@@ -1,0 +1,16 @@
+# Dependencies
+node_modules
+
+# Build output
+dist
+build
+
+# Coverage
+coverage
+
+# Prisma
+prisma/migrations
+
+# Config files
+*.config.js
+.eslintrc.js

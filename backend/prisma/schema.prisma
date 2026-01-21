@@ -1,0 +1,163 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+}
+
+enum Language {
+  VI
+  EN
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  fullName     String
+  role         Role      @default(MANAGER)
+  isActive     Boolean   @default(true)
+  
+  // Audit fields
+  createdAt    DateTime  @default(now())
+  createdBy    String?   // User ID who created this record
+  updatedAt    DateTime  @updatedAt
+  updatedBy    String?   // User ID who last updated
+  deletedAt    DateTime? // Soft delete
+  deletedBy    String?   // User ID who deleted
+  
+  refreshToken String?
+  
+  // Relations
+  createdProducts  Product[] @relation("ProductCreator")
+  updatedProducts  Product[] @relation("ProductUpdater")
+  deletedProducts  Product[] @relation("ProductDeleter")
+  
+  createdUsers     User[]    @relation("UserCreator")
+  updatedUsers     User[]    @relation("UserUpdater")
+  deletedUsers     User[]    @relation("UserDeleter")
+  
+  creator          User?     @relation("UserCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+  updater          User?     @relation("UserUpdater", fields: [updatedBy], references: [id], onDelete: SetNull)
+  deleter          User?     @relation("UserDeleter", fields: [deletedBy], references: [id], onDelete: SetNull)
+
+  @@map("users")
+}
+
+model Product {
+  id               String    @id @default(cuid())
+  slug             String    @unique
+  nameVi           String
+  nameEn           String
+  descriptionVi    String    @db.Text
+  descriptionEn    String    @db.Text
+  priceVND         Int
+  images           String[]  // Array of image URLs
+  material         String
+  dimensions       String
+  stock            Int       @default(0)
+  isActive         Boolean   @default(true)
+  
+  // Inquiry feature - Replace order system
+  inquiryEnabled   Boolean   @default(true)  // Enable/disable inquiry button
+  inquiryMessageVi String    @default("")    // Pre-filled message for Vietnamese
+  inquiryMessageEn String    @default("")    // Pre-filled message for English
+  
+  // Audit fields
+  createdAt        DateTime  @default(now())
+  createdBy        String?   // User ID who created this product
+  updatedAt        DateTime  @updatedAt
+  updatedBy        String?   // User ID who last updated
+  deletedAt        DateTime? // Soft delete timestamp
+  deletedBy        String?   // User ID who deleted
+  
+  // Relations for audit trail
+  creator          User?     @relation("ProductCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+  updater          User?     @relation("ProductUpdater", fields: [updatedBy], references: [id], onDelete: SetNull)
+  deleter          User?     @relation("ProductDeleter", fields: [deletedBy], references: [id], onDelete: SetNull)
+
+  @@map("products")
+}
+
+// Orders removed - Customers will contact via social media
+// Use "Inquiry" feature instead - customers click button to message via Facebook/Instagram
+
+// model Order {
+//   id              String      @id @default(cuid())
+//   orderNumber     String      @unique
+//   userId          String?
+//   customerEmail   String
+//   customerName    String
+//   shippingAddress String      @db.Text
+//   phoneNumber     String
+//   totalVND        Int
+//   language        Language    @default(VI)
+//   status          String      @default("pending")
+//   createdAt       DateTime    @default(now())
+//   updatedAt       DateTime    @updatedAt
+//   user            User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+//   items           OrderItem[]
+//   @@map("orders")
+// }
+
+// model OrderItem {
+//   id        String  @id @default(cuid())
+//   orderId   String
+//   productId String
+//   quantity  Int
+//   priceVND  Int
+//   order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+//   product   Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+//   @@map("order_items")
+// }
+
+model SiteSettings {
+  id    String @id @default("singleton")
+  key   String @unique
+  value String @db.Text
+
+  @@map("site_settings")
+}
+
+model ThemeSettings {
+  id              String    @id @default("singleton")
+  backgroundColor String    @default("#F9F7F1")
+  textColor       String    @default("#4A4238")
+  accentColor     String    @default("#8C7E6A")
+  
+  updatedAt       DateTime  @updatedAt
+  updatedBy       String?   // User ID who last updated
+
+  @@map("theme_settings")
+}
+
+model SiteContent {
+  id        String    @id @default(cuid())
+  key       String    @unique // e.g., "menu.shop.vi", "footer.text.en"
+  value     String    @db.Text
+  
+  updatedAt DateTime  @updatedAt
+  updatedBy String?   // User ID who last updated
+
+  @@map("site_content")
+}
+
+model SocialSettings {
+  id                String    @id @default("singleton")
+  facebookPageUrl   String    @default("") // e.g., "https://m.me/uomarchive"
+  instagramUsername String    @default("") // e.g., "uomarchive"
+  
+  updatedAt         DateTime  @updatedAt
+  updatedBy         String?   // User ID who last updated
+
+  @@map("social_settings")
+}
