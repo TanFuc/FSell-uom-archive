@@ -10,13 +10,13 @@ import * as bcrypt from 'bcrypt'
 import { PrismaService } from '../prisma/prisma.service'
 import { LoginDto, RegisterDto } from './dto'
 
-interface TokenPayload {
+export interface TokenPayload {
   sub: string
   email: string
   role: string
 }
 
-interface Tokens {
+export interface Tokens {
   accessToken: string
   refreshToken: string
 }
@@ -49,6 +49,7 @@ export class AuthService {
       data: {
         email: dto.email,
         passwordHash,
+        fullName: dto.email.split('@')[0],
       },
     })
 

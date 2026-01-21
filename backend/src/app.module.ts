@@ -8,6 +8,7 @@ import { ProductsModule } from './products/products.module'
 import { SettingsModule } from './settings/settings.module'
 import { UploadModule } from './upload/upload.module'
 import { UsersModule } from './users/users.module'
+import { BannersModule } from './banners/banners.module';
 
 // Orders and Notifications modules removed
 // Customers now contact via social media using the Inquiry feature
@@ -40,6 +41,7 @@ import { UsersModule } from './users/users.module'
     SettingsModule,
     UploadModule,
     UsersModule,
+    BannersModule,
   ],
 })
 export class AppModule {}

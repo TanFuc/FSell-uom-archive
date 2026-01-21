@@ -14,6 +14,7 @@ export interface Product {
   dimensions: string
   stock: number
   isActive: boolean
+  isFeatured: boolean
   inquiryEnabled: boolean
   inquiryMessageVi: string
   inquiryMessageEn: string
@@ -34,6 +35,25 @@ export interface User {
   createdAt: string
   updatedAt: string
   deletedAt: string | null
+}
+
+export interface Banner {
+  id: string
+  titleVi?: string
+  titleEn?: string
+  subtitleVi?: string
+  subtitleEn?: string
+  descriptionVi?: string
+  descriptionEn?: string
+  imageUrl: string
+  mobileImageUrl?: string
+  link?: string
+  order: number
+  isActive: boolean
+  textColor?: string
+  textPosition?: 'center' | 'left' | 'right'
+  createdAt: string
+  updatedAt: string
 }
 
 export interface ThemeSettings {
@@ -60,32 +80,6 @@ export interface ExchangeRate {
   updatedAt: string
 }
 
-export interface AllSettings {
-  theme: ThemeSettings
-  siteContent: SiteContent
-  socialLinks: SocialLinks
-  exchangeRate: ExchangeRate
-}
-
-// ==================== DTOs ====================
-
-// Auth DTOs
-export interface RegisterDto {
-  email: string
-  password: string
-}
-
-export interface LoginDto {
-  email: string
-  password: string
-}
-
-export interface AuthResponse {
-  accessToken: string
-  refreshToken: string
-}
-
-// Product DTOs
 export interface CreateProductDto {
   slug: string
   nameVi: string
@@ -98,6 +92,7 @@ export interface CreateProductDto {
   dimensions: string
   stock: number
   isActive?: boolean
+  isFeatured?: boolean
   inquiryEnabled?: boolean
   inquiryMessageVi?: string
   inquiryMessageEn?: string
@@ -115,6 +110,7 @@ export interface UpdateProductDto {
   dimensions?: string
   stock?: number
   isActive?: boolean
+  isFeatured?: boolean
   inquiryEnabled?: boolean
   inquiryMessageVi?: string
   inquiryMessageEn?: string
@@ -125,6 +121,7 @@ export interface QueryProductsDto {
   limit?: number
   search?: string
   inquiryEnabled?: boolean
+  isFeatured?: boolean
   minPrice?: number
   maxPrice?: number
   sortBy?: 'createdAt' | 'updatedAt' | 'nameVi' | 'nameEn' | 'priceVND'
@@ -141,6 +138,7 @@ export interface BulkDeleteDto {
 export interface BulkUpdateDto {
   ids: string[]
   isActive?: boolean
+  isFeatured?: boolean
   inquiryEnabled?: boolean
 }
 
@@ -171,43 +169,7 @@ export interface QueryUsersDto {
 
 // ==================== RESPONSES ====================
 
-export interface PaginatedResponse<T> {
-  items: T[]
-  meta: {
-    currentPage: number
-    itemsPerPage: number
-    totalItems: number
-    totalPages: number
-  }
-}
-  facebookPageUrl: string
-  instagramUsername: string
-}
-
-export interface SiteContent {
-  [key: string]: string
-}
-
-export interface ExchangeRate {
-  rate: number
-}
-
-export interface AllSettings {
-  theme: ThemeSettings
-  siteContent: SiteContent
-  socialLinks: SocialLinks
-  exchangeRate: number
-}
-
-export interface AuthResponse {
-  accessToken: string
-  refreshToken: string
-  user: {
-    id: string
-    email: string
-    role: string
-  }
-}
+// ==================== RESPONSES ====================
 
 export interface PaginatedResponse<T> {
   data: T[]
@@ -226,3 +188,11 @@ export interface ApiError {
 }
 
 export type Locale = 'vi' | 'en'
+
+// Override AllSettings to match backend response for public settings
+export interface AllSettings {
+  theme: ThemeSettings
+  siteContent: SiteContent
+  socialLinks: SocialLinks
+  exchangeRate: number
+}

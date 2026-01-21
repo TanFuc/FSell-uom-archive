@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 /* ==================== FONTS ====================*/
-@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500&display=swap');
+/* Fonts are loaded via next/font in layout.tsx */
 
 @layer base {
   :root {
@@ -47,31 +47,16 @@
 
   /* Consistent typography */
   body {
-    @apply bg-background text-foreground;
-    font-family: 'EB Garamond', serif;
+    @apply bg-background text-foreground font-sans; /* Default to sans, but layout forces serif? layout says font-serif. Let's stick to layout class or here. I'll set default to sans here for body text fallback. */
     font-size: 14px;
     font-weight: 400;
     line-height: 1.6;
     letter-spacing: 0.01em;
   }
 
-  /* Unified font size - STRICT */
-  h1, h2, h3, h4, h5, h6,
-  p, span, a, button,
-  input, textarea, select,
-  label, li, div {
-    font-size: 14px !important;
-    font-weight: 400 !important;
-    font-family: 'EB Garamond', serif !important;
-  }
-
   /* Links */
   a {
     @apply text-foreground no-underline transition-all duration-300;
-  }
-
-  a:hover {
-    @apply italic;
   }
 
   /* Images */
@@ -85,16 +70,12 @@
 @layer components {
   /* Container */
   .container-custom {
-    @apply w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
   }
 
   /* Navigation link */
   .nav-link {
-    @apply uppercase tracking-[0.15em] text-foreground transition-all duration-300;
-  }
-
-  .nav-link:hover {
-    @apply italic;
+    @apply uppercase tracking-[0.15em] text-foreground transition-all duration-300 hover:opacity-70;
   }
 
   /* Text link */
@@ -103,12 +84,12 @@
   }
 
   .text-link:hover {
-    @apply underline italic;
+    @apply underline opacity-80;
   }
 
   /* Button minimalist */
   .btn {
-    @apply inline-block px-6 py-3 uppercase tracking-[0.1em] text-center transition-all duration-300 cursor-pointer;
+    @apply inline-block cursor-pointer px-6 py-3 text-center uppercase tracking-[0.1em] transition-all duration-300;
     border: 1px solid hsl(var(--foreground));
   }
 
@@ -117,12 +98,12 @@
   }
 
   .btn-ghost {
-    @apply border-none hover:bg-transparent hover:italic;
+    @apply border-none hover:bg-muted/20 hover:opacity-90;
   }
 
   /* Input minimalist */
   .input {
-    @apply w-full px-4 py-3 bg-transparent border border-foreground text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-foreground transition-all;
+    @apply w-full border border-foreground bg-transparent px-4 py-3 text-foreground transition-all placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-foreground;
   }
 
   /* Section spacing */
@@ -168,11 +149,21 @@
   }
 
   /* Spacing scale */
-  .spacing-xs { @apply py-4 md:py-6; }
-  .spacing-sm { @apply py-8 md:py-12; }
-  .spacing-md { @apply py-12 md:py-16; }
-  .spacing-lg { @apply py-16 md:py-24; }
-  .spacing-xl { @apply py-24 md:py-32; }
+  .spacing-xs {
+    @apply py-4 md:py-6;
+  }
+  .spacing-sm {
+    @apply py-8 md:py-12;
+  }
+  .spacing-md {
+    @apply py-12 md:py-16;
+  }
+  .spacing-lg {
+    @apply py-16 md:py-24;
+  }
+  .spacing-xl {
+    @apply py-24 md:py-32;
+  }
 }
 
 /* ==================== SCROLLBAR ====================*/
@@ -242,23 +233,37 @@
   animation: slideUp 0.5s ease-out both;
 }
 
-.stagger-children > *:nth-child(1) { animation-delay: 0.1s; }
-.stagger-children > *:nth-child(2) { animation-delay: 0.2s; }
-.stagger-children > *:nth-child(3) { animation-delay: 0.3s; }
-.stagger-children > *:nth-child(4) { animation-delay: 0.4s; }
-.stagger-children > *:nth-child(5) { animation-delay: 0.5s; }
-.stagger-children > *:nth-child(6) { animation-delay: 0.6s; }
+.stagger-children > *:nth-child(1) {
+  animation-delay: 0.1s;
+}
+.stagger-children > *:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.stagger-children > *:nth-child(3) {
+  animation-delay: 0.3s;
+}
+.stagger-children > *:nth-child(4) {
+  animation-delay: 0.4s;
+}
+.stagger-children > *:nth-child(5) {
+  animation-delay: 0.5s;
+}
+.stagger-children > *:nth-child(6) {
+  animation-delay: 0.6s;
+}
 
-/* ==================== RESPONSIVE ====================*/
-@media (max-width: 640px) {
-  body {
-    font-size: 13px;
+@keyframes slowZoom {
+  from {
+    transform: scale(1);
   }
-
-  h1, h2, h3, h4, h5, h6,
-  p, span, a, button,
-  input, textarea, select,
-  label, li, div {
-    font-size: 13px !important;
+  to {
+    transform: scale(1.1);
   }
 }
+
+.animate-slow-zoom {
+  animation: slowZoom 20s infinite alternate ease-in-out;
+}
+
+/* ==================== RESPONSIVE ====================*/
+

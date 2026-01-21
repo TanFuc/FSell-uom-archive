@@ -67,6 +67,15 @@ export class QueryProductsDto {
   inquiryEnabled?: boolean
 
   @ApiPropertyOptional({
+    example: true,
+    description: 'Filter by featured status',
+  })
+  @IsOptional()
+  @Type(() => Boolean)
+  @IsBoolean()
+  isFeatured?: boolean
+
+  @ApiPropertyOptional({
     example: false,
     description: 'Include soft-deleted products (ADMIN only)',
     default: false,

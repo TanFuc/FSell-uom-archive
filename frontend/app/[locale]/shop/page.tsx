@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useLocale } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { useProducts } from '@/hooks/use-products'
 import { ProductCard } from '@/components/ProductCard'
 import { Input } from '@/components/ui/input'
@@ -9,6 +9,8 @@ import { Search, Loader2 } from 'lucide-react'
 
 export default function ShopPage() {
   const locale = useLocale() as 'vi' | 'en'
+  const t = useTranslations('shop')
+  const tCommon = useTranslations('common')
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
 
@@ -24,10 +26,10 @@ export default function ShopPage() {
       {/* Page Title */}
       <div className="text-center mb-12 animate-fade-in">
         <h1 className="text-2xl md:text-3xl uppercase tracking-[0.2em] mb-4">
-          SẢN PHẨM
+          {t('title')}
         </h1>
         <p className="text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-          Khám phá bộ sưu tập được tuyển chọn từ các nghệ nhân Việt Nam
+          {t('subtitle')}
         </p>
       </div>
 
@@ -37,7 +39,7 @@ export default function ShopPage() {
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             type="text"
-            placeholder="Tìm kiếm sản phẩm..."
+            placeholder={t('searchPlaceholder')}
             value={search}
             onChange={(e) => {
               setSearch(e.target.value)
@@ -59,10 +61,10 @@ export default function ShopPage() {
             </div>
           ))}
         </div>
-      ) : data && data.items.length > 0 ? (
+      ) : data && data.data.length > 0 ? (
         <>
           <div className="grid-products stagger-children">
-            {data.items.map((product) => (
+            {data.data.map((product) => (
               <ProductCard key={product.id} product={product} locale={locale} />
             ))}
           </div>
@@ -75,7 +77,7 @@ export default function ShopPage() {
                 disabled={page === 1}
                 className="btn btn-ghost disabled:opacity-30 disabled:cursor-not-allowed uppercase tracking-wider"
               >
-                Previous
+                {tCommon('previous')}
               </button>
               <span className="text-muted-foreground">
                 {page} / {data.meta.totalPages}
@@ -85,17 +87,16 @@ export default function ShopPage() {
                 disabled={page === data.meta.totalPages}
                 className="btn btn-ghost disabled:opacity-30 disabled:cursor-not-allowed uppercase tracking-wider"
               >
-                Next
+                {tCommon('next')}
               </button>
             </div>
           )}
         </>
       ) : (
         <div className="text-center py-16 text-muted-foreground animate-fade-in">
-          <p>Không tìm thấy sản phẩm nào.</p>
+          <p>{t('noProducts')}</p>
         </div>
       )}
     </div>
   )
-}
 }

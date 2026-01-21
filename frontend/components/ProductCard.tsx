@@ -41,11 +41,3 @@ export function ProductCard({ product, locale }: ProductCardProps) {
   )
 }
 
-export default ProductCard
-        <p className="text-muted-foreground mt-1">{price}</p>
-      </div>
-    </Link>
-  )
-}
-
-export default memo(ProductCard)

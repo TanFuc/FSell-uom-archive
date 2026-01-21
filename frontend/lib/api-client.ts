@@ -19,6 +19,7 @@ import type {
   QueryUsersDto,
   BulkDeleteDto,
   BulkUpdateDto,
+  Banner,
 } from './types'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
@@ -237,6 +238,15 @@ class ApiClient {
 
   async restoreUser(id: string): Promise<User> {
     return this.client.post(`/users/${id}/restore`)
+  }
+
+  // ==================== BANNERS (PUBLIC) ====================
+  async getBanners(activeOnly = true): Promise<Banner[]> {
+    return this.client.get('/banners', { params: { activeOnly: activeOnly.toString() } })
+  }
+
+  async getBannerById(id: string): Promise<Banner> {
+    return this.client.get(`/banners/${id}`)
   }
 
   // ==================== UPLOAD (ADMIN) ====================

@@ -46,7 +46,9 @@
     "description": "Mô tả"
   },
   "shop": {
-    "title": "Tất cả sản phẩm",
+    "title": "SẢN PHẨM",
+    "subtitle": "Khám phá bộ sưu tập được tuyển chọn từ các nghệ nhân Việt Nam",
+    "searchPlaceholder": "Tìm kiếm sản phẩm...",
     "noProducts": "Chưa có sản phẩm nào",
     "loading": "Đang tải..."
   },

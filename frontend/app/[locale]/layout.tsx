@@ -7,10 +7,35 @@ import { QueryProvider } from '@/components/providers/QueryProvider'
 import { Toaster } from 'sonner'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
+import { SplashScreen } from '@/components/ui/SplashScreen'
+import { DisableRightClick } from '@/components/DisableRightClick'
+import { Lora, Montserrat, Playfair_Display } from 'next/font/google'
 import '@/styles/globals.css'
 import '@/styles/loading-animations.css'
 
+const lora = Lora({ 
+  subsets: ['latin', 'vietnamese'], 
+  variable: '--font-lora',
+  display: 'swap',
+  weight: ['400', '500', '600', '700'],
+})
+
+const montserrat = Montserrat({ 
+  subsets: ['latin', 'vietnamese'], 
+  variable: '--font-montserrat',
+  display: 'swap', 
+  weight: ['300', '400', '500', '600'],
+})
+
+const playfair = Playfair_Display({
+  subsets: ['latin', 'vietnamese'],
+  variable: '--font-playfair',
+  display: 'swap',
+  weight: ['400', '500', '600', '700'],
+})
+
 export const metadata: Metadata = {
+  metadataBase: new URL('http://localhost:3000'),
   title: {
     default: 'Ươm Archive - Curated Vietnamese Fashion',
     template: '%s | Ươm Archive',
@@ -46,8 +71,7 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       { url: '/favicon.ico' },
-      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
-      { url: '/icon-512.png', sizes: '512x512', type: 'image/png' },
+      { url: '/assets/logo-remove.png', sizes: 'any' },
     ],
     apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
   },
@@ -79,8 +103,10 @@ export default async function RootLayout({ children, params: { locale } }: RootL
 
   return (
     <html lang={locale} suppressHydrationWarning>
-      <body className="min-h-screen flex flex-col bg-background font-serif antialiased">
+      <body className={`${lora.variable} ${montserrat.variable} ${playfair.variable} min-h-screen flex flex-col bg-background font-serif antialiased`}>
+        <DisableRightClick />
         <NextIntlClientProvider messages={messages}>
+          <SplashScreen />
           <QueryProvider>
             <Header />
             <main className="flex-1 pt-16 md:pt-20">

@@ -55,8 +55,9 @@ const config: Config = {
         sm: 'calc(var(--radius) - 4px)',
       },
       fontFamily: {
-        serif: ['EB Garamond', 'Georgia', 'serif'],
-        sans: ['Inter', 'Helvetica', 'sans-serif'],
+        serif: ['var(--font-lora)', '"Lora"', 'Georgia', 'serif'],
+        sans: ['var(--font-montserrat)', '"Montserrat"', 'Helvetica', 'sans-serif'],
+        playfair: ['var(--font-playfair)', '"Playfair Display"', 'serif'],
       },
       fontSize: {
         base: ['0.875rem', { lineHeight: '1.5' }],

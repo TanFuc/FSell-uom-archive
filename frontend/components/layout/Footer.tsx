@@ -13,13 +13,15 @@ export function Footer() {
   const currentYear = new Date().getFullYear()
 
   return (
-    <footer className="border-t border-foreground/10 bg-background">
+    <footer className="border-t border-foreground/10 bg-primary/15">
       <div className="container-custom spacing-md">
         {/* Main Footer Content */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 mb-8">
           {/* Brand */}
           <div>
-            <h3 className="uppercase tracking-wider mb-4">ƯƠM ARCHIVE</h3>
+            <Link href={`/${locale}`} className="inline-block font-playfair font-bold text-3xl md:text-4xl tracking-widest text-foreground hover:opacity-80 transition-opacity duration-300 mb-4">
+              ƯƠM<span className="text-primary">.</span>
+            </Link>
             <p className="text-muted-foreground max-w-xs">
               {t('description')}
             </p>

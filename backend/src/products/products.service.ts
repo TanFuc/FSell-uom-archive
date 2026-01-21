@@ -73,6 +73,7 @@ export class ProductsService {
     // Filters
     if (isActive !== undefined) where.isActive = isActive
     if (inquiryEnabled !== undefined) where.inquiryEnabled = inquiryEnabled
+    if (query.isFeatured !== undefined) where.isFeatured = query.isFeatured
     if (createdBy) where.createdBy = createdBy
 
     // Price range
@@ -99,6 +100,16 @@ export class ProductsService {
           creator: { select: { id: true, email: true, fullName: true } },
           updater: { select: { id: true, email: true, fullName: true } },
           deleter: { select: { id: true, email: true, fullName: true } },
+          relatedProducts: { 
+            select: { 
+              id: true, 
+              nameVi: true, 
+              nameEn: true, 
+              slug: true, 
+              images: true, 
+              priceVND: true 
+            } 
+          },
         },
       }),
       this.prisma.product.count({ where }),
@@ -136,6 +147,7 @@ export class ProductsService {
       include: {
         creator: { select: { id: true, email: true, fullName: true } },
         updater: { select: { id: true, email: true, fullName: true } },
+        relatedProducts: true,
       },
     })
 
@@ -162,6 +174,7 @@ export class ProductsService {
         creator: { select: { id: true, email: true, fullName: true } },
         updater: { select: { id: true, email: true, fullName: true } },
         deleter: { select: { id: true, email: true, fullName: true } },
+        relatedProducts: true,
       },
     })
 
@@ -175,6 +188,8 @@ export class ProductsService {
   // ==================== CREATE ====================
 
   async create(dto: CreateProductDto, userId: string) {
+    const { relatedProductIds, ...productData } = dto
+
     // Check if slug already exists
     const existingProduct = await this.prisma.product.findUnique({
       where: { slug: dto.slug },
@@ -186,12 +201,15 @@ export class ProductsService {
 
     const product = await this.prisma.product.create({
       data: {
-        ...dto,
+        ...productData,
         createdBy: userId,
         updatedBy: userId,
         // Auto-generate inquiry messages if empty
         inquiryMessageVi: dto.inquiryMessageVi || this.generateDefaultMessage(dto, 'vi'),
         inquiryMessageEn: dto.inquiryMessageEn || this.generateDefaultMessage(dto, 'en'),
+        relatedProducts: relatedProductIds 
+          ? { connect: relatedProductIds.map((id) => ({ id })) } 
+          : undefined,
       },
     })
 
@@ -204,6 +222,8 @@ export class ProductsService {
   // ==================== UPDATE ====================
 
   async update(id: string, dto: UpdateProductDto, userId: string) {
+    const { relatedProductIds, ...updateData } = dto
+
     const product = await this.prisma.product.findUnique({
       where: { id },
     })
@@ -230,8 +250,11 @@ export class ProductsService {
     const updatedProduct = await this.prisma.product.update({
       where: { id },
       data: {
-        ...dto,
+        ...updateData,
         updatedBy: userId,
+        relatedProducts: relatedProductIds 
+          ? { set: relatedProductIds.map((id) => ({ id })) } 
+          : undefined,
       },
     })
 

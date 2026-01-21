@@ -1,4 +1,28 @@
 {
+  "Navigation": {
+    "shop": "SHOP",
+    "about": "ABOUT US"
+  },
+  "Footer": {
+    "description": "Curating exquisite handcrafted items, carefully selected",
+    "navigation": "Navigation",
+    "connect": "Connect",
+    "shop": "Shop",
+    "about": "About Us",
+    "rights": "All rights reserved"
+  },
+  "Home": {
+    "title": "UOM ARCHIVE",
+    "subtitle": "Preserving the beauty of minimalism in Vietnamese craftsmanship",
+    "explore": "EXPLORE",
+    "featured": "NEW ARRIVALS",
+    "viewAll": "View all",
+    "curated": "CURATED SELECTION",
+    "showMore": "Show more",
+    "philosophy": "PHILOSOPHY",
+    "philosophyText": "We believe in the power of simplicity. Each product is carefully curated, carrying within it the story of the artisan and the spirit of Vietnam.",
+    "learnMore": "Learn more"
+  },
   "nav": {
     "shop": "SHOP",
     "shipping": "SHIPPING & RETURNS",
@@ -24,12 +48,14 @@
     "description": "Description"
   },
   "shop": {
-    "title": "All Products",
-    "noProducts": "No products yet",
+    "title": "ALL PRODUCTS",
+    "subtitle": "Discover our curated collection from Vietnamese artisans",
+    "searchPlaceholder": "Search for products...",
+    "noProducts": "No products found",
     "loading": "Loading..."
   },
   "footer": {
-    "copyright": "© 2026 Ươm Archive. All rights reserved.",
+    "copyright": "© 2026 Uom Archive. All rights reserved.",
     "followUs": "Follow us"
   },
   "admin": {

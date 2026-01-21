@@ -94,6 +94,15 @@ export class CreateProductDto {
   @IsOptional()
   isActive?: boolean
 
+  @ApiPropertyOptional({
+    example: true,
+    description: 'Whether the product is featured',
+    default: false,
+  })
+  @IsBoolean()
+  @IsOptional()
+  isFeatured?: boolean
+
   // Inquiry Feature Fields
   @ApiPropertyOptional({
     example: true,
@@ -119,4 +128,14 @@ export class CreateProductDto {
   @IsString()
   @IsOptional()
   inquiryMessageEn?: string
+
+  @ApiPropertyOptional({
+    example: ['prod_123', 'prod_456'],
+    description: 'IDs of related products',
+    type: [String],
+  })
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  relatedProductIds?: string[]
 }
