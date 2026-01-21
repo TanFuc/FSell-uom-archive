@@ -1,0 +1,115 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;1,400&family=Inter:wght@400&display=swap');
+
+@layer base {
+  :root {
+    --background: 39 37% 96%;
+    --foreground: 28 11% 25%;
+
+    --card: 39 37% 96%;
+    --card-foreground: 28 11% 25%;
+
+    --popover: 39 37% 96%;
+    --popover-foreground: 28 11% 25%;
+
+    --primary: 34 15% 48%;
+    --primary-foreground: 39 37% 96%;
+
+    --secondary: 36 10% 90%;
+    --secondary-foreground: 28 11% 25%;
+
+    --muted: 36 10% 90%;
+    --muted-foreground: 32 10% 45%;
+
+    --accent: 34 15% 48%;
+    --accent-foreground: 39 37% 96%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 34 15% 48%;
+    --input: 34 15% 48%;
+    --ring: 28 11% 25%;
+
+    --radius: 0rem;
+  }
+
+  * {
+    @apply border-border;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground font-serif text-base antialiased;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* Single font size enforcement */
+  h1, h2, h3, h4, h5, h6, p, span, a, button, input, textarea, label {
+    font-size: 14px;
+    font-weight: 400;
+  }
+}
+
+@layer components {
+  .link {
+    @apply text-earthy-brown transition-all duration-300;
+  }
+
+  .link:hover {
+    @apply italic;
+  }
+
+  .nav-link {
+    @apply uppercase tracking-wide text-earthy-brown transition-all duration-300;
+  }
+
+  .nav-link:hover {
+    @apply italic;
+  }
+
+  .container-custom {
+    @apply max-w-7xl mx-auto px-6 lg:px-12;
+  }
+
+  .btn-primary {
+    @apply text-earthy-brown uppercase tracking-wide hover:italic transition-all duration-300;
+  }
+
+  .input-field {
+    @apply w-full border border-earthy-brown bg-transparent p-3 text-earthy-brown placeholder:text-earthy-clay focus:outline-none focus:ring-1 focus:ring-earthy-brown;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F9F7F1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #8C7E6A;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #4A4238;
+}

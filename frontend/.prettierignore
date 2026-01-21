@@ -1,0 +1,25 @@
+# Dependencies
+node_modules
+
+# Build output
+.next
+out
+build
+dist
+
+# IDE
+.idea
+.vscode
+
+# Misc
+*.log
+.env*
+
+# Generated
+public/sw.js
+public/workbox-*.js
+
+# Package lock
+package-lock.json
+pnpm-lock.yaml
+yarn.lock

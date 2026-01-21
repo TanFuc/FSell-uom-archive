@@ -1,0 +1,143 @@
+/**
+ * LOADING ANIMATIONS FOR ƯƠM ARCHIVE
+ * 
+ * Add these animations to your globals.css or tailwind.config.ts
+ * 
+ * Key Features:
+ * - Character-by-character pulse animation
+ * - Smooth loading bar animation
+ * - Vietnamese character support (Ư, ơ)
+ * - Fullscreen overlay (NOT rotating spinners)
+ */
+
+/* ============================================
+   PULSE CHARACTER ANIMATION
+   Each character pulses up/down with opacity
+   ============================================ */
+
+@keyframes pulse-char {
+  0%, 100% { 
+    opacity: 0.3; 
+    transform: translateY(0); 
+  }
+  50% { 
+    opacity: 1; 
+    transform: translateY(-8px); 
+  }
+}
+
+.animate-pulse-char {
+  animation: pulse-char 1.4s ease-in-out infinite;
+}
+
+/* Staggered animation delays for each character */
+.animation-delay-0 { animation-delay: 0s; }
+.animation-delay-100 { animation-delay: 0.1s; }
+.animation-delay-200 { animation-delay: 0.2s; }
+.animation-delay-300 { animation-delay: 0.3s; }
+
+
+/* ============================================
+   LOADING BAR ANIMATION
+   Horizontal sliding bar beneath text
+   ============================================ */
+
+@keyframes loading-bar {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.animate-loading-bar {
+  animation: loading-bar 1.5s ease-in-out infinite;
+}
+
+
+/* ============================================
+   ALTERNATIVE: BREATHING EFFECT
+   Gentle scale + opacity (more subtle)
+   ============================================ */
+
+@keyframes breathe {
+  0%, 100% { 
+    opacity: 0.4; 
+    transform: scale(0.98); 
+  }
+  50% { 
+    opacity: 1; 
+    transform: scale(1); 
+  }
+}
+
+.animate-breathe {
+  animation: breathe 2s ease-in-out infinite;
+}
+
+
+/* ============================================
+   ALTERNATIVE: FADE WAVE
+   Sequential fade with slight blur
+   ============================================ */
+
+@keyframes fade-wave {
+  0%, 100% { 
+    opacity: 0.2; 
+    filter: blur(0px); 
+  }
+  50% { 
+    opacity: 1; 
+    filter: blur(1px); 
+  }
+}
+
+.animate-fade-wave {
+  animation: fade-wave 1.6s ease-in-out infinite;
+}
+
+
+/* ============================================
+   ALTERNATIVE: FADE IN (Typewriter)
+   Characters appear one by one
+   ============================================ */
+
+@keyframes fade-in {
+  from { 
+    opacity: 0; 
+    transform: translateY(10px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+
+/* ============================================
+   PERFORMANCE OPTIMIZATION
+   ============================================ */
+
+.animate-pulse-char,
+.animate-loading-bar,
+.animate-breathe,
+.animate-fade-wave {
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+
+/* ============================================
+   MOBILE OPTIMIZATION
+   Smaller text on mobile devices
+   ============================================ */
+
+@media (max-width: 640px) {
+  /* Adjust font size in component */
+  .loading-text {
+    font-size: 4rem; /* text-6xl instead of text-8xl */
+  }
+}

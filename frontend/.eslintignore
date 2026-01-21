@@ -1,0 +1,19 @@
+# Dependencies
+node_modules
+
+# Build output
+.next
+out
+build
+dist
+
+# Config files
+*.config.js
+*.config.ts
+.eslintrc.js
+
+# Public assets
+public
+
+# Generated types
+next-env.d.ts

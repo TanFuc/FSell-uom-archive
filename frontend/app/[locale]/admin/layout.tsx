@@ -1,0 +1,174 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
+import { useLocale, useTranslations } from 'next-intl'
+import Link from 'next/link'
+import {
+  LayoutDashboard,
+  Package,
+  Settings,
+  Palette,
+  Users,
+  LogOut,
+  Menu,
+  X,
+} from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Separator } from '@/components/ui/separator'
+import Logo from '@/components/Logo'
+import { api } from '@/lib/api'
+import { useAuthStore } from '@/lib/store'
+import { User } from '@/lib/types'
+
+interface AdminLayoutProps {
+  children: React.ReactNode
+}
+
+export default function AdminLayout({ children }: AdminLayoutProps) {
+  const pathname = usePathname()
+  const router = useRouter()
+  const locale = useLocale()
+  const t = useTranslations('admin')
+  const { user, setUser, logout } = useAuthStore()
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+
+  const isLoginPage = pathname.includes('/admin/login')
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      if (isLoginPage) {
+        setIsLoading(false)
+        return
+      }
+
+      try {
+        const userData = await api.getMe()
+        setUser(userData)
+      } catch (error) {
+        console.error('Auth check failed:', error)
+        router.push(`/${locale}/admin/login`)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    checkAuth()
+  }, [isLoginPage, locale, router, setUser])
+
+  const handleLogout = async () => {
+    await api.logout()
+    logout()
+    router.push(`/${locale}/admin/login`)
+  }
+
+  if (isLoginPage) {
+    return <>{children}</>
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <span className="text-muted-foreground">{t('loading')}</span>
+      </div>
+    )
+  }
+
+  const navItems = [
+    { href: `/${locale}/admin/dashboard`, label: t('dashboard'), icon: LayoutDashboard },
+    { href: `/${locale}/admin/products`, label: t('products'), icon: Package },
+    { href: `/${locale}/admin/theme`, label: t('theme'), icon: Palette },
+    { href: `/${locale}/admin/settings`, label: t('settings'), icon: Settings },
+  ]
+
+  if (user?.role === 'ADMIN') {
+    navItems.push({ href: `/${locale}/admin/users`, label: t('users'), icon: Users })
+  }
+
+  return (
+    <div className="flex min-h-screen">
+      {/* Mobile sidebar toggle */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="fixed top-4 left-4 z-50 md:hidden"
+        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+      >
+        {isSidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+      </Button>
+
+      {/* Sidebar */}
+      <aside
+        className={`fixed inset-y-0 left-0 z-40 w-64 transform bg-card border-r transition-transform duration-200 ease-in-out md:relative md:translate-x-0 ${
+          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <div className="flex h-full flex-col">
+          {/* Logo */}
+          <div className="flex h-16 items-center justify-center border-b px-6">
+            <Logo variant="text" linkToHome />
+          </div>
+
+          {/* Navigation */}
+          <nav className="flex-1 space-y-1 p-4">
+            {navItems.map((item) => {
+              const Icon = item.icon
+              const isActive = pathname === item.href
+
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`flex items-center gap-3 px-3 py-2 text-sm transition-colors ${
+                    isActive
+                      ? 'bg-accent text-accent-foreground'
+                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                  }`}
+                  onClick={() => setIsSidebarOpen(false)}
+                >
+                  <Icon className="h-4 w-4" />
+                  {item.label}
+                </Link>
+              )
+            })}
+          </nav>
+
+          <Separator />
+
+          {/* User info and logout */}
+          <div className="p-4">
+            {user && (
+              <div className="mb-4">
+                <p className="text-sm font-medium">{user.fullName}</p>
+                <p className="text-xs text-muted-foreground">{user.email}</p>
+                <p className="text-xs text-muted-foreground">{user.role}</p>
+              </div>
+            )}
+            <Button
+              variant="ghost"
+              className="w-full justify-start text-sm"
+              onClick={handleLogout}
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              {t('logout')}
+            </Button>
+          </div>
+        </div>
+      </aside>
+
+      {/* Overlay for mobile */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/50 md:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      {/* Main content */}
+      <main className="flex-1 overflow-auto">
+        <div className="p-6 md:p-8">{children}</div>
+      </main>
+    </div>
+  )
+}

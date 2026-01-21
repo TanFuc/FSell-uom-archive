@@ -1,0 +1,264 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==================== FONTS ====================*/
+@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500&display=swap');
+
+@layer base {
+  :root {
+    /* Earthy color palette */
+    --background: 39 37% 96%; /* #F9F7F1 cream */
+    --foreground: 28 11% 25%; /* #4A4238 brown */
+
+    --card: 39 37% 96%;
+    --card-foreground: 28 11% 25%;
+
+    --primary: 34 15% 48%; /* #8C7E6A clay */
+    --primary-foreground: 39 37% 96%;
+
+    --muted: 36 10% 90%;
+    --muted-foreground: 32 10% 45%;
+
+    --accent: 34 15% 48%;
+    --accent-foreground: 39 37% 96%;
+
+    --border: 34 15% 48%;
+    --input: 34 15% 48%;
+    --ring: 28 11% 25%;
+
+    --radius: 0rem;
+  }
+
+  /* Global reset */
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Consistent typography */
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'EB Garamond', serif;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.6;
+    letter-spacing: 0.01em;
+  }
+
+  /* Unified font size - STRICT */
+  h1, h2, h3, h4, h5, h6,
+  p, span, a, button,
+  input, textarea, select,
+  label, li, div {
+    font-size: 14px !important;
+    font-weight: 400 !important;
+    font-family: 'EB Garamond', serif !important;
+  }
+
+  /* Links */
+  a {
+    @apply text-foreground no-underline transition-all duration-300;
+  }
+
+  a:hover {
+    @apply italic;
+  }
+
+  /* Images */
+  img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
+}
+
+@layer components {
+  /* Container */
+  .container-custom {
+    @apply w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Navigation link */
+  .nav-link {
+    @apply uppercase tracking-[0.15em] text-foreground transition-all duration-300;
+  }
+
+  .nav-link:hover {
+    @apply italic;
+  }
+
+  /* Text link */
+  .text-link {
+    @apply text-foreground underline-offset-2 transition-all duration-300;
+  }
+
+  .text-link:hover {
+    @apply underline italic;
+  }
+
+  /* Button minimalist */
+  .btn {
+    @apply inline-block px-6 py-3 uppercase tracking-[0.1em] text-center transition-all duration-300 cursor-pointer;
+    border: 1px solid hsl(var(--foreground));
+  }
+
+  .btn:hover {
+    @apply bg-foreground text-background;
+  }
+
+  .btn-ghost {
+    @apply border-none hover:bg-transparent hover:italic;
+  }
+
+  /* Input minimalist */
+  .input {
+    @apply w-full px-4 py-3 bg-transparent border border-foreground text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-foreground transition-all;
+  }
+
+  /* Section spacing */
+  .section {
+    @apply py-16 md:py-24 lg:py-32;
+  }
+
+  .section-sm {
+    @apply py-12 md:py-16 lg:py-20;
+  }
+
+  /* Grid system */
+  .grid-products {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
+    gap: clamp(2rem, 5vw, 4rem);
+  }
+
+  .grid-products-simple {
+    @apply grid grid-cols-1 md:grid-cols-2;
+    gap: clamp(4rem, 8vw, 8rem);
+  }
+}
+
+@layer utilities {
+  /* Responsive text */
+  .text-responsive {
+    font-size: clamp(14px, 2vw, 14px);
+  }
+
+  /* Aspect ratios */
+  .aspect-product {
+    aspect-ratio: 3 / 4;
+  }
+
+  .aspect-hero {
+    aspect-ratio: 16 / 9;
+  }
+
+  @media (max-width: 768px) {
+    .aspect-hero {
+      aspect-ratio: 1 / 1;
+    }
+  }
+
+  /* Spacing scale */
+  .spacing-xs { @apply py-4 md:py-6; }
+  .spacing-sm { @apply py-8 md:py-12; }
+  .spacing-md { @apply py-12 md:py-16; }
+  .spacing-lg { @apply py-16 md:py-24; }
+  .spacing-xl { @apply py-24 md:py-32; }
+}
+
+/* ==================== SCROLLBAR ====================*/
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--background));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted));
+  border-radius: 0;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--foreground));
+}
+
+/* ==================== SELECTION ====================*/
+::selection {
+  background: hsl(var(--foreground));
+  color: hsl(var(--background));
+}
+
+/* ==================== FOCUS VISIBLE ====================*/
+*:focus-visible {
+  outline: 1px solid hsl(var(--foreground));
+  outline-offset: 2px;
+}
+
+/* ==================== ANIMATIONS ====================*/
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.6s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.4s ease-out;
+}
+
+/* Stagger children animation */
+.stagger-children > * {
+  animation: slideUp 0.5s ease-out both;
+}
+
+.stagger-children > *:nth-child(1) { animation-delay: 0.1s; }
+.stagger-children > *:nth-child(2) { animation-delay: 0.2s; }
+.stagger-children > *:nth-child(3) { animation-delay: 0.3s; }
+.stagger-children > *:nth-child(4) { animation-delay: 0.4s; }
+.stagger-children > *:nth-child(5) { animation-delay: 0.5s; }
+.stagger-children > *:nth-child(6) { animation-delay: 0.6s; }
+
+/* ==================== RESPONSIVE ====================*/
+@media (max-width: 640px) {
+  body {
+    font-size: 13px;
+  }
+
+  h1, h2, h3, h4, h5, h6,
+  p, span, a, button,
+  input, textarea, select,
+  label, li, div {
+    font-size: 13px !important;
+  }
+}
