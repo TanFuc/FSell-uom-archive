@@ -15,27 +15,24 @@ export function removeVietnameseAccents(str: string): string {
  * Create flexible search query that works with or without Vietnamese accents
  * Returns array of OR conditions for Prisma
  */
-export function createFlexibleSearchConditions(
-  searchTerm: string,
-  fields: string[]
-): any[] {
+export function createFlexibleSearchConditions(searchTerm: string, fields: string[]): any[] {
   const normalizedSearch = removeVietnameseAccents(searchTerm)
-  
+
   const conditions: any[] = []
-  
-  fields.forEach(field => {
+
+  fields.forEach((field) => {
     // Search with original term (case insensitive)
     conditions.push({
-      [field]: { contains: searchTerm, mode: 'insensitive' }
+      [field]: { contains: searchTerm, mode: 'insensitive' },
     })
-    
+
     // If search term contains Vietnamese characters, also search normalized
     if (normalizedSearch !== searchTerm.toLowerCase()) {
       conditions.push({
-        [field]: { contains: normalizedSearch, mode: 'insensitive' }
+        [field]: { contains: normalizedSearch, mode: 'insensitive' },
       })
     }
   })
-  
+
   return conditions
 }

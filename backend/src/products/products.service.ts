@@ -9,12 +9,7 @@ import {
 import { Prisma, Role } from '@prisma/client'
 import { PrismaService } from '../prisma/prisma.service'
 import { RedisService } from '../redis/redis.service'
-import {
-  CreateProductDto,
-  UpdateProductDto,
-  QueryProductsDto,
-  BulkUpdateDto,
-} from './dto'
+import { CreateProductDto, UpdateProductDto, QueryProductsDto, BulkUpdateDto } from './dto'
 import { createFlexibleSearchConditions } from '../common/utils/vietnamese-search.util'
 
 const CACHE_TTL = 300 // 5 minutes
@@ -65,11 +60,11 @@ export class ProductsService {
     if (search) {
       where.OR = createFlexibleSearchConditions(search, [
         'nameVi',
-        'nameEn', 
+        'nameEn',
         'slug',
         'material',
         'descriptionVi',
-        'descriptionEn'
+        'descriptionEn',
       ])
     }
 
@@ -103,15 +98,15 @@ export class ProductsService {
           creator: { select: { id: true, email: true, fullName: true } },
           updater: { select: { id: true, email: true, fullName: true } },
           deleter: { select: { id: true, email: true, fullName: true } },
-          relatedProducts: { 
-            select: { 
-              id: true, 
-              nameVi: true, 
-              nameEn: true, 
-              slug: true, 
-              images: true, 
-              priceVND: true 
-            } 
+          relatedProducts: {
+            select: {
+              id: true,
+              nameVi: true,
+              nameEn: true,
+              slug: true,
+              images: true,
+              priceVND: true,
+            },
           },
         },
       }),
@@ -210,8 +205,8 @@ export class ProductsService {
         // Auto-generate inquiry messages if empty
         inquiryMessageVi: dto.inquiryMessageVi || this.generateDefaultMessage(dto, 'vi'),
         inquiryMessageEn: dto.inquiryMessageEn || this.generateDefaultMessage(dto, 'en'),
-        relatedProducts: relatedProductIds 
-          ? { connect: relatedProductIds.map((id) => ({ id })) } 
+        relatedProducts: relatedProductIds
+          ? { connect: relatedProductIds.map((id) => ({ id })) }
           : undefined,
       },
     })
@@ -255,8 +250,8 @@ export class ProductsService {
       data: {
         ...updateData,
         updatedBy: userId,
-        relatedProducts: relatedProductIds 
-          ? { set: relatedProductIds.map((id) => ({ id })) } 
+        relatedProducts: relatedProductIds
+          ? { set: relatedProductIds.map((id) => ({ id })) }
           : undefined,
       },
     })
@@ -473,10 +468,7 @@ export class ProductsService {
 
   // ==================== HELPER METHODS ====================
 
-  private generateDefaultMessage(
-    dto: CreateProductDto | any,
-    language: 'vi' | 'en',
-  ): string {
+  private generateDefaultMessage(dto: CreateProductDto | any, language: 'vi' | 'en'): string {
     if (language === 'vi') {
       return `Xin chào! Tôi quan tâm đến sản phẩm "${dto.nameVi}".
 
