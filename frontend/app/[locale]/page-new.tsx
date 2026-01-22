@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { useLocale, useTranslations } from 'next-intl'
 import { useProducts } from '@/hooks/use-products'
 import { ArrowRight } from 'lucide-react'
+import { optimizeProductImage } from '@/lib/utils'
 
 export default function HomePage() {
   const locale = useLocale()
@@ -47,23 +48,26 @@ export default function HomePage() {
                   href={`/${locale}/shop/${product.slug}`}
                   className="group block animate-fade-in"
                 >
-                  <div className="relative aspect-product bg-muted/30 overflow-hidden mb-4">
+                  <div className="relative w-full bg-muted/30 overflow-hidden mb-4 rounded-sm" style={{ aspectRatio: '4 / 5' }}>
                     {product.images[0] && (
                       <Image
-                        src={product.images[0]}
+                        src={optimizeProductImage(product.images[0])}
                         alt={locale === 'vi' ? product.nameVi : product.nameEn}
                         fill
                         sizes="(max-width: 768px) 100vw, 50vw"
-                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        className="transition-transform duration-500 group-hover:scale-105"
+                        style={{ objectFit: 'cover', objectPosition: 'center' }}
                       />
                     )}
                   </div>
-                  <h3 className="mb-2 group-hover:italic transition-all">
-                    {locale === 'vi' ? product.nameVi : product.nameEn}
-                  </h3>
-                  <p className="text-muted-foreground">
-                    {product.priceVND.toLocaleString('vi-VN')} VND
-                  </p>
+                  <div className="space-y-1.5">
+                    <h3 className="text-sm font-medium leading-tight line-clamp-2 min-h-[2.5rem] group-hover:italic transition-all">
+                      {locale === 'vi' ? product.nameVi : product.nameEn}
+                    </h3>
+                    <p className="text-sm text-muted-foreground font-light">
+                      {product.priceVND.toLocaleString('vi-VN')}₫
+                    </p>
+                  </div>
                 </Link>
               ))}
             </div>

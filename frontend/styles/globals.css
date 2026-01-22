@@ -115,10 +115,10 @@
     @apply py-12 md:py-16 lg:py-20;
   }
 
-  /* Grid system */
+  /* Grid system - Full width layout with larger cards */
   .grid-products {
-    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
-    gap: clamp(2rem, 5vw, 4rem);
+    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
+    gap: clamp(2rem, 4vw, 3rem);
   }
 
   .grid-products-simple {
@@ -136,6 +136,41 @@
   /* Aspect ratios - 4:5 is standard for product photography */
   .aspect-product {
     aspect-ratio: 4 / 5;
+    position: relative;
+  }
+
+  /* Product image wrapper - ensures consistent rendering */
+  .product-image-wrapper {
+    aspect-ratio: 4 / 5 !important;
+    position: relative;
+    overflow: hidden;
+    background: hsl(var(--muted) / 0.2);
+  }
+
+  /* Product image - consistent object positioning */
+  .product-image {
+    object-fit: cover !important;
+    object-position: center !important;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Product card text styles */
+  .product-title {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-height: 3rem; /* Larger height for bigger text */
+    line-height: 1.5rem;
+  }
+
+  .product-price {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.01em;
+    font-size: 1.125rem; /* 18px - larger price text */
+    font-weight: 500;
   }
 
   .aspect-hero {

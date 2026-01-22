@@ -81,7 +81,7 @@ export default function HomePage() {
       )}
 
       {/* New Arrivals Section */}
-      <section className="container-custom spacing-md pt-16 md:pt-24">
+      <section className="w-full px-6 md:px-12 lg:px-16 py-12 md:py-16 pt-16 md:pt-24">
         <div className="flex justify-between items-center mb-12">
           <h2 className="uppercase tracking-wider">{t('featured')}</h2>
           <Link href={`/${locale}/shop`} className="nav-link">
@@ -109,7 +109,7 @@ export default function HomePage() {
       </section>
 
       {/* Curated Selection Section (Replacing Philosophy) */}
-      <section className="container-custom spacing-md border-t border-border/10">
+      <section className="w-full px-6 md:px-12 lg:px-16 py-12 md:py-16 border-t border-border/10">
         <div className="flex justify-between items-center mb-12">
           <h2 className="uppercase tracking-wider">{t('curated')}</h2>
           <Link href={`/${locale}/shop?isFeatured=true`} className="nav-link">

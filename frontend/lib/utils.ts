@@ -10,7 +10,7 @@ export function cn(...inputs: ClassValue[]) {
 export function formatPrice(
   priceVND: number,
   locale: Locale,
-  exchangeRate: number = DEFAULT_EXCHANGE_RATE
+  exchangeRate: number = DEFAULT_EXCHANGE_RATE,
 ): string {
   if (locale === 'vi') {
     return `${priceVND.toLocaleString('vi-VN')}₫`
@@ -24,7 +24,10 @@ export function formatPriceVND(price: number): string {
   return `${price.toLocaleString('vi-VN')}₫`
 }
 
-export function formatPriceUSD(priceVND: number, exchangeRate: number = DEFAULT_EXCHANGE_RATE): string {
+export function formatPriceUSD(
+  priceVND: number,
+  exchangeRate: number = DEFAULT_EXCHANGE_RATE,
+): string {
   const priceUSD = priceVND / exchangeRate
   return `$${priceUSD.toFixed(2)}`
 }
@@ -32,7 +35,7 @@ export function formatPriceUSD(priceVND: number, exchangeRate: number = DEFAULT_
 export function getLocalizedValue<T extends Record<string, string>>(
   obj: T,
   key: string,
-  locale: Locale
+  locale: Locale,
 ): string {
   const localizedKey = `${key}.${locale}`
   return obj[localizedKey] || obj[`${key}.vi`] || ''
@@ -61,6 +64,74 @@ export function getImageUrl(path: string): string {
   if (path.startsWith('http')) return path
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
   return `${baseUrl}${path}`
+}
+
+/**
+ * Optimizes and normalizes product images using Cloudinary transformations
+ * Ensures all images have consistent aspect ratio (4:5) and quality
+ *
+ * @param imageUrl - The original image URL (can be Cloudinary or local)
+ * @param options - Transformation options
+ * @returns Optimized image URL with transformations
+ */
+export interface OptimizeImageOptions {
+  width?: number
+  height?: number
+  quality?: 'auto' | number
+  aspectRatio?: string
+  crop?: 'fill' | 'fit' | 'scale' | 'crop' | 'thumb' | 'pad'
+  gravity?: 'auto' | 'center' | 'face' | 'faces'
+  format?: 'auto' | 'webp' | 'jpg' | 'png'
+}
+
+export function optimizeProductImage(imageUrl: string, options: OptimizeImageOptions = {}): string {
+  const {
+    width = 800,
+    height = 1000,
+    quality = 'auto',
+    aspectRatio = '4:5',
+    crop = 'fill',
+    gravity = 'auto',
+    format = 'auto',
+  } = options
+
+  // If not a Cloudinary URL, return the original with getImageUrl
+  if (!imageUrl.includes('cloudinary.com')) {
+    return getImageUrl(imageUrl)
+  }
+
+  // Parse Cloudinary URL
+  const uploadIndex = imageUrl.indexOf('/upload/')
+  if (uploadIndex === -1) return imageUrl
+
+  // Build transformation string
+  const transformations = [
+    `w_${width}`,
+    `h_${height}`,
+    `c_${crop}`,
+    `g_${gravity}`,
+    `ar_${aspectRatio}`,
+    `q_${quality}`,
+    `f_${format}`,
+  ].join(',')
+
+  // Insert transformations after /upload/
+  const beforeUpload = imageUrl.substring(0, uploadIndex + 8)
+  const afterUpload = imageUrl.substring(uploadIndex + 8)
+
+  return `${beforeUpload}${transformations}/${afterUpload}`
+}
+
+/**
+ * Get responsive image URLs for different screen sizes
+ * Useful for Next.js Image component with srcSet
+ */
+export function getResponsiveProductImages(imageUrl: string) {
+  return {
+    small: optimizeProductImage(imageUrl, { width: 400, height: 500 }),
+    medium: optimizeProductImage(imageUrl, { width: 800, height: 1000 }),
+    large: optimizeProductImage(imageUrl, { width: 1200, height: 1500 }),
+  }
 }
 
 export function formatDate(dateString: string, locale: Locale = 'vi'): string {

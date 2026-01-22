@@ -10,6 +10,7 @@ export interface Product {
   priceVND: number
   priceUSD?: number
   images: string[]
+  hoverImage?: string | null
   material: string
   dimensions: string
   stock: number
@@ -88,6 +89,7 @@ export interface CreateProductDto {
   descriptionEn: string
   priceVND: number
   images: string[]
+  hoverImage?: string
   material: string
   dimensions: string
   stock: number

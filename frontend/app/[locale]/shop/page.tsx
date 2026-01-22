@@ -22,7 +22,7 @@ export default function ShopPage() {
   })
 
   return (
-    <div className="container-custom spacing-lg">
+    <div className="w-full px-6 md:px-12 lg:px-16 py-16 md:py-24">
       {/* Page Title */}
       <div className="text-center mb-12 animate-fade-in">
         <h1 className="text-2xl md:text-3xl uppercase tracking-[0.2em] mb-4">

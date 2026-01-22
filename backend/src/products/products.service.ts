@@ -15,6 +15,7 @@ import {
   QueryProductsDto,
   BulkUpdateDto,
 } from './dto'
+import { createFlexibleSearchConditions } from '../common/utils/vietnamese-search.util'
 
 const CACHE_TTL = 300 // 5 minutes
 
@@ -60,14 +61,16 @@ export class ProductsService {
       where.deletedAt = null
     }
 
-    // Search across multiple fields
+    // Search across multiple fields with Vietnamese accent flexibility
     if (search) {
-      where.OR = [
-        { nameVi: { contains: search, mode: 'insensitive' } },
-        { nameEn: { contains: search, mode: 'insensitive' } },
-        { slug: { contains: search, mode: 'insensitive' } },
-        { material: { contains: search, mode: 'insensitive' } },
-      ]
+      where.OR = createFlexibleSearchConditions(search, [
+        'nameVi',
+        'nameEn', 
+        'slug',
+        'material',
+        'descriptionVi',
+        'descriptionEn'
+      ])
     }
 
     // Filters

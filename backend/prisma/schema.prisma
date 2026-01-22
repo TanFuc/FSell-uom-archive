@@ -65,6 +65,7 @@ model Product {
   descriptionEn String   @db.Text
   priceVND      Int
   images        String[] // Array of image URLs
+  hoverImage    String? // Image shown on hover (optional)
   material      String
   dimensions    String
   stock         Int      @default(0)

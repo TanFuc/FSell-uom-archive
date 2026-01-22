@@ -14,9 +14,11 @@ import {
   Power,
   PowerOff,
   Trash,
+  Filter,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
   Table,
@@ -34,6 +36,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { Switch } from '@/components/ui/switch'
 import { api } from '@/lib/api'
 import { Product } from '@/lib/types'
 import { useToast } from '@/hooks/use-toast'

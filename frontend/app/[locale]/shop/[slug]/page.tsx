@@ -1,7 +1,7 @@
 'use client'
 
 import { notFound } from 'next/navigation'
-import { useLocale } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useProduct, useProducts } from '@/hooks/use-products'
@@ -10,6 +10,7 @@ import { useBanners } from '@/hooks/use-banners'
 import { Instagram, Facebook, Loader2, ArrowLeft } from 'lucide-react'
 import { ProductCard } from '@/components/ProductCard'
 import { BannerCarousel } from '@/components/BannerCarousel'
+import { optimizeProductImage } from '@/lib/utils'
 
 interface ProductPageProps {
   params: {
@@ -19,10 +20,13 @@ interface ProductPageProps {
 
 export default function ProductPage({ params }: ProductPageProps) {
   const locale = useLocale() as 'vi' | 'en'
+  const t = useTranslations('product')
+  const tCommon = useTranslations('common')
+  const tHome = useTranslations('Home')
   const { data: product, isLoading, error } = useProduct(params.slug)
   const { data: socialLinks } = useSocialLinks()
   const { data: banners } = useBanners(true)
-  
+
   // Fetch related products (latest for now) - must be called before any conditional returns
   const { data: relatedProducts } = useProducts({
     page: 1,
@@ -63,7 +67,7 @@ export default function ProductPage({ params }: ProductPageProps) {
         className="inline-flex items-center gap-2 mb-12 hover:italic transition-all animate-fade-in"
       >
         <ArrowLeft className="w-4 h-4" />
-        <span className="uppercase tracking-wider">Quay lại</span>
+        <span className="uppercase tracking-wider">{tCommon('back')}</span>
       </Link>
 
       <div className="grid md:grid-cols-2 gap-12 md:gap-16 mb-24">
@@ -71,26 +75,28 @@ export default function ProductPage({ params }: ProductPageProps) {
         <div className="space-y-4 stagger-children">
           {product.images && product.images.length > 0 ? (
             <>
-              <div className="relative aspect-product bg-muted/20 overflow-hidden group">
+              <div className="relative w-full bg-muted/20 overflow-hidden group rounded-sm" style={{ aspectRatio: '4 / 5' }}>
                 <Image
-                  src={product.images[0]}
+                  src={optimizeProductImage(product.images[0])}
                   alt={name}
                   fill
                   sizes="(max-width: 768px) 100vw, 50vw"
-                  className="object-cover transition-transform duration-700 group-hover:scale-105"
+                  className="transition-transform duration-700 group-hover:scale-105"
+                  style={{ objectFit: 'cover', objectPosition: 'center' }}
                   priority
                 />
               </div>
               {product.images.length > 1 && (
                 <div className="grid grid-cols-3 gap-4">
                   {product.images.slice(1, 4).map((image, index) => (
-                    <div key={index} className="relative aspect-product bg-muted/20 overflow-hidden group">
+                    <div key={index} className="relative w-full bg-muted/20 overflow-hidden group rounded-sm" style={{ aspectRatio: '4 / 5' }}>
                       <Image
-                        src={image}
+                        src={optimizeProductImage(image, { width: 400, height: 500 })}
                         alt={`${name} ${index + 2}`}
                         fill
                         sizes="(max-width: 768px) 33vw, 17vw"
-                        className="object-cover transition-transform duration-500 group-hover:scale-110"
+                        className="transition-transform duration-500 group-hover:scale-110"
+                        style={{ objectFit: 'cover', objectPosition: 'center' }}
                       />
                     </div>
                   ))}
@@ -99,7 +105,7 @@ export default function ProductPage({ params }: ProductPageProps) {
             </>
           ) : (
             <div className="aspect-product bg-muted/20 flex items-center justify-center text-muted-foreground">
-              No Images
+              {t('noImages')}
             </div>
           )}
         </div>
@@ -111,7 +117,7 @@ export default function ProductPage({ params }: ProductPageProps) {
               {name}
             </h1>
             <p className="text-2xl text-muted-foreground font-light">
-              {product.priceVND.toLocaleString('vi-VN')} VND
+              {product.priceVND.toLocaleString('vi-VN')}₫
             </p>
           </div>
 
@@ -119,21 +125,21 @@ export default function ProductPage({ params }: ProductPageProps) {
              {/* Description */}
              {description && (
               <div className="space-y-4">
-                <h2 className="uppercase tracking-wider text-sm font-semibold">Chi tiết sản phẩm</h2>
+                <h2 className="uppercase tracking-wider text-sm font-semibold">{t('details')}</h2>
                 <p className="text-muted-foreground leading-relaxed whitespace-pre-line text-justify">
                   {description}
                 </p>
               </div>
             )}
-            
+
             {/* Material & Dimensions */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <h3 className="uppercase tracking-wider text-xs text-muted-foreground mb-1">Chất liệu</h3>
+                <h3 className="uppercase tracking-wider text-xs text-muted-foreground mb-1">{t('material')}</h3>
                 <p>{product.material}</p>
               </div>
               <div>
-                <h3 className="uppercase tracking-wider text-xs text-muted-foreground mb-1">Kích thước</h3>
+                <h3 className="uppercase tracking-wider text-xs text-muted-foreground mb-1">{t('dimensions')}</h3>
                 <p>{product.dimensions}</p>
               </div>
             </div>
@@ -141,9 +147,9 @@ export default function ProductPage({ params }: ProductPageProps) {
 
           {/* Inquiry Section */}
           <div className="space-y-4 pt-8 border-t border-border/50">
-            <h3 className="uppercase tracking-wider text-sm font-semibold">Liên hệ đặt hàng</h3>
+            <h3 className="uppercase tracking-wider text-sm font-semibold">{t('contactOrder')}</h3>
             <p className="text-muted-foreground leading-relaxed text-sm">
-              Sản phẩm tại Ươm là độc bản hoặc số lượng giới hạn. Vui lòng liên hệ để kiểm tra tình trạng hàng.
+              {t('contactNote')}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 pt-2">
               {socialLinks?.instagramUsername && (
@@ -154,7 +160,7 @@ export default function ProductPage({ params }: ProductPageProps) {
                   className="btn btn-primary flex items-center justify-center gap-2 flex-1"
                 >
                   <Instagram className="w-4 h-4" />
-                  <span className="uppercase tracking-wider">Instagram</span>
+                  <span className="uppercase tracking-wider">{t('instagram')}</span>
                 </a>
               )}
               {socialLinks?.facebookPageUrl && (
@@ -165,7 +171,7 @@ export default function ProductPage({ params }: ProductPageProps) {
                   className="btn flex items-center justify-center gap-2 flex-1 bg-transparent hover:bg-foreground hover:text-background"
                 >
                   <Facebook className="w-4 h-4" />
-                  <span className="uppercase tracking-wider">Facebook</span>
+                  <span className="uppercase tracking-wider">{t('facebook')}</span>
                 </a>
               )}
             </div>
@@ -176,25 +182,25 @@ export default function ProductPage({ params }: ProductPageProps) {
       {/* Brand Promise / Mini Footer */}
       <div className="grid md:grid-cols-3 gap-8 p-12 bg-muted/10 mb-24 text-center">
         <div className="space-y-2">
-          <h3 className="uppercase tracking-wider text-sm font-semibold">Thủ công tinh xảo</h3>
-          <p className="text-sm text-muted-foreground">Mỗi sản phẩm là một câu chuyện độc đáo từ bàn tay nghệ nhân.</p>
+          <h3 className="uppercase tracking-wider text-sm font-semibold">{t('handcrafted')}</h3>
+          <p className="text-sm text-muted-foreground">{t('handcraftedDesc')}</p>
         </div>
         <div className="space-y-2">
-          <h3 className="uppercase tracking-wider text-sm font-semibold">Vận chuyển an toàn</h3>
-          <p className="text-sm text-muted-foreground">Đóng gói cẩn thận, đảm bảo sản phẩm đến tay bạn nguyên vẹn.</p>
+          <h3 className="uppercase tracking-wider text-sm font-semibold">{t('safeShipping')}</h3>
+          <p className="text-sm text-muted-foreground">{t('safeShippingDesc')}</p>
         </div>
         <div className="space-y-2">
-          <h3 className="uppercase tracking-wider text-sm font-semibold">Hỗ trợ tận tâm</h3>
-          <p className="text-sm text-muted-foreground">Đội ngũ Ươm luôn sẵn sàng tư vấn và hỗ trợ bạn.</p>
+          <h3 className="uppercase tracking-wider text-sm font-semibold">{t('support')}</h3>
+          <p className="text-sm text-muted-foreground">{t('supportDesc')}</p>
         </div>
       </div>
 
       {/* Related Products */}
       <section className="space-y-12 border-t border-border/10 pt-24 pb-16 md:pb-24">
         <div className="flex justify-between items-center">
-          <h2 className="text-2xl uppercase tracking-wider">Có thể bạn sẽ thích</h2>
+          <h2 className="text-2xl uppercase tracking-wider">{t('relatedProducts')}</h2>
           <Link href={`/${locale}/shop`} className="nav-link text-sm">
-            Xem tất cả
+            {tHome('viewAll')}
           </Link>
         </div>
 

@@ -66,6 +66,7 @@ export default function ProductFormPage() {
   const [isLoading, setIsLoading] = useState(!isNew)
   const [isSaving, setIsSaving] = useState(false)
   const [images, setImages] = useState<string[]>([])
+  const [hoverImage, setHoverImage] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
 
   const form = useForm<ProductFormValues>({
@@ -108,6 +109,7 @@ export default function ProductFormPage() {
         inquiryMessageEn: product.inquiryMessageEn || '',
       })
       setImages(product.images)
+      setHoverImage(product.hoverImage || null)
     } catch (error) {
       console.error('Failed to fetch product:', error)
       toast({ title: t('error'), description: 'Product not found', variant: 'destructive' })
@@ -150,7 +152,7 @@ export default function ProductFormPage() {
 
     setIsSaving(true)
     try {
-      const productData = { ...data, images }
+      const productData = { ...data, images, hoverImage }
 
       if (isNew) {
         await api.createProduct(productData)
@@ -477,6 +479,63 @@ export default function ProductFormPage() {
                     <Button variant="outline" className="w-full" disabled={isUploading}>
                       <Upload className="mr-2 h-4 w-4" />
                       {isUploading ? 'Uploading...' : 'Upload Images'}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Hover Image */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="uppercase tracking-wide">Hover Image</CardTitle>
+                  <CardDescription>Image shown when user hovers over product</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {hoverImage && (
+                    <div className="relative aspect-product border">
+                      <Image
+                        src={getImageUrl(hoverImage)}
+                        alt="Hover image"
+                        fill
+                        sizes="300px"
+                        className="object-cover"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-1 right-1 h-6 w-6"
+                        onClick={() => setHoverImage(null)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+
+                  <div className="relative">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0]
+                        if (!file) return
+                        setIsUploading(true)
+                        try {
+                          const result = await api.uploadImage(file)
+                          setHoverImage(result.url)
+                          toast({ title: t('success'), description: 'Hover image uploaded' })
+                        } catch (error) {
+                          toast({ title: t('error'), description: 'Upload failed', variant: 'destructive' })
+                        } finally {
+                          setIsUploading(false)
+                        }
+                      }}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      disabled={isUploading}
+                    />
+                    <Button variant="outline" className="w-full" disabled={isUploading}>
+                      <Upload className="mr-2 h-4 w-4" />
+                      {isUploading ? 'Uploading...' : hoverImage ? 'Change Hover Image' : 'Upload Hover Image'}
                     </Button>
                   </div>
                 </CardContent>

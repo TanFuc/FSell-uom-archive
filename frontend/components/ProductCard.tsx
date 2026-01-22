@@ -1,8 +1,10 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import type { Product } from '@/lib/types'
+import { optimizeProductImage } from '@/lib/utils'
 
 interface ProductCardProps {
   product: Product
@@ -12,20 +14,31 @@ interface ProductCardProps {
 export function ProductCard({ product, locale }: ProductCardProps) {
   const name = locale === 'vi' ? product.nameVi : product.nameEn
   const hasImages = product.images && product.images.length > 0
+  const [isHovered, setIsHovered] = useState(false)
+  
+  // Use hover image if available, otherwise use main image
+  const mainImage = hasImages ? product.images[0] : null
+  const displayImage = isHovered && product.hoverImage 
+    ? product.hoverImage 
+    : mainImage
 
   return (
     <Link
       href={`/${locale}/shop/${product.slug}`}
       className="group block animate-fade-in"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="relative aspect-product bg-muted/20 overflow-hidden mb-4">
-        {hasImages ? (
+      <div className="relative w-full bg-muted/20 overflow-hidden mb-4 rounded-sm" style={{ aspectRatio: '4 / 5' }}>
+        {displayImage ? (
           <Image
-            src={product.images[0]}
+            src={optimizeProductImage(displayImage)}
             alt={name}
             fill
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            className="object-cover object-center transition-all duration-500 group-hover:scale-105"
+            style={{ objectFit: 'cover', objectPosition: 'center' }}
+            loading="lazy"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-muted-foreground">
@@ -33,10 +46,14 @@ export function ProductCard({ product, locale }: ProductCardProps) {
           </div>
         )}
       </div>
-      <h3 className="mb-2 group-hover:italic transition-all">{name}</h3>
-      <p className="text-muted-foreground">
-        {product.priceVND.toLocaleString('vi-VN')} VND
-      </p>
+      <div className="space-y-2">
+        <h3 className="text-base md:text-lg font-medium leading-tight line-clamp-2 min-h-[3rem] group-hover:italic transition-all">
+          {name}
+        </h3>
+        <p className="text-base md:text-lg text-muted-foreground font-light">
+          {product.priceVND.toLocaleString('vi-VN')}₫
+        </p>
+      </div>
     </Link>
   )
 }

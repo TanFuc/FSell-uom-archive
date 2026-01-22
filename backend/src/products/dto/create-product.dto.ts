@@ -60,6 +60,14 @@ export class CreateProductDto {
   @IsString({ each: true })
   images: string[]
 
+  @ApiPropertyOptional({
+    example: 'https://example.com/hover-image.jpg',
+    description: 'Image URL shown on hover (optional)',
+  })
+  @IsString()
+  @IsOptional()
+  hoverImage?: string
+
   @ApiProperty({
     example: 'Gốm sứ cao cấp',
     description: 'Product material',
