@@ -10,6 +10,7 @@ interface LogoProps {
   height?: number
   className?: string
   linkToHome?: boolean
+  customHref?: string // Custom link destination
 }
 
 export default function Logo({
@@ -18,14 +19,15 @@ export default function Logo({
   height = 40,
   className = '',
   linkToHome = true,
+  customHref,
 }: LogoProps) {
   const locale = useLocale()
 
   const logoContent = () => {
     if (variant === 'text') {
       return (
-        <span className={`text-earthy-brown uppercase tracking-widest ${className}`}>
-          Ươm Archive
+        <span className={`text-earthy-brown uppercase tracking-widest font-serif ${className}`}>
+          Ươm.
         </span>
       )
     }
@@ -48,9 +50,10 @@ export default function Logo({
     )
   }
 
-  if (linkToHome) {
+  if (linkToHome || customHref) {
+    const href = customHref || `/${locale}`
     return (
-      <Link href={`/${locale}`} className="hover:italic transition-all">
+      <Link href={href} className="transition-opacity hover:opacity-80">
         {logoContent()}
       </Link>
     )

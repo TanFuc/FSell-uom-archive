@@ -22,10 +22,11 @@ import Logo from '@/components/Logo'
 import { api } from '@/lib/api'
 import { useAuthStore } from '@/lib/store'
 import { useToast } from '@/hooks/use-toast'
+import { ErrorToastContent } from '@/components/ui/error-toast'
 
 const loginSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(1, 'Password is required'),
+  email: z.string().email('Vui lòng nhập địa chỉ email hợp lệ'),
+  password: z.string().min(1, 'Vui lòng nhập mật khẩu'),
 })
 
 type LoginFormValues = z.infer<typeof loginSchema>
@@ -58,22 +59,75 @@ export default function LoginPage() {
       // Store token in cookie for middleware
       document.cookie = `accessToken=${response.accessToken}; path=/; secure; samesite=strict`
 
-      // Fetch user info
-      const user = await api.getMe()
-      setUser(user)
+      // Set user from login response (already includes user info)
+      if (response.user) {
+        setUser(response.user)
+      }
 
       toast({
         title: t('success'),
-        description: 'Login successful',
+        description: 'Đăng nhập thành công! Đang chuyển hướng...',
       })
 
-      router.push(redirect)
-    } catch (error) {
+      // Redirect to dashboard
+      router.push(`/${locale}/admin/dashboard`)
+    } catch (error: any) {
       console.error('Login failed:', error)
+      
+      // Extract detailed error information from API response
+      let errorTitle = 'Lỗi đăng nhập'
+      let errorMessage = 'Có lỗi xảy ra khi đăng nhập'
+      let statusCode: number | undefined
+      let path: string | undefined
+      let method: string | undefined
+      let timestamp: string | undefined
+      
+      if (error.response) {
+        // API returned an error response
+        const errorData = error.response.data
+        statusCode = error.response.status
+        
+        // Extract error details from backend response
+        errorMessage = errorData?.message || error.response.statusText || 'Có lỗi xảy ra'
+        path = errorData?.path
+        method = errorData?.method
+        timestamp = errorData?.timestamp
+        
+        // Customize error title based on status code
+        if (statusCode === 401) {
+          errorTitle = 'Xác thực thất bại'
+          if (!errorData?.message) {
+            errorMessage = 'Email hoặc mật khẩu không chính xác. Vui lòng kiểm tra lại thông tin đăng nhập.'
+          }
+        } else if (statusCode === 404) {
+          errorTitle = 'Không tìm thấy'
+          errorMessage = 'Endpoint đăng nhập không tồn tại. Vui lòng liên hệ bộ phận hỗ trợ.'
+        } else if (statusCode === 500) {
+          errorTitle = 'Lỗi máy chủ'
+          errorMessage = 'Máy chủ gặp sự cố. Vui lòng thử lại sau.'
+        } else if (statusCode === 429) {
+          errorTitle = 'Quá nhiều yêu cầu'
+          errorMessage = 'Bạn đã thử đăng nhập quá nhiều lần. Vui lòng đợi một lúc rồi thử lại.'
+        }
+      } else if (error.request) {
+        // Request was made but no response received
+        errorTitle = 'Lỗi kết nối'
+        errorMessage = 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối internet của bạn.'
+      } else {
+        // Something else happened
+        errorMessage = error.message || 'Đã xảy ra lỗi không xác định'
+      }
+      
+      
       toast({
-        title: t('error'),
-        description: 'Invalid email or password',
         variant: 'destructive',
+        duration: 3000,
+        description: (
+          <ErrorToastContent
+            title={errorTitle}
+            message={errorMessage}
+          />
+        ),
       })
     } finally {
       setIsLoading(false)
@@ -95,7 +149,7 @@ export default function LoginPage() {
               <FormField
                 control={form.control}
                 name="email"
-                render={({ field }) => (
+                render={({ field, fieldState }) => (
                   <FormItem>
                     <FormLabel className="uppercase tracking-wide">{t('email')}</FormLabel>
                     <FormControl>
@@ -104,6 +158,7 @@ export default function LoginPage() {
                         type="email"
                         placeholder="admin@uomarchive.com"
                         disabled={isLoading}
+                        className={fieldState.error ? 'border-red-500 focus-visible:ring-red-500' : ''}
                       />
                     </FormControl>
                     <FormMessage />
@@ -114,7 +169,7 @@ export default function LoginPage() {
               <FormField
                 control={form.control}
                 name="password"
-                render={({ field }) => (
+                render={({ field, fieldState }) => (
                   <FormItem>
                     <FormLabel className="uppercase tracking-wide">{t('password')}</FormLabel>
                     <FormControl>
@@ -124,6 +179,7 @@ export default function LoginPage() {
                           type={showPassword ? 'text' : 'password'}
                           placeholder="••••••••"
                           disabled={isLoading}
+                          className={fieldState.error ? 'border-red-500 focus-visible:ring-red-500' : ''}
                         />
                         <Button
                           type="button"

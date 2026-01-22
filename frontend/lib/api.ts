@@ -10,27 +10,22 @@ import type {
   SiteContent,
   ExchangeRate,
   AllSettings,
-  AuthResponse,
-  LoginDto,
-  RegisterDto,
   User,
   CreateUserDto,
   UpdateUserDto,
   QueryUsersDto,
   BulkDeleteDto,
   BulkUpdateDto,
-  UpdateThemeDto,
-  UpdateSiteContentDto,
-  UpdateSocialLinksDto,
-  UpdateExchangeRateDto,
 } from './types'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
 
 class ApiClient {
   private client: AxiosInstance
+  private baseUrl: string
 
   constructor(baseURL: string) {
+    this.baseUrl = baseURL
     this.client = axios.create({
       baseURL,
       headers: {
@@ -62,12 +57,20 @@ class ApiClient {
       async (error: AxiosError<any>) => {
         const originalRequest: any = error.config
 
+        // Handle 401 Unauthorized
         if (error.response?.status === 401 && !originalRequest._retry) {
+          // If the error comes from login endpoint, do not attempt to refresh
+          if (originalRequest.url?.includes('/auth/login')) {
+            return Promise.reject(error)
+          }
+
           originalRequest._retry = true
 
           try {
             const refreshToken = localStorage.getItem('refreshToken')
-            if (!refreshToken) throw new Error('No refresh token')
+            if (!refreshToken) {
+              throw new Error('No refresh token')
+            }
 
             const { data } = await axios.post(
               `${API_BASE_URL}/auth/refresh`,
@@ -77,23 +80,78 @@ class ApiClient {
               }
             )
 
+            // Update tokens
             localStorage.setItem('accessToken', data.data.accessToken)
             localStorage.setItem('refreshToken', data.data.refreshToken)
 
+            // Retry original request with new token
             originalRequest.headers.Authorization = `Bearer ${data.data.accessToken}`
             return this.client(originalRequest)
-          } catch (refreshError) {
-            localStorage.clear()
+          } catch (refreshError: any) {
+            // Determine redirect path based on current location
             if (typeof window !== 'undefined') {
-              window.location.href = '/login'
+              const isAdminPage = window.location.pathname.includes('/admin')
+              const locale = localStorage.getItem('locale') || 'vi'
+              
+              // Clear all auth data but preserve locale
+              const savedLocale = localStorage.getItem('locale')
+              localStorage.clear()
+              if (savedLocale) {
+                localStorage.setItem('locale', savedLocale)
+              }
+              
+              const loginPath = isAdminPage ? `/${locale}/admin/login` : `/${locale}/login`
+              
+              // Show error message
+              console.error('Session expired. Please login again.')
+              
+              // Redirect to appropriate login page
+              window.location.href = loginPath
             }
+            
             return Promise.reject(refreshError)
           }
+        }
+
+        // Handle 404 Not Found - redirect to appropriate page
+        if (error.response?.status === 404) {
+          console.error('Resource not found:', error.config?.url)
         }
 
         return Promise.reject(error)
       }
     )
+  }
+
+  private getToken(): string | null {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('accessToken')
+    }
+    return null
+  }
+
+  private async request<T>(
+    url: string,
+    options?: {
+      method?: string
+      body?: string
+      headers?: Record<string, string>
+    }
+  ): Promise<T> {
+    const method = options?.method || 'GET'
+    const config: any = {
+      method,
+      url,
+      headers: options?.headers || {},
+    }
+
+    if (options?.body) {
+      config.data = JSON.parse(options.body)
+    }
+
+    const response = await this.client.request(config)
+    // Handle both wrapped ({data: ...}) and unwrapped responses
+    return response.data?.data !== undefined ? response.data.data : response.data
   }
 
   // ==================== PUBLIC ENDPOINTS ====================
@@ -140,8 +198,8 @@ class ApiClient {
 
   // ==================== AUTH ENDPOINTS ====================
 
-  async login(email: string, password: string): Promise<AuthResponse> {
-    const response = await this.request<AuthResponse>('/auth/login', {
+  async login(email: string, password: string): Promise<{ accessToken: string; refreshToken: string; user: User }> {
+    const response = await this.request<{ accessToken: string; refreshToken: string; user: User }>('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     })
@@ -162,7 +220,7 @@ class ApiClient {
   }
 
   async getMe(): Promise<User> {
-    return this.request<User>('/auth/me')
+    return this.request<User>('/auth/profile')
   }
 
   // ==================== ADMIN PRODUCT ENDPOINTS ====================
@@ -320,7 +378,7 @@ class ApiClient {
 
   // ==================== UPLOAD ENDPOINT ====================
 
-  async uploadImage(file: File): Promise<{ url: string }> {
+  async uploadImage(file: File): Promise<{ url: string; publicId?: string }> {
     const formData = new FormData()
     formData.append('file', file)
 
@@ -331,7 +389,7 @@ class ApiClient {
       ;(headers as Record<string, string>)['Authorization'] = `Bearer ${token}`
     }
 
-    const response = await fetch(`${this.baseUrl}/upload`, {
+    const response = await fetch(`${this.baseUrl}/upload/product-image`, {
       method: 'POST',
       headers,
       body: formData,
@@ -341,7 +399,8 @@ class ApiClient {
       throw new Error('Upload failed')
     }
 
-    return response.json()
+    const result = await response.json()
+    return result.data || result
   }
 }
 

@@ -81,10 +81,14 @@ export function BannerCarousel({ banners, locale, autoPlayInterval = 5000 }: Ban
     setTouchEnd(0)
   }
 
-  // Mouse drag handlers for desktop
+  // Mouse drag handlers for desktop (supports both left and right mouse buttons)
   const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true)
-    setDragStart(e.clientX)
+    // Accept both left (0) and right (2) mouse buttons
+    if (e.button === 0 || e.button === 2) {
+      e.preventDefault() // Prevent default behavior for right-click
+      setIsDragging(true)
+      setDragStart(e.clientX)
+    }
   }
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -114,6 +118,13 @@ export function BannerCarousel({ banners, locale, autoPlayInterval = 5000 }: Ban
     setDragStart(0)
   }
 
+  // Prevent context menu when dragging with right mouse button
+  const handleContextMenu = (e: React.MouseEvent) => {
+    if (isDragging) {
+      e.preventDefault()
+    }
+  }
+
   if (sortedBanners.length === 0) return null
 
   const currentBanner = sortedBanners[currentIndex]
@@ -131,7 +142,7 @@ export function BannerCarousel({ banners, locale, autoPlayInterval = 5000 }: Ban
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseLeave}
-      onContextMenu={(e) => e.preventDefault()} // Disable right-click
+      onContextMenu={handleContextMenu}
       style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
     >
       {/* Background Image - Hero Style */}

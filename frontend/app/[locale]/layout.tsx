@@ -4,10 +4,9 @@ import { getMessages, unstable_setRequestLocale } from 'next-intl/server'
 import { notFound } from 'next/navigation'
 import { locales } from '@/i18n'
 import { QueryProvider } from '@/components/providers/QueryProvider'
-import { Toaster } from 'sonner'
-import { Header } from '@/components/layout/Header'
-import { Footer } from '@/components/layout/Footer'
-import { SplashScreen } from '@/components/ui/SplashScreen'
+import { Toaster as SonnerToaster } from 'sonner'
+import { Toaster } from '@/components/ui/toaster'
+import { ConditionalLayout } from '@/components/layout/ConditionalLayout'
 import { DisableRightClick } from '@/components/DisableRightClick'
 import { Lora, Montserrat, Playfair_Display } from 'next/font/google'
 import '@/styles/globals.css'
@@ -106,14 +105,10 @@ export default async function RootLayout({ children, params: { locale } }: RootL
       <body className={`${lora.variable} ${montserrat.variable} ${playfair.variable} min-h-screen flex flex-col bg-background font-serif antialiased`}>
         <DisableRightClick />
         <NextIntlClientProvider messages={messages}>
-          <SplashScreen />
           <QueryProvider>
-            <Header />
-            <main className="flex-1 pt-16 md:pt-20">
-              {children}
-            </main>
-            <Footer />
+            <ConditionalLayout>{children}</ConditionalLayout>
             <Toaster />
+            <SonnerToaster />
           </QueryProvider>
         </NextIntlClientProvider>
       </body>

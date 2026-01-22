@@ -20,6 +20,7 @@ import Logo from '@/components/Logo'
 import { api } from '@/lib/api'
 import { useAuthStore } from '@/lib/store'
 import { User } from '@/lib/types'
+import { LoadingScreen } from '@/components/ui/loading-screen'
 
 interface AdminLayoutProps {
   children: React.ReactNode
@@ -68,11 +69,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   }
 
   if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <span className="text-muted-foreground">{t('loading')}</span>
-      </div>
-    )
+    return <LoadingScreen />
   }
 
   const navItems = [
@@ -105,9 +102,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         }`}
       >
         <div className="flex h-full flex-col">
-          {/* Logo */}
-          <div className="flex h-16 items-center justify-center border-b px-6">
-            <Logo variant="text" linkToHome />
+          {/* Logo with Dashboard text */}
+          <div className="flex h-16 items-center justify-center border-b px-6 gap-2">
+            <Logo variant="text" customHref={`/${locale}/admin/dashboard`} />
+            <span className="text-xs uppercase tracking-widest text-muted-foreground">Dashboard</span>
           </div>
 
           {/* Navigation */}

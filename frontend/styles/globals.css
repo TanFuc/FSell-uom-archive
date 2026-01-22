@@ -133,9 +133,9 @@
     font-size: clamp(14px, 2vw, 14px);
   }
 
-  /* Aspect ratios */
+  /* Aspect ratios - 4:5 is standard for product photography */
   .aspect-product {
-    aspect-ratio: 3 / 4;
+    aspect-ratio: 4 / 5;
   }
 
   .aspect-hero {

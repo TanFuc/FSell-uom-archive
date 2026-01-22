@@ -47,14 +47,14 @@ export default function HomePage() {
                   href={`/${locale}/shop/${product.slug}`}
                   className="group block animate-fade-in"
                 >
-                  <div className="aspect-product bg-muted/30 overflow-hidden mb-4">
+                  <div className="relative aspect-product bg-muted/30 overflow-hidden mb-4">
                     {product.images[0] && (
                       <Image
                         src={product.images[0]}
                         alt={locale === 'vi' ? product.nameVi : product.nameEn}
-                        width={600}
-                        height={800}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        fill
+                        sizes="(max-width: 768px) 100vw, 50vw"
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
                       />
                     )}
                   </div>

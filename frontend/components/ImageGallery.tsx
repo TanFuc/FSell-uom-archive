@@ -14,7 +14,7 @@ export default function ImageGallery({ images, alt }: ImageGalleryProps) {
 
   if (images.length === 0) {
     return (
-      <div className="aspect-[4/5] bg-earthy-cream flex items-center justify-center text-earthy-clay">
+      <div className="aspect-product bg-earthy-cream flex items-center justify-center text-earthy-clay">
         No images available
       </div>
     )
@@ -23,7 +23,7 @@ export default function ImageGallery({ images, alt }: ImageGalleryProps) {
   return (
     <div className="space-y-4">
       {/* Main Image */}
-      <div className="relative aspect-[4/5] overflow-hidden bg-earthy-cream">
+      <div className="relative aspect-product overflow-hidden bg-earthy-cream">
         <Image
           src={getImageUrl(images[activeIndex])}
           alt={`${alt} - Image ${activeIndex + 1}`}

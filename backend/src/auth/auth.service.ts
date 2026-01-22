@@ -38,7 +38,7 @@ export class AuthService {
     })
 
     if (existingUser) {
-      throw new ConflictException('Email already registered')
+      throw new ConflictException('Email đã được đăng ký')
     }
 
     // Hash password
@@ -67,21 +67,21 @@ export class AuthService {
     return tokens
   }
 
-  async login(dto: LoginDto): Promise<Tokens> {
+  async login(dto: LoginDto): Promise<Tokens & { user: { id: string; email: string; fullName: string; role: string } }> {
     // Find user
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
     })
 
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials')
+      throw new UnauthorizedException('Email hoặc mật khẩu không chính xác')
     }
 
     // Verify password
     const passwordValid = await bcrypt.compare(dto.password, user.passwordHash)
 
     if (!passwordValid) {
-      throw new UnauthorizedException('Invalid credentials')
+      throw new UnauthorizedException('Email hoặc mật khẩu không chính xác')
     }
 
     // Generate tokens
@@ -95,7 +95,16 @@ export class AuthService {
     await this.updateRefreshToken(user.id, tokens.refreshToken)
 
     this.logger.log(`User logged in: ${user.email}`)
-    return tokens
+    
+    return {
+      ...tokens,
+      user: {
+        id: user.id,
+        email: user.email,
+        fullName: user.fullName,
+        role: user.role,
+      },
+    }
   }
 
   async refreshTokens(userId: string): Promise<Tokens> {
@@ -104,7 +113,7 @@ export class AuthService {
     })
 
     if (!user || !user.refreshToken) {
-      throw new UnauthorizedException('Invalid refresh token')
+      throw new UnauthorizedException('Refresh token không hợp lệ')
     }
 
     // Generate new tokens
@@ -128,7 +137,7 @@ export class AuthService {
     })
 
     this.logger.log(`User logged out: ${userId}`)
-    return { message: 'Logged out successfully' }
+    return { message: 'Đăng xuất thành công' }
   }
 
   async getProfile(userId: string) {
@@ -137,13 +146,14 @@ export class AuthService {
       select: {
         id: true,
         email: true,
+        fullName: true,
         role: true,
         createdAt: true,
       },
     })
 
     if (!user) {
-      throw new UnauthorizedException('User not found')
+      throw new UnauthorizedException('Không tìm thấy người dùng')
     }
 
     return user

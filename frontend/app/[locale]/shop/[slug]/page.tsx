@@ -71,26 +71,26 @@ export default function ProductPage({ params }: ProductPageProps) {
         <div className="space-y-4 stagger-children">
           {product.images && product.images.length > 0 ? (
             <>
-              <div className="aspect-product bg-muted/20 overflow-hidden relative group">
+              <div className="relative aspect-product bg-muted/20 overflow-hidden group">
                 <Image
                   src={product.images[0]}
                   alt={name}
-                  width={600}
-                  height={800}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  className="object-cover transition-transform duration-700 group-hover:scale-105"
                   priority
                 />
               </div>
               {product.images.length > 1 && (
                 <div className="grid grid-cols-3 gap-4">
                   {product.images.slice(1, 4).map((image, index) => (
-                    <div key={index} className="aspect-square bg-muted/20 overflow-hidden relative group">
+                    <div key={index} className="relative aspect-product bg-muted/20 overflow-hidden group">
                       <Image
                         src={image}
                         alt={`${name} ${index + 2}`}
-                        width={200}
-                        height={200}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        fill
+                        sizes="(max-width: 768px) 33vw, 17vw"
+                        className="object-cover transition-transform duration-500 group-hover:scale-110"
                       />
                     </div>
                   ))}

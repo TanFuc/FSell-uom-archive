@@ -444,11 +444,12 @@ export default function ProductFormPage() {
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-2">
                     {images.map((image, index) => (
-                      <div key={index} className="relative aspect-[4/5] border">
+                      <div key={index} className="relative aspect-product border">
                         <Image
                           src={getImageUrl(image)}
                           alt={`Product ${index + 1}`}
                           fill
+                          sizes="150px"
                           className="object-cover"
                         />
                         <Button

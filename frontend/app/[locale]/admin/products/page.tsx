@@ -203,14 +203,14 @@ export default function ProductsPage() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8">
-                  {t('loading')}...
+                <TableCell colSpan={7} className="text-center h-[400px]">
+                  <span className="text-muted-foreground">{t('loading')}...</span>
                 </TableCell>
               </TableRow>
             ) : products.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8">
-                  {t('noResults')}
+                <TableCell colSpan={7} className="text-center h-[400px]">
+                  <span className="text-muted-foreground">{t('noResults')}</span>
                 </TableCell>
               </TableRow>
             ) : (
