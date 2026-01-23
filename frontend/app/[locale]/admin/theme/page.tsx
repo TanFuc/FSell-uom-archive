@@ -88,7 +88,7 @@ export default function ThemePage() {
         </div>
         <Button variant="outline" onClick={resetToDefault}>
           <RefreshCw className="mr-2 h-4 w-4" />
-          Reset to Default
+          {t('resetToDefault')}
         </Button>
       </div>
 
@@ -96,8 +96,8 @@ export default function ThemePage() {
         {/* Form */}
         <Card>
           <CardHeader>
-            <CardTitle className="uppercase tracking-wide">Color Settings</CardTitle>
-            <CardDescription>Click on color boxes to change colors</CardDescription>
+            <CardTitle className="uppercase tracking-wide">{t('colorSettings')}</CardTitle>
+            <CardDescription>{t('colorSettingsHint')}</CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>
@@ -107,7 +107,7 @@ export default function ThemePage() {
                   name="backgroundColor"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Background Color</FormLabel>
+                      <FormLabel>{t('backgroundColor')}</FormLabel>
                       <FormControl>
                         <div className="flex gap-2">
                           <input
@@ -119,7 +119,7 @@ export default function ThemePage() {
                           <Input {...field} className="flex-1" />
                         </div>
                       </FormControl>
-                      <FormDescription>Main background color (default: cream)</FormDescription>
+                      <FormDescription>{t('backgroundColorHint')}</FormDescription>
                     </FormItem>
                   )}
                 />
@@ -129,7 +129,7 @@ export default function ThemePage() {
                   name="textColor"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Text Color</FormLabel>
+                      <FormLabel>{t('textColor')}</FormLabel>
                       <FormControl>
                         <div className="flex gap-2">
                           <input
@@ -141,7 +141,7 @@ export default function ThemePage() {
                           <Input {...field} className="flex-1" />
                         </div>
                       </FormControl>
-                      <FormDescription>Primary text color (default: brown)</FormDescription>
+                      <FormDescription>{t('textColorHint')}</FormDescription>
                     </FormItem>
                   )}
                 />
@@ -151,7 +151,7 @@ export default function ThemePage() {
                   name="accentColor"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Accent Color</FormLabel>
+                      <FormLabel>{t('accentColor')}</FormLabel>
                       <FormControl>
                         <div className="flex gap-2">
                           <input
@@ -163,7 +163,7 @@ export default function ThemePage() {
                           <Input {...field} className="flex-1" />
                         </div>
                       </FormControl>
-                      <FormDescription>Secondary/accent color (default: clay)</FormDescription>
+                      <FormDescription>{t('accentColorHint')}</FormDescription>
                     </FormItem>
                   )}
                 />
@@ -179,8 +179,8 @@ export default function ThemePage() {
         {/* Preview */}
         <Card>
           <CardHeader>
-            <CardTitle className="uppercase tracking-wide">Live Preview</CardTitle>
-            <CardDescription>See how your changes will look</CardDescription>
+            <CardTitle className="uppercase tracking-wide">{t('livePreview')}</CardTitle>
+            <CardDescription>{t('livePreviewHint')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div
@@ -192,26 +192,26 @@ export default function ThemePage() {
                   className="text-2xl font-serif"
                   style={{ color: watchedValues.textColor }}
                 >
-                  Ươm Archive
+                  {t('previewTitle')}
                 </h2>
                 <p style={{ color: watchedValues.textColor }}>
-                  Discover timeless Vietnamese fashion pieces curated with care.
+                  {t('previewSubtitle')}
                 </p>
                 <p style={{ color: watchedValues.accentColor }}>
-                  New collection available now
+                  {t('previewNewCollection')}
                 </p>
                 <div className="flex gap-4 pt-4">
                   <button
                     className="uppercase tracking-wide text-sm"
                     style={{ color: watchedValues.textColor }}
                   >
-                    Shop Now
+                    {t('shopNow')}
                   </button>
                   <button
                     className="uppercase tracking-wide text-sm"
                     style={{ color: watchedValues.accentColor }}
                   >
-                    Learn More
+                    {t('learnMore')}
                   </button>
                 </div>
               </div>

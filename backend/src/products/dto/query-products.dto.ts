@@ -49,6 +49,14 @@ export class QueryProductsDto {
   search?: string
 
   @ApiPropertyOptional({
+    example: 'category-id',
+    description: 'Filter by category ID',
+  })
+  @IsOptional()
+  @IsString()
+  categoryId?: string
+
+  @ApiPropertyOptional({
     example: true,
     description: 'Filter by active status (admin only)',
   })

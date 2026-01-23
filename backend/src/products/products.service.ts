@@ -13,6 +13,7 @@ import { CreateProductDto, UpdateProductDto, QueryProductsDto, BulkUpdateDto } f
 import { createFlexibleSearchConditions } from '../common/utils/vietnamese-search.util'
 
 const CACHE_TTL = 300 // 5 minutes
+const USD_EXCHANGE_RATE = 24500 // 1 USD = 24,500 VND (configurable)
 
 @Injectable()
 export class ProductsService {
@@ -30,6 +31,7 @@ export class ProductsService {
       page = 1,
       limit = 12,
       search,
+      categoryId,
       isActive,
       inquiryEnabled,
       includeDeleted = false,
@@ -69,6 +71,7 @@ export class ProductsService {
     }
 
     // Filters
+    if (categoryId) where.categoryId = categoryId
     if (isActive !== undefined) where.isActive = isActive
     if (inquiryEnabled !== undefined) where.inquiryEnabled = inquiryEnabled
     if (query.isFeatured !== undefined) where.isFeatured = query.isFeatured
@@ -98,6 +101,7 @@ export class ProductsService {
           creator: { select: { id: true, email: true, fullName: true } },
           updater: { select: { id: true, email: true, fullName: true } },
           deleter: { select: { id: true, email: true, fullName: true } },
+          category: { select: { id: true, nameVi: true, nameEn: true, slug: true } },
           relatedProducts: {
             select: {
               id: true,
@@ -106,6 +110,9 @@ export class ProductsService {
               slug: true,
               images: true,
               priceVND: true,
+              priceUSD: true,
+              salePriceVND: true,
+              salePriceUSD: true,
             },
           },
         },
@@ -145,6 +152,7 @@ export class ProductsService {
       include: {
         creator: { select: { id: true, email: true, fullName: true } },
         updater: { select: { id: true, email: true, fullName: true } },
+        category: { select: { id: true, nameVi: true, nameEn: true, slug: true } },
         relatedProducts: true,
       },
     })
@@ -172,6 +180,7 @@ export class ProductsService {
         creator: { select: { id: true, email: true, fullName: true } },
         updater: { select: { id: true, email: true, fullName: true } },
         deleter: { select: { id: true, email: true, fullName: true } },
+        category: { select: { id: true, nameVi: true, nameEn: true, slug: true } },
         relatedProducts: true,
       },
     })
@@ -197,9 +206,13 @@ export class ProductsService {
       throw new ConflictException(`Product with slug "${dto.slug}" already exists`)
     }
 
+    // Auto-calculate USD prices if not provided
+    const priceData = this.preparePriceData(dto)
+
     const product = await this.prisma.product.create({
       data: {
         ...productData,
+        ...priceData,
         createdBy: userId,
         updatedBy: userId,
         // Auto-generate inquiry messages if empty
@@ -245,10 +258,14 @@ export class ProductsService {
       }
     }
 
+    // Auto-calculate USD prices if not provided
+    const priceData = this.preparePriceData(dto)
+
     const updatedProduct = await this.prisma.product.update({
       where: { id },
       data: {
         ...updateData,
+        ...priceData,
         updatedBy: userId,
         relatedProducts: relatedProductIds
           ? { set: relatedProductIds.map((id) => ({ id })) }
@@ -372,14 +389,20 @@ export class ProductsService {
         descriptionVi: original.descriptionVi,
         descriptionEn: original.descriptionEn,
         priceVND: original.priceVND,
+        priceUSD: original.priceUSD,
+        salePriceVND: original.salePriceVND,
+        salePriceUSD: original.salePriceUSD,
         images: original.images,
+        hoverImage: original.hoverImage,
         material: original.material,
         dimensions: original.dimensions,
         stock: original.stock,
         isActive: false, // Start as inactive
+        isFeatured: false, // Don't copy featured status
         inquiryEnabled: original.inquiryEnabled,
         inquiryMessageVi: original.inquiryMessageVi,
         inquiryMessageEn: original.inquiryMessageEn,
+        categoryId: original.categoryId,
         createdBy: userId,
         updatedBy: userId,
       },
@@ -467,6 +490,41 @@ export class ProductsService {
   }
 
   // ==================== HELPER METHODS ====================
+
+  /**
+   * Convert VND to USD using exchange rate
+   */
+  private convertVndToUsd(vnd: number): number {
+    return Math.round((vnd / USD_EXCHANGE_RATE) * 100) / 100 // Round to 2 decimal places
+  }
+
+  /**
+   * Prepare price data with auto-conversion
+   */
+  private preparePriceData(dto: CreateProductDto | UpdateProductDto): {
+    priceUSD?: number
+    salePriceUSD?: number | null
+  } {
+    const result: { priceUSD?: number; salePriceUSD?: number | null } = {}
+
+    // Auto-calculate priceUSD if not provided but priceVND is
+    if (dto.priceVND !== undefined && dto.priceUSD === undefined) {
+      result.priceUSD = this.convertVndToUsd(dto.priceVND)
+    } else if (dto.priceUSD !== undefined) {
+      result.priceUSD = dto.priceUSD
+    }
+
+    // Auto-calculate salePriceUSD if salePriceVND is provided
+    if (dto.salePriceVND !== undefined) {
+      if (dto.salePriceUSD === undefined && dto.salePriceVND !== null) {
+        result.salePriceUSD = this.convertVndToUsd(dto.salePriceVND)
+      } else {
+        result.salePriceUSD = dto.salePriceUSD
+      }
+    }
+
+    return result
+  }
 
   private generateDefaultMessage(dto: CreateProductDto | any, language: 'vi' | 'en'): string {
     if (language === 'vi') {

@@ -12,7 +12,7 @@ export class UploadService {
     private cloudinaryService: CloudinaryService,
   ) {}
 
-  async uploadProductImage(file: Express.Multer.File): Promise<{ url: string; publicId: string }> {
+  async uploadProductImage(file: Express.Multer.File, folder: string = 'products'): Promise<{ url: string; publicId: string }> {
     if (!file) {
       throw new BadRequestException('Không có file được cung cấp')
     }
@@ -47,7 +47,7 @@ export class UploadService {
       }
 
       // Upload to Cloudinary
-      const result = await this.cloudinaryService.uploadFile(optimizedFile, 'products')
+      const result = await this.cloudinaryService.uploadFile(optimizedFile, folder)
 
       this.logger.log(`Image uploaded to Cloudinary: ${result.public_id}`)
       

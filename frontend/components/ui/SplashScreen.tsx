@@ -3,9 +3,11 @@
 import { useEffect, useState } from 'react'
 
 export function SplashScreen() {
+  const [mounted, setMounted] = useState(false)
   const [show, setShow] = useState(true)
 
   useEffect(() => {
+    setMounted(true)
     const timer = setTimeout(() => {
       setShow(false)
     }, 2000)
@@ -13,8 +15,11 @@ export function SplashScreen() {
     return () => clearTimeout(timer)
   }, [])
 
+  // Prevent hydration mismatch by not rendering on server
+  if (!mounted) return null
+
   return (
-    <div 
+    <div
       className={`fixed inset-0 z-[100] flex items-center justify-center bg-background transition-opacity duration-500 ${show ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
       aria-hidden={!show}
     >

@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "products" ADD COLUMN     "priceUSD" DOUBLE PRECISION,
+ADD COLUMN     "salePriceUSD" DOUBLE PRECISION,
+ADD COLUMN     "salePriceVND" INTEGER;

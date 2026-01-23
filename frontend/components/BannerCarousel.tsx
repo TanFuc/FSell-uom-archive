@@ -146,7 +146,7 @@ export function BannerCarousel({ banners, locale, autoPlayInterval = 5000 }: Ban
       style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
     >
       {/* Background Image - Hero Style */}
-      <div className="relative w-full aspect-[16/9] md:aspect-[21/9] lg:aspect-[3/1]">
+      <div className="relative w-full aspect-[4/5] md:aspect-[21/9] lg:aspect-[3/1]">
         <Image
           src={currentBanner.imageUrl}
           alt={title || 'Banner'}
@@ -157,14 +157,14 @@ export function BannerCarousel({ banners, locale, autoPlayInterval = 5000 }: Ban
         />
         
         {/* Subtle overlay for text readability */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/10 to-black/30" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/20 to-black/60 md:to-black/40" />
         
         {/* Text Content - Positioned at bottom left */}
         {(title || subtitle || description) && (
-          <div className="absolute inset-0 flex items-end px-8 md:px-16 lg:px-24 pb-12 md:pb-16 lg:pb-20">
-            <div className="max-w-3xl space-y-2 md:space-y-3 animate-fade-in" style={{ color: currentBanner.textColor || '#FFFFFF' }}>
+          <div className="absolute inset-0 flex items-end px-6 md:px-16 lg:px-24 pb-12 md:pb-16 lg:pb-20">
+            <div className="max-w-3xl space-y-3 md:space-y-3 animate-fade-in" style={{ color: currentBanner.textColor || '#FFFFFF' }}>
               {title && (
-                <h2 className="text-3xl md:text-5xl lg:text-6xl uppercase tracking-[0.15em] font-light leading-tight">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl uppercase tracking-[0.15em] font-light leading-tight">
                   {title}
                 </h2>
               )}
@@ -174,7 +174,7 @@ export function BannerCarousel({ banners, locale, autoPlayInterval = 5000 }: Ban
                 </p>
               )}
               {description && (
-                <p className="text-sm md:text-base font-light opacity-80 max-w-2xl pt-2">
+                <p className="text-sm md:text-base font-light opacity-80 max-w-2xl pt-2 line-clamp-3 md:line-clamp-none">
                   {description}
                 </p>
               )}

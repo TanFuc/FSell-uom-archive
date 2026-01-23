@@ -3,13 +3,18 @@ const createNextIntlPlugin = require('next-intl/plugin')
 const withNextIntl = createNextIntlPlugin()
 
 /** @type {import('next').NextConfig} */
+const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+const apiUrlObj = new URL(apiUrl)
+const apiProtocol = apiUrlObj.protocol.replace(':', '')
+const apiPort = apiUrlObj.port
+
 const nextConfig = {
   images: {
     remotePatterns: [
       {
-        protocol: 'http',
-        hostname: 'localhost',
-        port: '3001',
+        protocol: apiProtocol,
+        hostname: apiUrlObj.hostname,
+        port: apiPort,
         pathname: '/uploads/**',
       },
       {

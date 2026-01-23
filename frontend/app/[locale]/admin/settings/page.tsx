@@ -107,7 +107,7 @@ export default function SettingsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-serif">{t('settings')}</h1>
-        <p className="text-muted-foreground">Configure website settings</p>
+        <p className="text-muted-foreground">{t('configureSettings')}</p>
       </div>
 
       <div className="grid gap-6">
@@ -116,7 +116,7 @@ export default function SettingsPage() {
           <CardHeader>
             <CardTitle className="uppercase tracking-wide">{t('socialLinks')}</CardTitle>
             <CardDescription>
-              Configure social media links for customer inquiries
+              {t('settingsDesc')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -127,12 +127,12 @@ export default function SettingsPage() {
                   name="facebookPageUrl"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Facebook Messenger URL</FormLabel>
+                      <FormLabel>{t('facebookUrl')}</FormLabel>
                       <FormControl>
                         <Input {...field} placeholder="https://m.me/uomarchive" />
                       </FormControl>
                       <FormDescription>
-                        Format: https://m.me/yourpagename
+                        {t('facebookUrlFormat')}
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -144,12 +144,12 @@ export default function SettingsPage() {
                   name="instagramUsername"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Instagram Username</FormLabel>
+                      <FormLabel>{t('instagramUsername')}</FormLabel>
                       <FormControl>
                         <Input {...field} placeholder="uomarchive" />
                       </FormControl>
                       <FormDescription>
-                        Username only (without @)
+                        {t('instagramUsernameHint')}
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -167,9 +167,9 @@ export default function SettingsPage() {
         {/* Exchange Rate */}
         <Card>
           <CardHeader>
-            <CardTitle className="uppercase tracking-wide">Exchange Rate</CardTitle>
+            <CardTitle className="uppercase tracking-wide">{t('exchangeRate')}</CardTitle>
             <CardDescription>
-              VND to USD conversion rate for English display
+              {t('exchangeRateDesc')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -180,12 +180,12 @@ export default function SettingsPage() {
                   name="rate"
                   render={({ field }) => (
                     <FormItem className="max-w-xs">
-                      <FormLabel>1 USD = VND</FormLabel>
+                      <FormLabel>{t('usdToVnd')}</FormLabel>
                       <FormControl>
                         <Input {...field} type="number" />
                       </FormControl>
                       <FormDescription>
-                        Current rate: {rateForm.watch('rate').toLocaleString()} VND
+                        {t('currentRate', { rate: rateForm.watch('rate').toLocaleString() })}
                       </FormDescription>
                       <FormMessage />
                     </FormItem>

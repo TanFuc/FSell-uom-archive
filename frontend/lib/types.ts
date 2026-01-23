@@ -1,14 +1,41 @@
 // ==================== ENTITIES ====================
 
+export interface Category {
+  id: string
+  slug: string
+  nameVi: string
+  nameEn: string
+  descriptionVi?: string | null
+  descriptionEn?: string | null
+  image?: string | null
+  order: number
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+  deletedAt: string | null
+  createdBy?: string
+  updatedBy?: string
+  deletedBy?: string
+  _count?: {
+    products: number
+  }
+}
+
 export interface Product {
   id: string
   slug: string
   nameVi: string
   nameEn: string
+  shortDescriptionVi: string
+  shortDescriptionEn: string
   descriptionVi: string
   descriptionEn: string
+  categoryId?: string | null
+  category?: Category | null
   priceVND: number
-  priceUSD?: number
+  priceUSD?: number | null
+  salePriceVND?: number | null
+  salePriceUSD?: number | null
   images: string[]
   hoverImage?: string | null
   material: string
@@ -85,9 +112,14 @@ export interface CreateProductDto {
   slug: string
   nameVi: string
   nameEn: string
+  shortDescriptionVi?: string
+  shortDescriptionEn?: string
   descriptionVi: string
   descriptionEn: string
   priceVND: number
+  priceUSD?: number
+  salePriceVND?: number
+  salePriceUSD?: number
   images: string[]
   hoverImage?: string
   material: string
@@ -98,16 +130,23 @@ export interface CreateProductDto {
   inquiryEnabled?: boolean
   inquiryMessageVi?: string
   inquiryMessageEn?: string
+  categoryId?: string | null
 }
 
 export interface UpdateProductDto {
   slug?: string
   nameVi?: string
   nameEn?: string
+  shortDescriptionVi?: string
+  shortDescriptionEn?: string
   descriptionVi?: string
   descriptionEn?: string
   priceVND?: number
+  priceUSD?: number
+  salePriceVND?: number | null
+  salePriceUSD?: number | null
   images?: string[]
+  hoverImage?: string | null
   material?: string
   dimensions?: string
   stock?: number
@@ -116,12 +155,42 @@ export interface UpdateProductDto {
   inquiryEnabled?: boolean
   inquiryMessageVi?: string
   inquiryMessageEn?: string
+  categoryId?: string | null
+}
+
+// Category DTOs
+export interface CreateCategoryDto {
+  slug: string
+  nameVi: string
+  nameEn: string
+  descriptionVi?: string
+  descriptionEn?: string
+  image?: string
+  order?: number
+  isActive?: boolean
+}
+
+export interface UpdateCategoryDto {
+  slug?: string
+  nameVi?: string
+  nameEn?: string
+  descriptionVi?: string | null
+  descriptionEn?: string | null
+  image?: string | null
+  order?: number
+  isActive?: boolean
+}
+
+export interface QueryCategoriesDto {
+  includeDeleted?: boolean
+  includeInactive?: boolean
 }
 
 export interface QueryProductsDto {
   page?: number
   limit?: number
   search?: string
+  categoryId?: string
   inquiryEnabled?: boolean
   isFeatured?: boolean
   minPrice?: number

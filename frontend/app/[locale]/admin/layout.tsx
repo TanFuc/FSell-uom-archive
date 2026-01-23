@@ -7,12 +7,14 @@ import Link from 'next/link'
 import {
   LayoutDashboard,
   Package,
+  LayoutGrid,
   Settings,
   Palette,
   Users,
   LogOut,
   Menu,
   X,
+  FileText,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
@@ -75,7 +77,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const navItems = [
     { href: `/${locale}/admin/dashboard`, label: t('dashboard'), icon: LayoutDashboard },
     { href: `/${locale}/admin/products`, label: t('products'), icon: Package },
+    { href: `/${locale}/admin/categories`, label: t('categories'), icon: LayoutGrid },
     { href: `/${locale}/admin/theme`, label: t('theme'), icon: Palette },
+    { href: `/${locale}/admin/about`, label: t('aboutPage'), icon: FileText },
     { href: `/${locale}/admin/settings`, label: t('settings'), icon: Settings },
   ]
 
@@ -84,16 +88,16 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   }
 
   return (
-    <div className="flex min-h-screen">
-      {/* Mobile sidebar toggle */}
-      <Button
-        variant="ghost"
-        size="icon"
-        className="fixed top-4 left-4 z-50 md:hidden"
-        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-      >
-        {isSidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-      </Button>
+    <div className="flex min-h-screen pt-16 md:pt-0 bg-background text-foreground">
+      {/* Mobile Top Bar */}
+      <div className="fixed top-0 left-0 right-0 z-30 flex h-16 items-center justify-between border-b bg-background px-4 md:hidden">
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(true)}>
+            <Menu className="h-5 w-5" />
+          </Button>
+          <Logo variant="text" customHref={`/${locale}/admin/dashboard`} />
+        </div>
+      </div>
 
       {/* Sidebar */}
       <aside
@@ -103,9 +107,19 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       >
         <div className="flex h-full flex-col">
           {/* Logo with Dashboard text */}
-          <div className="flex h-16 items-center justify-center border-b px-6 gap-2">
+          <div className="relative flex h-16 items-center justify-center border-b px-6 gap-2">
             <Logo variant="text" customHref={`/${locale}/admin/dashboard`} />
-            <span className="text-xs uppercase tracking-widest text-muted-foreground">Dashboard</span>
+            <span className="text-xs uppercase tracking-widest text-muted-foreground">{t('dashboard')}</span>
+            
+            {/* Mobile Close Button */}
+            <Button 
+               variant="ghost" 
+               size="icon" 
+               className="absolute right-2 md:hidden" 
+               onClick={() => setIsSidebarOpen(false)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
           </div>
 
           {/* Navigation */}
@@ -158,7 +172,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       {/* Overlay for mobile */}
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 z-30 bg-black/50 md:hidden"
+          className="fixed inset-0 z-30 bg-black/80 md:hidden backdrop-blur-sm"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}

@@ -37,6 +37,7 @@ import {
 import { api } from '@/lib/api'
 import { Product } from '@/lib/types'
 import { useToast } from '@/hooks/use-toast'
+import { useDocumentTitle } from '@/hooks/use-document-title'
 import { formatPriceVND, getImageUrl, optimizeProductImage, slugify } from '@/lib/utils'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -46,6 +47,9 @@ export default function ProductsPage() {
   const locale = useLocale()
   const t = useTranslations('admin')
   const { toast } = useToast()
+
+  // Update document title
+  useDocumentTitle(t('products'), 'Admin - Ươm Archive')
 
   const [products, setProducts] = useState<Product[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -270,6 +274,7 @@ export default function ProductsPage() {
               </TableHead>
               <TableHead className="w-20">{t('image')}</TableHead>
               <TableHead>{t('name')}</TableHead>
+              <TableHead className="w-32">{t('category')}</TableHead>
               <TableHead className="w-32">{t('priceLabel')}</TableHead>
               <TableHead className="w-24">{t('stockLabel')}</TableHead>
               <TableHead className="w-32 text-center">{t('activeStatus')}</TableHead>
@@ -321,6 +326,17 @@ export default function ProductsPage() {
                       <p className="font-medium">{product.nameVi}</p>
                       <p className="text-xs text-muted-foreground">{product.nameEn}</p>
                     </div>
+                  </TableCell>
+                  <TableCell>
+                    {product.category ? (
+                      <span className="text-sm">
+                        {locale === 'vi' ? product.category.nameVi : product.category.nameEn}
+                      </span>
+                    ) : (
+                      <span className="text-sm text-muted-foreground italic">
+                        {t('noCategory')}
+                      </span>
+                    )}
                   </TableCell>
                   <TableCell>{formatPriceVND(product.priceVND)}</TableCell>
                   <TableCell>

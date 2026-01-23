@@ -24,24 +24,29 @@ import { useAuthStore } from '@/lib/store'
 import { useToast } from '@/hooks/use-toast'
 import { ErrorToastContent } from '@/components/ui/error-toast'
 
-const loginSchema = z.object({
-  email: z.string().email('Vui lòng nhập địa chỉ email hợp lệ'),
-  password: z.string().min(1, 'Vui lòng nhập mật khẩu'),
-})
-
-type LoginFormValues = z.infer<typeof loginSchema>
+type LoginFormValues = {
+  email: string
+  password: string
+}
 
 export default function LoginPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const locale = useLocale()
   const t = useTranslations('admin')
+  const tAuth = useTranslations('auth')
+  const tValidation = useTranslations('validation')
   const { setUser } = useAuthStore()
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
 
   const redirect = searchParams.get('redirect') || `/${locale}/admin/dashboard`
+
+  const loginSchema = z.object({
+    email: z.string().email(tValidation('emailRequired')),
+    password: z.string().min(1, tValidation('passwordRequired')),
+  })
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -66,59 +71,59 @@ export default function LoginPage() {
 
       toast({
         title: t('success'),
-        description: 'Đăng nhập thành công! Đang chuyển hướng...',
+        description: tAuth('loginSuccess'),
       })
 
       // Redirect to dashboard
       router.push(`/${locale}/admin/dashboard`)
     } catch (error: any) {
       console.error('Login failed:', error)
-      
+
       // Extract detailed error information from API response
-      let errorTitle = 'Lỗi đăng nhập'
-      let errorMessage = 'Có lỗi xảy ra khi đăng nhập'
+      let errorTitle = tAuth('loginError')
+      let errorMessage = tAuth('genericError')
       let statusCode: number | undefined
       let path: string | undefined
       let method: string | undefined
       let timestamp: string | undefined
-      
+
       if (error.response) {
         // API returned an error response
         const errorData = error.response.data
         statusCode = error.response.status
-        
+
         // Extract error details from backend response
-        errorMessage = errorData?.message || error.response.statusText || 'Có lỗi xảy ra'
+        errorMessage = errorData?.message || error.response.statusText || tAuth('genericError')
         path = errorData?.path
         method = errorData?.method
         timestamp = errorData?.timestamp
-        
+
         // Customize error title based on status code
         if (statusCode === 401) {
-          errorTitle = 'Xác thực thất bại'
+          errorTitle = tAuth('authFailed')
           if (!errorData?.message) {
-            errorMessage = 'Email hoặc mật khẩu không chính xác. Vui lòng kiểm tra lại thông tin đăng nhập.'
+            errorMessage = tAuth('invalidCredentials')
           }
         } else if (statusCode === 404) {
-          errorTitle = 'Không tìm thấy'
-          errorMessage = 'Endpoint đăng nhập không tồn tại. Vui lòng liên hệ bộ phận hỗ trợ.'
+          errorTitle = tAuth('notFound')
+          errorMessage = tAuth('endpointNotFound')
         } else if (statusCode === 500) {
-          errorTitle = 'Lỗi máy chủ'
-          errorMessage = 'Máy chủ gặp sự cố. Vui lòng thử lại sau.'
+          errorTitle = tAuth('serverError')
+          errorMessage = tAuth('serverIssue')
         } else if (statusCode === 429) {
-          errorTitle = 'Quá nhiều yêu cầu'
-          errorMessage = 'Bạn đã thử đăng nhập quá nhiều lần. Vui lòng đợi một lúc rồi thử lại.'
+          errorTitle = tAuth('tooManyRequests')
+          errorMessage = tAuth('tooManyAttemptsMessage')
         }
       } else if (error.request) {
         // Request was made but no response received
-        errorTitle = 'Lỗi kết nối'
-        errorMessage = 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối internet của bạn.'
+        errorTitle = tAuth('connectionError')
+        errorMessage = tAuth('connectionErrorMessage')
       } else {
         // Something else happened
-        errorMessage = error.message || 'Đã xảy ra lỗi không xác định'
+        errorMessage = error.message || tAuth('genericError')
       }
-      
-      
+
+
       toast({
         variant: 'destructive',
         duration: 3000,

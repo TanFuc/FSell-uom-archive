@@ -1,9 +1,12 @@
 import axios, { AxiosInstance, AxiosError } from 'axios'
 import type {
   Product,
+  Category,
   CreateProductDto,
   UpdateProductDto,
   QueryProductsDto,
+  CreateCategoryDto,
+  UpdateCategoryDto,
   PaginatedResponse,
   ThemeSettings,
   SocialLinks,
@@ -378,9 +381,10 @@ class ApiClient {
 
   // ==================== UPLOAD ENDPOINT ====================
 
-  async uploadImage(file: File): Promise<{ url: string; publicId?: string }> {
+  async uploadImage(file: File, folder: string = 'products'): Promise<{ url: string; publicId?: string }> {
     const formData = new FormData()
     formData.append('file', file)
+    formData.append('folder', folder)
 
     const token = this.getToken()
     const headers: HeadersInit = {}
@@ -401,6 +405,64 @@ class ApiClient {
 
     const result = await response.json()
     return result.data || result
+  }
+
+  // ==================== CATEGORY ENDPOINTS ====================
+
+  async getCategories(params?: {
+    includeDeleted?: boolean
+    includeInactive?: boolean
+  }): Promise<Category[]> {
+    const searchParams = new URLSearchParams()
+    if (params?.includeDeleted !== undefined)
+      searchParams.set('includeDeleted', params.includeDeleted.toString())
+    if (params?.includeInactive !== undefined)
+      searchParams.set('includeInactive', params.includeInactive.toString())
+
+    const query = searchParams.toString()
+    return this.request<Category[]>(
+      `/categories${query ? `?${query}` : ''}`
+    )
+  }
+
+  async getCategoryById(id: string): Promise<Category> {
+    return this.request<Category>(`/categories/${id}`)
+  }
+
+  async getCategoryBySlug(slug: string): Promise<Category> {
+    return this.request<Category>(`/categories/slug/${slug}`)
+  }
+
+  async createCategory(data: CreateCategoryDto): Promise<Category> {
+    return this.request<Category>('/categories', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async updateCategory(id: string, data: UpdateCategoryDto): Promise<Category> {
+    return this.request<Category>(`/categories/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async deleteCategory(id: string): Promise<{ message: string }> {
+    return this.request<{ message: string }>(`/categories/${id}`, {
+      method: 'DELETE',
+    })
+  }
+
+  async restoreCategory(id: string): Promise<Category> {
+    return this.request<Category>(`/categories/${id}/restore`, {
+      method: 'POST',
+    })
+  }
+
+  async permanentDeleteCategory(id: string): Promise<{ message: string }> {
+    return this.request<{ message: string }>(`/categories/${id}/permanent`, {
+      method: 'DELETE',
+    })
   }
 }
 

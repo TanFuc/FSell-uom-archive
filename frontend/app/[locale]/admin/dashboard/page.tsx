@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { Package, Users, DollarSign, Eye } from 'lucide-react'
+import { Package, Users, DollarSign, Eye, LayoutGrid } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useDocumentTitle } from '@/hooks/use-document-title'
 import { api } from '@/lib/api'
 
 interface DashboardStats {
@@ -20,6 +21,9 @@ export default function DashboardPage() {
     totalUsers: 0,
   })
   const [isLoading, setIsLoading] = useState(true)
+
+  // Update document title
+  useDocumentTitle(t('dashboard'), 'Admin - Ươm Archive')
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -46,16 +50,16 @@ export default function DashboardPage() {
 
   const statCards = [
     {
-      title: t('products'),
+      title: t('totalProducts'),
       value: stats.totalProducts,
       icon: Package,
-      description: `${stats.activeProducts} active`,
+      description: `${stats.activeProducts} ${t('activeProducts')}`,
     },
     {
-      title: t('users'),
+      title: t('totalAdmins'),
       value: stats.totalUsers,
       icon: Users,
-      description: 'Total administrators',
+      description: t('users'),
     },
   ]
 
@@ -63,7 +67,7 @@ export default function DashboardPage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-serif mb-2">{t('dashboard')}</h1>
-        <p className="text-muted-foreground">Welcome to Ươm Archive admin panel</p>
+        <p className="text-muted-foreground">{t('welcomeMessage')}</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -91,7 +95,7 @@ export default function DashboardPage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-sm font-medium uppercase tracking-wide">
-            Quick Actions
+            {t('quickActions')}
           </CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-3">
@@ -101,8 +105,8 @@ export default function DashboardPage() {
           >
             <Package className="h-5 w-5" />
             <div>
-              <p className="font-medium">Manage Products</p>
-              <p className="text-sm text-muted-foreground">Add, edit, delete products</p>
+              <p className="font-medium">{t('manageProducts')}</p>
+              <p className="text-sm text-muted-foreground">{t('manageProductsDesc')}</p>
             </div>
           </a>
           <a
@@ -111,8 +115,18 @@ export default function DashboardPage() {
           >
             <Eye className="h-5 w-5" />
             <div>
-              <p className="font-medium">Customize Theme</p>
-              <p className="text-sm text-muted-foreground">Change colors and styles</p>
+              <p className="font-medium">{t('customizeTheme')}</p>
+              <p className="text-sm text-muted-foreground">{t('customizeThemeDesc')}</p>
+            </div>
+          </a>
+          <a
+            href="./categories"
+            className="flex items-center gap-3 p-4 border hover:bg-accent transition-colors"
+          >
+            <LayoutGrid className="h-5 w-5" />
+            <div>
+              <p className="font-medium">{t('categories')}</p>
+              <p className="text-sm text-muted-foreground">{t('manageCategoriesDesc')}</p>
             </div>
           </a>
           <a
@@ -121,8 +135,8 @@ export default function DashboardPage() {
           >
             <DollarSign className="h-5 w-5" />
             <div>
-              <p className="font-medium">Settings</p>
-              <p className="text-sm text-muted-foreground">Social links, exchange rate</p>
+              <p className="font-medium">{t('settings')}</p>
+              <p className="text-sm text-muted-foreground">{t('settingsDesc')}</p>
             </div>
           </a>
         </CardContent>

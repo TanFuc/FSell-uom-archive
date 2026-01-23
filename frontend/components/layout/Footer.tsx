@@ -3,12 +3,14 @@
 import Link from 'next/link'
 import { useLocale, useTranslations } from 'next-intl'
 import { useSocialLinks } from '@/hooks/use-settings'
+import { useCategories } from '@/hooks/use-categories'
 import { Instagram, Facebook } from 'lucide-react'
 
 export function Footer() {
-  const locale = useLocale()
+  const locale = useLocale() as 'vi' | 'en'
   const t = useTranslations('Footer')
   const { data: socialLinks } = useSocialLinks()
+  const { data: categories } = useCategories({ includeInactive: false })
 
   const currentYear = new Date().getFullYear()
 

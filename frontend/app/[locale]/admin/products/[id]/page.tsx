@@ -3,17 +3,33 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { ArrowLeft, Upload, X, Plus } from 'lucide-react'
+import { ArrowLeft, Upload, X, Plus, Languages, RefreshCw } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import {
   Card,
   CardContent,
@@ -31,21 +47,32 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { api } from '@/lib/api'
-import { Product } from '@/lib/types'
+import { Product, Category } from '@/lib/types'
 import { useToast } from '@/hooks/use-toast'
+import { useDocumentTitle } from '@/hooks/use-document-title'
 import { getImageUrl, slugify } from '@/lib/utils'
+import { RichTextEditor } from '@/components/RichTextEditor'
+import { vndToUsd, usdToVnd } from '@/lib/currency'
+import { DEFAULT_EXCHANGE_RATE } from '@/lib/constants'
 
 const productSchema = z.object({
   slug: z.string().min(1, 'Slug is required'),
   nameVi: z.string().min(1, 'Vietnamese name is required'),
   nameEn: z.string().min(1, 'English name is required'),
+  shortDescriptionVi: z.string().optional(),
+  shortDescriptionEn: z.string().optional(),
   descriptionVi: z.string().min(1, 'Vietnamese description is required'),
   descriptionEn: z.string().min(1, 'English description is required'),
   priceVND: z.coerce.number().min(0, 'Price must be positive'),
+  priceUSD: z.coerce.number().min(0).optional(),
+  salePriceVND: z.coerce.number().min(0).optional().nullable(),
+  salePriceUSD: z.coerce.number().min(0).optional().nullable(),
+  categoryId: z.string().optional().nullable(),
   material: z.string().min(1, 'Material is required'),
   dimensions: z.string().min(1, 'Dimensions required'),
   stock: z.coerce.number().int().min(0, 'Stock must be non-negative'),
   isActive: z.boolean().default(true),
+  isFeatured: z.boolean().default(false),
   inquiryEnabled: z.boolean().default(true),
   inquiryMessageVi: z.string().optional(),
   inquiryMessageEn: z.string().optional(),
@@ -63,11 +90,18 @@ export default function ProductFormPage() {
   const id = params.id as string
   const isNew = id === 'new'
 
+
   const [isLoading, setIsLoading] = useState(!isNew)
   const [isSaving, setIsSaving] = useState(false)
   const [images, setImages] = useState<string[]>([])
   const [hoverImage, setHoverImage] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
+  const [categories, setCategories] = useState<Category[]>([])
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
+  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false)
+  const [isCreatingCategory, setIsCreatingCategory] = useState(false)
+  const [newCatNameVi, setNewCatNameVi] = useState('')
+  const [newCatNameEn, setNewCatNameEn] = useState('')
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
@@ -75,18 +109,94 @@ export default function ProductFormPage() {
       slug: '',
       nameVi: '',
       nameEn: '',
+      shortDescriptionVi: '',
+      shortDescriptionEn: '',
       descriptionVi: '',
       descriptionEn: '',
       priceVND: 0,
+      priceUSD: undefined,
+      salePriceVND: null,
+      salePriceUSD: null,
+      categoryId: null,
       material: '',
       dimensions: '',
       stock: 0,
       isActive: true,
+      isFeatured: false,
       inquiryEnabled: true,
       inquiryMessageVi: '',
       inquiryMessageEn: '',
     },
   })
+
+  // Update document title based on product name or "Create Product"
+  const productName = form.watch('nameVi') || form.watch('nameEn')
+  useDocumentTitle(
+    isNew ? t('createProduct') : (productName || t('updateProduct')),
+    'Admin - Ươm Archive'
+  )
+
+  // Auto-convert prices
+  const [autoConvertPrice, setAutoConvertPrice] = useState(true)
+  const [autoConvertSalePrice, setAutoConvertSalePrice] = useState(true)
+  const [isTranslating, setIsTranslating] = useState(false)
+
+  const priceVND = useWatch({ control: form.control, name: 'priceVND' })
+  const salePriceVND = useWatch({ control: form.control, name: 'salePriceVND' })
+
+  // Auto-convert VND to USD when VND changes
+  useEffect(() => {
+    if (autoConvertPrice && priceVND) {
+      const usdValue = vndToUsd(priceVND)
+      form.setValue('priceUSD', usdValue)
+    }
+  }, [priceVND, autoConvertPrice, form])
+
+  useEffect(() => {
+    if (autoConvertSalePrice && salePriceVND) {
+      const usdValue = vndToUsd(salePriceVND)
+      form.setValue('salePriceUSD', usdValue)
+    }
+  }, [salePriceVND, autoConvertSalePrice, form])
+
+  // Simple mock translation function
+  const translateText = async (text: string, from: 'vi' | 'en', to: 'vi' | 'en'): Promise<string> => {
+    // In a real implementation, this would call a translation API (e.g. Google Translate)
+    // Currently, we'll just return the original text so the user can edit it
+    // This acts as a "Copy" or "Fill" feature when API is not available
+    if (from === to || !text.trim()) return text
+
+    // Mock translation - just return text
+    return text
+  }
+
+  const handleTranslate = async (field: 'name' | 'description', direction: 'vi-to-en' | 'en-to-vi') => {
+    setIsTranslating(true)
+    try {
+      if (field === 'name') {
+        if (direction === 'vi-to-en') {
+          const translated = await translateText(form.getValues('nameVi'), 'vi', 'en')
+          form.setValue('nameEn', translated)
+        } else {
+          const translated = await translateText(form.getValues('nameEn'), 'en', 'vi')
+          form.setValue('nameVi', translated)
+        }
+      } else {
+        if (direction === 'vi-to-en') {
+          const translated = await translateText(form.getValues('descriptionVi'), 'vi', 'en')
+          form.setValue('descriptionEn', translated)
+        } else {
+          const translated = await translateText(form.getValues('descriptionEn'), 'en', 'vi')
+          form.setValue('descriptionVi', translated)
+        }
+      }
+      toast({ title: t('success'), description: 'Translation completed' })
+    } catch (error) {
+      toast({ title: t('error'), description: 'Translation failed', variant: 'destructive' })
+    } finally {
+      setIsTranslating(false)
+    }
+  }
 
   const fetchProduct = useCallback(async () => {
     if (isNew) return
@@ -97,19 +207,34 @@ export default function ProductFormPage() {
         slug: product.slug,
         nameVi: product.nameVi,
         nameEn: product.nameEn,
+        shortDescriptionVi: product.shortDescriptionVi || '',
+        shortDescriptionEn: product.shortDescriptionEn || '',
         descriptionVi: product.descriptionVi,
         descriptionEn: product.descriptionEn,
         priceVND: product.priceVND,
+        priceUSD: product.priceUSD || undefined,
+        salePriceVND: product.salePriceVND || null,
+        salePriceUSD: product.salePriceUSD || null,
+        categoryId: product.categoryId || null,
         material: product.material,
         dimensions: product.dimensions,
         stock: product.stock,
         isActive: product.isActive,
+        isFeatured: product.isFeatured,
         inquiryEnabled: product.inquiryEnabled,
         inquiryMessageVi: product.inquiryMessageVi || '',
         inquiryMessageEn: product.inquiryMessageEn || '',
       })
       setImages(product.images)
       setHoverImage(product.hoverImage || null)
+      setSelectedCategoryId(product.categoryId || null)
+      // Disable auto-convert when loading existing product with custom USD prices
+      if (product.priceUSD) {
+        setAutoConvertPrice(false)
+      }
+      if (product.salePriceUSD) {
+        setAutoConvertSalePrice(false)
+      }
     } catch (error) {
       console.error('Failed to fetch product:', error)
       toast({ title: t('error'), description: 'Product not found', variant: 'destructive' })
@@ -122,6 +247,18 @@ export default function ProductFormPage() {
   useEffect(() => {
     fetchProduct()
   }, [fetchProduct])
+
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const data = await api.getCategories({ includeInactive: true })
+        setCategories(data)
+      } catch (error) {
+        console.error('Failed to load categories:', error)
+      }
+    }
+    loadCategories()
+  }, [])
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
@@ -174,6 +311,48 @@ export default function ProductFormPage() {
     const nameVi = form.getValues('nameVi')
     if (nameVi) {
       form.setValue('slug', slugify(nameVi))
+    }
+  }
+
+  const handleQuickCreateCategory = async () => {
+    if (!newCatNameVi || !newCatNameEn) {
+      toast({ 
+        title: t('error'), 
+        description: 'Vui lòng nhập tên danh mục cả tiếng Việt và tiếng Anh', 
+        variant: 'destructive' 
+      })
+      return
+    }
+
+    setIsCreatingCategory(true)
+    try {
+      const slug = slugify(newCatNameVi)
+      const newCategory = await api.createCategory({
+        nameVi: newCatNameVi,
+        nameEn: newCatNameEn,
+        slug,
+        isActive: true,
+        order: categories.length,
+      })
+
+      // Update categories list
+      setCategories(prev => [...prev, newCategory])
+      
+      // Select the new category
+      form.setValue('categoryId', newCategory.id)
+      
+      toast({ title: t('success'), description: t('categoryCreated') })
+      setIsCategoryDialogOpen(false)
+      setNewCatNameVi('')
+      setNewCatNameEn('')
+    } catch (error: any) {
+      toast({ 
+        title: t('error'), 
+        description: error.message || 'Không thể tạo danh mục', 
+        variant: 'destructive' 
+      })
+    } finally {
+      setIsCreatingCategory(false)
     }
   }
 
@@ -233,13 +412,27 @@ export default function ProductFormPage() {
                     />
                   </div>
 
+                  {/* Name Fields with Translation */}
                   <div className="grid gap-4 md:grid-cols-2">
                     <FormField
                       control={form.control}
                       name="nameVi"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Vietnamese Name</FormLabel>
+                          <div className="flex items-center justify-between">
+                            <FormLabel>{t('vietnameseName')}</FormLabel>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleTranslate('name', 'en-to-vi')}
+                              disabled={isTranslating}
+                              className="h-6 text-xs"
+                            >
+                              <Languages className="h-3 w-3 mr-1" />
+                              EN → VI
+                            </Button>
+                          </div>
                           <FormControl>
                             <Input {...field} />
                           </FormControl>
@@ -252,7 +445,20 @@ export default function ProductFormPage() {
                       name="nameEn"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>English Name</FormLabel>
+                          <div className="flex items-center justify-between">
+                            <FormLabel>{t('englishName')}</FormLabel>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleTranslate('name', 'vi-to-en')}
+                              disabled={isTranslating}
+                              className="h-6 text-xs"
+                            >
+                              <Languages className="h-3 w-3 mr-1" />
+                              VI → EN
+                            </Button>
+                          </div>
                           <FormControl>
                             <Input {...field} />
                           </FormControl>
@@ -262,15 +468,63 @@ export default function ProductFormPage() {
                     />
                   </div>
 
+                  {/* Short Description Fields */}
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name="shortDescriptionVi"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Mô tả ngắn (Tiếng Việt)</FormLabel>
+                          <FormControl>
+                            <Textarea {...field} rows={3} placeholder="Mô tả tóm tắt..." />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="shortDescriptionEn"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Short Description (English)</FormLabel>
+                          <FormControl>
+                            <Textarea {...field} rows={3} placeholder="Summary description..." />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  {/* Description Fields with Rich Text Editor and Translation */}
                   <div className="grid gap-4 md:grid-cols-2">
                     <FormField
                       control={form.control}
                       name="descriptionVi"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Vietnamese Description</FormLabel>
+                          <div className="flex items-center justify-between">
+                            <FormLabel>{t('vietnameseDescription')}</FormLabel>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleTranslate('description', 'en-to-vi')}
+                              disabled={isTranslating}
+                              className="h-6 text-xs"
+                            >
+                              <Languages className="h-3 w-3 mr-1" />
+                              EN → VI
+                            </Button>
+                          </div>
                           <FormControl>
-                            <Textarea {...field} rows={5} />
+                            <RichTextEditor
+                              content={field.value}
+                              onChange={field.onChange}
+                              placeholder={t('enterDescription')}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -281,9 +535,26 @@ export default function ProductFormPage() {
                       name="descriptionEn"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>English Description</FormLabel>
+                          <div className="flex items-center justify-between">
+                            <FormLabel>{t('englishDescription')}</FormLabel>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleTranslate('description', 'vi-to-en')}
+                              disabled={isTranslating}
+                              className="h-6 text-xs"
+                            >
+                              <Languages className="h-3 w-3 mr-1" />
+                              VI → EN
+                            </Button>
+                          </div>
                           <FormControl>
-                            <Textarea {...field} rows={5} />
+                            <RichTextEditor
+                              content={field.value}
+                              onChange={field.onChange}
+                              placeholder={t('enterDescription')}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -291,26 +562,137 @@ export default function ProductFormPage() {
                     />
                   </div>
 
-                  <div className="grid gap-4 md:grid-cols-3">
-                    <FormField
-                      control={form.control}
-                      name="priceVND"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Price (VND)</FormLabel>
-                          <FormControl>
-                            <Input {...field} type="number" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                  {/* Price Fields */}
+                  <Card className="bg-muted/30">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base">{t('pricing')}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {/* Original Price */}
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <FormField
+                          control={form.control}
+                          name="priceVND"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>{t('priceVND')} *</FormLabel>
+                              <FormControl>
+                                <Input {...field} type="number" placeholder="1,000,000" />
+                              </FormControl>
+                              <FormDescription>{t('originalPrice')}</FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="priceUSD"
+                          render={({ field }) => (
+                            <FormItem>
+                              <div className="flex items-center justify-between">
+                                <FormLabel>{t('priceUSD')}</FormLabel>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setAutoConvertPrice(!autoConvertPrice)}
+                                  className="h-6 text-xs"
+                                >
+                                  <RefreshCw className={`h-3 w-3 mr-1 ${autoConvertPrice ? 'text-green-500' : ''}`} />
+                                  {autoConvertPrice ? t('autoOn') : t('autoOff')}
+                                </Button>
+                              </div>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  type="number"
+                                  step="0.01"
+                                  value={field.value || ''}
+                                  onChange={(e) => {
+                                    setAutoConvertPrice(false)
+                                    field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)
+                                  }}
+                                />
+                              </FormControl>
+                              <FormDescription>{t('autoCalculated')}</FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <Separator />
+
+                      {/* Sale Price */}
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <FormField
+                          control={form.control}
+                          name="salePriceVND"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>{t('salePriceVND')}</FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  type="number"
+                                  placeholder={t('optional')}
+                                  value={field.value || ''}
+                                  onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
+                                />
+                              </FormControl>
+                              <FormDescription>{t('discountPrice')}</FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="salePriceUSD"
+                          render={({ field }) => (
+                            <FormItem>
+                              <div className="flex items-center justify-between">
+                                <FormLabel>{t('salePriceUSD')}</FormLabel>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setAutoConvertSalePrice(!autoConvertSalePrice)}
+                                  className="h-6 text-xs"
+                                >
+                                  <RefreshCw className={`h-3 w-3 mr-1 ${autoConvertSalePrice ? 'text-green-500' : ''}`} />
+                                  {autoConvertSalePrice ? t('autoOn') : t('autoOff')}
+                                </Button>
+                              </div>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  type="number"
+                                  step="0.01"
+                                  placeholder={t('optional')}
+                                  value={field.value || ''}
+                                  onChange={(e) => {
+                                    setAutoConvertSalePrice(false)
+                                    field.onChange(e.target.value ? parseFloat(e.target.value) : null)
+                                  }}
+                                />
+                              </FormControl>
+                              <FormDescription>{t('autoCalculated')}</FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Material and Dimensions */}
+                  <div className="grid gap-4 md:grid-cols-2">
                     <FormField
                       control={form.control}
                       name="material"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Material</FormLabel>
+                          <FormLabel>{t('material')}</FormLabel>
                           <FormControl>
                             <Input {...field} />
                           </FormControl>
@@ -323,7 +705,7 @@ export default function ProductFormPage() {
                       name="dimensions"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Dimensions</FormLabel>
+                          <FormLabel>{t('dimensions')}</FormLabel>
                           <FormControl>
                             <Input {...field} placeholder="15cm x 20cm" />
                           </FormControl>
@@ -333,19 +715,62 @@ export default function ProductFormPage() {
                     />
                   </div>
 
-                  <FormField
-                    control={form.control}
-                    name="stock"
-                    render={({ field }) => (
-                      <FormItem className="max-w-xs">
-                        <FormLabel>Stock</FormLabel>
-                        <FormControl>
-                          <Input {...field} type="number" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  {/* Category and Stock */}
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name="categoryId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <div className="flex items-center justify-between">
+                            <FormLabel>{t('category')}</FormLabel>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-2 text-xs"
+                              onClick={() => setIsCategoryDialogOpen(true)}
+                            >
+                              <Plus className="h-3 w-3 mr-1" />
+                              Thêm mới
+                            </Button>
+                          </div>
+                          <Select
+                            onValueChange={(val) => field.onChange(val === 'none' ? null : val)}
+                            value={field.value || 'none'}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder={t('selectCategory')} />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="none">{t('noCategory')}</SelectItem>
+                              {categories.map((category) => (
+                                <SelectItem key={category.id} value={category.id}>
+                                  {locale === 'vi' ? category.nameVi : category.nameEn}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="stock"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('stockLabelForm')}</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="number" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </CardContent>
               </Card>
 
@@ -419,15 +844,27 @@ export default function ProductFormPage() {
               {/* Status */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="uppercase tracking-wide">Status</CardTitle>
+                  <CardTitle className="uppercase tracking-wide">{t('status')}</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-4">
                   <FormField
                     control={form.control}
                     name="isActive"
                     render={({ field }) => (
                       <FormItem className="flex items-center justify-between">
-                        <FormLabel>Active</FormLabel>
+                        <FormLabel>{t('active')}</FormLabel>
+                        <FormControl>
+                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="isFeatured"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center justify-between">
+                        <FormLabel>{t('featured')}</FormLabel>
                         <FormControl>
                           <Switch checked={field.value} onCheckedChange={field.onChange} />
                         </FormControl>
@@ -444,25 +881,32 @@ export default function ProductFormPage() {
                   <CardDescription>Upload product images (4:5 ratio recommended)</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-4">
                     {images.map((image, index) => (
-                      <div key={index} className="relative aspect-product border">
+                      <div key={index} className="relative aspect-product border rounded-md overflow-hidden group cursor-move">
                         <Image
                           src={getImageUrl(image)}
                           alt={`Product ${index + 1}`}
                           fill
                           sizes="150px"
-                          className="object-cover"
+                          className="object-cover transition-transform duration-300 group-hover:scale-105"
                         />
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="icon"
-                          className="absolute top-1 right-1 h-6 w-6"
-                          onClick={() => removeImage(index)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
+                        {index === 0 && (
+                          <div className="absolute top-2 left-2 bg-primary/90 text-primary-foreground text-[10px] uppercase font-bold tracking-wider px-2 py-1 rounded-sm shadow-sm z-10 backdrop-blur-sm">
+                            Main Display
+                          </div>
+                        )}
+                        <div className="absolute inset-x-0 bottom-0 p-2 bg-black/60 translate-y-full group-hover:translate-y-0 transition-transform duration-300 flex justify-center">
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            className="h-7 w-7 p-0 rounded-full"
+                            onClick={() => removeImage(index)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -558,6 +1002,51 @@ export default function ProductFormPage() {
           </div>
         </form>
       </Form>
+
+      {/* Quick Category Dialog */}
+      <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('createCategory')}</DialogTitle>
+            <DialogDescription>
+              Tạo nhanh danh mục mới để gán cho sản phẩm này.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label>{t('vietnameseName')}</Label>
+              <Input
+                value={newCatNameVi}
+                onChange={(e) => setNewCatNameVi(e.target.value)}
+                placeholder="Ví dụ: Gốm sứ"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label>{t('englishName')}</Label>
+              <Input
+                value={newCatNameEn}
+                onChange={(e) => setNewCatNameEn(e.target.value)}
+                placeholder="Example: Ceramics"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsCategoryDialogOpen(false)}
+              disabled={isCreatingCategory}
+            >
+              {t('cancel')}
+            </Button>
+            <Button
+              onClick={handleQuickCreateCategory}
+              disabled={isCreatingCategory}
+            >
+              {isCreatingCategory ? t('loading') : t('create')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

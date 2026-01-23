@@ -56,21 +56,60 @@ model User {
   @@map("users")
 }
 
-model Product {
-  id            String   @id @default(cuid())
-  slug          String   @unique
+model Category {
+  id            String  @id @default(cuid())
+  slug          String  @unique
   nameVi        String
   nameEn        String
-  descriptionVi String   @db.Text
-  descriptionEn String   @db.Text
-  priceVND      Int
-  images        String[] // Array of image URLs
-  hoverImage    String? // Image shown on hover (optional)
-  material      String
-  dimensions    String
-  stock         Int      @default(0)
-  isActive      Boolean  @default(true)
-  isFeatured    Boolean  @default(false)
+  descriptionVi String? @db.Text
+  descriptionEn String? @db.Text
+  image         String? // Optional category image
+  order         Int     @default(0) // For sorting categories
+  isActive      Boolean @default(true)
+
+  // Audit fields
+  createdAt DateTime  @default(now())
+  createdBy String?
+  updatedAt DateTime  @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+
+  // Relations
+  products Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id                 String @id @default(cuid())
+  slug               String @unique
+  nameVi             String
+  nameEn             String
+  shortDescriptionVi String @default("")
+  shortDescriptionEn String @default("")
+  descriptionVi      String @db.Text
+  descriptionEn      String @db.Text
+
+  // Category relation
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  // Price fields - Original/List price
+  priceVND Int
+  priceUSD Float? // Auto-calculated from VND if not provided
+
+  // Sale/Discount price (nullable - only set if product is on sale)
+  salePriceVND Int?
+  salePriceUSD Float?
+
+  images     String[] // Array of image URLs
+  hoverImage String? // Image shown on hover (optional)
+  material   String
+  dimensions String
+  stock      Int      @default(0)
+  isActive   Boolean  @default(true)
+  isFeatured Boolean  @default(false)
 
   // Inquiry feature - Replace order system
   inquiryEnabled   Boolean @default(true) // Enable/disable inquiry button

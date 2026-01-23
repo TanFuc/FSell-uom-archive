@@ -1,4 +1,4 @@
-import { IsString, IsInt, IsArray, Min, IsNotEmpty, IsBoolean, IsOptional } from 'class-validator'
+import { IsString, IsInt, IsArray, Min, IsNotEmpty, IsBoolean, IsOptional, IsNumber } from 'class-validator'
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
 
 export class CreateProductDto {
@@ -26,6 +26,22 @@ export class CreateProductDto {
   @IsNotEmpty()
   nameEn: string
 
+  @ApiPropertyOptional({
+    example: 'Mô tả ngắn gọn về sản phẩm',
+    description: 'Product short description in Vietnamese',
+  })
+  @IsString()
+  @IsOptional()
+  shortDescriptionVi?: string
+
+  @ApiPropertyOptional({
+    example: 'Brief product description',
+    description: 'Product short description in English',
+  })
+  @IsString()
+  @IsOptional()
+  shortDescriptionEn?: string
+
   @ApiProperty({
     example: 'Bình gốm trắng thủ công với thiết kế tối giản',
     description: 'Product description in Vietnamese',
@@ -44,12 +60,42 @@ export class CreateProductDto {
 
   @ApiProperty({
     example: 1200000,
-    description: 'Price in VND',
+    description: 'Price in VND (Original/List Price)',
     minimum: 0,
   })
   @IsInt()
   @Min(0)
   priceVND: number
+
+  @ApiPropertyOptional({
+    example: 48.0,
+    description: 'Price in USD (auto-calculated from VND if not provided)',
+    minimum: 0,
+  })
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  priceUSD?: number
+
+  @ApiPropertyOptional({
+    example: 1000000,
+    description: 'Sale/Discount price in VND (if product is on sale)',
+    minimum: 0,
+  })
+  @IsInt()
+  @Min(0)
+  @IsOptional()
+  salePriceVND?: number
+
+  @ApiPropertyOptional({
+    example: 40.0,
+    description: 'Sale/Discount price in USD (auto-calculated from salePriceVND if not provided)',
+    minimum: 0,
+  })
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  salePriceUSD?: number
 
   @ApiProperty({
     example: ['https://example.com/image1.jpg', 'https://example.com/image2.jpg'],
@@ -146,4 +192,12 @@ export class CreateProductDto {
   @IsString({ each: true })
   @IsOptional()
   relatedProductIds?: string[]
+
+  @ApiPropertyOptional({
+    example: 'category_id_123',
+    description: 'Category ID of the product',
+  })
+  @IsString()
+  @IsOptional()
+  categoryId?: string
 }

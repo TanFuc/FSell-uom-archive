@@ -183,11 +183,10 @@ export default function UsersPage() {
     }
   }
 
-  // Only ADMIN can access this page
   if (currentUser?.role !== 'ADMIN') {
     return (
       <div className="flex items-center justify-center py-12">
-        <span className="text-muted-foreground">Access denied. Admin only.</span>
+        <span className="text-muted-foreground">{t('accessDenied')}</span>
       </div>
     )
   }
@@ -197,11 +196,11 @@ export default function UsersPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-serif">{t('users')}</h1>
-          <p className="text-muted-foreground">Manage admin users</p>
+          <p className="text-muted-foreground">{t('manageAdminUsers')}</p>
         </div>
         <Button onClick={openCreateDialog}>
           <Plus className="mr-2 h-4 w-4" />
-          Add User
+          {t('addUser')}
         </Button>
       </div>
 
@@ -217,7 +216,7 @@ export default function UsersPage() {
         </div>
         <div className="flex items-center gap-2">
           <Switch checked={includeDeleted} onCheckedChange={setIncludeDeleted} />
-          <span className="text-sm">Show deleted</span>
+          <span className="text-sm">{t('showDeleted')}</span>
         </div>
       </div>
 
@@ -225,10 +224,10 @@ export default function UsersPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead>{t('name')}</TableHead>
+              <TableHead>{t('email')}</TableHead>
+              <TableHead>{t('role')}</TableHead>
+              <TableHead>{t('status')}</TableHead>
               <TableHead className="w-12">{t('actions')}</TableHead>
             </TableRow>
           </TableHeader>
@@ -266,11 +265,11 @@ export default function UsersPage() {
                   </TableCell>
                   <TableCell>
                     {user.deletedAt ? (
-                      <Badge variant="destructive">Deleted</Badge>
+                      <Badge variant="destructive">{t('deleted')}</Badge>
                     ) : user.isActive ? (
-                      <Badge variant="default">Active</Badge>
+                      <Badge variant="default">{t('active')}</Badge>
                     ) : (
-                      <Badge variant="secondary">Inactive</Badge>
+                      <Badge variant="secondary">{t('inactive')}</Badge>
                     )}
                   </TableCell>
                   <TableCell>
@@ -315,7 +314,7 @@ export default function UsersPage() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingUser ? t('edit') : t('create')} User</DialogTitle>
+            <DialogTitle>{editingUser ? t('edit') : t('create')} {t('user')}</DialogTitle>
           </DialogHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -324,7 +323,7 @@ export default function UsersPage() {
                 name="fullName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Full Name</FormLabel>
+                    <FormLabel>{t('fullName')}</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -338,7 +337,7 @@ export default function UsersPage() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>{t('email')}</FormLabel>
                     <FormControl>
                       <Input {...field} type="email" />
                     </FormControl>
@@ -353,7 +352,7 @@ export default function UsersPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      Password {editingUser && '(leave empty to keep current)'}
+                      {t('passwordHint')}
                     </FormLabel>
                     <FormControl>
                       <Input {...field} type="password" />
@@ -368,16 +367,16 @@ export default function UsersPage() {
                 name="role"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Role</FormLabel>
+                    <FormLabel>{t('role')}</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select role" />
+                          <SelectValue placeholder={t('selectRole')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="ADMIN">Admin</SelectItem>
-                        <SelectItem value="MANAGER">Manager</SelectItem>
+                        <SelectItem value="ADMIN">{t('roleAdmin')}</SelectItem>
+                        <SelectItem value="MANAGER">{t('roleManager')}</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />

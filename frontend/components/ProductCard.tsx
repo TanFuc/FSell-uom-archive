@@ -1,10 +1,11 @@
 'use client'
 
-
 import Link from 'next/link'
 import Image from 'next/image'
+import { useTranslations } from 'next-intl'
 import type { Product } from '@/lib/types'
 import { optimizeProductImage } from '@/lib/utils'
+import { getDisplayPrice } from '@/lib/currency'
 
 interface ProductCardProps {
   product: Product
@@ -12,10 +13,14 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, locale }: ProductCardProps) {
+  const t = useTranslations('admin')
   const name = locale === 'vi' ? product.nameVi : product.nameEn
   const hasImages = product.images && product.images.length > 0
   const mainImage = hasImages ? product.images[0] : null
   const hoverImage = product.hoverImage
+
+  // Get price display with sale logic
+  const priceDisplay = getDisplayPrice(product, locale)
 
   return (
     <Link
@@ -48,17 +53,30 @@ export function ProductCard({ product, locale }: ProductCardProps) {
           </>
         ) : (
           <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-            No Image
+            {t('noImage')}
+          </div>
+        )}
+        {/* Sale badge */}
+        {priceDisplay.hasDiscount && priceDisplay.discountPercentage && (
+          <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded z-20">
+            -{priceDisplay.discountPercentage}%
           </div>
         )}
       </div>
       <div className="space-y-2">
-        <h3 className="text-base md:text-lg font-medium leading-tight line-clamp-2 min-h-[3rem] transition-all">
+        <h3 className="text-sm md:text-base font-serif font-medium leading-tight line-clamp-2 min-h-[2.5rem] md:min-h-[3rem] overflow-hidden text-ellipsis">
           {name}
         </h3>
-        <p className="text-base md:text-lg text-muted-foreground font-light">
-          {product.priceVND.toLocaleString('vi-VN')}₫
-        </p>
+        <div className="flex items-center gap-2 flex-wrap">
+          <p className="text-sm md:text-lg text-muted-foreground font-serif font-light">
+            {priceDisplay.currentPrice}
+          </p>
+          {priceDisplay.hasDiscount && priceDisplay.originalPrice && (
+            <p className="text-xs md:text-sm text-muted-foreground/60 line-through">
+              {priceDisplay.originalPrice}
+            </p>
+          )}
+        </div>
       </div>
     </Link>
   )

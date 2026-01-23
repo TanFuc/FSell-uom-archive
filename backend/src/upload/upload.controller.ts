@@ -47,13 +47,18 @@ export class UploadController {
           format: 'binary',
           description: 'Image file (JPEG, PNG, WebP, GIF)',
         },
+        folder: {
+          type: 'string',
+          description: 'Destination folder (default: products)',
+          default: 'products',
+        },
       },
     },
   })
   @ApiResponse({ status: 201, description: 'Image uploaded successfully' })
   @ApiResponse({ status: 400, description: 'Invalid file' })
-  async uploadImage(@UploadedFile() file: Express.Multer.File) {
-    return this.uploadService.uploadProductImage(file)
+  async uploadImage(@UploadedFile() file: Express.Multer.File, @Body('folder') folder?: string) {
+    return this.uploadService.uploadProductImage(file, folder)
   }
 
   @Post('product-images')

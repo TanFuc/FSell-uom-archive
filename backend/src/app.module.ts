@@ -5,10 +5,11 @@ import { PrismaModule } from './prisma'
 import { RedisModule } from './redis'
 import { AuthModule } from './auth/auth.module'
 import { ProductsModule } from './products/products.module'
+import { CategoriesModule } from './categories/categories.module'
 import { SettingsModule } from './settings/settings.module'
 import { UploadModule } from './upload/upload.module'
 import { UsersModule } from './users/users.module'
-import { BannersModule } from './banners/banners.module';
+import { BannersModule } from './banners/banners.module'
 
 // Orders and Notifications modules removed
 // Customers now contact via social media using the Inquiry feature
@@ -38,6 +39,7 @@ import { BannersModule } from './banners/banners.module';
     // Feature modules
     AuthModule,
     ProductsModule,
+    CategoriesModule,
     SettingsModule,
     UploadModule,
     UsersModule,
