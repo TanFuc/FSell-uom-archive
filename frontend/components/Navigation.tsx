@@ -1,8 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { useLocale, useTranslations } from 'next-intl'
 import { usePathname, useRouter } from 'next/navigation'
+import { useLocale, useTranslations } from 'next-intl'
 import Logo from './Logo'
 
 export default function Navigation() {
@@ -20,12 +20,12 @@ export default function Navigation() {
   return (
     <>
       {/* Top Left - Logo/Brand */}
-      <div className="fixed top-6 left-6 z-50">
+      <div className="fixed left-6 top-6 z-50">
         <Logo variant="text" />
       </div>
 
       {/* Top Right - Language Toggle */}
-      <div className="fixed top-6 right-6 z-50 flex items-center gap-2">
+      <div className="fixed right-6 top-6 z-50 flex items-center gap-2">
         <button
           onClick={() => switchLocale('vi')}
           className={`nav-link ${locale === 'vi' ? 'italic' : ''}`}

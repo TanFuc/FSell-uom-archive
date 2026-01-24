@@ -1,12 +1,12 @@
 'use client'
 
+import { zodResolver } from '@hookform/resolvers/zod'
+import { Loader2, Save, Eye, EyeOff } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import * as z from 'z od'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import * as z from 'zod'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Form,
   FormControl,
@@ -16,8 +16,8 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
 import { useToast } from '@/hooks/use-toast'
-import { Loader2, Save, Eye, EyeOff } from 'lucide-react'
 
 const cloudinarySchema = z.object({
   cloudName: z.string().min(1, 'Cloud name là bắt buộc'),
@@ -56,15 +56,16 @@ export default function CloudinarySettingsPage() {
         description: (
           <div className="space-y-2">
             <p className="font-medium">
-              Vui lòng cập nhật các giá trị sau vào file <code className="bg-muted px-1 py-0.5 rounded">.env</code> của backend:
+              Vui lòng cập nhật các giá trị sau vào file{' '}
+              <code className="rounded bg-muted px-1 py-0.5">.env</code> của backend:
             </p>
-            <div className="mt-2 p-3 bg-muted rounded-md font-mono text-xs space-y-1">
+            <div className="mt-2 space-y-1 rounded-md bg-muted p-3 font-mono text-xs">
               <div>CLOUDINARY_CLOUD_NAME=&quot;{data.cloudName}&quot;</div>
               <div>CLOUDINARY_API_KEY=&quot;{data.apiKey}&quot;</div>
               <div>CLOUDINARY_API_SECRET=&quot;{data.apiSecret}&quot;</div>
               <div>CLOUDINARY_FOLDER=&quot;{data.folder}&quot;</div>
             </div>
-            <p className="text-sm text-muted-foreground mt-2">
+            <p className="mt-2 text-sm text-muted-foreground">
               Sau khi cập nhật, khởi động lại server backend để áp dụng thay đổi.
             </p>
           </div>
@@ -106,7 +107,7 @@ export default function CloudinarySettingsPage() {
     <div className="container max-w-4xl py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight">Cài đặt Cloudinary</h1>
-        <p className="text-muted-foreground mt-2">
+        <p className="mt-2 text-muted-foreground">
           Cấu hình thông tin kết nối đến Cloudinary cho chức năng upload ảnh
         </p>
       </div>
@@ -115,7 +116,8 @@ export default function CloudinarySettingsPage() {
         <CardHeader>
           <CardTitle>Thông tin xác thực Cloudinary</CardTitle>
           <CardDescription>
-            Nhập thông tin tài khoản Cloudinary của bạn. Bạn có thể tìm thấy những thông tin này trong{' '}
+            Nhập thông tin tài khoản Cloudinary của bạn. Bạn có thể tìm thấy những thông tin này
+            trong{' '}
             <a
               href="https://cloudinary.com/console"
               target="_blank"
@@ -140,7 +142,9 @@ export default function CloudinarySettingsPage() {
                       <Input
                         {...field}
                         placeholder="my-cloud-name"
-                        className={fieldState.error ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                        className={
+                          fieldState.error ? 'border-red-500 focus-visible:ring-red-500' : ''
+                        }
                       />
                     </FormControl>
                     <FormDescription>
@@ -161,7 +165,9 @@ export default function CloudinarySettingsPage() {
                       <Input
                         {...field}
                         placeholder="123456789012345"
-                        className={fieldState.error ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                        className={
+                          fieldState.error ? 'border-red-500 focus-visible:ring-red-500' : ''
+                        }
                       />
                     </FormControl>
                     <FormDescription>API key từ Cloudinary console</FormDescription>
@@ -182,7 +188,9 @@ export default function CloudinarySettingsPage() {
                           {...field}
                           type={showApiSecret ? 'text' : 'password'}
                           placeholder="••••••••••••••••"
-                          className={fieldState.error ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                          className={
+                            fieldState.error ? 'border-red-500 focus-visible:ring-red-500' : ''
+                          }
                         />
                         <Button
                           type="button"
@@ -191,7 +199,11 @@ export default function CloudinarySettingsPage() {
                           className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
                           onClick={() => setShowApiSecret(!showApiSecret)}
                         >
-                          {showApiSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          {showApiSecret ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
                         </Button>
                       </div>
                     </FormControl>
@@ -211,7 +223,9 @@ export default function CloudinarySettingsPage() {
                       <Input
                         {...field}
                         placeholder="uom-archive"
-                        className={fieldState.error ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                        className={
+                          fieldState.error ? 'border-red-500 focus-visible:ring-red-500' : ''
+                        }
                       />
                     </FormControl>
                     <FormDescription>
@@ -238,9 +252,11 @@ export default function CloudinarySettingsPage() {
                 </Button>
               </div>
 
-              <div className="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-                <h4 className="font-semibold text-yellow-900 dark:text-yellow-200 mb-2">⚠️ Lưu ý bảo mật</h4>
-                <ul className="text-sm text-yellow-800 dark:text-yellow-300 space-y-1 list-disc list-inside">
+              <div className="mt-6 rounded-lg border border-yellow-200 bg-yellow-50 p-4 dark:border-yellow-800 dark:bg-yellow-900/20">
+                <h4 className="mb-2 font-semibold text-yellow-900 dark:text-yellow-200">
+                  ⚠️ Lưu ý bảo mật
+                </h4>
+                <ul className="list-inside list-disc space-y-1 text-sm text-yellow-800 dark:text-yellow-300">
                   <li>API Secret phải được bảo mật tuyệt đối</li>
                   <li>Không chia sẻ thông tin này với bất kỳ ai</li>
                   <li>Các giá trị này phải được cấu hình trong file .env của backend</li>
@@ -258,7 +274,7 @@ export default function CloudinarySettingsPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <h4 className="font-semibold mb-2">1. Lấy thông tin từ Cloudinary</h4>
+            <h4 className="mb-2 font-semibold">1. Lấy thông tin từ Cloudinary</h4>
             <p className="text-sm text-muted-foreground">
               Truy cập{' '}
               <a
@@ -274,11 +290,12 @@ export default function CloudinarySettingsPage() {
           </div>
 
           <div>
-            <h4 className="font-semibold mb-2">2. Cập nhật file .env trong backend</h4>
-            <p className="text-sm text-muted-foreground mb-2">
-              Mở file <code className="bg-muted px-1 py-0.5 rounded">.env</code> trong thư mục backend và thêm/cập nhật:
+            <h4 className="mb-2 font-semibold">2. Cập nhật file .env trong backend</h4>
+            <p className="mb-2 text-sm text-muted-foreground">
+              Mở file <code className="rounded bg-muted px-1 py-0.5">.env</code> trong thư mục
+              backend và thêm/cập nhật:
             </p>
-            <pre className="bg-muted p-3 rounded-md text-xs overflow-x-auto">
+            <pre className="overflow-x-auto rounded-md bg-muted p-3 text-xs">
               {`CLOUDINARY_CLOUD_NAME="your-cloud-name"
 CLOUDINARY_API_KEY="your-api-key"
 CLOUDINARY_API_SECRET="your-api-secret"
@@ -287,7 +304,7 @@ CLOUDINARY_FOLDER="uom-archive"`}
           </div>
 
           <div>
-            <h4 className="font-semibold mb-2">3. Khởi động lại backend server</h4>
+            <h4 className="mb-2 font-semibold">3. Khởi động lại backend server</h4>
             <p className="text-sm text-muted-foreground">
               Sau khi cập nhật file .env, khởi động lại backend server để các thay đổi có hiệu lực
             </p>

@@ -1,12 +1,12 @@
 'use client'
 
-import { useEditor, EditorContent } from '@tiptap/react'
-import StarterKit from '@tiptap/starter-kit'
 import ImageExtension from '@tiptap/extension-image'
 import LinkExtension from '@tiptap/extension-link'
 import Placeholder from '@tiptap/extension-placeholder'
-import UnderlineExtension from '@tiptap/extension-underline'
 import TextAlign from '@tiptap/extension-text-align'
+import UnderlineExtension from '@tiptap/extension-underline'
+import { useEditor, EditorContent } from '@tiptap/react'
+import StarterKit from '@tiptap/starter-kit'
 import {
   Bold,
   Italic,
@@ -30,11 +30,11 @@ import {
   AlignJustify,
   Underline as UnderlineIcon,
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
 import { useCallback, useState, useRef, useEffect } from 'react'
-import { api } from '@/lib/api'
+import { Button } from '@/components/ui/button'
 import { useToast } from '@/hooks/use-toast'
+import { api } from '@/lib/api'
+import { cn } from '@/lib/utils'
 
 interface RichTextEditorProps {
   content: string
@@ -102,30 +102,36 @@ export function RichTextEditor({
     },
   })
 
-  // ... (handleImageUpload, handleFileSelect, setLink consts remain the same) 
-  const handleImageUpload = useCallback(async (file: File) => {
-    if (!editor) return
+  // ... (handleImageUpload, handleFileSelect, setLink consts remain the same)
+  const handleImageUpload = useCallback(
+    async (file: File) => {
+      if (!editor) return
 
-    setIsUploading(true)
-    try {
-      const result = await api.uploadImage(file)
-      editor.chain().focus().setImage({ src: result.url }).run()
-      toast({ title: 'Success', description: 'Image uploaded successfully' })
-    } catch (error) {
-      console.error('Image upload failed:', error)
-      toast({ title: 'Error', description: 'Failed to upload image', variant: 'destructive' })
-    } finally {
-      setIsUploading(false)
-    }
-  }, [editor, toast])
+      setIsUploading(true)
+      try {
+        const result = await api.uploadImage(file)
+        editor.chain().focus().setImage({ src: result.url }).run()
+        toast({ title: 'Success', description: 'Image uploaded successfully' })
+      } catch (error) {
+        console.error('Image upload failed:', error)
+        toast({ title: 'Error', description: 'Failed to upload image', variant: 'destructive' })
+      } finally {
+        setIsUploading(false)
+      }
+    },
+    [editor, toast],
+  )
 
-  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      handleImageUpload(file)
-    }
-    e.target.value = ''
-  }, [handleImageUpload])
+  const handleFileSelect = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0]
+      if (file) {
+        handleImageUpload(file)
+      }
+      e.target.value = ''
+    },
+    [handleImageUpload],
+  )
 
   const setLink = useCallback(() => {
     if (!editor) return
@@ -169,10 +175,7 @@ export function RichTextEditor({
         onClick()
       }}
       disabled={btnDisabled || disabled}
-      className={cn(
-        'h-8 w-8 p-0',
-        isActive && 'bg-muted text-foreground'
-      )}
+      className={cn('h-8 w-8 p-0', isActive && 'bg-muted text-foreground')}
       title={title}
     >
       {children}
@@ -180,15 +183,15 @@ export function RichTextEditor({
   )
 
   return (
-    <div 
+    <div
       className={cn(
-        'border rounded-md flex flex-col bg-background transition-all duration-200',
+        'flex flex-col rounded-md border bg-background transition-all duration-200',
         className,
-        isMaximized && 'fixed inset-0 z-[100] rounded-none border-none h-screen w-screen'
+        isMaximized && 'fixed inset-0 z-[100] h-screen w-screen rounded-none border-none',
       )}
     >
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-1 border-b p-2 bg-muted/30 sticky top-0 z-10 w-full overflow-x-auto">
+      <div className="sticky top-0 z-10 flex w-full flex-wrap items-center gap-1 overflow-x-auto border-b bg-muted/30 p-2">
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleBold().run()}
           isActive={editor.isActive('bold')}
@@ -218,7 +221,7 @@ export function RichTextEditor({
           <Strikethrough className="h-4 w-4" />
         </ToolbarButton>
 
-        <div className="w-px h-6 bg-border mx-1" />
+        <div className="mx-1 h-6 w-px bg-border" />
 
         <ToolbarButton
           onClick={() => editor.chain().focus().setTextAlign('left').run()}
@@ -249,7 +252,7 @@ export function RichTextEditor({
           <AlignJustify className="h-4 w-4" />
         </ToolbarButton>
 
-        <div className="w-px h-6 bg-border mx-1" />
+        <div className="mx-1 h-6 w-px bg-border" />
 
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
@@ -273,7 +276,7 @@ export function RichTextEditor({
           <Heading3 className="h-4 w-4" />
         </ToolbarButton>
 
-        <div className="w-px h-6 bg-border mx-1" />
+        <div className="mx-1 h-6 w-px bg-border" />
 
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleBulletList().run()}
@@ -297,13 +300,9 @@ export function RichTextEditor({
           <Quote className="h-4 w-4" />
         </ToolbarButton>
 
-        <div className="w-px h-6 bg-border mx-1" />
+        <div className="mx-1 h-6 w-px bg-border" />
 
-        <ToolbarButton
-          onClick={setLink}
-          isActive={editor.isActive('link')}
-          title="Add Link"
-        >
+        <ToolbarButton onClick={setLink} isActive={editor.isActive('link')} title="Add Link">
           <LinkIcon className="h-4 w-4" />
         </ToolbarButton>
         {editor.isActive('link') && (
@@ -330,7 +329,7 @@ export function RichTextEditor({
           <ImageIcon className="h-4 w-4" />
         </ToolbarButton>
 
-        <div className="w-px h-6 bg-border mx-1" />
+        <div className="mx-1 h-6 w-px bg-border" />
 
         <ToolbarButton
           onClick={() => editor.chain().focus().undo().run()}
@@ -348,11 +347,11 @@ export function RichTextEditor({
         </ToolbarButton>
 
         <div className="flex-1" />
-        
+
         <ToolbarButton
           onClick={() => setIsMaximized(!isMaximized)}
           isActive={isMaximized}
-          title={isMaximized ? "Minimize" : "Maximize"}
+          title={isMaximized ? 'Minimize' : 'Maximize'}
         >
           {isMaximized ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
         </ToolbarButton>
@@ -362,7 +361,7 @@ export function RichTextEditor({
       <EditorContent
         editor={editor}
         className={cn(
-          'prose prose-sm max-w-none p-4 min-h-[150px] focus:outline-none flex-1 overflow-y-auto w-full transition-all duration-300',
+          'prose prose-sm min-h-[150px] w-full max-w-none flex-1 overflow-y-auto p-4 transition-all duration-300 focus:outline-none',
           '[&_.ProseMirror]:min-h-[130px] [&_.ProseMirror]:outline-none',
           '[&_.ProseMirror_p.is-editor-empty:first-child::before]:text-muted-foreground',
           '[&_.ProseMirror_p.is-editor-empty:first-child::before]:content-[attr(data-placeholder)]',
@@ -370,8 +369,9 @@ export function RichTextEditor({
           '[&_.ProseMirror_p.is-editor-empty:first-child::before]:h-0',
           '[&_.ProseMirror_p.is-editor-empty:first-child::before]:pointer-events-none',
           '[&_.ProseMirror]:text-left',
-          disabled && 'opacity-50 cursor-not-allowed',
-          isMaximized && 'p-8 max-w-4xl mx-auto [&_.ProseMirror]:min-h-[calc(100vh-100px)] border-x border-border/10 shadow-sm'
+          disabled && 'cursor-not-allowed opacity-50',
+          isMaximized &&
+            'mx-auto max-w-4xl border-x border-border/10 p-8 shadow-sm [&_.ProseMirror]:min-h-[calc(100vh-100px)]',
         )}
       />
     </div>

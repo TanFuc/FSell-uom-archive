@@ -1,9 +1,16 @@
 'use client'
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { apiClient } from '@/lib/api-client'
-import type { Product, CreateProductDto, UpdateProductDto, QueryProductsDto, BulkDeleteDto, BulkUpdateDto } from '@/lib/types'
 import { toast } from 'sonner'
+import { apiClient } from '@/lib/api-client'
+import type {
+  Product,
+  CreateProductDto,
+  UpdateProductDto,
+  QueryProductsDto,
+  BulkDeleteDto,
+  BulkUpdateDto,
+} from '@/lib/types'
 
 // Query keys for cache management
 export const productKeys = {
@@ -153,10 +160,10 @@ export function useBulkSoftDelete() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (data: BulkDeleteDto) => apiClient.bulkSoftDelete(data),
+    mutationFn: (data: BulkDeleteDto) => apiClient.bulkDeleteProducts(data),
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: productKeys.all })
-      toast.success(`${response.count} products deleted`)
+      toast.success(`${response.deletedCount} products deleted`)
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to delete products')
@@ -164,15 +171,19 @@ export function useBulkSoftDelete() {
   })
 }
 
-// Admin: Bulk hard delete
+// Admin: Bulk hard delete (not implemented in API, loop individual deletes)
 export function useBulkHardDelete() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (data: BulkDeleteDto) => apiClient.bulkHardDelete(data),
+    mutationFn: async (data: BulkDeleteDto) => {
+      // Loop through each ID and hard delete individually
+      await Promise.all(data.ids.map((id) => apiClient.hardDeleteProduct(id)))
+      return { deletedCount: data.ids.length }
+    },
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: productKeys.all })
-      toast.success(`${response.count} products permanently deleted`)
+      toast.success(`${response.deletedCount} products permanently deleted`)
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to permanently delete products')
@@ -185,10 +196,10 @@ export function useBulkRestore() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (data: BulkDeleteDto) => apiClient.bulkRestore(data),
+    mutationFn: (ids: string[]) => apiClient.bulkRestoreProducts(ids),
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: productKeys.all })
-      toast.success(`${response.count} products restored`)
+      toast.success(`${response.restoredCount} products restored`)
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to restore products')
@@ -201,10 +212,10 @@ export function useBulkUpdate() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (data: BulkUpdateDto) => apiClient.bulkUpdate(data),
+    mutationFn: (data: BulkUpdateDto) => apiClient.bulkUpdateProducts(data),
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: productKeys.all })
-      toast.success(`${response.count} products updated`)
+      toast.success(`${response.updatedCount} products updated`)
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to update products')

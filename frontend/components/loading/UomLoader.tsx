@@ -2,18 +2,18 @@ import { useEffect, useState } from 'react'
 
 /**
  * Custom "Ươm." Loading Screen Component
- * 
+ *
  * Features:
  * - Fullscreen overlay (NOT a small spinner)
  * - Character-by-character pulse animation
  * - Vietnamese accent marks (Ư, ơ) preserved
  * - Smooth fade transitions
  * - Optional loading bar
- * 
+ *
  * Usage:
  * ```tsx
  * import { UomLoader } from '@/components/loading/UomLoader'
- * 
+ *
  * <UomLoader isLoading={isLoading} />
  * ```
  */
@@ -23,10 +23,7 @@ interface UomLoaderProps {
   showLoadingBar?: boolean
 }
 
-export function UomLoader({ 
-  isLoading, 
-  showLoadingBar = true 
-}: UomLoaderProps) {
+export function UomLoader({ isLoading, showLoadingBar = true }: UomLoaderProps) {
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -35,38 +32,30 @@ export function UomLoader({
 
   // Prevent SSR hydration mismatch
   if (!mounted) return null
-  
+
   // Don't render if not loading
   if (!isLoading) return null
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-background transition-opacity duration-500"
       style={{ opacity: isLoading ? 1 : 0 }}
     >
       <div className="flex flex-col items-center gap-8">
         {/* Animated "Ươm." text with Vietnamese accents */}
         <div className="relative">
-          <h1 className="text-8xl font-serif tracking-wide text-foreground select-none antialiased">
-            <span className="inline-block animate-pulse-char animation-delay-0">
-              Ư
-            </span>
-            <span className="inline-block animate-pulse-char animation-delay-100">
-              ơ
-            </span>
-            <span className="inline-block animate-pulse-char animation-delay-200">
-              m
-            </span>
-            <span className="inline-block animate-pulse-char animation-delay-300">
-              .
-            </span>
+          <h1 className="select-none font-serif text-8xl tracking-wide text-foreground antialiased">
+            <span className="animate-pulse-char animation-delay-0 inline-block">Ư</span>
+            <span className="animate-pulse-char animation-delay-100 inline-block">ơ</span>
+            <span className="animate-pulse-char animation-delay-200 inline-block">m</span>
+            <span className="animate-pulse-char animation-delay-300 inline-block">.</span>
           </h1>
         </div>
 
         {/* Optional: Subtle loading bar */}
         {showLoadingBar && (
-          <div className="w-64 h-0.5 bg-muted overflow-hidden">
-            <div className="h-full bg-foreground animate-loading-bar" />
+          <div className="h-0.5 w-64 overflow-hidden bg-muted">
+            <div className="animate-loading-bar h-full bg-foreground" />
           </div>
         )}
       </div>
@@ -90,7 +79,7 @@ export function UomLoaderBreathing({ isLoading }: { isLoading: boolean }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background">
       <div className="flex flex-col items-center">
-        <h1 className="text-8xl font-serif tracking-wide text-foreground select-none animate-breathe">
+        <h1 className="animate-breathe select-none font-serif text-8xl tracking-wide text-foreground">
           Ươm.
         </h1>
       </div>
@@ -115,11 +104,11 @@ export function UomLoaderTypewriter({ isLoading }: { isLoading: boolean }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background">
       <div className="flex flex-col items-center">
-        <h1 className="text-8xl font-serif tracking-wide text-foreground select-none">
+        <h1 className="select-none font-serif text-8xl tracking-wide text-foreground">
           {characters.map((char, i) => (
             <span
               key={i}
-              className="inline-block animate-fade-in"
+              className="animate-fade-in inline-block"
               style={{
                 animationDelay: `${i * 0.15}s`,
                 animationFillMode: 'backwards',

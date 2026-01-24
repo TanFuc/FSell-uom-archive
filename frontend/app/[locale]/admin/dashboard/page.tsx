@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useTranslations } from 'next-intl'
 import { Package, Users, DollarSign, Eye, LayoutGrid, CheckCircle, Star } from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useDocumentTitle } from '@/hooks/use-document-title'
 import { api } from '@/lib/api'
@@ -81,7 +81,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-serif mb-2">{t('dashboard')}</h1>
+        <h1 className="mb-2 font-serif text-2xl">{t('dashboard')}</h1>
         <p className="text-muted-foreground">{t('welcomeMessage')}</p>
       </div>
 
@@ -97,9 +97,7 @@ export default function DashboardPage() {
                 <Icon className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
-                  {isLoading ? '...' : card.value}
-                </div>
+                <div className="text-2xl font-bold">{isLoading ? '...' : card.value}</div>
                 <p className="text-xs text-muted-foreground">{card.description}</p>
               </CardContent>
             </Card>
@@ -116,7 +114,7 @@ export default function DashboardPage() {
         <CardContent className="grid gap-4 md:grid-cols-3">
           <a
             href="./products"
-            className="flex items-center gap-3 p-4 border hover:bg-accent transition-colors"
+            className="flex items-center gap-3 border p-4 transition-colors hover:bg-accent"
           >
             <Package className="h-5 w-5" />
             <div>
@@ -126,7 +124,7 @@ export default function DashboardPage() {
           </a>
           <a
             href="./theme"
-            className="flex items-center gap-3 p-4 border hover:bg-accent transition-colors"
+            className="flex items-center gap-3 border p-4 transition-colors hover:bg-accent"
           >
             <Eye className="h-5 w-5" />
             <div>
@@ -136,7 +134,7 @@ export default function DashboardPage() {
           </a>
           <a
             href="./categories"
-            className="flex items-center gap-3 p-4 border hover:bg-accent transition-colors"
+            className="flex items-center gap-3 border p-4 transition-colors hover:bg-accent"
           >
             <LayoutGrid className="h-5 w-5" />
             <div>
@@ -146,7 +144,7 @@ export default function DashboardPage() {
           </a>
           <a
             href="./settings"
-            className="flex items-center gap-3 p-4 border hover:bg-accent transition-colors"
+            className="flex items-center gap-3 border p-4 transition-colors hover:bg-accent"
           >
             <DollarSign className="h-5 w-5" />
             <div>

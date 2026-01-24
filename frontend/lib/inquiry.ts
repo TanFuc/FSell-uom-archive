@@ -1,10 +1,7 @@
-import { Product, Locale } from './types'
 import { DEFAULT_EXCHANGE_RATE } from './constants'
+import { type Product, type Locale } from './types'
 
-export function generateFacebookInquiryUrl(
-  facebookPageUrl: string,
-  message: string
-): string {
+export function generateFacebookInquiryUrl(facebookPageUrl: string, message: string): string {
   const encodedMessage = encodeURIComponent(message)
   // Ensure URL has proper format
   const baseUrl = facebookPageUrl.startsWith('http')
@@ -13,10 +10,7 @@ export function generateFacebookInquiryUrl(
   return `${baseUrl}?text=${encodedMessage}`
 }
 
-export function generateInstagramInquiryUrl(
-  instagramUsername: string,
-  message: string
-): string {
+export function generateInstagramInquiryUrl(instagramUsername: string, message: string): string {
   const encodedMessage = encodeURIComponent(message)
   // Remove @ if present
   const username = instagramUsername.replace('@', '')
@@ -26,7 +20,7 @@ export function generateInstagramInquiryUrl(
 export function generateDefaultInquiryMessage(
   product: Pick<Product, 'nameVi' | 'nameEn' | 'priceVND' | 'material' | 'dimensions'>,
   language: Locale,
-  exchangeRate: number = DEFAULT_EXCHANGE_RATE
+  exchangeRate: number = DEFAULT_EXCHANGE_RATE,
 ): string {
   if (language === 'vi') {
     return `Xin chào! Tôi quan tâm đến sản phẩm "${product.nameVi}".
@@ -50,14 +44,8 @@ Could you provide more information?`
   }
 }
 
-export function getInquiryMessage(
-  product: Product,
-  locale: Locale,
-  exchangeRate?: number
-): string {
-  const message = locale === 'vi'
-    ? product.inquiryMessageVi
-    : product.inquiryMessageEn
+export function getInquiryMessage(product: Product, locale: Locale, exchangeRate?: number): string {
+  const message = locale === 'vi' ? product.inquiryMessageVi : product.inquiryMessageEn
 
   // If message is empty, generate default
   if (!message || message.trim() === '') {

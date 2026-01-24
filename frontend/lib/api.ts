@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosError } from 'axios'
+import axios, { type AxiosInstance, type AxiosError } from 'axios'
 import type {
   Product,
   Category,
@@ -51,7 +51,7 @@ class ApiClient {
         }
         return config
       },
-      (error) => Promise.reject(error)
+      (error) => Promise.reject(error),
     )
 
     // Response interceptor - Handle token refresh
@@ -80,7 +80,7 @@ class ApiClient {
               {},
               {
                 headers: { Authorization: `Bearer ${refreshToken}` },
-              }
+              },
             )
 
             // Update tokens
@@ -95,23 +95,23 @@ class ApiClient {
             if (typeof window !== 'undefined') {
               const isAdminPage = window.location.pathname.includes('/admin')
               const locale = localStorage.getItem('locale') || 'vi'
-              
+
               // Clear all auth data but preserve locale
               const savedLocale = localStorage.getItem('locale')
               localStorage.clear()
               if (savedLocale) {
                 localStorage.setItem('locale', savedLocale)
               }
-              
+
               const loginPath = isAdminPage ? `/${locale}/admin/login` : `/${locale}/login`
-              
+
               // Show error message
               console.error('Session expired. Please login again.')
-              
+
               // Redirect to appropriate login page
               window.location.href = loginPath
             }
-            
+
             return Promise.reject(refreshError)
           }
         }
@@ -122,7 +122,7 @@ class ApiClient {
         }
 
         return Promise.reject(error)
-      }
+      },
     )
   }
 
@@ -139,7 +139,7 @@ class ApiClient {
       method?: string
       body?: string
       headers?: Record<string, string>
-    }
+    },
   ): Promise<T> {
     const method = options?.method || 'GET'
     const config: any = {
@@ -170,9 +170,7 @@ class ApiClient {
     if (params?.search) searchParams.set('search', params.search)
 
     const query = searchParams.toString()
-    return this.request<PaginatedResponse<Product>>(
-      `/products${query ? `?${query}` : ''}`
-    )
+    return this.request<PaginatedResponse<Product>>(`/products${query ? `?${query}` : ''}`)
   }
 
   async getProductBySlug(slug: string): Promise<Product> {
@@ -201,11 +199,17 @@ class ApiClient {
 
   // ==================== AUTH ENDPOINTS ====================
 
-  async login(email: string, password: string): Promise<{ accessToken: string; refreshToken: string; user: User }> {
-    const response = await this.request<{ accessToken: string; refreshToken: string; user: User }>('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-    })
+  async login(
+    email: string,
+    password: string,
+  ): Promise<{ accessToken: string; refreshToken: string; user: User }> {
+    const response = await this.request<{ accessToken: string; refreshToken: string; user: User }>(
+      '/auth/login',
+      {
+        method: 'POST',
+        body: JSON.stringify({ email, password }),
+      },
+    )
 
     if (typeof window !== 'undefined') {
       localStorage.setItem('accessToken', response.accessToken)
@@ -239,14 +243,13 @@ class ApiClient {
     if (params?.page) searchParams.set('page', params.page.toString())
     if (params?.limit) searchParams.set('limit', params.limit.toString())
     if (params?.search) searchParams.set('search', params.search)
-    if (params?.isActive !== undefined)
-      searchParams.set('isActive', params.isActive.toString())
+    if (params?.isActive !== undefined) searchParams.set('isActive', params.isActive.toString())
     if (params?.includeDeleted !== undefined)
       searchParams.set('includeDeleted', params.includeDeleted.toString())
 
     const query = searchParams.toString()
     return this.request<PaginatedResponse<Product>>(
-      `/products/admin/list${query ? `?${query}` : ''}`
+      `/products/admin/list${query ? `?${query}` : ''}`,
     )
   }
 
@@ -352,9 +355,7 @@ class ApiClient {
       searchParams.set('includeDeleted', params.includeDeleted.toString())
 
     const query = searchParams.toString()
-    return this.request<PaginatedResponse<User>>(
-      `/users${query ? `?${query}` : ''}`
-    )
+    return this.request<PaginatedResponse<User>>(`/users${query ? `?${query}` : ''}`)
   }
 
   async createUser(data: {
@@ -369,10 +370,7 @@ class ApiClient {
     })
   }
 
-  async updateUser(
-    id: string,
-    data: Partial<User & { password?: string }>
-  ): Promise<User> {
+  async updateUser(id: string, data: Partial<User & { password?: string }>): Promise<User> {
     return this.request<User>(`/users/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
@@ -393,7 +391,10 @@ class ApiClient {
 
   // ==================== UPLOAD ENDPOINT ====================
 
-  async uploadImage(file: File, folder: string = 'products'): Promise<{ url: string; publicId?: string }> {
+  async uploadImage(
+    file: File,
+    folder: string = 'products',
+  ): Promise<{ url: string; publicId?: string }> {
     const formData = new FormData()
     formData.append('file', file)
     formData.append('folder', folder)
@@ -402,7 +403,7 @@ class ApiClient {
     const headers: HeadersInit = {}
 
     if (token) {
-      ;(headers as Record<string, string>)['Authorization'] = `Bearer ${token}`
+      headers['Authorization'] = `Bearer ${token}`
     }
 
     const response = await fetch(`${this.baseUrl}/upload/product-image`, {
@@ -432,9 +433,7 @@ class ApiClient {
       searchParams.set('includeInactive', params.includeInactive.toString())
 
     const query = searchParams.toString()
-    return this.request<Category[]>(
-      `/categories${query ? `?${query}` : ''}`
-    )
+    return this.request<Category[]>(`/categories${query ? `?${query}` : ''}`)
   }
 
   async getCategoryById(id: string): Promise<Category> {

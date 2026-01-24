@@ -1,4 +1,4 @@
-import { ThemeSettings, SocialLinks, SiteContent } from './types'
+import { type ThemeSettings, type SocialLinks, type SiteContent } from './types'
 
 export const DEFAULT_THEME: ThemeSettings = {
   id: 'default',
@@ -9,8 +9,10 @@ export const DEFAULT_THEME: ThemeSettings = {
 }
 
 export const DEFAULT_SOCIAL_LINKS: SocialLinks = {
+  id: 'default',
   facebookPageUrl: 'https://m.me/uomarchive',
   instagramUsername: 'uomarchive',
+  updatedAt: new Date().toISOString(),
 }
 
 export const DEFAULT_SITE_CONTENT: SiteContent = {

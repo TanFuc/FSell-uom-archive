@@ -1,10 +1,10 @@
 'use client'
 
+import FilePondPluginFileValidateSize from 'filepond-plugin-file-validate-size'
+import FilePondPluginFileValidateType from 'filepond-plugin-file-validate-type'
+import FilePondPluginImagePreview from 'filepond-plugin-image-preview'
 import React, { useState } from 'react'
 import { FilePond, registerPlugin } from 'react-filepond'
-import FilePondPluginImagePreview from 'filepond-plugin-image-preview'
-import FilePondPluginFileValidateType from 'filepond-plugin-file-validate-type'
-import FilePondPluginFileValidateSize from 'filepond-plugin-file-validate-size'
 
 // Import FilePond styles
 import 'filepond/dist/filepond.min.css'
@@ -14,7 +14,7 @@ import 'filepond-plugin-image-preview/dist/filepond-plugin-image-preview.min.css
 registerPlugin(
   FilePondPluginImagePreview,
   FilePondPluginFileValidateType,
-  FilePondPluginFileValidateSize
+  FilePondPluginFileValidateSize,
 )
 
 interface FileUploadProps {
@@ -128,10 +128,10 @@ export function MultipleFileUpload({
               if (data.success && data.data) {
                 const newUrls = [...uploadedUrls, data.data.url]
                 const newPublicIds = [...uploadedPublicIds, data.data.publicId]
-                
+
                 setUploadedUrls(newUrls)
                 setUploadedPublicIds(newPublicIds)
-                
+
                 // Call success callback with all uploaded files
                 onUploadSuccess?.(newUrls, newPublicIds)
               }

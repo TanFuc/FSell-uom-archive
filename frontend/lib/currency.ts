@@ -1,5 +1,5 @@
-import { Locale, Product } from './types'
 import { DEFAULT_EXCHANGE_RATE } from './constants'
+import { type Locale, type Product } from './types'
 
 /**
  * Format currency based on locale
@@ -7,7 +7,7 @@ import { DEFAULT_EXCHANGE_RATE } from './constants'
 export function formatCurrency(
   amount: number,
   currency: 'VND' | 'USD',
-  locale: Locale = 'vi'
+  locale: Locale = 'vi',
 ): string {
   if (currency === 'VND') {
     return `${amount.toLocaleString('vi-VN')}₫`
@@ -28,7 +28,7 @@ export function convertPrice(
   amount: number,
   from: 'VND' | 'USD',
   to: 'VND' | 'USD',
-  exchangeRate: number = DEFAULT_EXCHANGE_RATE
+  exchangeRate: number = DEFAULT_EXCHANGE_RATE,
 ): number {
   if (from === to) return amount
 
@@ -46,7 +46,7 @@ export function convertPrice(
 export function getDisplayPrice(
   product: Product,
   locale: Locale,
-  exchangeRate: number = DEFAULT_EXCHANGE_RATE
+  exchangeRate: number = DEFAULT_EXCHANGE_RATE,
 ): {
   currentPrice: string
   originalPrice: string | null
@@ -61,9 +61,13 @@ export function getDisplayPrice(
 
   if (isEnglish) {
     // For English, prefer USD prices
-    originalPriceValue = product.priceUSD ?? convertPrice(product.priceVND, 'VND', 'USD', exchangeRate)
-    currentPriceValue = product.salePriceUSD ??
-      (product.salePriceVND ? convertPrice(product.salePriceVND, 'VND', 'USD', exchangeRate) : originalPriceValue)
+    originalPriceValue =
+      product.priceUSD ?? convertPrice(product.priceVND, 'VND', 'USD', exchangeRate)
+    currentPriceValue =
+      product.salePriceUSD ??
+      (product.salePriceVND
+        ? convertPrice(product.salePriceVND, 'VND', 'USD', exchangeRate)
+        : originalPriceValue)
   } else {
     // For Vietnamese, use VND prices
     originalPriceValue = product.priceVND
@@ -72,7 +76,9 @@ export function getDisplayPrice(
 
   const hasDiscount = product.salePriceVND != null && product.salePriceVND < product.priceVND
   const discountPercentage = hasDiscount
-    ? Math.round(((product.priceVND - (product.salePriceVND ?? product.priceVND)) / product.priceVND) * 100)
+    ? Math.round(
+        ((product.priceVND - (product.salePriceVND ?? product.priceVND)) / product.priceVND) * 100,
+      )
     : null
 
   const currency = isEnglish ? 'USD' : 'VND'
@@ -92,9 +98,13 @@ export function getDisplayPrice(
 export function formatProductPrice(
   product: Product,
   locale: Locale,
-  exchangeRate: number = DEFAULT_EXCHANGE_RATE
+  exchangeRate: number = DEFAULT_EXCHANGE_RATE,
 ): string {
-  const { currentPrice, originalPrice, hasDiscount } = getDisplayPrice(product, locale, exchangeRate)
+  const { currentPrice, originalPrice, hasDiscount } = getDisplayPrice(
+    product,
+    locale,
+    exchangeRate,
+  )
 
   if (hasDiscount && originalPrice) {
     return `${currentPrice} (${originalPrice})`
@@ -106,19 +116,13 @@ export function formatProductPrice(
 /**
  * Calculate USD from VND
  */
-export function vndToUsd(
-  vnd: number,
-  exchangeRate: number = DEFAULT_EXCHANGE_RATE
-): number {
+export function vndToUsd(vnd: number, exchangeRate: number = DEFAULT_EXCHANGE_RATE): number {
   return Math.round((vnd / exchangeRate) * 100) / 100
 }
 
 /**
  * Calculate VND from USD
  */
-export function usdToVnd(
-  usd: number,
-  exchangeRate: number = DEFAULT_EXCHANGE_RATE
-): number {
+export function usdToVnd(usd: number, exchangeRate: number = DEFAULT_EXCHANGE_RATE): number {
   return Math.round(usd * exchangeRate)
 }

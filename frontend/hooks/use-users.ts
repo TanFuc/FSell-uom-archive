@@ -1,9 +1,9 @@
 'use client'
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { apiClient } from '@/lib/api-client'
 import type { User, CreateUserDto, UpdateUserDto, QueryUsersDto } from '@/lib/types'
-import { toast } from 'sonner'
 
 // Query keys
 export const userKeys = {
@@ -72,7 +72,7 @@ export function useDeleteUser() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (id: string) => apiClient.deleteUser(id),
+    mutationFn: (id: string) => apiClient.softDeleteUser(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: userKeys.all })
       toast.success('User deleted successfully')

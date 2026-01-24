@@ -1,15 +1,15 @@
 'use client'
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { apiClient } from '@/lib/api-client'
-import type { 
-  Settings, 
-  UpdateThemeDto, 
-  UpdateSocialLinksDto, 
-  UpdateExchangeRateDto,
-  UpdateSiteContentDto 
-} from '@/lib/types'
 import { toast } from 'sonner'
+import { apiClient } from '@/lib/api-client'
+import type {
+  AllSettings,
+  ThemeSettings,
+  SocialLinks,
+  SiteContent,
+  ExchangeRate,
+} from '@/lib/types'
 
 // Query keys
 export const settingsKeys = {
@@ -24,7 +24,7 @@ export const settingsKeys = {
 export function useSettings() {
   return useQuery({
     queryKey: settingsKeys.all,
-    queryFn: () => apiClient.getSettings(),
+    queryFn: () => apiClient.getAllSettings(),
     staleTime: 10 * 60 * 1000, // 10 minutes
   })
 }
@@ -70,7 +70,7 @@ export function useUpdateTheme() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (data: UpdateThemeDto) => apiClient.updateTheme(data),
+    mutationFn: (data: Partial<ThemeSettings>) => apiClient.updateTheme(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: settingsKeys.theme() })
       queryClient.invalidateQueries({ queryKey: settingsKeys.all })
@@ -87,7 +87,7 @@ export function useUpdateSocialLinks() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (data: UpdateSocialLinksDto) => apiClient.updateSocialLinks(data),
+    mutationFn: (data: Partial<SocialLinks>) => apiClient.updateSocialLinks(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: settingsKeys.social() })
       queryClient.invalidateQueries({ queryKey: settingsKeys.all })
@@ -104,7 +104,7 @@ export function useUpdateExchangeRate() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (data: UpdateExchangeRateDto) => apiClient.updateExchangeRate(data),
+    mutationFn: (rate: number) => apiClient.updateExchangeRate(rate),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: settingsKeys.exchange() })
       queryClient.invalidateQueries({ queryKey: settingsKeys.all })
@@ -121,7 +121,7 @@ export function useUpdateSiteContent() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (data: UpdateSiteContentDto) => apiClient.updateSiteContent(data),
+    mutationFn: (data: Partial<SiteContent>) => apiClient.updateSiteContent(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: settingsKeys.content() })
       queryClient.invalidateQueries({ queryKey: settingsKeys.all })

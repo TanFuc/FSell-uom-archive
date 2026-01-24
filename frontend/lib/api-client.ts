@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosError } from 'axios'
+import axios, { type AxiosInstance, type AxiosError } from 'axios'
 import type {
   Product,
   CreateProductDto,
@@ -10,9 +10,6 @@ import type {
   SiteContent,
   ExchangeRate,
   AllSettings,
-  AuthResponse,
-  LoginDto,
-  RegisterDto,
   User,
   CreateUserDto,
   UpdateUserDto,
@@ -21,6 +18,24 @@ import type {
   BulkUpdateDto,
   Banner,
 } from './types'
+
+// Auth types
+interface LoginDto {
+  email: string
+  password: string
+}
+
+interface RegisterDto {
+  email: string
+  password: string
+  fullName: string
+}
+
+interface AuthResponse {
+  accessToken: string
+  refreshToken: string
+  user: User
+}
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
 
@@ -49,7 +64,7 @@ class ApiClient {
         }
         return config
       },
-      (error) => Promise.reject(error)
+      (error) => Promise.reject(error),
     )
 
     // Response interceptor
@@ -68,7 +83,7 @@ class ApiClient {
             const { data } = await axios.post(
               `${API_BASE_URL}/auth/refresh`,
               {},
-              { headers: { Authorization: `Bearer ${refreshToken}` } }
+              { headers: { Authorization: `Bearer ${refreshToken}` } },
             )
 
             localStorage.setItem('accessToken', data.data.accessToken)
@@ -86,13 +101,13 @@ class ApiClient {
         }
 
         return Promise.reject(error)
-      }
+      },
     )
   }
 
   // ==================== AUTH ====================
   async register(data: RegisterDto): Promise<AuthResponse> {
-    const response = await this.client.post('/auth/register', data)
+    const response = await this.client.post<any, AuthResponse>('/auth/register', data)
     if (typeof window !== 'undefined') {
       localStorage.setItem('accessToken', response.accessToken)
       localStorage.setItem('refreshToken', response.refreshToken)
@@ -101,7 +116,7 @@ class ApiClient {
   }
 
   async login(data: LoginDto): Promise<AuthResponse> {
-    const response = await this.client.post('/auth/login', data)
+    const response = await this.client.post<any, AuthResponse>('/auth/login', data)
     if (typeof window !== 'undefined') {
       localStorage.setItem('accessToken', response.accessToken)
       localStorage.setItem('refreshToken', response.refreshToken)

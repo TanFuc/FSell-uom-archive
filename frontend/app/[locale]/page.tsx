@@ -1,28 +1,28 @@
 'use client'
 
-import { useLocale, useTranslations } from 'next-intl'
-import Link from 'next/link'
 import Image from 'next/image'
-import { useProducts } from '@/hooks/use-products'
-import { useCategories } from '@/hooks/use-categories'
-import { useSiteContent } from '@/hooks/use-settings'
-import { useBanners } from '@/hooks/use-banners'
-import { useDocumentTitle } from '@/hooks/use-document-title'
-import { ProductCard } from '@/components/ProductCard'
+import Link from 'next/link'
+import { useLocale, useTranslations } from 'next-intl'
 import { BannerCarousel } from '@/components/BannerCarousel'
+import { ProductCard } from '@/components/ProductCard'
+import { useBanners } from '@/hooks/use-banners'
+import { useCategories } from '@/hooks/use-categories'
+import { useDocumentTitle } from '@/hooks/use-document-title'
+import { useProducts } from '@/hooks/use-products'
+import { useSiteContent } from '@/hooks/use-settings'
 
 export default function HomePage() {
   const t = useTranslations('Home')
   const locale = useLocale() as 'vi' | 'en'
-  
+
   // Update document title - just use the brand name for home page
   useDocumentTitle('', 'Ươm Archive')
-  
+
   // Fetch global settings/content
   const { data: siteContent } = useSiteContent()
   const { data: banners } = useBanners(true)
   const heroImage = siteContent?.[`hero.image.${locale}`] || siteContent?.['hero.image.en']
-  
+
   // Fetch latest products
   const { data: latestProducts, isLoading: isLoadingLatest } = useProducts({
     page: 1,
@@ -54,7 +54,7 @@ export default function HomePage() {
         </div>
       ) : (
         /* Fallback Hero Section if no banners */
-        <section className="relative h-[60vh] md:h-[80vh] min-h-[400px] w-full flex items-center justify-center overflow-hidden">
+        <section className="relative flex h-[60vh] min-h-[400px] w-full items-center justify-center overflow-hidden md:h-[80vh]">
           {/* Background Image with Parallax/Zoom effect */}
           {heroImage && (
             <div className="absolute inset-0 z-0">
@@ -62,24 +62,24 @@ export default function HomePage() {
                 src={heroImage}
                 alt="Hero Background"
                 fill
-                className="object-cover animate-slow-zoom"
+                className="animate-slow-zoom object-cover"
                 priority
               />
               <div className="absolute inset-0 bg-black/30" /> {/* Overlay */}
             </div>
           )}
 
-          <div className="relative z-10 text-center text-white animate-fade-in space-y-4 md:space-y-6 max-w-4xl px-6">
-            <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl uppercase tracking-[0.2em] font-light drop-shadow-lg">
+          <div className="animate-fade-in relative z-10 max-w-4xl space-y-4 px-6 text-center text-white md:space-y-6">
+            <h1 className="text-3xl font-light uppercase tracking-[0.2em] drop-shadow-lg sm:text-4xl md:text-6xl lg:text-7xl">
               {siteContent?.[`hero.title.${locale}`] || t('title')}
             </h1>
-            <p className="text-base sm:text-lg md:text-xl font-light tracking-wide leading-relaxed max-w-2xl mx-auto drop-shadow-md opacity-90 hidden sm:block">
+            <p className="mx-auto hidden max-w-2xl text-base font-light leading-relaxed tracking-wide opacity-90 drop-shadow-md sm:block sm:text-lg md:text-xl">
               {siteContent?.[`hero.subtitle.${locale}`] || t('subtitle')}
             </p>
             <div className="pt-6 md:pt-8">
-              <Link 
-                href={`/${locale}/shop`} 
-                className="btn border-white text-white hover:bg-white hover:text-black transition-all duration-500 min-w-[160px] md:min-w-[200px] text-sm md:text-base"
+              <Link
+                href={`/${locale}/shop`}
+                className="btn min-w-[160px] border-white text-sm text-white transition-all duration-500 hover:bg-white hover:text-black md:min-w-[200px] md:text-base"
               >
                 {t('explore')}
               </Link>
@@ -89,9 +89,9 @@ export default function HomePage() {
       )}
 
       {/* New Arrivals Section */}
-      <section className="w-full px-4 md:px-12 lg:px-16 py-12 md:py-16 pt-12 md:pt-24">
-        <div className="flex justify-between items-center mb-8 md:mb-12">
-          <h2 className="uppercase tracking-wider text-sm md:text-base">{t('featured')}</h2>
+      <section className="w-full px-4 py-12 pt-12 md:px-12 md:py-16 md:pt-24 lg:px-16">
+        <div className="mb-8 flex items-center justify-between md:mb-12">
+          <h2 className="text-sm uppercase tracking-wider md:text-base">{t('featured')}</h2>
           <Link href={`/${locale}/shop`} className="nav-link text-xs md:text-sm">
             {t('viewAll')}
           </Link>
@@ -101,9 +101,9 @@ export default function HomePage() {
           <div className="grid-products">
             {[...Array(4)].map((_, i) => (
               <div key={i} className="space-y-4">
-                <div className="aspect-product bg-muted/30 animate-pulse" />
-                <div className="h-4 bg-muted/30 animate-pulse w-3/4" />
-                <div className="h-4 bg-muted/30 animate-pulse w-1/2" />
+                <div className="aspect-product animate-pulse bg-muted/30" />
+                <div className="h-4 w-3/4 animate-pulse bg-muted/30" />
+                <div className="h-4 w-1/2 animate-pulse bg-muted/30" />
               </div>
             ))}
           </div>
@@ -118,21 +118,23 @@ export default function HomePage() {
 
       {/* Categories Selection */}
       {categories && categories.length > 0 && (
-        <section className="w-full px-4 md:px-12 lg:px-16 py-12 md:py-16 bg-[#F8F5F2]/50 border-y border-border/10">
-          <div className="text-center mb-10 md:mb-16">
-            <h2 className="uppercase tracking-[0.3em] font-light text-xl md:text-2xl mb-4">Shop by Category</h2>
-            <div className="w-24 h-px bg-primary mx-auto opacity-30" />
+        <section className="w-full border-y border-border/10 bg-[#F8F5F2]/50 px-4 py-12 md:px-12 md:py-16 lg:px-16">
+          <div className="mb-10 text-center md:mb-16">
+            <h2 className="mb-4 text-xl font-light uppercase tracking-[0.3em] md:text-2xl">
+              Shop by Category
+            </h2>
+            <div className="mx-auto h-px w-24 bg-primary opacity-30" />
           </div>
-          
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8 lg:gap-12 max-w-7xl mx-auto">
+
+          <div className="mx-auto grid max-w-7xl grid-cols-2 gap-4 md:grid-cols-3 md:gap-8 lg:grid-cols-4 lg:gap-12">
             {categories.map((category) => (
-              <Link 
+              <Link
                 key={category.id}
                 href={`/${locale}/shop?categoryId=${category.id}`}
                 className="group flex flex-col items-center"
               >
-                <div className="relative aspect-square w-full overflow-hidden rounded-full mb-4 md:mb-6 border border-border/10 bg-white p-2">
-                  <div className="relative w-full h-full overflow-hidden rounded-full">
+                <div className="relative mb-4 aspect-square w-full overflow-hidden rounded-full border border-border/10 bg-white p-2 md:mb-6">
+                  <div className="relative h-full w-full overflow-hidden rounded-full">
                     {category.image ? (
                       <Image
                         src={category.image}
@@ -141,17 +143,17 @@ export default function HomePage() {
                         className="object-cover transition-transform duration-700 group-hover:scale-110"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-muted/50">
-                        <span className="text-xl md:text-2xl font-serif text-muted-foreground/30">
-                          { (locale === 'vi' ? category.nameVi : category.nameEn).charAt(0) }
+                      <div className="flex h-full w-full items-center justify-center bg-muted/50">
+                        <span className="font-serif text-xl text-muted-foreground/30 md:text-2xl">
+                          {(locale === 'vi' ? category.nameVi : category.nameEn).charAt(0)}
                         </span>
                       </div>
                     )}
                   </div>
                   {/* Subtle overlay */}
-                  <div className="absolute inset-0 rounded-full ring-1 ring-black/5 ring-inset group-hover:bg-black/5 transition-all duration-300" />
+                  <div className="absolute inset-0 rounded-full ring-1 ring-inset ring-black/5 transition-all duration-300 group-hover:bg-black/5" />
                 </div>
-                <h3 className="uppercase tracking-widest text-xs md:text-sm font-medium group-hover:text-primary transition-colors text-center">
+                <h3 className="text-center text-xs font-medium uppercase tracking-widest transition-colors group-hover:text-primary md:text-sm">
                   {locale === 'vi' ? category.nameVi : category.nameEn}
                 </h3>
               </Link>
@@ -161,8 +163,8 @@ export default function HomePage() {
       )}
 
       {/* Curated Selection Section (Replacing Philosophy) */}
-      <section className="w-full px-6 md:px-12 lg:px-16 py-12 md:py-16 border-t border-border/10">
-        <div className="flex justify-between items-center mb-12">
+      <section className="w-full border-t border-border/10 px-6 py-12 md:px-12 md:py-16 lg:px-16">
+        <div className="mb-12 flex items-center justify-between">
           <h2 className="uppercase tracking-wider">{t('curated')}</h2>
           <Link href={`/${locale}/shop?isFeatured=true`} className="nav-link">
             {t('showMore')}
@@ -173,9 +175,9 @@ export default function HomePage() {
           <div className="grid-products">
             {[...Array(4)].map((_, i) => (
               <div key={i} className="space-y-4">
-                <div className="aspect-product bg-muted/30 animate-pulse" />
-                <div className="h-4 bg-muted/30 animate-pulse w-3/4" />
-                <div className="h-4 bg-muted/30 animate-pulse w-1/2" />
+                <div className="aspect-product animate-pulse bg-muted/30" />
+                <div className="h-4 w-3/4 animate-pulse bg-muted/30" />
+                <div className="h-4 w-1/2 animate-pulse bg-muted/30" />
               </div>
             ))}
           </div>

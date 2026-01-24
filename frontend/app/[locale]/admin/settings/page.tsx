@@ -1,19 +1,27 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useTranslations } from 'next-intl'
-import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useTranslations } from 'next-intl'
+import { useEffect, useState } from 'react'
+import { useForm } from 'react-hook-form'
 import * as z from 'zod'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Form, FormControl, FormField, FormItem, FormLabel, FormDescription, FormMessage } from '@/components/ui/form'
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormDescription,
+  FormMessage,
+} from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
-import { api } from '@/lib/api'
-import { SocialLinks } from '@/lib/types'
-import { DEFAULT_SOCIAL_LINKS, DEFAULT_EXCHANGE_RATE } from '@/lib/constants'
 import { useToast } from '@/hooks/use-toast'
+import { api } from '@/lib/api'
+import { DEFAULT_SOCIAL_LINKS, DEFAULT_EXCHANGE_RATE } from '@/lib/constants'
+import { SocialLinks } from '@/lib/types'
 
 const socialLinksSchema = z.object({
   facebookPageUrl: z.string().url('Must be a valid URL').optional().or(z.literal('')),
@@ -47,10 +55,7 @@ export default function SettingsPage() {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const [social, rate] = await Promise.all([
-          api.getSocialLinks(),
-          api.getExchangeRate(),
-        ])
+        const [social, rate] = await Promise.all([api.getSocialLinks(), api.getExchangeRate()])
 
         socialForm.reset({
           facebookPageUrl: social.facebookPageUrl || '',
@@ -106,7 +111,7 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-serif">{t('settings')}</h1>
+        <h1 className="font-serif text-2xl">{t('settings')}</h1>
         <p className="text-muted-foreground">{t('configureSettings')}</p>
       </div>
 
@@ -115,9 +120,7 @@ export default function SettingsPage() {
         <Card>
           <CardHeader>
             <CardTitle className="uppercase tracking-wide">{t('socialLinks')}</CardTitle>
-            <CardDescription>
-              {t('settingsDesc')}
-            </CardDescription>
+            <CardDescription>{t('settingsDesc')}</CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...socialForm}>
@@ -131,9 +134,7 @@ export default function SettingsPage() {
                       <FormControl>
                         <Input {...field} placeholder="https://m.me/uomarchive" />
                       </FormControl>
-                      <FormDescription>
-                        {t('facebookUrlFormat')}
-                      </FormDescription>
+                      <FormDescription>{t('facebookUrlFormat')}</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -148,9 +149,7 @@ export default function SettingsPage() {
                       <FormControl>
                         <Input {...field} placeholder="uomarchive" />
                       </FormControl>
-                      <FormDescription>
-                        {t('instagramUsernameHint')}
-                      </FormDescription>
+                      <FormDescription>{t('instagramUsernameHint')}</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -168,9 +167,7 @@ export default function SettingsPage() {
         <Card>
           <CardHeader>
             <CardTitle className="uppercase tracking-wide">{t('exchangeRate')}</CardTitle>
-            <CardDescription>
-              {t('exchangeRateDesc')}
-            </CardDescription>
+            <CardDescription>{t('exchangeRateDesc')}</CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...rateForm}>

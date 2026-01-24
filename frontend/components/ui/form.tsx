@@ -1,24 +1,24 @@
 'use client'
 
-import * as React from 'react'
-import * as LabelPrimitive from '@radix-ui/react-label'
+import type * as LabelPrimitive from '@radix-ui/react-label'
 import { Slot } from '@radix-ui/react-slot'
+import * as React from 'react'
 import {
   Controller,
-  ControllerProps,
-  FieldPath,
-  FieldValues,
+  type ControllerProps,
+  type FieldPath,
+  type FieldValues,
   FormProvider,
   useFormContext,
 } from 'react-hook-form'
-import { cn } from '@/lib/utils'
 import { Label } from '@/components/ui/label'
+import { cn } from '@/lib/utils'
 
 const Form = FormProvider
 
 type FormFieldContextValue<
   TFieldValues extends FieldValues = FieldValues,
-  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
+  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
 > = {
   name: TName
 }
@@ -27,7 +27,7 @@ const FormFieldContext = React.createContext<FormFieldContextValue>({} as FormFi
 
 const FormField = <
   TFieldValues extends FieldValues = FieldValues,
-  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
+  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
 >({
   ...props
 }: ControllerProps<TFieldValues, TName>) => {
@@ -76,7 +76,7 @@ const FormItem = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivEl
         <div ref={ref} className={cn('space-y-2', className)} {...props} />
       </FormItemContext.Provider>
     )
-  }
+  },
 )
 FormItem.displayName = 'FormItem'
 
@@ -148,13 +148,13 @@ const FormMessage = React.forwardRef<
       ref={ref}
       id={formMessageId}
       className={cn(
-        'flex items-start gap-2 text-sm animate-in slide-in-from-top-1 duration-200',
-        className
+        'flex items-start gap-2 text-sm duration-200 animate-in slide-in-from-top-1',
+        className,
       )}
       {...props}
     >
       <svg
-        className="h-4 w-4 mt-0.5 flex-shrink-0 text-red-500"
+        className="mt-0.5 h-4 w-4 flex-shrink-0 text-red-500"
         fill="none"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -164,7 +164,7 @@ const FormMessage = React.forwardRef<
       >
         <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
       </svg>
-      <span className="text-red-600 font-medium leading-relaxed">{body}</span>
+      <span className="font-medium leading-relaxed text-red-600">{body}</span>
     </div>
   )
 })

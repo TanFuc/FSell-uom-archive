@@ -24,8 +24,8 @@ export function ErrorToastContent({
         <AlertCircle className="h-5 w-5 text-[#E8D4C5]" />
       </div>
       <div className="flex-1">
-        <h3 className="font-semibold text-[#FCFAF7] tracking-wide">{title}</h3>
-        <p className="text-sm text-[#E8D4C5] leading-relaxed font-light mt-0.5">{message}</p>
+        <h3 className="font-semibold tracking-wide text-[#FCFAF7]">{title}</h3>
+        <p className="mt-0.5 text-sm font-light leading-relaxed text-[#E8D4C5]">{message}</p>
       </div>
     </div>
   )
@@ -37,15 +37,11 @@ interface SuccessToastContentProps {
   className?: string
 }
 
-export function SuccessToastContent({
-  title,
-  message,
-  className,
-}: SuccessToastContentProps) {
+export function SuccessToastContent({ title, message, className }: SuccessToastContentProps) {
   return (
     <div className={cn('flex gap-3', className)}>
-      <div className="flex-shrink-0 mt-0.5">
-        <div className="h-5 w-5 rounded-full bg-green-500 flex items-center justify-center">
+      <div className="mt-0.5 flex-shrink-0">
+        <div className="flex h-5 w-5 items-center justify-center rounded-full bg-green-500">
           <svg
             className="h-3 w-3 text-white"
             fill="none"
@@ -55,13 +51,13 @@ export function SuccessToastContent({
             viewBox="0 0 24 24"
             stroke="currentColor"
           >
-            <path d="M5 13l4 4L19 7"></path>
+            <path d="M5 13l4 4L19 7" />
           </svg>
         </div>
       </div>
       <div className="flex-1">
         <h3 className="font-semibold text-green-50">{title}</h3>
-        <p className="text-sm text-green-100 mt-1">{message}</p>
+        <p className="mt-1 text-sm text-green-100">{message}</p>
       </div>
     </div>
   )

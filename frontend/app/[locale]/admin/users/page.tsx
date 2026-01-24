@@ -1,28 +1,22 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
-import { useTranslations } from 'next-intl'
-import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import {
+  Plus,
+  Search,
+  MoreHorizontal,
+  Edit,
+  Trash2,
+  RotateCcw,
+  Shield,
+  User as UserIcon,
+} from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import { useEffect, useState, useCallback } from 'react'
+import { useForm } from 'react-hook-form'
 import * as z from 'zod'
-import { Plus, Search, MoreHorizontal, Edit, Trash2, RotateCcw, Shield, User as UserIcon } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -32,23 +26,49 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Switch } from '@/components/ui/switch'
-import { api } from '@/lib/api'
-import { User } from '@/lib/types'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import { useToast } from '@/hooks/use-toast'
+import { api } from '@/lib/api'
 import { useAuthStore } from '@/lib/store'
+import { type User } from '@/lib/types'
 
 const userSchema = z.object({
   email: z.string().email('Invalid email'),
   fullName: z.string().min(1, 'Name is required'),
-  password: z.string().min(8, 'Password must be at least 8 characters').optional().or(z.literal('')),
+  password: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .optional()
+    .or(z.literal('')),
   role: z.enum(['ADMIN', 'MANAGER']),
 })
 
@@ -195,7 +215,7 @@ export default function UsersPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-serif">{t('users')}</h1>
+          <h1 className="font-serif text-2xl">{t('users')}</h1>
           <p className="text-muted-foreground">{t('manageAdminUsers')}</p>
         </div>
         <Button onClick={openCreateDialog}>
@@ -205,7 +225,7 @@ export default function UsersPage() {
       </div>
 
       <div className="flex items-center gap-4">
-        <div className="relative flex-1 max-w-sm">
+        <div className="relative max-w-sm flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder={t('search')}
@@ -234,13 +254,13 @@ export default function UsersPage() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8">
+                <TableCell colSpan={5} className="py-8 text-center">
                   {t('loading')}...
                 </TableCell>
               </TableRow>
             ) : users.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8">
+                <TableCell colSpan={5} className="py-8 text-center">
                   {t('noResults')}
                 </TableCell>
               </TableRow>
@@ -314,7 +334,9 @@ export default function UsersPage() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingUser ? t('edit') : t('create')} {t('user')}</DialogTitle>
+            <DialogTitle>
+              {editingUser ? t('edit') : t('create')} {t('user')}
+            </DialogTitle>
           </DialogHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -351,9 +373,7 @@ export default function UsersPage() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>
-                      {t('passwordHint')}
-                    </FormLabel>
+                    <FormLabel>{t('passwordHint')}</FormLabel>
                     <FormControl>
                       <Input {...field} type="password" />
                     </FormControl>
@@ -396,7 +416,10 @@ export default function UsersPage() {
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ open, user: null })}>
+      <Dialog
+        open={deleteDialog.open}
+        onOpenChange={(open) => setDeleteDialog({ open, user: null })}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('confirmDelete')}</DialogTitle>

@@ -1,20 +1,20 @@
 'use client'
 
-import { useTranslations } from 'next-intl'
 import { Facebook, Instagram, MessageSquare } from 'lucide-react'
-import { Product, SocialLinks, Locale } from '@/lib/types'
-import {
-  generateFacebookInquiryUrl,
-  generateInstagramInquiryUrl,
-  getInquiryMessage,
-} from '@/lib/inquiry'
+import { useTranslations } from 'next-intl'
+import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Button } from '@/components/ui/button'
+import {
+  generateFacebookInquiryUrl,
+  generateInstagramInquiryUrl,
+  getInquiryMessage,
+} from '@/lib/inquiry'
+import { type Product, type SocialLinks, type Locale } from '@/lib/types'
 
 interface InquiryButtonProps {
   product: Product
@@ -32,11 +32,7 @@ export default function InquiryButton({
   const t = useTranslations('product')
 
   if (!product.inquiryEnabled) {
-    return (
-      <p className="text-muted-foreground italic">
-        {t('contactForAvailability')}
-      </p>
-    )
+    return <p className="italic text-muted-foreground">{t('contactForAvailability')}</p>
   }
 
   const message = getInquiryMessage(product, locale, exchangeRate)
@@ -56,20 +52,20 @@ export default function InquiryButton({
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className="uppercase tracking-wide hover:italic hover:bg-transparent p-0 h-auto font-normal"
+          className="h-auto p-0 font-normal uppercase tracking-wide hover:bg-transparent hover:italic"
         >
-          <MessageSquare className="w-4 h-4 mr-2" />
+          <MessageSquare className="mr-2 h-4 w-4" />
           {t('askAboutProduct')}
         </Button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="start" className="bg-background border-border">
+      <DropdownMenuContent align="start" className="border-border bg-background">
         {socialLinks.facebookPageUrl && (
           <DropdownMenuItem
             onClick={handleFacebookClick}
             className="cursor-pointer hover:bg-accent"
           >
-            <Facebook className="w-4 h-4 mr-2" />
+            <Facebook className="mr-2 h-4 w-4" />
             {t('facebook')}
           </DropdownMenuItem>
         )}
@@ -79,7 +75,7 @@ export default function InquiryButton({
             onClick={handleInstagramClick}
             className="cursor-pointer hover:bg-accent"
           >
-            <Instagram className="w-4 h-4 mr-2" />
+            <Instagram className="mr-2 h-4 w-4" />
             {t('instagram')}
           </DropdownMenuItem>
         )}

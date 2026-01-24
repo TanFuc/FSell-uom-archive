@@ -20,11 +20,11 @@ export function SplashScreen() {
 
   return (
     <div
-      className={`fixed inset-0 z-[100] flex items-center justify-center bg-background transition-opacity duration-500 ${show ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+      className={`fixed inset-0 z-[100] flex items-center justify-center bg-background transition-opacity duration-500 ${show ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
       aria-hidden={!show}
     >
       <div className="relative">
-        <h1 className="font-playfair font-bold text-6xl md:text-8xl tracking-widest animate-pulse text-foreground">
+        <h1 className="animate-pulse font-playfair text-6xl font-bold tracking-widest text-foreground md:text-8xl">
           ƯƠM<span className="text-primary">.</span>
         </h1>
       </div>

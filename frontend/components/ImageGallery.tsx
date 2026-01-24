@@ -14,7 +14,7 @@ export default function ImageGallery({ images, alt }: ImageGalleryProps) {
 
   if (images.length === 0) {
     return (
-      <div className="aspect-product bg-earthy-cream flex items-center justify-center text-earthy-clay">
+      <div className="aspect-product flex items-center justify-center bg-earthy-cream text-earthy-clay">
         No images available
       </div>
     )
@@ -23,7 +23,7 @@ export default function ImageGallery({ images, alt }: ImageGalleryProps) {
   return (
     <div className="space-y-4">
       {/* Main Image */}
-      <div className="relative aspect-product overflow-hidden bg-earthy-cream">
+      <div className="aspect-product relative overflow-hidden bg-earthy-cream">
         <Image
           src={getImageUrl(images[activeIndex])}
           alt={`${alt} - Image ${activeIndex + 1}`}
@@ -41,7 +41,7 @@ export default function ImageGallery({ images, alt }: ImageGalleryProps) {
             <button
               key={index}
               onClick={() => setActiveIndex(index)}
-              className={`relative w-16 h-20 flex-shrink-0 overflow-hidden transition-opacity ${
+              className={`relative h-20 w-16 flex-shrink-0 overflow-hidden transition-opacity ${
                 index === activeIndex ? 'opacity-100' : 'opacity-50 hover:opacity-75'
               }`}
             >

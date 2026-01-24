@@ -1,14 +1,14 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useLocale, useTranslations } from 'next-intl'
+import { Search, Loader2 } from 'lucide-react'
 import { useSearchParams } from 'next/navigation'
-import { useProducts } from '@/hooks/use-products'
-import { useCategories } from '@/hooks/use-categories'
-import { useDocumentTitle } from '@/hooks/use-document-title'
+import { useLocale, useTranslations } from 'next-intl'
+import { useState, useEffect } from 'react'
 import { ProductCard } from '@/components/ProductCard'
 import { Input } from '@/components/ui/input'
-import { Search, Loader2 } from 'lucide-react'
+import { useCategories } from '@/hooks/use-categories'
+import { useDocumentTitle } from '@/hooks/use-document-title'
+import { useProducts } from '@/hooks/use-products'
 import { cn } from '@/lib/utils'
 
 export default function ShopPage() {
@@ -16,11 +16,11 @@ export default function ShopPage() {
   const t = useTranslations('shop')
   const tCommon = useTranslations('common')
   const searchParams = useSearchParams()
-  
+
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [categoryId, setCategoryId] = useState<string | undefined>(
-    searchParams.get('categoryId') || undefined
+    searchParams.get('categoryId') || undefined,
   )
 
   // Update categoryId if URL parameter changes
@@ -46,21 +46,19 @@ export default function ShopPage() {
   })
 
   return (
-    <div className="w-full px-4 md:px-12 lg:px-16 py-12 md:py-24">
+    <div className="w-full px-4 py-12 md:px-12 md:py-24 lg:px-16">
       {/* Page Title */}
-      <div className="text-center mb-8 md:mb-12 animate-fade-in">
-        <h1 className="text-2xl md:text-3xl uppercase tracking-[0.2em] mb-4">
-          {t('title')}
-        </h1>
-        <p className="text-muted-foreground max-w-2xl mx-auto leading-relaxed text-sm md:text-base">
+      <div className="animate-fade-in mb-8 text-center md:mb-12">
+        <h1 className="mb-4 text-2xl uppercase tracking-[0.2em] md:text-3xl">{t('title')}</h1>
+        <p className="mx-auto max-w-2xl text-sm leading-relaxed text-muted-foreground md:text-base">
           {t('subtitle')}
         </p>
       </div>
 
       {/* Search Bar */}
-      <div className="max-w-md mx-auto mb-8 md:mb-12 animate-slide-up">
+      <div className="animate-slide-up mx-auto mb-8 max-w-md md:mb-12">
         <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="text"
             placeholder={t('searchPlaceholder')}
@@ -69,24 +67,24 @@ export default function ShopPage() {
               setSearch(e.target.value)
               setPage(1) // Reset to first page on search
             }}
-            className="pl-12 input text-base"
+            className="input pl-12 text-base"
           />
         </div>
       </div>
 
       {/* Category Filter */}
       {categories.length > 0 && (
-        <div className="flex flex-wrap justify-center gap-2 md:gap-4 mb-8 md:mb-12 animate-fade-in">
+        <div className="animate-fade-in mb-8 flex flex-wrap justify-center gap-2 md:mb-12 md:gap-4">
           <button
             onClick={() => {
               setCategoryId(undefined)
               setPage(1)
             }}
             className={cn(
-              'px-4 md:px-6 py-2 rounded-full border text-[10px] md:text-xs uppercase tracking-[0.15em] md:tracking-[0.2em] transition-all duration-300',
+              'rounded-full border px-4 py-2 text-[10px] uppercase tracking-[0.15em] transition-all duration-300 md:px-6 md:text-xs md:tracking-[0.2em]',
               !categoryId
-                ? 'bg-[#403126] text-white border-[#403126]'
-                : 'bg-transparent border-muted-foreground/20 hover:border-[#403126]'
+                ? 'border-[#403126] bg-[#403126] text-white'
+                : 'border-muted-foreground/20 bg-transparent hover:border-[#403126]',
             )}
           >
             {t('allCategories')}
@@ -99,10 +97,10 @@ export default function ShopPage() {
                 setPage(1)
               }}
               className={cn(
-                'px-4 md:px-6 py-2 rounded-full border text-[10px] md:text-xs uppercase tracking-[0.15em] md:tracking-[0.2em] transition-all duration-300',
+                'rounded-full border px-4 py-2 text-[10px] uppercase tracking-[0.15em] transition-all duration-300 md:px-6 md:text-xs md:tracking-[0.2em]',
                 categoryId === category.id
-                  ? 'bg-[#403126] text-white border-[#403126]'
-                  : 'bg-transparent border-muted-foreground/20 hover:border-[#403126]'
+                  ? 'border-[#403126] bg-[#403126] text-white'
+                  : 'border-muted-foreground/20 bg-transparent hover:border-[#403126]',
               )}
             >
               {locale === 'vi' ? category.nameVi : category.nameEn}
@@ -116,9 +114,9 @@ export default function ShopPage() {
         <div className="grid-products">
           {[...Array(8)].map((_, i) => (
             <div key={i} className="space-y-4">
-              <div className="aspect-product bg-muted/30 animate-pulse" />
-              <div className="h-4 bg-muted/30 animate-pulse w-3/4" />
-              <div className="h-4 bg-muted/30 animate-pulse w-1/2" />
+              <div className="aspect-product animate-pulse bg-muted/30" />
+              <div className="h-4 w-3/4 animate-pulse bg-muted/30" />
+              <div className="h-4 w-1/2 animate-pulse bg-muted/30" />
             </div>
           ))}
         </div>
@@ -132,11 +130,11 @@ export default function ShopPage() {
 
           {/* Pagination */}
           {data.meta.totalPages > 1 && (
-            <div className="flex justify-center items-center gap-6 mt-16 animate-fade-in">
+            <div className="animate-fade-in mt-16 flex items-center justify-center gap-6">
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="btn btn-ghost disabled:opacity-30 disabled:cursor-not-allowed uppercase tracking-wider"
+                className="btn btn-ghost uppercase tracking-wider disabled:cursor-not-allowed disabled:opacity-30"
               >
                 {tCommon('previous')}
               </button>
@@ -146,7 +144,7 @@ export default function ShopPage() {
               <button
                 onClick={() => setPage((p) => Math.min(data.meta.totalPages, p + 1))}
                 disabled={page === data.meta.totalPages}
-                className="btn btn-ghost disabled:opacity-30 disabled:cursor-not-allowed uppercase tracking-wider"
+                className="btn btn-ghost uppercase tracking-wider disabled:cursor-not-allowed disabled:opacity-30"
               >
                 {tCommon('next')}
               </button>
@@ -154,7 +152,7 @@ export default function ShopPage() {
           )}
         </>
       ) : (
-        <div className="text-center py-16 text-muted-foreground animate-fade-in">
+        <div className="animate-fade-in py-16 text-center text-muted-foreground">
           <p>{t('noProducts')}</p>
         </div>
       )}

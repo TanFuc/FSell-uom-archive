@@ -1,20 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { Trash2, RotateCcw, X, AlertTriangle } from 'lucide-react'
+import Image from 'next/image'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
-import { Trash2, RotateCcw, X, AlertTriangle } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { useState } from 'react'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
 import {
   Dialog,
   DialogContent,
@@ -23,13 +17,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { api } from '@/lib/api'
-import { Product } from '@/lib/types'
-import { useToast } from '@/hooks/use-toast'
-import { formatPriceVND, getImageUrl, optimizeProductImage } from '@/lib/utils'
-import Image from 'next/image'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import { useProducts } from '@/hooks/use-products'
-import Link from 'next/link'
+import { useToast } from '@/hooks/use-toast'
+import { api } from '@/lib/api'
+import { type Product } from '@/lib/types'
+import { formatPriceVND, getImageUrl, optimizeProductImage } from '@/lib/utils'
 
 export default function TrashPage() {
   const locale = useLocale()
@@ -54,11 +54,11 @@ export default function TrashPage() {
   })
 
   // Filter only deleted products
-  const deletedProducts = data?.data.filter(p => p.deletedAt) || []
+  const deletedProducts = data?.data.filter((p) => p.deletedAt) || []
 
   const toggleSelect = (id: string) => {
     setSelectedProducts((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     )
   }
 
@@ -72,7 +72,7 @@ export default function TrashPage() {
 
   const handleRestore = async (product: Product) => {
     try {
-      await api.patch(`/products/${product.id}`, { deletedAt: null })
+      await api.restoreProduct(product.id)
       toast({ title: t('success'), description: t('userRestored') })
       refetch()
       setRestoreDialog({ open: false, product: null })
@@ -87,7 +87,7 @@ export default function TrashPage() {
 
   const handlePermanentDelete = async (product: Product) => {
     try {
-      await api.delete(`/products/${product.id}`)
+      await api.hardDeleteProduct(product.id)
       toast({ title: t('success'), description: 'Đã xóa vĩnh viễn sản phẩm' })
       refetch()
       setPermanentDeleteDialog({ open: false, product: null })
@@ -102,10 +102,11 @@ export default function TrashPage() {
 
   const handleBulkRestore = async () => {
     try {
-      await Promise.all(
-        selectedProducts.map(id => api.patch(`/products/${id}`, { deletedAt: null }))
-      )
-      toast({ title: t('success'), description: `Đã khôi phục ${selectedProducts.length} sản phẩm` })
+      await Promise.all(selectedProducts.map((id) => api.restoreProduct(id)))
+      toast({
+        title: t('success'),
+        description: `Đã khôi phục ${selectedProducts.length} sản phẩm`,
+      })
       setSelectedProducts([])
       refetch()
     } catch (error: any) {
@@ -120,10 +121,10 @@ export default function TrashPage() {
   return (
     <div className="container-custom py-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold mb-2">
-            <Trash2 className="inline-block w-6 h-6 mr-2" />
+          <h1 className="mb-2 text-2xl font-semibold">
+            <Trash2 className="mr-2 inline-block h-6 w-6" />
             {t('trash')}
           </h1>
           <p className="text-muted-foreground">
@@ -132,7 +133,7 @@ export default function TrashPage() {
         </div>
         <Link href={`/${locale}/admin/products`}>
           <Button variant="outline">
-            <X className="w-4 h-4 mr-2" />
+            <X className="mr-2 h-4 w-4" />
             Đóng
           </Button>
         </Link>
@@ -140,7 +141,7 @@ export default function TrashPage() {
 
       {/* Bulk Actions */}
       {selectedProducts.length > 0 && (
-        <div className="mb-4 p-4 bg-muted/50 rounded-lg flex items-center justify-between">
+        <div className="mb-4 flex items-center justify-between rounded-lg bg-muted/50 p-4">
           <span className="font-medium">
             {selectedProducts.length} {t('selected')}
           </span>
@@ -149,7 +150,7 @@ export default function TrashPage() {
               {t('clear')}
             </Button>
             <Button variant="default" size="sm" onClick={handleBulkRestore}>
-              <RotateCcw className="w-4 h-4 mr-2" />
+              <RotateCcw className="mr-2 h-4 w-4" />
               Khôi phục đã chọn
             </Button>
           </div>
@@ -157,13 +158,15 @@ export default function TrashPage() {
       )}
 
       {/* Table */}
-      <div className="border rounded-lg">
+      <div className="rounded-lg border">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead className="w-12">
                 <Checkbox
-                  checked={selectedProducts.length === deletedProducts.length && deletedProducts.length > 0}
+                  checked={
+                    selectedProducts.length === deletedProducts.length && deletedProducts.length > 0
+                  }
                   onCheckedChange={toggleSelectAll}
                 />
               </TableHead>
@@ -177,14 +180,14 @@ export default function TrashPage() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center h-[400px]">
+                <TableCell colSpan={6} className="h-[400px] text-center">
                   <span className="text-muted-foreground">{t('loading')}...</span>
                 </TableCell>
               </TableRow>
             ) : deletedProducts.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center h-[400px]">
-                  <Trash2 className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
+                <TableCell colSpan={6} className="h-[400px] text-center">
+                  <Trash2 className="mx-auto mb-4 h-12 w-12 text-muted-foreground/50" />
                   <span className="text-muted-foreground">Thùng rác trống</span>
                 </TableCell>
               </TableRow>
@@ -199,9 +202,15 @@ export default function TrashPage() {
                   </TableCell>
                   <TableCell>
                     {product.images[0] && (
-                      <div className="relative rounded overflow-hidden bg-muted/20" style={{ width: '48px', height: '60px' }}>
+                      <div
+                        className="relative overflow-hidden rounded bg-muted/20"
+                        style={{ width: '48px', height: '60px' }}
+                      >
                         <Image
-                          src={optimizeProductImage(getImageUrl(product.images[0]), { width: 100, height: 125 })}
+                          src={optimizeProductImage(getImageUrl(product.images[0]), {
+                            width: 100,
+                            height: 125,
+                          })}
                           alt={product.nameVi}
                           fill
                           sizes="48px"
@@ -212,14 +221,26 @@ export default function TrashPage() {
                   </TableCell>
                   <TableCell>
                     <div>
-                      <p className="font-medium text-muted-foreground line-clamp-2" title={product.nameVi}>{product.nameVi}</p>
-                      <p className="text-xs text-muted-foreground line-clamp-1" title={product.nameEn}>{product.nameEn}</p>
+                      <p
+                        className="line-clamp-2 font-medium text-muted-foreground"
+                        title={product.nameVi}
+                      >
+                        {product.nameVi}
+                      </p>
+                      <p
+                        className="line-clamp-1 text-xs text-muted-foreground"
+                        title={product.nameEn}
+                      >
+                        {product.nameEn}
+                      </p>
                     </div>
                   </TableCell>
                   <TableCell>{formatPriceVND(product.priceVND)}</TableCell>
                   <TableCell>
                     <span className="text-sm text-muted-foreground">
-                      {product.deletedAt ? new Date(product.deletedAt).toLocaleDateString('vi-VN') : '-'}
+                      {product.deletedAt
+                        ? new Date(product.deletedAt).toLocaleDateString('vi-VN')
+                        : '-'}
                     </span>
                   </TableCell>
                   <TableCell>
@@ -229,14 +250,14 @@ export default function TrashPage() {
                         size="sm"
                         onClick={() => setRestoreDialog({ open: true, product })}
                       >
-                        <RotateCcw className="w-4 h-4" />
+                        <RotateCcw className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="destructive"
                         size="sm"
                         onClick={() => setPermanentDeleteDialog({ open: true, product })}
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </TableCell>
@@ -248,16 +269,23 @@ export default function TrashPage() {
       </div>
 
       {/* Restore Dialog */}
-      <Dialog open={restoreDialog.open} onOpenChange={(open) => setRestoreDialog({ ...restoreDialog, open })}>
+      <Dialog
+        open={restoreDialog.open}
+        onOpenChange={(open) => setRestoreDialog({ ...restoreDialog, open })}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('restoreFromTrash')}</DialogTitle>
             <DialogDescription>
-              Khôi phục "{restoreDialog.product?.nameVi}"? Sản phẩm sẽ được hiển thị lại trong danh sách sản phẩm.
+              Khôi phục "{restoreDialog.product?.nameVi}"? Sản phẩm sẽ được hiển thị lại trong danh
+              sách sản phẩm.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setRestoreDialog({ open: false, product: null })}>
+            <Button
+              variant="outline"
+              onClick={() => setRestoreDialog({ open: false, product: null })}
+            >
               {t('cancel')}
             </Button>
             <Button onClick={() => restoreDialog.product && handleRestore(restoreDialog.product)}>
@@ -268,26 +296,36 @@ export default function TrashPage() {
       </Dialog>
 
       {/* Permanent Delete Dialog */}
-      <Dialog open={permanentDeleteDialog.open} onOpenChange={(open) => setPermanentDeleteDialog({ ...permanentDeleteDialog, open })}>
+      <Dialog
+        open={permanentDeleteDialog.open}
+        onOpenChange={(open) => setPermanentDeleteDialog({ ...permanentDeleteDialog, open })}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-destructive">
-              <AlertTriangle className="w-5 h-5" />
+              <AlertTriangle className="h-5 w-5" />
               {t('permanentlyDelete')}
             </DialogTitle>
             <DialogDescription>
-              <strong className="text-destructive">CẢNH BÁO:</strong> Xóa vĩnh viễn "{permanentDeleteDialog.product?.nameVi}"? 
+              <strong className="text-destructive">CẢNH BÁO:</strong> Xóa vĩnh viễn "
+              {permanentDeleteDialog.product?.nameVi}"?
               <br />
               Hành động này KHÔNG THỂ hoàn tác!
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setPermanentDeleteDialog({ open: false, product: null })}>
+            <Button
+              variant="outline"
+              onClick={() => setPermanentDeleteDialog({ open: false, product: null })}
+            >
               {t('cancel')}
             </Button>
-            <Button 
-              variant="destructive" 
-              onClick={() => permanentDeleteDialog.product && handlePermanentDelete(permanentDeleteDialog.product)}
+            <Button
+              variant="destructive"
+              onClick={() =>
+                permanentDeleteDialog.product &&
+                handlePermanentDelete(permanentDeleteDialog.product)
+              }
             >
               Xóa vĩnh viễn
             </Button>

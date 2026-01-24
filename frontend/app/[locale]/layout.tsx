@@ -1,28 +1,28 @@
 import type { Metadata, Viewport } from 'next'
+import { Lora, Montserrat, Playfair_Display } from 'next/font/google'
+import { notFound } from 'next/navigation'
 import { NextIntlClientProvider } from 'next-intl'
 import { getMessages, unstable_setRequestLocale } from 'next-intl/server'
-import { notFound } from 'next/navigation'
-import { locales } from '@/i18n'
-import { QueryProvider } from '@/components/providers/QueryProvider'
 import { Toaster as SonnerToaster } from 'sonner'
-import { Toaster } from '@/components/ui/toaster'
-import { ConditionalLayout } from '@/components/layout/ConditionalLayout'
 import { DisableRightClick } from '@/components/DisableRightClick'
-import { Lora, Montserrat, Playfair_Display } from 'next/font/google'
+import { ConditionalLayout } from '@/components/layout/ConditionalLayout'
+import { QueryProvider } from '@/components/providers/QueryProvider'
+import { Toaster } from '@/components/ui/toaster'
+import { locales } from '@/i18n'
 import '@/styles/globals.css'
 import '@/styles/loading-animations.css'
 
-const lora = Lora({ 
-  subsets: ['latin', 'vietnamese'], 
+const lora = Lora({
+  subsets: ['latin', 'vietnamese'],
   variable: '--font-lora',
   display: 'swap',
   weight: ['400', '500', '600', '700'],
 })
 
-const montserrat = Montserrat({ 
-  subsets: ['latin', 'vietnamese'], 
+const montserrat = Montserrat({
+  subsets: ['latin', 'vietnamese'],
   variable: '--font-montserrat',
-  display: 'swap', 
+  display: 'swap',
   weight: ['300', '400', '500', '600'],
 })
 
@@ -68,10 +68,7 @@ export const metadata: Metadata = {
     creator: '@uomarchive',
   },
   icons: {
-    icon: [
-      { url: '/favicon.ico' },
-      { url: '/assets/logo-remove.png', sizes: 'any' },
-    ],
+    icon: [{ url: '/favicon.ico' }, { url: '/assets/logo-remove.png', sizes: 'any' }],
     apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
   },
   manifest: '/manifest.json',
@@ -93,7 +90,7 @@ interface RootLayoutProps {
 }
 
 export default async function RootLayout({ children, params: { locale } }: RootLayoutProps) {
-  if (!locales.includes(locale as typeof locales[number])) {
+  if (!locales.includes(locale as (typeof locales)[number])) {
     notFound()
   }
 
@@ -102,7 +99,9 @@ export default async function RootLayout({ children, params: { locale } }: RootL
 
   return (
     <html lang={locale} suppressHydrationWarning>
-      <body className={`${lora.variable} ${montserrat.variable} ${playfair.variable} min-h-screen flex flex-col bg-background font-serif antialiased`}>
+      <body
+        className={`${lora.variable} ${montserrat.variable} ${playfair.variable} flex min-h-screen flex-col bg-background font-serif antialiased`}
+      >
         <DisableRightClick />
         <NextIntlClientProvider messages={messages}>
           <QueryProvider>

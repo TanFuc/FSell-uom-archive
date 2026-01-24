@@ -1,10 +1,10 @@
 'use client'
 
-import Link from 'next/link'
+import { Search, X, Loader2, Menu } from 'lucide-react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
-import { Search, X, Loader2, Menu } from 'lucide-react'
 import { useState, useEffect, useLayoutEffect } from 'react'
 import { useCategories } from '@/hooks/use-categories'
 import { useProducts } from '@/hooks/use-products'
@@ -30,7 +30,7 @@ export function Header() {
   }, [searchQuery])
 
   const { data: categories } = useCategories({ includeInactive: false })
-  
+
   const [scrollbarWidth, setScrollbarWidth] = useState(0)
 
   // Prevent scroll when search or mobile menu is open
@@ -81,30 +81,38 @@ export function Header() {
   }
 
   return (
-    <header 
+    <header
       style={{ paddingRight: `${scrollbarWidth}px` }}
       className={cn(
-      "fixed top-0 left-0 right-0 z-50 transition-[height,background-color,border-color,box-shadow] duration-500",
-      showSearch ? "bg-[#1a1a1a] shadow-2xl h-screen lg:h-20" : (
-        showMobileMenu ? "bg-background shadow-sm border-b border-foreground/10 h-16 lg:h-20" : "bg-primary/15 backdrop-blur-md border-b border-foreground/10 h-16 lg:h-20"
-      )
-    )}>
-      <div className="container-custom h-16 lg:h-20 flex items-center justify-between">
+        'fixed left-0 right-0 top-0 z-50 transition-[height,background-color,border-color,box-shadow] duration-500',
+        showSearch
+          ? 'h-screen bg-[#1a1a1a] shadow-2xl lg:h-20'
+          : showMobileMenu
+            ? 'h-16 border-b border-foreground/10 bg-background shadow-sm lg:h-20'
+            : 'h-16 border-b border-foreground/10 bg-primary/15 backdrop-blur-md lg:h-20',
+      )}
+    >
+      <div className="container-custom flex h-16 items-center justify-between lg:h-20">
         {!showSearch ? (
           <>
             {/* Logo */}
-            <Link href={`/${locale}`} className="font-playfair font-bold text-2xl lg:text-3xl xl:text-4xl tracking-widest text-foreground hover:opacity-80 transition-opacity duration-300 z-[60]">
+            <Link
+              href={`/${locale}`}
+              className="z-[60] font-playfair text-2xl font-bold tracking-widest text-foreground transition-opacity duration-300 hover:opacity-80 lg:text-3xl xl:text-4xl"
+            >
               ƯƠM<span className="text-primary">.</span>
             </Link>
 
             {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center gap-6 xl:gap-8">
+            <nav className="hidden items-center gap-6 lg:flex xl:gap-8">
               {navigation.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
                   className={`nav-link text-xs xl:text-sm ${
-                    pathname === item.href ? 'underline underline-offset-8 decoration-primary decoration-2' : ''
+                    pathname === item.href
+                      ? 'underline decoration-primary decoration-2 underline-offset-8'
+                      : ''
                   }`}
                 >
                   {item.name}
@@ -112,31 +120,31 @@ export function Header() {
               ))}
 
               {/* Categories Dropdown */}
-              <div className="relative group flex items-center h-full">
-                <button className="nav-link py-2 flex items-center gap-1 group-hover:opacity-70 transition-opacity text-xs xl:text-sm">
+              <div className="group relative flex h-full items-center">
+                <button className="nav-link flex items-center gap-1 py-2 text-xs transition-opacity group-hover:opacity-70 xl:text-sm">
                   {locale === 'vi' ? 'DANH MỤC' : 'CATEGORIES'}
                 </button>
-                
-                <div className="absolute top-full -left-4 w-56 bg-white border border-foreground/10 shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-[60] py-4 translate-y-2 group-hover:translate-y-0">
+
+                <div className="invisible absolute -left-4 top-full z-[60] w-56 translate-y-2 border border-foreground/10 bg-white py-4 opacity-0 shadow-xl transition-all duration-300 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
                   <nav className="flex flex-col">
                     {categories?.map((category) => (
                       <Link
                         key={category.id}
                         href={`/${locale}/shop?categoryId=${category.id}`}
-                        className="px-6 py-3 text-[11px] uppercase tracking-widest text-foreground hover:bg-muted/30 hover:pl-8 transition-all duration-300 border-l-2 border-transparent hover:border-primary flex items-center gap-3"
+                        className="flex items-center gap-3 border-l-2 border-transparent px-6 py-3 text-[11px] uppercase tracking-widest text-foreground transition-all duration-300 hover:border-primary hover:bg-muted/30 hover:pl-8"
                       >
-                         {category.image && (
-                            <div className="w-6 h-6 rounded-full overflow-hidden relative shrink-0">
-                               <Image src={category.image} alt="" fill className="object-cover" />
-                            </div>
-                         )}
-                         {locale === 'vi' ? category.nameVi : category.nameEn}
+                        {category.image && (
+                          <div className="relative h-6 w-6 shrink-0 overflow-hidden rounded-full">
+                            <Image src={category.image} alt="" fill className="object-cover" />
+                          </div>
+                        )}
+                        {locale === 'vi' ? category.nameVi : category.nameEn}
                       </Link>
                     ))}
                     <div className="mx-6 my-2 h-px bg-foreground/5" />
                     <Link
                       href={`/${locale}/shop`}
-                      className="px-6 py-2.5 text-[10px] uppercase tracking-widest text-muted-foreground hover:text-foreground transition-all duration-300 italic"
+                      className="px-6 py-2.5 text-[10px] uppercase italic tracking-widest text-muted-foreground transition-all duration-300 hover:text-foreground"
                     >
                       {locale === 'vi' ? 'Xem tất cả' : 'View All'}
                     </Link>
@@ -147,11 +155,11 @@ export function Header() {
               {/* Search Toggle */}
               <button
                 onClick={() => setShowSearch(true)}
-                className="nav-link p-1 hover:text-primary transition-colors flex items-center gap-2"
+                className="nav-link flex items-center gap-2 p-1 transition-colors hover:text-primary"
                 aria-label="Search"
               >
-                 <Search className="w-4 h-4" />
-                 <span className="hidden xl:inline text-[10px] tracking-widest">SEARCH</span>
+                <Search className="h-4 w-4" />
+                <span className="hidden text-[10px] tracking-widest xl:inline">SEARCH</span>
               </button>
 
               {/* Language switcher */}
@@ -167,212 +175,226 @@ export function Header() {
                   setShowSearch(true)
                   setShowMobileMenu(false)
                 }}
-                className="p-2 hover:bg-black/5 rounded-full transition-colors"
+                className="rounded-full p-2 transition-colors hover:bg-black/5"
               >
-                <Search className="w-5 h-5 text-foreground" />
+                <Search className="h-5 w-5 text-foreground" />
               </button>
-              
+
               <button
                 onClick={() => setShowMobileMenu(!showMobileMenu)}
-                className="p-2 hover:bg-black/5 rounded-full transition-colors"
-                aria-label={showMobileMenu ? "Close menu" : "Open menu"}
+                className="rounded-full p-2 transition-colors hover:bg-black/5"
+                aria-label={showMobileMenu ? 'Close menu' : 'Open menu'}
               >
                 {showMobileMenu ? (
-                  <X className="w-6 h-6 text-foreground" />
+                  <X className="h-6 w-6 text-foreground" />
                 ) : (
-                  <Menu className="w-6 h-6 text-foreground" />
+                  <Menu className="h-6 w-6 text-foreground" />
                 )}
               </button>
             </div>
           </>
         ) : (
           /* Header Search Mode - Active */
-          <div className="flex items-center gap-4 lg:gap-8 w-full animate-in fade-in slide-in-from-top-4 duration-500">
-             <p className="text-[10px] uppercase tracking-[0.4em] text-primary font-medium hidden lg:block shrink-0">
-                {locale === 'vi' ? 'Tìm kiếm' : 'Search'}
-             </p>
-             <form onSubmit={handleSearch} className="flex-1 relative">
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder={locale === 'vi' ? 'Nhập tên sản phẩm...' : 'Type to search...'}
-                  className="w-full bg-transparent border-b border-white/10 py-2 text-lg lg:text-2xl font-playfair italic focus:outline-none transition-all duration-500 text-white placeholder:text-white/10"
-                  autoFocus
-                />
-                {isSearching && searchQuery && (
-                  <div className="absolute right-0 top-1/2 -translate-y-1/2">
-                    <Loader2 className="w-4 h-4 animate-spin text-primary/50" />
-                  </div>
-                )}
-             </form>
-             <button 
-                onClick={() => {
-                  setShowSearch(false)
-                  setSearchQuery('')
-                }}
-                className="p-2 hover:opacity-50 transition-opacity"
-              >
-                <X className="w-5 h-5 text-foreground" />
-              </button>
+          <div className="flex w-full items-center gap-4 duration-500 animate-in fade-in slide-in-from-top-4 lg:gap-8">
+            <p className="hidden shrink-0 text-[10px] font-medium uppercase tracking-[0.4em] text-primary lg:block">
+              {locale === 'vi' ? 'Tìm kiếm' : 'Search'}
+            </p>
+            <form onSubmit={handleSearch} className="relative flex-1">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={locale === 'vi' ? 'Nhập tên sản phẩm...' : 'Type to search...'}
+                className="w-full border-b border-white/10 bg-transparent py-2 font-playfair text-lg italic text-white transition-all duration-500 placeholder:text-white/10 focus:outline-none lg:text-2xl"
+                autoFocus
+              />
+              {isSearching && searchQuery && (
+                <div className="absolute right-0 top-1/2 -translate-y-1/2">
+                  <Loader2 className="h-4 w-4 animate-spin text-primary/50" />
+                </div>
+              )}
+            </form>
+            <button
+              onClick={() => {
+                setShowSearch(false)
+                setSearchQuery('')
+              }}
+              className="p-2 transition-opacity hover:opacity-50"
+            >
+              <X className="h-5 w-5 text-foreground" />
+            </button>
           </div>
         )}
       </div>
 
       {/* Mobile Menu Drawer (Right Side) */}
-      <div className={cn(
-        "fixed inset-0 z-[49] lg:hidden pointer-events-none", // Reduced z-index to be below header
-        showMobileMenu ? "pointer-events-auto" : ""
-      )}>
-         {/* Backdrop */}
-         <div 
-            className={cn(
-               "absolute inset-0 bg-black/80 backdrop-blur-md transition-opacity duration-500",
-               showMobileMenu ? "opacity-100" : "opacity-0"
-            )}
-            onClick={() => setShowMobileMenu(false)}
-         />
+      <div
+        className={cn(
+          'pointer-events-none fixed inset-0 z-[49] lg:hidden', // Reduced z-index to be below header
+          showMobileMenu ? 'pointer-events-auto' : '',
+        )}
+      >
+        {/* Backdrop */}
+        <div
+          className={cn(
+            'absolute inset-0 bg-black/80 backdrop-blur-md transition-opacity duration-500',
+            showMobileMenu ? 'opacity-100' : 'opacity-0',
+          )}
+          onClick={() => setShowMobileMenu(false)}
+        />
 
-         {/* Drawer Panel */}
-         <div className={cn(
-            "absolute top-16 right-0 h-[calc(100vh-4rem)] w-full md:w-[400px] bg-background shadow-2xl flex flex-col transition-transform duration-500 ease-out border-l border-white/10",
-            showMobileMenu ? "translate-x-0" : "translate-x-full"
-         )}>
-             {/* Search in Menu */}
-             <div className="shrink-0 px-6 py-2">
-               <form onSubmit={(e) => {
-                  e.preventDefault();
-                  handleSearch(e);
-                  setShowMobileMenu(false);
-               }} className="relative group">
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder={locale === 'vi' ? 'Tìm kiếm sản phẩm...' : 'Search for products...'}
-                    className="w-full bg-muted/40 border border-transparent focus:border-primary/20 hover:bg-muted/60 rounded-xl px-10 py-3 text-sm focus:outline-none transition-all placeholder:text-muted-foreground/60"
-                  />
-                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/70 group-focus-within:text-primary transition-colors" />
-                  <button type="submit" className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg bg-background shadow-sm opacity-0 group-focus-within:opacity-100 transition-all scale-90 group-focus-within:scale-100">
-                    <span className="sr-only">Search</span>
-                    <Search className="w-3 h-3" />
-                  </button>
-               </form>
-             </div>
-             
-             {/* Menu Content */}
-             <div className="flex-1 overflow-y-auto px-6 py-6 space-y-8 scrollbar-hide">
-                {/* Main Links */}
-                <nav className="flex flex-col space-y-1">
-                   {navigation.map((item) => (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        className={cn(
-                          "text-2xl font-playfair italic px-4 py-3 rounded-xl transition-all duration-300",
-                          pathname === item.href 
-                            ? "bg-primary/5 text-primary pl-6" 
-                            : "text-foreground hover:bg-muted/50 hover:pl-6"
-                        )}
-                        onClick={() => setShowMobileMenu(false)}
-                      >
-                        {item.name}
-                      </Link>
-                   ))}
+        {/* Drawer Panel */}
+        <div
+          className={cn(
+            'absolute right-0 top-16 flex h-[calc(100vh-4rem)] w-full flex-col border-l border-white/10 bg-background shadow-2xl transition-transform duration-500 ease-out md:w-[400px]',
+            showMobileMenu ? 'translate-x-0' : 'translate-x-full',
+          )}
+        >
+          {/* Search in Menu */}
+          <div className="shrink-0 px-6 py-2">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                handleSearch(e)
+                setShowMobileMenu(false)
+              }}
+              className="group relative"
+            >
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={locale === 'vi' ? 'Tìm kiếm sản phẩm...' : 'Search for products...'}
+                className="w-full rounded-xl border border-transparent bg-muted/40 px-10 py-3 text-sm transition-all placeholder:text-muted-foreground/60 hover:bg-muted/60 focus:border-primary/20 focus:outline-none"
+              />
+              <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70 transition-colors group-focus-within:text-primary" />
+              <button
+                type="submit"
+                className="absolute right-2 top-1/2 -translate-y-1/2 scale-90 rounded-lg bg-background p-1.5 opacity-0 shadow-sm transition-all group-focus-within:scale-100 group-focus-within:opacity-100"
+              >
+                <span className="sr-only">Search</span>
+                <Search className="h-3 w-3" />
+              </button>
+            </form>
+          </div>
 
-                </nav>
-                
-                {/* Visual Divider */}
-                <div className="relative py-2">
-                  <div className="absolute inset-x-0 top-1/2 border-t border-dashed border-foreground/10"></div>
-                  <span className="relative z-10 bg-background px-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-medium ml-4">
-                     {locale === 'vi' ? 'BST Theo Danh mục' : 'Shop by Category'}
-                  </span>
-                </div>
-                
-                {/* Categories Grid/List */}
-                <div className="grid gap-3">
-                   {categories?.map((category) => (
-                      <Link
-                        key={category.id}
-                        href={`/${locale}/shop?categoryId=${category.id}`}
-                        onClick={() => setShowMobileMenu(false)}
-                        className="flex items-center gap-4 p-2 rounded-xl hover:bg-muted/40 transition-all duration-300 group"
-                      >
-                         <div className="w-12 h-12 rounded-lg bg-muted overflow-hidden relative shrink-0 shadow-sm group-hover:shadow-md transition-all">
-                            {category.image ? (
-                               <Image src={category.image} alt="" fill className="object-cover group-hover:scale-110 transition-transform duration-500" />
-                            ) : (
-                               <div className="w-full h-full flex items-center justify-center text-lg font-playfair italic text-muted-foreground/50 bg-muted">
-                                  {category.nameEn.charAt(0)}
-                               </div>
-                            )}
-                         </div>
-                         <div className="flex flex-col">
-                           <span className="text-sm font-medium uppercase tracking-widest text-foreground/90 group-hover:text-primary transition-colors">
-                             {locale === 'vi' ? category.nameVi : category.nameEn}
-                           </span>
-                           <span className="text-[10px] text-muted-foreground font-lora italic">
-                             {locale === 'vi' ? 'Khám phá ngay' : 'Explore now'}
-                           </span>
-                         </div>
-                         <div className="ml-auto opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all">
-                           <div className="w-6 h-6 rounded-full border border-foreground/10 flex items-center justify-center">
-                              <span className="text-[10px]">→</span>
-                           </div>
-                         </div>
-                      </Link>
-                   ))}
-                </div>
-             </div>
-             
-             {/* Drawer Footer */}
-             <div className="shrink-0 p-6 border-t border-foreground/5 bg-muted/5">
-                <Link 
-                   href={newPath} 
-                   className="flex items-center justify-between p-3 rounded-lg border border-foreground/5 bg-background/50 hover:bg-background hover:shadow-sm transition-all duration-300 group"
-                   scroll={false}
+          {/* Menu Content */}
+          <div className="scrollbar-hide flex-1 space-y-8 overflow-y-auto px-6 py-6">
+            {/* Main Links */}
+            <nav className="flex flex-col space-y-1">
+              {navigation.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    'rounded-xl px-4 py-3 font-playfair text-2xl italic transition-all duration-300',
+                    pathname === item.href
+                      ? 'bg-primary/5 pl-6 text-primary'
+                      : 'text-foreground hover:bg-muted/50 hover:pl-6',
+                  )}
+                  onClick={() => setShowMobileMenu(false)}
                 >
-                   <span className="flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground">
-                      <span className="w-8 h-8 rounded-full bg-foreground/10 flex items-center justify-center text-[10px] font-bold shrink-0">
-                        {locale.toUpperCase()}
-                      </span>
-                      {locale === 'vi' ? 'Đổi Ngôn ngữ' : 'Switch Language'}
-                   </span>
-                   <span className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">
-                      {switchLocale.toUpperCase()}
-                   </span>
+                  {item.name}
                 </Link>
-             </div>
-         </div>
+              ))}
+            </nav>
+
+            {/* Visual Divider */}
+            <div className="relative py-2">
+              <div className="absolute inset-x-0 top-1/2 border-t border-dashed border-foreground/10" />
+              <span className="relative z-10 ml-4 bg-background px-2 text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
+                {locale === 'vi' ? 'BST Theo Danh mục' : 'Shop by Category'}
+              </span>
+            </div>
+
+            {/* Categories Grid/List */}
+            <div className="grid gap-3">
+              {categories?.map((category) => (
+                <Link
+                  key={category.id}
+                  href={`/${locale}/shop?categoryId=${category.id}`}
+                  onClick={() => setShowMobileMenu(false)}
+                  className="group flex items-center gap-4 rounded-xl p-2 transition-all duration-300 hover:bg-muted/40"
+                >
+                  <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-muted shadow-sm transition-all group-hover:shadow-md">
+                    {category.image ? (
+                      <Image
+                        src={category.image}
+                        alt=""
+                        fill
+                        className="object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-muted font-playfair text-lg italic text-muted-foreground/50">
+                        {category.nameEn.charAt(0)}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium uppercase tracking-widest text-foreground/90 transition-colors group-hover:text-primary">
+                      {locale === 'vi' ? category.nameVi : category.nameEn}
+                    </span>
+                    <span className="font-lora text-[10px] italic text-muted-foreground">
+                      {locale === 'vi' ? 'Khám phá ngay' : 'Explore now'}
+                    </span>
+                  </div>
+                  <div className="ml-auto -translate-x-2 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100">
+                    <div className="flex h-6 w-6 items-center justify-center rounded-full border border-foreground/10">
+                      <span className="text-[10px]">→</span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* Drawer Footer */}
+          <div className="shrink-0 border-t border-foreground/5 bg-muted/5 p-6">
+            <Link
+              href={newPath}
+              className="group flex items-center justify-between rounded-lg border border-foreground/5 bg-background/50 p-3 transition-all duration-300 hover:bg-background hover:shadow-sm"
+              scroll={false}
+            >
+              <span className="flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-foreground/10 text-[10px] font-bold">
+                  {locale.toUpperCase()}
+                </span>
+                {locale === 'vi' ? 'Đổi Ngôn ngữ' : 'Switch Language'}
+              </span>
+              <span className="text-sm font-bold text-foreground transition-colors group-hover:text-primary">
+                {switchLocale.toUpperCase()}
+              </span>
+            </Link>
+          </div>
+        </div>
       </div>
 
       {/* Search Dropdown Results */}
       {showSearch && (
-        <div 
-          className="fixed inset-0 z-[-1] bg-black/20 backdrop-blur-[2px]" 
+        <div
+          className="fixed inset-0 z-[-1] bg-black/20 backdrop-blur-[2px]"
           onClick={() => setShowSearch(false)}
         />
       )}
-      
+
       {showSearch && (
-        <div className="absolute top-full left-0 w-full bg-[#1a1a1a] shadow-2xl border-t border-white/5 animate-in slide-in-from-top-2 duration-500 overflow-hidden max-h-[calc(100vh-80px)]">
-          <div className="container-custom py-8 md:py-12 px-4 md:px-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-24">
+        <div className="absolute left-0 top-full max-h-[calc(100vh-80px)] w-full overflow-hidden border-t border-white/5 bg-[#1a1a1a] shadow-2xl duration-500 animate-in slide-in-from-top-2">
+          <div className="container-custom px-4 py-8 md:px-8 md:py-12">
+            <div className="grid grid-cols-1 gap-12 md:grid-cols-2 md:gap-24">
               {/* Left Column: Products */}
               <div className="space-y-6 md:space-y-8">
-                <h3 className="text-[9px] uppercase tracking-[0.4em] font-bold text-white/30 border-b border-white/5 pb-4">
+                <h3 className="border-b border-white/5 pb-4 text-[9px] font-bold uppercase tracking-[0.4em] text-white/30">
                   {locale === 'vi' ? 'Sản phẩm gợi ý' : 'Suggested Products'}
                 </h3>
-                
-                <div className="space-y-6 max-h-[40vh] overflow-y-auto pr-4 scrollbar-hide">
+
+                <div className="scrollbar-hide max-h-[40vh] space-y-6 overflow-y-auto pr-4">
                   {!searchQuery && (
-                    <p className="text-[11px] italic text-white/20 font-lora">
+                    <p className="font-lora text-[11px] italic text-white/20">
                       {locale === 'vi' ? 'Gõ để bắt đầu tìm kiếm...' : 'Start typing to search...'}
                     </p>
                   )}
                   {searchQuery && suggestedProducts?.data.length === 0 && !isSearching && (
-                    <p className="text-[11px] italic text-white/20 font-lora">
+                    <p className="font-lora text-[11px] italic text-white/20">
                       {locale === 'vi' ? 'Không tìm thấy kết quả' : 'No results found'}
                     </p>
                   )}
@@ -381,23 +403,23 @@ export function Header() {
                       key={product.id}
                       href={`/${locale}/shop/${product.slug}`}
                       onClick={() => setShowSearch(false)}
-                      className="group flex items-center gap-6 border-b border-white/5 pb-4 last:border-0 hover:border-primary/30 transition-all duration-500"
+                      className="group flex items-center gap-6 border-b border-white/5 pb-4 transition-all duration-500 last:border-0 hover:border-primary/30"
                     >
-                      <div className="relative w-16 h-20 overflow-hidden bg-white/5 grayscale group-hover:grayscale-0 transition-all duration-700 shrink-0">
+                      <div className="relative h-20 w-16 shrink-0 overflow-hidden bg-white/5 grayscale transition-all duration-700 group-hover:grayscale-0">
                         {product.images?.[0] && (
                           <Image
                             src={product.images[0]}
                             alt={product.nameVi}
                             fill
-                            className="object-cover opacity-60 group-hover:opacity-100 transition-opacity"
+                            className="object-cover opacity-60 transition-opacity group-hover:opacity-100"
                           />
                         )}
                       </div>
                       <div className="space-y-1">
-                        <h4 className="text-[11px] uppercase tracking-widest text-white/60 group-hover:text-primary transition-colors line-clamp-2">
+                        <h4 className="line-clamp-2 text-[11px] uppercase tracking-widest text-white/60 transition-colors group-hover:text-primary">
                           {locale === 'vi' ? product.nameVi : product.nameEn}
                         </h4>
-                        <p className="text-[10px] text-white/30 font-lora">
+                        <p className="font-lora text-[10px] text-white/30">
                           {formatPriceVND(product.priceVND)}
                         </p>
                       </div>
@@ -407,8 +429,8 @@ export function Header() {
               </div>
 
               {/* Right Column: Categories */}
-              <div className="space-y-6 md:space-y-8 hidden md:block">
-                <h3 className="text-[9px] uppercase tracking-[0.4em] font-bold text-white/30 border-b border-white/5 pb-4">
+              <div className="hidden space-y-6 md:block md:space-y-8">
+                <h3 className="border-b border-white/5 pb-4 text-[9px] font-bold uppercase tracking-[0.4em] text-white/30">
                   {locale === 'vi' ? 'Danh mục tinh túy' : 'Curated Categories'}
                 </h3>
                 <div className="flex flex-col gap-4">
@@ -419,21 +441,21 @@ export function Header() {
                       onClick={() => setShowSearch(false)}
                       className="group flex items-center gap-4 pt-2"
                     >
-                      <div className="relative w-12 h-12 rounded-full overflow-hidden border border-white/5 bg-white/5 grayscale group-hover:grayscale-0 transition-all duration-700 shrink-0">
+                      <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border border-white/5 bg-white/5 grayscale transition-all duration-700 group-hover:grayscale-0">
                         {category.image ? (
                           <Image
                             src={category.image}
                             alt={category.nameVi}
                             fill
-                            className="object-cover opacity-60 group-hover:opacity-100 transition-all"
+                            className="object-cover opacity-60 transition-all group-hover:opacity-100"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center text-[10px] text-white/20 italic">
-                            { (locale === 'vi' ? category.nameVi : category.nameEn).charAt(0) }
+                          <div className="flex h-full w-full items-center justify-center text-[10px] italic text-white/20">
+                            {(locale === 'vi' ? category.nameVi : category.nameEn).charAt(0)}
                           </div>
                         )}
                       </div>
-                      <span className="text-[12px] uppercase tracking-[0.2em] text-white/40 group-hover:text-primary transition-all duration-500">
+                      <span className="text-[12px] uppercase tracking-[0.2em] text-white/40 transition-all duration-500 group-hover:text-primary">
                         {locale === 'vi' ? category.nameVi : category.nameEn}
                       </span>
                     </Link>
@@ -441,14 +463,14 @@ export function Header() {
                 </div>
               </div>
             </div>
-            
-            <div className="mt-8 md:mt-12 pt-8 border-t border-white/5 flex justify-center">
-               <button 
-                  onClick={() => setShowSearch(false)}
-                  className="text-[9px] uppercase tracking-[0.6em] text-white/20 hover:text-white/50 transition-colors"
-                >
-                  {locale === 'vi' ? 'Đóng' : 'Close'}
-               </button>
+
+            <div className="mt-8 flex justify-center border-t border-white/5 pt-8 md:mt-12">
+              <button
+                onClick={() => setShowSearch(false)}
+                className="text-[9px] uppercase tracking-[0.6em] text-white/20 transition-colors hover:text-white/50"
+              >
+                {locale === 'vi' ? 'Đóng' : 'Close'}
+              </button>
             </div>
           </div>
         </div>

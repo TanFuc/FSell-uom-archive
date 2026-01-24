@@ -1,8 +1,5 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
-import { useLocale, useTranslations } from 'next-intl'
 import {
   Plus,
   Search,
@@ -15,17 +12,13 @@ import {
   PowerOff,
   Trash,
 } from 'lucide-react'
+import Image from 'next/image'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useLocale, useTranslations } from 'next-intl'
+import { useEffect, useState, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
 import {
   Dialog,
   DialogContent,
@@ -34,13 +27,20 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { api } from '@/lib/api'
-import { Product } from '@/lib/types'
-import { useToast } from '@/hooks/use-toast'
+import { Input } from '@/components/ui/input'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import { useDocumentTitle } from '@/hooks/use-document-title'
+import { useToast } from '@/hooks/use-toast'
+import { api } from '@/lib/api'
+import { type Product } from '@/lib/types'
 import { formatPriceVND, getImageUrl, optimizeProductImage, slugify } from '@/lib/utils'
-import Image from 'next/image'
-import Link from 'next/link'
 
 export default function ProductsPage() {
   const router = useRouter()
@@ -65,10 +65,10 @@ export default function ProductsPage() {
       setIsLoading(true)
       const response = await api.getAdminProducts({
         search: search || undefined,
-        includeDeleted: false,  // Don't show deleted products
+        includeDeleted: false, // Don't show deleted products
         limit: 100,
       })
-      setProducts(response.data.filter((p: Product) => !p.deletedAt))  // Extra filter
+      setProducts(response.data.filter((p: Product) => !p.deletedAt)) // Extra filter
     } catch (error) {
       console.error('Failed to fetch products:', error)
       toast({
@@ -121,9 +121,9 @@ export default function ProductsPage() {
     e.stopPropagation()
     try {
       await api.updateProduct(product.id, { isActive: !product.isActive })
-      toast({ 
-        title: t('success'), 
-        description: product.isActive ? 'Đã tắt sản phẩm' : 'Đã bật sản phẩm' 
+      toast({
+        title: t('success'),
+        description: product.isActive ? 'Đã tắt sản phẩm' : 'Đã bật sản phẩm',
       })
       fetchProducts()
     } catch (error) {
@@ -136,9 +136,9 @@ export default function ProductsPage() {
     e.stopPropagation()
     try {
       await api.updateProduct(product.id, { isFeatured: !product.isFeatured })
-      toast({ 
-        title: t('success'), 
-        description: product.isFeatured ? 'Đã bỏ khỏi nổi bật' : 'Đã đặt nổi bật' 
+      toast({
+        title: t('success'),
+        description: product.isFeatured ? 'Đã bỏ khỏi nổi bật' : 'Đã đặt nổi bật',
       })
       fetchProducts()
     } catch (error) {
@@ -149,8 +149,11 @@ export default function ProductsPage() {
   // Bulk actions
   const handleBulkDelete = async () => {
     try {
-      await Promise.all(selectedProducts.map(id => api.deleteProduct(id)))
-      toast({ title: t('success'), description: `Đã chuyển ${selectedProducts.length} sản phẩm vào thùng rác` })
+      await Promise.all(selectedProducts.map((id) => api.deleteProduct(id)))
+      toast({
+        title: t('success'),
+        description: `Đã chuyển ${selectedProducts.length} sản phẩm vào thùng rác`,
+      })
       setSelectedProducts([])
       fetchProducts()
     } catch (error) {
@@ -160,8 +163,11 @@ export default function ProductsPage() {
 
   const handleBulkToggleActive = async (active: boolean) => {
     try {
-      await Promise.all(selectedProducts.map(id => api.updateProduct(id, { isActive: active })))
-      toast({ title: t('success'), description: `Đã ${active ? 'bật' : 'tắt'} ${selectedProducts.length} sản phẩm` })
+      await Promise.all(selectedProducts.map((id) => api.updateProduct(id, { isActive: active })))
+      toast({
+        title: t('success'),
+        description: `Đã ${active ? 'bật' : 'tắt'} ${selectedProducts.length} sản phẩm`,
+      })
       setSelectedProducts([])
       fetchProducts()
     } catch (error) {
@@ -171,8 +177,13 @@ export default function ProductsPage() {
 
   const handleBulkToggleFeatured = async (featured: boolean) => {
     try {
-      await Promise.all(selectedProducts.map(id => api.updateProduct(id, { isFeatured: featured })))
-      toast({ title: t('success'), description: `Đã ${featured ? 'đặt nổi bật' : 'bỏ nổi bật'} ${selectedProducts.length} sản phẩm` })
+      await Promise.all(
+        selectedProducts.map((id) => api.updateProduct(id, { isFeatured: featured })),
+      )
+      toast({
+        title: t('success'),
+        description: `Đã ${featured ? 'đặt nổi bật' : 'bỏ nổi bật'} ${selectedProducts.length} sản phẩm`,
+      })
       setSelectedProducts([])
       fetchProducts()
     } catch (error) {
@@ -190,7 +201,7 @@ export default function ProductsPage() {
 
   const toggleSelect = (id: string) => {
     setSelectedProducts((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
     )
   }
 
@@ -199,7 +210,7 @@ export default function ProductsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-serif">{t('products')}</h1>
+          <h1 className="font-serif text-2xl">{t('products')}</h1>
           <p className="text-muted-foreground">{t('manageProductCatalog')}</p>
         </div>
         <div className="flex gap-2">
@@ -218,7 +229,7 @@ export default function ProductsPage() {
 
       {/* Search */}
       <div className="flex items-center gap-4">
-        <div className="relative flex-1 max-w-sm">
+        <div className="relative max-w-sm flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder={t('search')}
@@ -231,38 +242,40 @@ export default function ProductsPage() {
 
       {/* Bulk Actions */}
       {selectedProducts.length > 0 && (
-        <div className="flex items-center gap-2 p-4 bg-primary/10 border border-primary/20 rounded-lg">
-          <span className="text-sm font-medium">{selectedProducts.length} {t('selected')}</span>
+        <div className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/10 p-4">
+          <span className="text-sm font-medium">
+            {selectedProducts.length} {t('selected')}
+          </span>
           <Button variant="outline" size="sm" onClick={() => setSelectedProducts([])}>
             {t('clear')}
           </Button>
-          <div className="h-4 w-px bg-border mx-2" />
+          <div className="mx-2 h-4 w-px bg-border" />
           <Button variant="outline" size="sm" onClick={() => handleBulkToggleActive(true)}>
-            <Power className="w-4 h-4 mr-2" />
+            <Power className="mr-2 h-4 w-4" />
             Bật
           </Button>
           <Button variant="outline" size="sm" onClick={() => handleBulkToggleActive(false)}>
-            <PowerOff className="w-4 h-4 mr-2" />
+            <PowerOff className="mr-2 h-4 w-4" />
             Tắt
           </Button>
           <Button variant="outline" size="sm" onClick={() => handleBulkToggleFeatured(true)}>
-            <Star className="w-4 h-4 mr-2" />
+            <Star className="mr-2 h-4 w-4" />
             Nổi bật
           </Button>
           <Button variant="outline" size="sm" onClick={() => handleBulkToggleFeatured(false)}>
-            <StarOff className="w-4 h-4 mr-2" />
+            <StarOff className="mr-2 h-4 w-4" />
             Bỏ nổi bật
           </Button>
-          <div className="h-4 w-px bg-border mx-2" />
+          <div className="mx-2 h-4 w-px bg-border" />
           <Button variant="destructive" size="sm" onClick={handleBulkDelete}>
-            <Trash2 className="w-4 h-4 mr-2" />
+            <Trash2 className="mr-2 h-4 w-4" />
             {t('deleteSelected')}
           </Button>
         </div>
       )}
 
       {/* Table */}
-      <div className="border rounded-lg overflow-hidden">
+      <div className="overflow-hidden rounded-lg border">
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50">
@@ -285,21 +298,21 @@ export default function ProductsPage() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center h-[400px]">
+                <TableCell colSpan={8} className="h-[400px] text-center">
                   <span className="text-muted-foreground">{t('loading')}...</span>
                 </TableCell>
               </TableRow>
             ) : products.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center h-[400px]">
+                <TableCell colSpan={8} className="h-[400px] text-center">
                   <span className="text-muted-foreground">{t('noResults')}</span>
                 </TableCell>
               </TableRow>
             ) : (
               products.map((product) => (
-                <TableRow 
-                  key={product.id} 
-                  className="cursor-pointer hover:bg-muted/30 transition-colors"
+                <TableRow
+                  key={product.id}
+                  className="cursor-pointer transition-colors hover:bg-muted/30"
                   onClick={() => router.push(`/${locale}/admin/products/${product.id}`)}
                 >
                   <TableCell onClick={(e) => e.stopPropagation()}>
@@ -310,9 +323,15 @@ export default function ProductsPage() {
                   </TableCell>
                   <TableCell>
                     {product.images[0] && (
-                      <div className="relative rounded overflow-hidden bg-muted/20" style={{ width: '48px', height: '60px' }}>
+                      <div
+                        className="relative overflow-hidden rounded bg-muted/20"
+                        style={{ width: '48px', height: '60px' }}
+                      >
                         <Image
-                          src={optimizeProductImage(getImageUrl(product.images[0]), { width: 100, height: 125 })}
+                          src={optimizeProductImage(getImageUrl(product.images[0]), {
+                            width: 100,
+                            height: 125,
+                          })}
                           alt={product.nameVi}
                           fill
                           sizes="48px"
@@ -323,8 +342,15 @@ export default function ProductsPage() {
                   </TableCell>
                   <TableCell>
                     <div>
-                      <p className="font-medium line-clamp-2" title={product.nameVi}>{product.nameVi}</p>
-                      <p className="text-xs text-muted-foreground line-clamp-1" title={product.nameEn}>{product.nameEn}</p>
+                      <p className="line-clamp-2 font-medium" title={product.nameVi}>
+                        {product.nameVi}
+                      </p>
+                      <p
+                        className="line-clamp-1 text-xs text-muted-foreground"
+                        title={product.nameEn}
+                      >
+                        {product.nameEn}
+                      </p>
                     </div>
                   </TableCell>
                   <TableCell>
@@ -333,32 +359,32 @@ export default function ProductsPage() {
                         {locale === 'vi' ? product.category.nameVi : product.category.nameEn}
                       </span>
                     ) : (
-                      <span className="text-sm text-muted-foreground italic">
+                      <span className="text-sm italic text-muted-foreground">
                         {t('noCategory')}
                       </span>
                     )}
                   </TableCell>
                   <TableCell>{formatPriceVND(product.priceVND)}</TableCell>
                   <TableCell>
-                    <span className={product.stock <= 0 ? 'text-destructive font-medium' : ''}>
+                    <span className={product.stock <= 0 ? 'font-medium text-destructive' : ''}>
                       {product.stock}
                     </span>
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()} className="text-center">
                     <Button
-                      variant={product.isActive ? "default" : "outline"}
+                      variant={product.isActive ? 'default' : 'outline'}
                       size="sm"
                       onClick={(e) => handleToggleActive(product, e)}
-                      className={product.isActive ? "bg-green-600 hover:bg-green-700" : ""}
+                      className={product.isActive ? 'bg-green-600 hover:bg-green-700' : ''}
                     >
                       {product.isActive ? (
                         <>
-                          <Power className="w-4 h-4 mr-1" />
+                          <Power className="mr-1 h-4 w-4" />
                           Bật
                         </>
                       ) : (
                         <>
-                          <PowerOff className="w-4 h-4 mr-1" />
+                          <PowerOff className="mr-1 h-4 w-4" />
                           Tắt
                         </>
                       )}
@@ -366,19 +392,19 @@ export default function ProductsPage() {
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()} className="text-center">
                     <Button
-                      variant={product.isFeatured ? "default" : "outline"}
+                      variant={product.isFeatured ? 'default' : 'outline'}
                       size="sm"
                       onClick={(e) => handleToggleFeatured(product, e)}
-                      className={product.isFeatured ? "bg-yellow-600 hover:bg-yellow-700" : ""}
+                      className={product.isFeatured ? 'bg-yellow-600 hover:bg-yellow-700' : ''}
                     >
                       {product.isFeatured ? (
                         <>
-                          <Star className="w-4 h-4 mr-1 fill-current" />
+                          <Star className="mr-1 h-4 w-4 fill-current" />
                           Nổi bật
                         </>
                       ) : (
                         <>
-                          <StarOff className="w-4 h-4 mr-1" />
+                          <StarOff className="mr-1 h-4 w-4" />
                           Thường
                         </>
                       )}
@@ -421,33 +447,42 @@ export default function ProductsPage() {
       </div>
 
       {/* Delete Dialog */}
-      <Dialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ open, product: null })}>
-        <DialogContent className="sm:max-w-[425px] p-6">
+      <Dialog
+        open={deleteDialog.open}
+        onOpenChange={(open) => setDeleteDialog({ open, product: null })}
+      >
+        <DialogContent className="p-6 sm:max-w-[425px]">
           <DialogHeader className="flex flex-col items-center gap-4 text-center">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#4A4238]/10 text-[#4A4238] dark:bg-[#4A4238]/20">
               <Trash2 className="h-6 w-6" />
             </div>
             <div className="space-y-2">
               <DialogTitle className="text-xl">Xóa sản phẩm?</DialogTitle>
-              <DialogDescription className="text-center mx-auto max-w-[90%]">
-                Bạn có chắc chắn muốn xóa sản phẩm <span className="font-semibold text-foreground">"{deleteDialog.product?.nameVi}"</span> không?
+              <DialogDescription className="mx-auto max-w-[90%] text-center">
+                Bạn có chắc chắn muốn xóa sản phẩm{' '}
+                <span className="font-semibold text-foreground">
+                  "{deleteDialog.product?.nameVi}"
+                </span>{' '}
+                không?
                 <br />
-                <span className="text-sm mt-2 block text-muted-foreground">Sản phẩm sẽ được chuyển vào thùng rác và có thể khôi phục tại mục Thùng rác.</span>
+                <span className="mt-2 block text-sm text-muted-foreground">
+                  Sản phẩm sẽ được chuyển vào thùng rác và có thể khôi phục tại mục Thùng rác.
+                </span>
               </DialogDescription>
             </div>
           </DialogHeader>
-          <DialogFooter className="sm:justify-center sm:space-x-4 gap-2 mt-4">
-            <Button 
-              variant="outline" 
+          <DialogFooter className="mt-4 gap-2 sm:justify-center sm:space-x-4">
+            <Button
+              variant="outline"
               onClick={() => setDeleteDialog({ open: false, product: null })}
               className="w-full sm:w-32"
             >
               {t('cancel')}
             </Button>
-            <Button 
-              variant="destructive" 
+            <Button
+              variant="destructive"
               onClick={handleDelete}
-              className="w-full sm:w-32 bg-[#4A4238] hover:bg-[#4A4238]/90 text-white"
+              className="w-full bg-[#4A4238] text-white hover:bg-[#4A4238]/90 sm:w-32"
             >
               {t('delete')}
             </Button>

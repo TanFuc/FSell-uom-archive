@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/hooks/use-toast'
 
 export default function FileUploadTestPage() {
-  const [uploadedUrl, setUploadedUrl] = useState< string>('')
+  const [uploadedUrl, setUploadedUrl] = useState<string>('')
   const [uploadedPublicId, setUploadedPublicId] = useState<string>('')
   const [multipleUrls, setMultipleUrls] = useState<string[]>([])
   const [multiplePublicIds, setMultiplePublicIds] = useState<string[]>([])
@@ -39,10 +39,10 @@ export default function FileUploadTestPage() {
   }
 
   return (
-    <div className="container max-w-4xl py-8 space-y-8">
+    <div className="container max-w-4xl space-y-8 py-8">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Test File Upload</h1>
-        <p className="text-muted-foreground mt-2">Test FilePond integration với Cloudinary</p>
+        <p className="mt-2 text-muted-foreground">Test FilePond integration với Cloudinary</p>
       </div>
 
       <Card>
@@ -59,20 +59,25 @@ export default function FileUploadTestPage() {
           />
 
           {uploadedUrl && (
-            <div className="mt-4 p-4 bg-muted rounded-lg">
-              <h4 className="font-semibold mb-2">Uploaded File:</h4>
+            <div className="mt-4 rounded-lg bg-muted p-4">
+              <h4 className="mb-2 font-semibold">Uploaded File:</h4>
               <div className="space-y-2">
                 <div className="text-sm">
                   <span className="font-medium">Public ID:</span> {uploadedPublicId}
                 </div>
-                <div className="text-sm break-all">
+                <div className="break-all text-sm">
                   <span className="font-medium">URL:</span>{' '}
-                  <a href={uploadedUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                  <a
+                    href={uploadedUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline"
+                  >
                     {uploadedUrl}
                   </a>
                 </div>
-                <div className="mt-2 max-w-md aspect-product relative rounded-lg border overflow-hidden">
-                  <img src={uploadedUrl} alt="Uploaded" className="w-full h-full object-cover" />
+                <div className="aspect-product relative mt-2 max-w-md overflow-hidden rounded-lg border">
+                  <img src={uploadedUrl} alt="Uploaded" className="h-full w-full object-cover" />
                 </div>
               </div>
             </div>
@@ -93,13 +98,17 @@ export default function FileUploadTestPage() {
           />
 
           {multipleUrls.length > 0 && (
-            <div className="mt-4 p-4 bg-muted rounded-lg">
-              <h4 className="font-semibold mb-2">Uploaded Files ({multipleUrls.length}):</h4>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+            <div className="mt-4 rounded-lg bg-muted p-4">
+              <h4 className="mb-2 font-semibold">Uploaded Files ({multipleUrls.length}):</h4>
+              <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-3">
                 {multipleUrls.map((url, index) => (
                   <div key={index} className="space-y-2">
-                    <img src={url} alt={`Upload ${index + 1}`} className="w-full aspect-product object-cover rounded-lg border" />
-                    <div className="text-xs break-all">
+                    <img
+                      src={url}
+                      alt={`Upload ${index + 1}`}
+                      className="aspect-product w-full rounded-lg border object-cover"
+                    />
+                    <div className="break-all text-xs">
                       <span className="font-medium">Public ID:</span> {multiplePublicIds[index]}
                     </div>
                   </div>
@@ -110,9 +119,9 @@ export default function FileUploadTestPage() {
         </CardContent>
       </Card>
 
-      <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-        <h4 className="font-semibold text-blue-900 dark:text-blue-200 mb-2">💡 Lưu ý</h4>
-        <ul className="text-sm text-blue-800 dark:text-blue-300 space-y-1 list-disc list-inside">
+      <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
+        <h4 className="mb-2 font-semibold text-blue-900 dark:text-blue-200">💡 Lưu ý</h4>
+        <ul className="list-inside list-disc space-y-1 text-sm text-blue-800 dark:text-blue-300">
           <li>File sẽ được upload lên Cloudinary</li>
           <li>Hình ảnh sẽ được tự động optimize và convert sang WebP</li>
           <li>Kích thước tối đa: 10MB</li>

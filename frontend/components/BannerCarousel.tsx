@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useState, useEffect, useCallback } from 'react'
 import type { Banner as BannerType } from '@/lib/types'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface BannerCarouselProps {
   banners: BannerType[]
@@ -66,7 +66,7 @@ export function BannerCarousel({ banners, locale, autoPlayInterval = 5000 }: Ban
 
   const handleTouchEnd = () => {
     if (!touchStart || !touchEnd) return
-    
+
     const distance = touchStart - touchEnd
     const isLeftSwipe = distance > 50
     const isRightSwipe = distance < -50
@@ -98,7 +98,7 @@ export function BannerCarousel({ banners, locale, autoPlayInterval = 5000 }: Ban
 
   const handleMouseUp = (e: React.MouseEvent) => {
     if (!isDragging) return
-    
+
     const distance = dragStart - e.clientX
     const isLeftDrag = distance > 50
     const isRightDrag = distance < -50
@@ -133,8 +133,8 @@ export function BannerCarousel({ banners, locale, autoPlayInterval = 5000 }: Ban
   const description = locale === 'vi' ? currentBanner.descriptionVi : currentBanner.descriptionEn
 
   const bannerContent = (
-    <div 
-      className="relative w-full overflow-hidden select-none"
+    <div
+      className="relative w-full select-none overflow-hidden"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
@@ -146,7 +146,7 @@ export function BannerCarousel({ banners, locale, autoPlayInterval = 5000 }: Ban
       style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
     >
       {/* Background Image - Hero Style */}
-      <div className="relative w-full aspect-[4/5] md:aspect-[21/9] lg:aspect-[3/1]">
+      <div className="relative aspect-[4/5] w-full md:aspect-[21/9] lg:aspect-[3/1]">
         <Image
           src={currentBanner.imageUrl}
           alt={title || 'Banner'}
@@ -155,26 +155,29 @@ export function BannerCarousel({ banners, locale, autoPlayInterval = 5000 }: Ban
           priority
           draggable={false}
         />
-        
+
         {/* Subtle overlay for text readability */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/20 to-black/60 md:to-black/40" />
-        
+
         {/* Text Content - Positioned at bottom left */}
         {(title || subtitle || description) && (
-          <div className="absolute inset-0 flex items-end px-6 md:px-16 lg:px-24 pb-12 md:pb-16 lg:pb-20">
-            <div className="max-w-3xl space-y-3 md:space-y-3 animate-fade-in" style={{ color: currentBanner.textColor || '#FFFFFF' }}>
+          <div className="absolute inset-0 flex items-end px-6 pb-12 md:px-16 md:pb-16 lg:px-24 lg:pb-20">
+            <div
+              className="animate-fade-in max-w-3xl space-y-3 md:space-y-3"
+              style={{ color: currentBanner.textColor || '#FFFFFF' }}
+            >
               {title && (
-                <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl uppercase tracking-[0.15em] font-light leading-tight">
+                <h2 className="text-3xl font-light uppercase leading-tight tracking-[0.15em] sm:text-4xl md:text-5xl lg:text-6xl">
                   {title}
                 </h2>
               )}
               {subtitle && (
-                <p className="text-xs md:text-sm uppercase tracking-[0.25em] font-light opacity-90">
+                <p className="text-xs font-light uppercase tracking-[0.25em] opacity-90 md:text-sm">
                   {subtitle}
                 </p>
               )}
               {description && (
-                <p className="text-sm md:text-base font-light opacity-80 max-w-2xl pt-2 line-clamp-3 md:line-clamp-none">
+                <p className="line-clamp-3 max-w-2xl pt-2 text-sm font-light opacity-80 md:line-clamp-none md:text-base">
                   {description}
                 </p>
               )}
@@ -190,35 +193,35 @@ export function BannerCarousel({ banners, locale, autoPlayInterval = 5000 }: Ban
                 e.preventDefault()
                 goToPrevious()
               }}
-              className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 backdrop-blur-sm p-2 md:p-3 rounded-full transition-all opacity-0 hover:opacity-100 group-hover:opacity-100"
+              className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/20 p-2 opacity-0 backdrop-blur-sm transition-all hover:bg-white/30 hover:opacity-100 group-hover:opacity-100 md:left-8 md:p-3"
               aria-label="Previous banner"
             >
-              <ChevronLeft className="w-5 h-5 md:w-6 md:h-6 text-white" />
+              <ChevronLeft className="h-5 w-5 text-white md:h-6 md:w-6" />
             </button>
             <button
               onClick={(e) => {
                 e.preventDefault()
                 goToNext()
               }}
-              className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 backdrop-blur-sm p-2 md:p-3 rounded-full transition-all opacity-0 hover:opacity-100 group-hover:opacity-100"
+              className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/20 p-2 opacity-0 backdrop-blur-sm transition-all hover:bg-white/30 hover:opacity-100 group-hover:opacity-100 md:right-8 md:p-3"
               aria-label="Next banner"
             >
-              <ChevronRight className="w-5 h-5 md:w-6 md:h-6 text-white" />
+              <ChevronRight className="h-5 w-5 text-white md:h-6 md:w-6" />
             </button>
           </>
         )}
 
         {/* Improved Indicators/Dots - Only show if multiple banners */}
         {sortedBanners.length > 1 && (
-          <div className="absolute bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 flex gap-2 bg-black/20 backdrop-blur-sm px-4 py-2 rounded-full">
+          <div className="absolute bottom-6 left-1/2 flex -translate-x-1/2 gap-2 rounded-full bg-black/20 px-4 py-2 backdrop-blur-sm md:bottom-8">
             {sortedBanners.map((_, index) => (
               <button
                 key={index}
                 onClick={() => goToSlide(index)}
-                className={`transition-all duration-300 rounded-full ${
+                className={`rounded-full transition-all duration-300 ${
                   index === currentIndex
-                    ? 'w-8 md:w-10 h-1.5 bg-white shadow-lg'
-                    : 'w-1.5 h-1.5 bg-white/40 hover:bg-white/60 hover:scale-125'
+                    ? 'h-1.5 w-8 bg-white shadow-lg md:w-10'
+                    : 'h-1.5 w-1.5 bg-white/40 hover:scale-125 hover:bg-white/60'
                 }`}
                 aria-label={`Go to banner ${index + 1}`}
               />
@@ -232,7 +235,7 @@ export function BannerCarousel({ banners, locale, autoPlayInterval = 5000 }: Ban
   // If banner has a link, wrap in Link component
   if (currentBanner.link) {
     return (
-      <Link href={currentBanner.link} className="block group">
+      <Link href={currentBanner.link} className="group block">
         {bannerContent}
       </Link>
     )

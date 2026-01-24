@@ -1,27 +1,17 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { ArrowLeft, Upload, X, Plus, Languages, RefreshCw } from 'lucide-react'
+import Image from 'next/image'
+import Link from 'next/link'
 import { useRouter, useParams } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
+import { useEffect, useState, useCallback } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { ArrowLeft, Upload, X, Plus, Languages, RefreshCw } from 'lucide-react'
-import Link from 'next/link'
-import Image from 'next/image'
+import { RichTextEditor } from '@/components/RichTextEditor'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { Switch } from '@/components/ui/switch'
-import { Label } from '@/components/ui/label'
-import { Separator } from '@/components/ui/separator'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Dialog,
   DialogContent,
@@ -31,13 +21,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import {
   Form,
   FormControl,
   FormDescription,
@@ -46,14 +29,25 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
-import { api } from '@/lib/api'
-import { Product, Category } from '@/lib/types'
-import { useToast } from '@/hooks/use-toast'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Separator } from '@/components/ui/separator'
+import { Switch } from '@/components/ui/switch'
+import { Textarea } from '@/components/ui/textarea'
 import { useDocumentTitle } from '@/hooks/use-document-title'
-import { getImageUrl, slugify } from '@/lib/utils'
-import { RichTextEditor } from '@/components/RichTextEditor'
-import { vndToUsd, usdToVnd } from '@/lib/currency'
+import { useToast } from '@/hooks/use-toast'
+import { api } from '@/lib/api'
 import { DEFAULT_EXCHANGE_RATE } from '@/lib/constants'
+import { vndToUsd, usdToVnd } from '@/lib/currency'
+import { Product, type Category } from '@/lib/types'
+import { getImageUrl, slugify } from '@/lib/utils'
 
 const productSchema = z.object({
   slug: z.string().min(1, 'Slug is required'),
@@ -89,7 +83,6 @@ export default function ProductFormPage() {
 
   const id = params.id as string
   const isNew = id === 'new'
-
 
   const [isLoading, setIsLoading] = useState(!isNew)
   const [isSaving, setIsSaving] = useState(false)
@@ -132,8 +125,8 @@ export default function ProductFormPage() {
   // Update document title based on product name or "Create Product"
   const productName = form.watch('nameVi') || form.watch('nameEn')
   useDocumentTitle(
-    isNew ? t('createProduct') : (productName || t('updateProduct')),
-    'Admin - Ươm Archive'
+    isNew ? t('createProduct') : productName || t('updateProduct'),
+    'Admin - Ươm Archive',
   )
 
   // Auto-convert prices
@@ -160,7 +153,11 @@ export default function ProductFormPage() {
   }, [salePriceVND, autoConvertSalePrice, form])
 
   // Simple mock translation function
-  const translateText = async (text: string, from: 'vi' | 'en', to: 'vi' | 'en'): Promise<string> => {
+  const translateText = async (
+    text: string,
+    from: 'vi' | 'en',
+    to: 'vi' | 'en',
+  ): Promise<string> => {
     // In a real implementation, this would call a translation API (e.g. Google Translate)
     // Currently, we'll just return the original text so the user can edit it
     // This acts as a "Copy" or "Fill" feature when API is not available
@@ -170,7 +167,10 @@ export default function ProductFormPage() {
     return text
   }
 
-  const handleTranslate = async (field: 'name' | 'description', direction: 'vi-to-en' | 'en-to-vi') => {
+  const handleTranslate = async (
+    field: 'name' | 'description',
+    direction: 'vi-to-en' | 'en-to-vi',
+  ) => {
     setIsTranslating(true)
     try {
       if (field === 'name') {
@@ -283,7 +283,11 @@ export default function ProductFormPage() {
 
   const onSubmit = async (data: ProductFormValues) => {
     if (images.length === 0) {
-      toast({ title: t('error'), description: 'At least one image is required', variant: 'destructive' })
+      toast({
+        title: t('error'),
+        description: 'At least one image is required',
+        variant: 'destructive',
+      })
       return
     }
 
@@ -316,10 +320,10 @@ export default function ProductFormPage() {
 
   const handleQuickCreateCategory = async () => {
     if (!newCatNameVi || !newCatNameEn) {
-      toast({ 
-        title: t('error'), 
-        description: 'Vui lòng nhập tên danh mục cả tiếng Việt và tiếng Anh', 
-        variant: 'destructive' 
+      toast({
+        title: t('error'),
+        description: 'Vui lòng nhập tên danh mục cả tiếng Việt và tiếng Anh',
+        variant: 'destructive',
       })
       return
     }
@@ -336,20 +340,20 @@ export default function ProductFormPage() {
       })
 
       // Update categories list
-      setCategories(prev => [...prev, newCategory])
-      
+      setCategories((prev) => [...prev, newCategory])
+
       // Select the new category
       form.setValue('categoryId', newCategory.id)
-      
+
       toast({ title: t('success'), description: t('categoryCreated') })
       setIsCategoryDialogOpen(false)
       setNewCatNameVi('')
       setNewCatNameEn('')
     } catch (error: any) {
-      toast({ 
-        title: t('error'), 
-        description: error.message || 'Không thể tạo danh mục', 
-        variant: 'destructive' 
+      toast({
+        title: t('error'),
+        description: error.message || 'Không thể tạo danh mục',
+        variant: 'destructive',
       })
     } finally {
       setIsCreatingCategory(false)
@@ -373,7 +377,7 @@ export default function ProductFormPage() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-2xl font-serif">{isNew ? t('create') : t('edit')} Product</h1>
+          <h1 className="font-serif text-2xl">{isNew ? t('create') : t('edit')} Product</h1>
           <p className="text-muted-foreground">
             {isNew ? 'Add a new product' : 'Update product details'}
           </p>
@@ -429,7 +433,7 @@ export default function ProductFormPage() {
                               disabled={isTranslating}
                               className="h-6 text-xs"
                             >
-                              <Languages className="h-3 w-3 mr-1" />
+                              <Languages className="mr-1 h-3 w-3" />
                               EN → VI
                             </Button>
                           </div>
@@ -455,7 +459,7 @@ export default function ProductFormPage() {
                               disabled={isTranslating}
                               className="h-6 text-xs"
                             >
-                              <Languages className="h-3 w-3 mr-1" />
+                              <Languages className="mr-1 h-3 w-3" />
                               VI → EN
                             </Button>
                           </div>
@@ -515,7 +519,7 @@ export default function ProductFormPage() {
                               disabled={isTranslating}
                               className="h-6 text-xs"
                             >
-                              <Languages className="h-3 w-3 mr-1" />
+                              <Languages className="mr-1 h-3 w-3" />
                               EN → VI
                             </Button>
                           </div>
@@ -545,7 +549,7 @@ export default function ProductFormPage() {
                               disabled={isTranslating}
                               className="h-6 text-xs"
                             >
-                              <Languages className="h-3 w-3 mr-1" />
+                              <Languages className="mr-1 h-3 w-3" />
                               VI → EN
                             </Button>
                           </div>
@@ -598,7 +602,9 @@ export default function ProductFormPage() {
                                   onClick={() => setAutoConvertPrice(!autoConvertPrice)}
                                   className="h-6 text-xs"
                                 >
-                                  <RefreshCw className={`h-3 w-3 mr-1 ${autoConvertPrice ? 'text-green-500' : ''}`} />
+                                  <RefreshCw
+                                    className={`mr-1 h-3 w-3 ${autoConvertPrice ? 'text-green-500' : ''}`}
+                                  />
                                   {autoConvertPrice ? t('autoOn') : t('autoOff')}
                                 </Button>
                               </div>
@@ -610,7 +616,9 @@ export default function ProductFormPage() {
                                   value={field.value || ''}
                                   onChange={(e) => {
                                     setAutoConvertPrice(false)
-                                    field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)
+                                    field.onChange(
+                                      e.target.value ? parseFloat(e.target.value) : undefined,
+                                    )
                                   }}
                                 />
                               </FormControl>
@@ -637,7 +645,9 @@ export default function ProductFormPage() {
                                   type="number"
                                   placeholder={t('optional')}
                                   value={field.value || ''}
-                                  onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
+                                  onChange={(e) =>
+                                    field.onChange(e.target.value ? parseInt(e.target.value) : null)
+                                  }
                                 />
                               </FormControl>
                               <FormDescription>{t('discountPrice')}</FormDescription>
@@ -659,7 +669,9 @@ export default function ProductFormPage() {
                                   onClick={() => setAutoConvertSalePrice(!autoConvertSalePrice)}
                                   className="h-6 text-xs"
                                 >
-                                  <RefreshCw className={`h-3 w-3 mr-1 ${autoConvertSalePrice ? 'text-green-500' : ''}`} />
+                                  <RefreshCw
+                                    className={`mr-1 h-3 w-3 ${autoConvertSalePrice ? 'text-green-500' : ''}`}
+                                  />
                                   {autoConvertSalePrice ? t('autoOn') : t('autoOff')}
                                 </Button>
                               </div>
@@ -672,7 +684,9 @@ export default function ProductFormPage() {
                                   value={field.value || ''}
                                   onChange={(e) => {
                                     setAutoConvertSalePrice(false)
-                                    field.onChange(e.target.value ? parseFloat(e.target.value) : null)
+                                    field.onChange(
+                                      e.target.value ? parseFloat(e.target.value) : null,
+                                    )
                                   }}
                                 />
                               </FormControl>
@@ -731,7 +745,7 @@ export default function ProductFormPage() {
                               className="h-6 px-2 text-xs"
                               onClick={() => setIsCategoryDialogOpen(true)}
                             >
-                              <Plus className="h-3 w-3 mr-1" />
+                              <Plus className="mr-1 h-3 w-3" />
                               Thêm mới
                             </Button>
                           </div>
@@ -788,7 +802,9 @@ export default function ProductFormPage() {
                       <FormItem className="flex items-center justify-between">
                         <div>
                           <FormLabel>{t('inquiryEnabled')}</FormLabel>
-                          <FormDescription>Allow customers to ask about this product</FormDescription>
+                          <FormDescription>
+                            Allow customers to ask about this product
+                          </FormDescription>
                         </div>
                         <FormControl>
                           <Switch checked={field.value} onCheckedChange={field.onChange} />
@@ -807,11 +823,7 @@ export default function ProductFormPage() {
                         <FormItem>
                           <FormLabel>{t('inquiryMessageVi')}</FormLabel>
                           <FormControl>
-                            <Textarea
-                              {...field}
-                              rows={4}
-                              placeholder={t('autoGenerated')}
-                            />
+                            <Textarea {...field} rows={4} placeholder={t('autoGenerated')} />
                           </FormControl>
                           <FormDescription>Leave empty for auto-generated message</FormDescription>
                         </FormItem>
@@ -824,11 +836,7 @@ export default function ProductFormPage() {
                         <FormItem>
                           <FormLabel>{t('inquiryMessageEn')}</FormLabel>
                           <FormControl>
-                            <Textarea
-                              {...field}
-                              rows={4}
-                              placeholder={t('autoGenerated')}
-                            />
+                            <Textarea {...field} rows={4} placeholder={t('autoGenerated')} />
                           </FormControl>
                           <FormDescription>Leave empty for auto-generated message</FormDescription>
                         </FormItem>
@@ -883,7 +891,10 @@ export default function ProductFormPage() {
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     {images.map((image, index) => (
-                      <div key={index} className="relative aspect-product border rounded-md overflow-hidden group cursor-move">
+                      <div
+                        key={index}
+                        className="aspect-product group relative cursor-move overflow-hidden rounded-md border"
+                      >
                         <Image
                           src={getImageUrl(image)}
                           alt={`Product ${index + 1}`}
@@ -892,16 +903,16 @@ export default function ProductFormPage() {
                           className="object-cover transition-transform duration-300 group-hover:scale-105"
                         />
                         {index === 0 && (
-                          <div className="absolute top-2 left-2 bg-primary/90 text-primary-foreground text-[10px] uppercase font-bold tracking-wider px-2 py-1 rounded-sm shadow-sm z-10 backdrop-blur-sm">
+                          <div className="absolute left-2 top-2 z-10 rounded-sm bg-primary/90 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-primary-foreground shadow-sm backdrop-blur-sm">
                             Main Display
                           </div>
                         )}
-                        <div className="absolute inset-x-0 bottom-0 p-2 bg-black/60 translate-y-full group-hover:translate-y-0 transition-transform duration-300 flex justify-center">
+                        <div className="absolute inset-x-0 bottom-0 flex translate-y-full justify-center bg-black/60 p-2 transition-transform duration-300 group-hover:translate-y-0">
                           <Button
                             type="button"
                             variant="destructive"
                             size="sm"
-                            className="h-7 w-7 p-0 rounded-full"
+                            className="h-7 w-7 rounded-full p-0"
                             onClick={() => removeImage(index)}
                           >
                             <X className="h-4 w-4" />
@@ -917,7 +928,7 @@ export default function ProductFormPage() {
                       accept="image/*"
                       multiple
                       onChange={handleImageUpload}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
                       disabled={isUploading}
                     />
                     <Button variant="outline" className="w-full" disabled={isUploading}>
@@ -936,7 +947,7 @@ export default function ProductFormPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {hoverImage && (
-                    <div className="relative aspect-product border">
+                    <div className="aspect-product relative border">
                       <Image
                         src={getImageUrl(hoverImage)}
                         alt="Hover image"
@@ -948,7 +959,7 @@ export default function ProductFormPage() {
                         type="button"
                         variant="destructive"
                         size="icon"
-                        className="absolute top-1 right-1 h-6 w-6"
+                        className="absolute right-1 top-1 h-6 w-6"
                         onClick={() => setHoverImage(null)}
                       >
                         <X className="h-4 w-4" />
@@ -969,17 +980,25 @@ export default function ProductFormPage() {
                           setHoverImage(result.url)
                           toast({ title: t('success'), description: 'Hover image uploaded' })
                         } catch (error) {
-                          toast({ title: t('error'), description: 'Upload failed', variant: 'destructive' })
+                          toast({
+                            title: t('error'),
+                            description: 'Upload failed',
+                            variant: 'destructive',
+                          })
                         } finally {
                           setIsUploading(false)
                         }
                       }}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
                       disabled={isUploading}
                     />
                     <Button variant="outline" className="w-full" disabled={isUploading}>
                       <Upload className="mr-2 h-4 w-4" />
-                      {isUploading ? 'Uploading...' : hoverImage ? 'Change Hover Image' : 'Upload Hover Image'}
+                      {isUploading
+                        ? 'Uploading...'
+                        : hoverImage
+                          ? 'Change Hover Image'
+                          : 'Upload Hover Image'}
                     </Button>
                   </div>
                 </CardContent>
@@ -1008,9 +1027,7 @@ export default function ProductFormPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('createCategory')}</DialogTitle>
-            <DialogDescription>
-              Tạo nhanh danh mục mới để gán cho sản phẩm này.
-            </DialogDescription>
+            <DialogDescription>Tạo nhanh danh mục mới để gán cho sản phẩm này.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
@@ -1038,10 +1055,7 @@ export default function ProductFormPage() {
             >
               {t('cancel')}
             </Button>
-            <Button
-              onClick={handleQuickCreateCategory}
-              disabled={isCreatingCategory}
-            >
+            <Button onClick={handleQuickCreateCategory} disabled={isCreatingCategory}>
               {isCreatingCategory ? t('loading') : t('create')}
             </Button>
           </DialogFooter>

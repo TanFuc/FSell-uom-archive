@@ -1,14 +1,16 @@
 'use client'
 
-import { useState } from 'react'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { Eye, EyeOff } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { Eye, EyeOff } from 'lucide-react'
+import Logo from '@/components/Logo'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { ErrorToastContent } from '@/components/ui/error-toast'
 import {
   Form,
   FormControl,
@@ -17,12 +19,10 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import Logo from '@/components/Logo'
+import { Input } from '@/components/ui/input'
+import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api'
 import { useAuthStore } from '@/lib/store'
-import { useToast } from '@/hooks/use-toast'
-import { ErrorToastContent } from '@/components/ui/error-toast'
 
 type LoginFormValues = {
   email: string
@@ -123,16 +123,10 @@ export default function LoginPage() {
         errorMessage = error.message || tAuth('genericError')
       }
 
-
       toast({
         variant: 'destructive',
         duration: 3000,
-        description: (
-          <ErrorToastContent
-            title={errorTitle}
-            message={errorMessage}
-          />
-        ),
+        description: <ErrorToastContent title={errorTitle} message={errorMessage} />,
       })
     } finally {
       setIsLoading(false)
@@ -143,7 +137,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
+          <div className="mb-4 flex justify-center">
             <Logo variant="svg" width={120} height={40} />
           </div>
           <CardTitle className="uppercase tracking-widest">{t('login')}</CardTitle>
@@ -163,7 +157,9 @@ export default function LoginPage() {
                         type="email"
                         placeholder="admin@uomarchive.com"
                         disabled={isLoading}
-                        className={fieldState.error ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                        className={
+                          fieldState.error ? 'border-red-500 focus-visible:ring-red-500' : ''
+                        }
                       />
                     </FormControl>
                     <FormMessage />
@@ -184,7 +180,9 @@ export default function LoginPage() {
                           type={showPassword ? 'text' : 'password'}
                           placeholder="••••••••"
                           disabled={isLoading}
-                          className={fieldState.error ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                          className={
+                            fieldState.error ? 'border-red-500 focus-visible:ring-red-500' : ''
+                          }
                         />
                         <Button
                           type="button"

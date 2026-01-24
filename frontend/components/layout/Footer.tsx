@@ -1,10 +1,10 @@
 'use client'
 
+import { Instagram, Facebook } from 'lucide-react'
 import Link from 'next/link'
 import { useLocale, useTranslations } from 'next-intl'
-import { useSocialLinks } from '@/hooks/use-settings'
 import { useCategories } from '@/hooks/use-categories'
-import { Instagram, Facebook } from 'lucide-react'
+import { useSocialLinks } from '@/hooks/use-settings'
 
 export function Footer() {
   const locale = useLocale() as 'vi' | 'en'
@@ -18,20 +18,21 @@ export function Footer() {
     <footer className="border-t border-foreground/10 bg-primary/15">
       <div className="container-custom spacing-md">
         {/* Main Footer Content */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 mb-8">
+        <div className="mb-8 grid grid-cols-1 gap-8 md:grid-cols-3 md:gap-12">
           {/* Brand */}
           <div>
-            <Link href={`/${locale}`} className="inline-block font-playfair font-bold text-3xl md:text-4xl tracking-widest text-foreground hover:opacity-80 transition-opacity duration-300 mb-4">
+            <Link
+              href={`/${locale}`}
+              className="mb-4 inline-block font-playfair text-3xl font-bold tracking-widest text-foreground transition-opacity duration-300 hover:opacity-80 md:text-4xl"
+            >
               ƯƠM<span className="text-primary">.</span>
             </Link>
-            <p className="text-muted-foreground max-w-xs">
-              {t('description')}
-            </p>
+            <p className="max-w-xs text-muted-foreground">{t('description')}</p>
           </div>
 
           {/* Links */}
           <div>
-            <h4 className="uppercase tracking-wider mb-4">{t('navigation')}</h4>
+            <h4 className="mb-4 uppercase tracking-wider">{t('navigation')}</h4>
             <nav className="flex flex-col gap-2">
               <Link href={`/${locale}/shop`} className="text-link">
                 {t('shop')}
@@ -44,17 +45,17 @@ export function Footer() {
 
           {/* Social */}
           <div>
-            <h4 className="uppercase tracking-wider mb-4">{t('connect')}</h4>
+            <h4 className="mb-4 uppercase tracking-wider">{t('connect')}</h4>
             <div className="flex gap-4">
               {socialLinks?.instagramUsername && (
                 <a
                   href={`https://instagram.com/${socialLinks.instagramUsername}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:opacity-60 transition-opacity"
+                  className="transition-opacity hover:opacity-60"
                   aria-label="Instagram"
                 >
-                  <Instagram className="w-5 h-5" />
+                  <Instagram className="h-5 w-5" />
                 </a>
               )}
               {socialLinks?.facebookPageUrl && (
@@ -62,10 +63,10 @@ export function Footer() {
                   href={socialLinks.facebookPageUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:opacity-60 transition-opacity"
+                  className="transition-opacity hover:opacity-60"
                   aria-label="Facebook"
                 >
-                  <Facebook className="w-5 h-5" />
+                  <Facebook className="h-5 w-5" />
                 </a>
               )}
             </div>
@@ -73,7 +74,7 @@ export function Footer() {
         </div>
 
         {/* Copyright */}
-        <div className="pt-8 border-t border-foreground/10 text-center md:text-left">
+        <div className="border-t border-foreground/10 pt-8 text-center md:text-left">
           <p className="text-muted-foreground">
             © {currentYear} Ươm Archive. {t('rights')}
           </p>

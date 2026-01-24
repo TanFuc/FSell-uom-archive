@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { User, ThemeSettings } from './types'
 import { DEFAULT_THEME } from './constants'
+import { type User, type ThemeSettings } from './types'
 
 interface AuthState {
   user: User | null
@@ -27,8 +27,8 @@ export const useAuthStore = create<AuthState>()(
     {
       name: 'auth-storage',
       partialize: (state) => ({ user: state.user, isAuthenticated: state.isAuthenticated }),
-    }
-  )
+    },
+  ),
 )
 
 interface ThemeState {

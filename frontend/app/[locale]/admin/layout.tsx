@@ -1,9 +1,5 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { usePathname, useRouter } from 'next/navigation'
-import { useLocale, useTranslations } from 'next-intl'
-import Link from 'next/link'
 import {
   LayoutDashboard,
   Package,
@@ -16,13 +12,17 @@ import {
   X,
   FileText,
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
+import Link from 'next/link'
+import { usePathname, useRouter } from 'next/navigation'
+import { useLocale, useTranslations } from 'next-intl'
+import { useEffect, useState } from 'react'
 import Logo from '@/components/Logo'
+import { Button } from '@/components/ui/button'
+import { LoadingScreen } from '@/components/ui/loading-screen'
+import { Separator } from '@/components/ui/separator'
 import { api } from '@/lib/api'
 import { useAuthStore } from '@/lib/store'
 import { User } from '@/lib/types'
-import { LoadingScreen } from '@/components/ui/loading-screen'
 
 interface AdminLayoutProps {
   children: React.ReactNode
@@ -88,9 +88,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   }
 
   return (
-    <div className="flex min-h-screen pt-16 md:pt-0 bg-background text-foreground">
+    <div className="flex min-h-screen bg-background pt-16 text-foreground md:pt-0">
       {/* Mobile Top Bar */}
-      <div className="fixed top-0 left-0 right-0 z-30 flex h-16 items-center justify-between border-b bg-background px-4 md:hidden">
+      <div className="fixed left-0 right-0 top-0 z-30 flex h-16 items-center justify-between border-b bg-background px-4 md:hidden">
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(true)}>
             <Menu className="h-5 w-5" />
@@ -101,22 +101,24 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 w-64 transform bg-card border-r transition-transform duration-200 ease-in-out md:relative md:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 w-64 transform border-r bg-card transition-transform duration-200 ease-in-out md:relative md:translate-x-0 ${
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         <div className="flex h-full flex-col">
           {/* Logo with Dashboard text */}
-          <div className="relative flex h-16 items-center justify-center border-b px-6 gap-2">
+          <div className="relative flex h-16 items-center justify-center gap-2 border-b px-6">
             <Logo variant="text" customHref={`/${locale}/admin/dashboard`} />
-            <span className="text-xs uppercase tracking-widest text-muted-foreground">{t('dashboard')}</span>
-            
+            <span className="text-xs uppercase tracking-widest text-muted-foreground">
+              {t('dashboard')}
+            </span>
+
             {/* Mobile Close Button */}
-            <Button 
-               variant="ghost" 
-               size="icon" 
-               className="absolute right-2 md:hidden" 
-               onClick={() => setIsSidebarOpen(false)}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-2 md:hidden"
+              onClick={() => setIsSidebarOpen(false)}
             >
               <X className="h-4 w-4" />
             </Button>
@@ -157,11 +159,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 <p className="text-xs text-muted-foreground">{user.role}</p>
               </div>
             )}
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-sm"
-              onClick={handleLogout}
-            >
+            <Button variant="ghost" className="w-full justify-start text-sm" onClick={handleLogout}>
               <LogOut className="mr-2 h-4 w-4" />
               {t('logout')}
             </Button>
@@ -172,7 +170,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       {/* Overlay for mobile */}
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 z-30 bg-black/80 md:hidden backdrop-blur-sm"
+          className="fixed inset-0 z-30 bg-black/80 backdrop-blur-sm md:hidden"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}

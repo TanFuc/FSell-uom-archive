@@ -1,19 +1,26 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useTranslations } from 'next-intl'
-import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import * as z from 'zod'
 import { RefreshCw } from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import { useEffect, useState } from 'react'
+import { useForm } from 'react-hook-form'
+import * as z from 'zod'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Form, FormControl, FormField, FormItem, FormLabel, FormDescription } from '@/components/ui/form'
-import { api } from '@/lib/api'
-import { ThemeSettings } from '@/lib/types'
-import { DEFAULT_THEME } from '@/lib/constants'
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormDescription,
+} from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
 import { useToast } from '@/hooks/use-toast'
+import { api } from '@/lib/api'
+import { DEFAULT_THEME } from '@/lib/constants'
+import { ThemeSettings } from '@/lib/types'
 
 const themeSchema = z.object({
   backgroundColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color'),
@@ -83,7 +90,7 @@ export default function ThemePage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-serif">{t('theme')}</h1>
+          <h1 className="font-serif text-2xl">{t('theme')}</h1>
           <p className="text-muted-foreground">Customize website colors</p>
         </div>
         <Button variant="outline" onClick={resetToDefault}>
@@ -184,31 +191,24 @@ export default function ThemePage() {
           </CardHeader>
           <CardContent>
             <div
-              className="p-8 min-h-[300px] border"
+              className="min-h-[300px] border p-8"
               style={{ backgroundColor: watchedValues.backgroundColor }}
             >
               <div className="space-y-4">
-                <h2
-                  className="text-2xl font-serif"
-                  style={{ color: watchedValues.textColor }}
-                >
+                <h2 className="font-serif text-2xl" style={{ color: watchedValues.textColor }}>
                   {t('previewTitle')}
                 </h2>
-                <p style={{ color: watchedValues.textColor }}>
-                  {t('previewSubtitle')}
-                </p>
-                <p style={{ color: watchedValues.accentColor }}>
-                  {t('previewNewCollection')}
-                </p>
+                <p style={{ color: watchedValues.textColor }}>{t('previewSubtitle')}</p>
+                <p style={{ color: watchedValues.accentColor }}>{t('previewNewCollection')}</p>
                 <div className="flex gap-4 pt-4">
                   <button
-                    className="uppercase tracking-wide text-sm"
+                    className="text-sm uppercase tracking-wide"
                     style={{ color: watchedValues.textColor }}
                   >
                     {t('shopNow')}
                   </button>
                   <button
-                    className="uppercase tracking-wide text-sm"
+                    className="text-sm uppercase tracking-wide"
                     style={{ color: watchedValues.accentColor }}
                   >
                     {t('learnMore')}
