@@ -23,7 +23,11 @@ export function ProductCard({ product, locale }: ProductCardProps) {
   const priceDisplay = getDisplayPrice(product, locale)
 
   return (
-    <Link href={`/${locale}/shop/${product.slug}`} className="animate-fade-in group block">
+    <Link
+      href={`/${locale}/shop/${product.slug}`}
+      className="animate-fade-in group block"
+      draggable="false"
+    >
       <div
         className="relative mb-4 w-full overflow-hidden rounded-sm bg-muted/20"
         style={{ aspectRatio: '4 / 5' }}
@@ -38,6 +42,7 @@ export function ProductCard({ product, locale }: ProductCardProps) {
               className="z-0 object-cover object-center transition-transform duration-500 group-hover:scale-105"
               style={{ objectFit: 'cover', objectPosition: 'center' }}
               loading="lazy"
+              draggable="false"
             />
             {hoverImage && (
               <Image
@@ -48,6 +53,7 @@ export function ProductCard({ product, locale }: ProductCardProps) {
                 className="z-10 object-cover object-center opacity-0 transition-all duration-500 group-hover:scale-105 group-hover:opacity-100"
                 style={{ objectFit: 'cover', objectPosition: 'center' }}
                 loading="lazy"
+                draggable="false"
               />
             )}
           </>
@@ -63,19 +69,19 @@ export function ProductCard({ product, locale }: ProductCardProps) {
           </div>
         )}
       </div>
-      <div className="space-y-2">
+      <div className="mt-4 space-y-1.5">
         <h3
-          className="line-clamp-2 h-9 overflow-hidden text-ellipsis font-serif text-sm font-medium leading-tight md:h-10 md:text-base"
+          className="line-clamp-2 h-8 overflow-hidden text-ellipsis font-sans text-[11px] font-medium leading-tight md:h-10 md:text-sm"
           title={name}
         >
           {name}
         </h3>
         <div className="flex flex-wrap items-center gap-2">
-          <p className="font-serif text-sm font-light text-muted-foreground md:text-lg">
+          <p className="font-sans text-[11px] font-medium text-foreground md:text-sm">
             {priceDisplay.currentPrice}
           </p>
           {priceDisplay.hasDiscount && priceDisplay.originalPrice && (
-            <p className="text-xs text-muted-foreground/60 line-through md:text-sm">
+            <p className="text-[9px] text-muted-foreground/30 line-through md:text-[11px]">
               {priceDisplay.originalPrice}
             </p>
           )}

@@ -8,35 +8,35 @@
 @layer base {
   :root {
     /* Black & White minimalist palette */
-    --background: 0 0% 100%;           /* #FFFFFF white */
-    --foreground: 0 0% 0%;             /* #000000 black */
+    --background: 0 0% 100%; /* #FFFFFF white */
+    --foreground: 0 0% 0%; /* #000000 black */
 
-    --card: 0 0% 100%;                 /* white */
-    --card-foreground: 0 0% 0%;        /* black */
+    --card: 0 0% 100%; /* white */
+    --card-foreground: 0 0% 0%; /* black */
 
-    --primary: 0 0% 0%;                /* black */
-    --primary-foreground: 0 0% 100%;   /* white */
+    --primary: 0 0% 0%; /* black */
+    --primary-foreground: 0 0% 100%; /* white */
 
-    --secondary: 0 0% 96%;             /* #F5F5F5 light gray */
-    --secondary-foreground: 0 0% 0%;   /* black */
+    --secondary: 0 0% 96%; /* #F5F5F5 light gray */
+    --secondary-foreground: 0 0% 0%; /* black */
 
-    --muted: 0 0% 96%;                 /* #F5F5F5 light gray */
-    --muted-foreground: 0 0% 40%;      /* #666666 medium gray */
+    --muted: 0 0% 96%; /* #F5F5F5 light gray */
+    --muted-foreground: 0 0% 40%; /* #666666 medium gray */
 
-    --accent: 0 0% 5%;                 /* #0D0D0D near-black */
-    --accent-foreground: 0 0% 100%;    /* white */
+    --accent: 0 0% 5%; /* #0D0D0D near-black */
+    --accent-foreground: 0 0% 100%; /* white */
 
-    --destructive: 0 0% 0%;            /* black for consistency */
+    --destructive: 0 0% 0%; /* black for consistency */
     --destructive-foreground: 0 0% 100%; /* white */
 
-    --border: 0 0% 85%;                /* #D9D9D9 light gray */
-    --input: 0 0% 85%;                 /* #D9D9D9 */
-    --ring: 0 0% 0%;                   /* black */
+    --border: 0 0% 85%; /* #D9D9D9 light gray */
+    --input: 0 0% 85%; /* #D9D9D9 */
+    --ring: 0 0% 0%; /* black */
 
-    --popover: 0 0% 100%;              /* white */
-    --popover-foreground: 0 0% 0%;     /* black */
+    --popover: 0 0% 100%; /* white */
+    --popover-foreground: 0 0% 0%; /* black */
 
-    --radius: 0rem;                    /* Sharp corners for minimalist feel */
+    --radius: 0rem; /* Sharp corners for minimalist feel */
   }
 
   /* Global reset */
@@ -56,11 +56,11 @@
 
   /* Consistent typography */
   body {
-    @apply bg-background text-foreground font-sans;
-    font-size: 16px; /* Increased from 14px for better readability */
-    font-weight: 400;
-    line-height: 1.7;
-    letter-spacing: 0.02em;
+    @apply bg-background font-sans uppercase text-foreground;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.4;
+    letter-spacing: 0.08em;
   }
 
   /* Links */
@@ -213,21 +213,21 @@
 
 /* ==================== SCROLLBAR ====================*/
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  display: none;
 }
 
-::-webkit-scrollbar-track {
-  background: hsl(var(--background));
+* {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted));
-  border-radius: 0;
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--foreground));
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
 /* ==================== SELECTION ====================*/
@@ -311,4 +311,3 @@
 }
 
 /* ==================== RESPONSIVE ====================*/
-
