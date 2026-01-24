@@ -188,8 +188,8 @@ export default function HomePage() {
 
         {isLoadingLatest ? (
           <div className="flex gap-6 overflow-hidden px-6 lg:px-12">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="w-[85vw] shrink-0 space-y-6 md:w-[40vw] lg:w-[23vw]">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="w-[85vw] shrink-0 space-y-6 md:w-[45vw] lg:w-[31vw]">
                 <div className="aspect-[4/5] animate-pulse bg-muted/30" />
               </div>
             ))}
@@ -210,13 +210,13 @@ export default function HomePage() {
             >
               <AnimatePresence mode="popLayout">
                 {latestProducts?.data.map((product, idx) => (
-                  <motion.div 
-                    key={product.id} 
+                  <motion.div
+                    key={product.id}
                     initial={{ opacity: 0, x: 50 }}
                     whileInView={{ opacity: 1, x: 0.01 }}
                     viewport={{ once: true }}
                     transition={{ delay: idx * 0.05, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                    className="w-[85vw] shrink-0 md:w-[40vw] lg:w-[23vw]"
+                    className="w-[85vw] shrink-0 md:w-[45vw] lg:w-[31vw]"
                   >
                     <ProductCard product={product} locale={locale} />
                   </motion.div>
@@ -249,8 +249,8 @@ export default function HomePage() {
 
         {isLoadingFeatured ? (
           <div className="flex gap-6 overflow-hidden px-6 lg:px-12">
-             {[...Array(4)].map((_, i) => (
-              <div key={i} className="w-[85vw] shrink-0 space-y-6 md:w-[40vw] lg:w-[23vw]">
+             {[...Array(2)].map((_, i) => (
+              <div key={i} className="w-[85vw] shrink-0 space-y-6 md:w-[45vw] lg:w-[48vw]">
                 <div className="aspect-[4/5] animate-pulse bg-muted/30" />
               </div>
             ))}
@@ -271,13 +271,13 @@ export default function HomePage() {
             >
               <AnimatePresence mode="popLayout">
                 {featuredProducts?.data.map((product, idx) => (
-                  <motion.div 
-                    key={product.id} 
+                  <motion.div
+                    key={product.id}
                     initial={{ opacity: 0, x: 50 }}
                     whileInView={{ opacity: 1, x: 0.01 }}
                     viewport={{ once: true }}
                     transition={{ delay: idx * 0.05, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                    className="w-[85vw] shrink-0 md:w-[40vw] lg:w-[23vw]"
+                    className="w-[85vw] shrink-0 md:w-[45vw] lg:w-[48vw]"
                   >
                     <ProductCard product={product} locale={locale} />
                   </motion.div>

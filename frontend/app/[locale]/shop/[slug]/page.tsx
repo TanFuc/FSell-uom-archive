@@ -327,7 +327,7 @@ export default function ProductPage({ params }: ProductPageProps) {
                     whileInView={{ opacity: 1, x: 0 }}
                     viewport={{ once: true }}
                     transition={{ delay: idx * 0.05, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                    className="w-[85vw] shrink-0 md:w-[40vw] lg:w-[22vw]"
+                    className="w-[85vw] shrink-0 md:w-[45vw] lg:w-[23vw]"
                   >
                     <ProductCard product={item} locale={locale} />
                   </motion.div>
