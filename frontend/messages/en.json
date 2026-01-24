@@ -302,6 +302,23 @@
       "description": "Description",
       "vietnamese": "Vietnamese",
       "english": "English"
+    },
+    "banners": {
+      "pageTitle": "Banners",
+      "pageDesc": "Manage home page slides",
+      "create": "Create Banner",
+      "link": "Link",
+      "order": "Order",
+      "empty": "No banners found. Create one to get started.",
+      "deleteConfirmTitle": "Delete Banner?",
+      "deleteConfirmDesc": "Are you sure you want to delete this banner? This action cannot be undone.",
+      "deleteAction": "Delete It",
+      "loadError": "Failed to load banners",
+      "deleteSuccess": "Banner deleted",
+      "deleteError": "Failed to delete banner",
+      "activated": "Banner activated",
+      "deactivated": "Banner deactivated",
+      "statusUpdateError": "Failed to update status"
     }
   },
   "validation": {

@@ -299,6 +299,23 @@
       "description": "Mô tả",
       "vietnamese": "Tiếng Việt",
       "english": "English"
+    },
+    "banners": {
+      "pageTitle": "Danh sách Banner",
+      "pageDesc": "Quản lý hình ảnh trang chủ",
+      "create": "Tạo Banner",
+      "link": "Liên kết",
+      "order": "Thứ tự",
+      "empty": "Chưa có banner nào. Hãy tạo mới để bắt đầu.",
+      "deleteConfirmTitle": "Xóa Banner?",
+      "deleteConfirmDesc": "Bạn có chắc chắn muốn xóa banner này? Hành động này không thể hoàn tác.",
+      "deleteAction": "Xóa",
+      "loadError": "Không thể tải danh sách banner",
+      "deleteSuccess": "Đã xóa banner",
+      "deleteError": "Xóa banner thất bại",
+      "activated": "Đã kích hoạt banner",
+      "deactivated": "Đã hủy kích hoạt banner",
+      "statusUpdateError": "Lỗi cập nhật trạng thái"
     }
   },
   "validation": {

@@ -47,6 +47,7 @@ class ApiClient {
       baseURL,
       headers: {
         'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true',
       },
       timeout: 30000,
     })
@@ -255,13 +256,25 @@ class ApiClient {
     return this.client.post(`/users/${id}/restore`)
   }
 
-  // ==================== BANNERS (PUBLIC) ====================
+  // ==================== BANNERS (PUBLIC & ADMIN) ====================
   async getBanners(activeOnly = true): Promise<Banner[]> {
     return this.client.get('/banners', { params: { activeOnly: activeOnly.toString() } })
   }
 
   async getBannerById(id: string): Promise<Banner> {
     return this.client.get(`/banners/${id}`)
+  }
+
+  async createBanner(data: any): Promise<Banner> {
+    return this.client.post('/banners', data)
+  }
+
+  async updateBanner(id: string, data: any): Promise<Banner> {
+    return this.client.patch(`/banners/${id}`, data)
+  }
+
+  async deleteBanner(id: string): Promise<void> {
+    return this.client.delete(`/banners/${id}`)
   }
 
   // ==================== UPLOAD (ADMIN) ====================

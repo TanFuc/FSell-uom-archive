@@ -31,3 +31,36 @@ export function useBanner(id: string) {
     staleTime: 10 * 60 * 1000,
   })
 }
+
+// Mutations
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+
+export function useCreateBanner() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (data: any) => apiClient.createBanner(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: bannerKeys.all })
+    },
+  })
+}
+
+export function useUpdateBanner() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) => apiClient.updateBanner(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: bannerKeys.all })
+    },
+  })
+}
+
+export function useDeleteBanner() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => apiClient.deleteBanner(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: bannerKeys.all })
+    },
+  })
+}

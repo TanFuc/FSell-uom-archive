@@ -19,6 +19,7 @@ import type {
   QueryUsersDto,
   BulkDeleteDto,
   BulkUpdateDto,
+  Banner,
 } from './types'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
@@ -33,6 +34,7 @@ class ApiClient {
       baseURL,
       headers: {
         'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true',
       },
       timeout: 30000,
     })
@@ -228,6 +230,44 @@ class ApiClient {
 
   async getMe(): Promise<User> {
     return this.request<User>('/auth/profile')
+  }
+
+  // ==================== BANNERS ENDPOINTS ====================
+  async getBanners(activeOnly = true): Promise<Banner[]> {
+    return this.request<Banner[]>('/banners', { 
+      headers: { 
+        'ngrok-skip-browser-warning': 'true' 
+      },
+      method: 'GET'
+    }).then(data => {
+      // Handle filtering on client side if needed, or rely on backend
+      if (activeOnly) return data.filter((b: Banner) => b.isActive)
+      return data
+    })
+  }
+
+  async getBannerById(id: string): Promise<Banner> {
+    return this.request<Banner>(`/banners/${id}`)
+  }
+
+  async createBanner(data: any): Promise<Banner> {
+    return this.request<Banner>('/banners', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async updateBanner(id: string, data: any): Promise<Banner> {
+    return this.request<Banner>(`/banners/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async deleteBanner(id: string): Promise<void> {
+    return this.request<void>(`/banners/${id}`, {
+      method: 'DELETE',
+    })
   }
 
   // ==================== ADMIN PRODUCT ENDPOINTS ====================

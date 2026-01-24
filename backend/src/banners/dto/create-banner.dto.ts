@@ -31,7 +31,6 @@ export class CreateBannerDto {
 
   @IsOptional()
   @IsString()
-  @IsUrl()
   mobileImageUrl?: string;
 
   @IsOptional()

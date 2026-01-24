@@ -30,7 +30,13 @@ async function bootstrap() {
     origin: true, // Allow all origins (reflects the request origin)
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept-Language'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'Accept-Language',
+      'X-Requested-With',
+      'ngrok-skip-browser-warning',
+    ],
   })
 
   // Global pipes
