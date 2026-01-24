@@ -15,11 +15,17 @@ export const productKeys = {
   detailById: (id: string) => [...productKeys.details(), 'id', id] as const,
 }
 
-// Public: Get products list
+// Public: Get products list (or Admin list if includeDeleted is true)
 export function useProducts(params?: QueryProductsDto) {
   return useQuery({
     queryKey: productKeys.list(params || {}),
-    queryFn: () => apiClient.getProducts(params),
+    queryFn: () => {
+      // If we want to see deleted items, we must use the admin endpoint
+      if (params?.includeDeleted) {
+        return apiClient.getAdminProducts(params)
+      }
+      return apiClient.getProducts(params)
+    },
     staleTime: 5 * 60 * 1000, // 5 minutes
   })
 }

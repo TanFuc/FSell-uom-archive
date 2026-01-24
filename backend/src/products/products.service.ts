@@ -45,7 +45,9 @@ export class ProductsService {
     const skip = (page - 1) * limit
 
     // Build dynamic where clause
-    const where: Prisma.ProductWhereInput = {}
+    const where: Prisma.ProductWhereInput = {
+      hardDeletedAt: null, // Always exclude hard-deleted items
+    }
 
     // Soft delete filter - MANAGER can only see non-deleted items
     if (userRole === Role.MANAGER || !includeDeleted) {
@@ -135,6 +137,22 @@ export class ProductsService {
     await this.redis.set(cacheKey, JSON.stringify(result), CACHE_TTL)
 
     return result
+  }
+
+  // ==================== STATS ====================
+
+  async getStats() {
+    const [totalProducts, activeProducts, featuredProducts] = await Promise.all([
+      this.prisma.product.count({ where: { deletedAt: null } }),
+      this.prisma.product.count({ where: { deletedAt: null, isActive: true } }),
+      this.prisma.product.count({ where: { deletedAt: null, isFeatured: true } }),
+    ])
+
+    return {
+      totalProducts,
+      activeProducts,
+      featuredProducts,
+    }
   }
 
   // ==================== FIND BY SLUG ====================
@@ -322,10 +340,22 @@ export class ProductsService {
       throw new NotFoundException(`Product with ID "${id}" not found`)
     }
 
-    await this.prisma.product.delete({ where: { id } })
+    // Instead of deleting, just set hardDeletedAt
+    // Also change slug to free up the original slug
+    const timestamp = new Date().getTime()
+    await this.prisma.product.update({
+      where: { id },
+      data: {
+        hardDeletedAt: new Date(),
+        slug: `${product.slug}-deleted-${timestamp}`, // Free up the slug
+        deletedAt: product.deletedAt || new Date(), // Ensure it's marked as soft deleted too
+        isActive: false,
+      },
+    })
+
     await this.invalidateProductCache(id)
 
-    this.logger.log(`Product hard-deleted: ${product.slug}`)
+    this.logger.log(`Product hard-deleted (archived): ${product.slug}`)
     return { message: 'Product permanently deleted' }
   }
 

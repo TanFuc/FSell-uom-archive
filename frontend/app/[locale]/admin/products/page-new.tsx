@@ -96,7 +96,7 @@ export default function ProductsPage() {
 
     try {
       await api.deleteProduct(deleteDialog.product.id)
-      toast({ title: t('success'), description: 'Đã chuyển vào thùng rác' })
+      toast({ title: t('success'), description: 'Đã xóa thành công' })
       fetchProducts()
     } catch (error) {
       toast({ title: t('error'), description: t('failedToDelete'), variant: 'destructive' })

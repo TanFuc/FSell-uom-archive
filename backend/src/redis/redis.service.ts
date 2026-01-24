@@ -8,12 +8,40 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   private client: RedisClientType
 
   constructor(private configService: ConfigService) {
-    const url = this.configService.get<string>('REDIS_URL') || 'redis://localhost:6379'
-    const password = this.configService.get<string>('REDIS_PASSWORD')
+    const nodeEnv = this.configService.get<string>('NODE_ENV') || 'development'
+    const isProduction = nodeEnv === 'production'
+
+    // Use Upstash Redis in production, local Redis in development
+    let url: string | undefined
+    let password: string | undefined
+
+    if (isProduction) {
+      // Production: Use Upstash Redis
+      url = this.configService.get<string>('UPSTASH_REDIS_URL')
+      password = this.configService.get<string>('UPSTASH_REDIS_TOKEN')
+
+      if (!url || !password) {
+        throw new Error('UPSTASH_REDIS_URL and UPSTASH_REDIS_TOKEN must be set in production')
+      }
+
+      this.logger.log('Using Upstash Redis (Production)')
+    } else {
+      // Development: Use local Redis
+      url = this.configService.get<string>('REDIS_URL') || 'redis://localhost:6379'
+      password = this.configService.get<string>('REDIS_PASSWORD')
+
+      this.logger.log('Using Local Redis (Development)')
+    }
 
     this.client = createClient({
       url,
       password: password || undefined,
+      socket: isProduction
+        ? {
+            tls: true,
+            rejectUnauthorized: true,
+          }
+        : undefined,
     })
 
     this.client.on('error', (err) => {
@@ -21,7 +49,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     })
 
     this.client.on('connect', () => {
-      this.logger.log('Redis Client Connected')
+      this.logger.log(`Redis Client Connected to ${isProduction ? 'Upstash' : 'Local Redis'}`)
     })
   }
 

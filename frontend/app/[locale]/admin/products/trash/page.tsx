@@ -212,8 +212,8 @@ export default function TrashPage() {
                   </TableCell>
                   <TableCell>
                     <div>
-                      <p className="font-medium text-muted-foreground">{product.nameVi}</p>
-                      <p className="text-xs text-muted-foreground">{product.nameEn}</p>
+                      <p className="font-medium text-muted-foreground line-clamp-2" title={product.nameVi}>{product.nameVi}</p>
+                      <p className="text-xs text-muted-foreground line-clamp-1" title={product.nameEn}>{product.nameEn}</p>
                     </div>
                   </TableCell>
                   <TableCell>{formatPriceVND(product.priceVND)}</TableCell>

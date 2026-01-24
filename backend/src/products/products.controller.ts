@@ -68,6 +68,16 @@ export class ProductsController {
     return this.productsService.findAll(query, user.role as Role)
   }
 
+  @Get('admin/stats')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.MANAGER)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Get product statistics' })
+  @ApiResponse({ status: 200, description: 'Product statistics' })
+  async getStats() {
+    return this.productsService.getStats()
+  }
+
   @Get('admin/id/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MANAGER)

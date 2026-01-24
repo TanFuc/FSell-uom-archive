@@ -27,7 +27,7 @@ async function bootstrap() {
 
   // CORS
   app.enableCors({
-    origin: frontendUrl,
+    origin: true, // Allow all origins (reflects the request origin)
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept-Language'],
@@ -89,7 +89,7 @@ async function bootstrap() {
     logger.log(`Swagger documentation available at http://localhost:${port}/api/docs`)
   }
 
-  await app.listen(port)
+  await app.listen(port, '0.0.0.0')
   logger.log(`Application running on http://localhost:${port}`)
   logger.log(`Environment: ${nodeEnv}`)
 }

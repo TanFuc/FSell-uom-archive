@@ -64,7 +64,7 @@ export function ProductCard({ product, locale }: ProductCardProps) {
         )}
       </div>
       <div className="space-y-2">
-        <h3 className="text-sm md:text-base font-serif font-medium leading-tight line-clamp-2 min-h-[2.5rem] md:min-h-[3rem] overflow-hidden text-ellipsis">
+        <h3 className="text-sm md:text-base font-serif font-medium leading-tight line-clamp-2 h-9 md:h-10 overflow-hidden text-ellipsis" title={name}>
           {name}
         </h3>
         <div className="flex items-center gap-2 flex-wrap">

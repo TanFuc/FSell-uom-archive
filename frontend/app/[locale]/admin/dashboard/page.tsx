@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { Package, Users, DollarSign, Eye, LayoutGrid } from 'lucide-react'
+import { Package, Users, DollarSign, Eye, LayoutGrid, CheckCircle, Star } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useDocumentTitle } from '@/hooks/use-document-title'
 import { api } from '@/lib/api'
@@ -10,6 +10,7 @@ import { api } from '@/lib/api'
 interface DashboardStats {
   totalProducts: number
   activeProducts: number
+  featuredProducts: number
   totalUsers: number
 }
 
@@ -18,6 +19,7 @@ export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats>({
     totalProducts: 0,
     activeProducts: 0,
+    featuredProducts: 0,
     totalUsers: 0,
   })
   const [isLoading, setIsLoading] = useState(true)
@@ -28,14 +30,15 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const [productsRes, usersRes] = await Promise.all([
-          api.getAdminProducts({ limit: 1, includeDeleted: true }),
+        const [statsRes, usersRes] = await Promise.all([
+          api.getAdminProductStats(),
           api.getUsers({ limit: 1 }),
         ])
 
         setStats({
-          totalProducts: productsRes.meta.total,
-          activeProducts: productsRes.data.filter((p) => p.isActive && !p.deletedAt).length,
+          totalProducts: statsRes.totalProducts,
+          activeProducts: statsRes.activeProducts,
+          featuredProducts: statsRes.featuredProducts,
           totalUsers: usersRes.meta.total,
         })
       } catch (error) {
@@ -53,7 +56,19 @@ export default function DashboardPage() {
       title: t('totalProducts'),
       value: stats.totalProducts,
       icon: Package,
-      description: `${stats.activeProducts} ${t('activeProducts')}`,
+      description: t('manageProductsDesc'),
+    },
+    {
+      title: t('active'),
+      value: stats.activeProducts,
+      icon: CheckCircle,
+      description: t('activeProducts'),
+    },
+    {
+      title: t('featured'),
+      value: stats.featuredProducts,
+      icon: Star,
+      description: t('featuredProducts'),
     },
     {
       title: t('totalAdmins'),

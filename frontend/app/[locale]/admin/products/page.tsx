@@ -323,8 +323,8 @@ export default function ProductsPage() {
                   </TableCell>
                   <TableCell>
                     <div>
-                      <p className="font-medium">{product.nameVi}</p>
-                      <p className="text-xs text-muted-foreground">{product.nameEn}</p>
+                      <p className="font-medium line-clamp-2" title={product.nameVi}>{product.nameVi}</p>
+                      <p className="text-xs text-muted-foreground line-clamp-1" title={product.nameEn}>{product.nameEn}</p>
                     </div>
                   </TableCell>
                   <TableCell>
@@ -422,19 +422,34 @@ export default function ProductsPage() {
 
       {/* Delete Dialog */}
       <Dialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ open, product: null })}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t('confirmDelete')}</DialogTitle>
-            <DialogDescription>
-              Chuyển "{deleteDialog.product?.nameVi}" vào thùng rác? Bạn có thể khôi phục sản phẩm sau này.
-            </DialogDescription>
+        <DialogContent className="sm:max-w-[425px] p-6">
+          <DialogHeader className="flex flex-col items-center gap-4 text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#4A4238]/10 text-[#4A4238] dark:bg-[#4A4238]/20">
+              <Trash2 className="h-6 w-6" />
+            </div>
+            <div className="space-y-2">
+              <DialogTitle className="text-xl">Xóa sản phẩm?</DialogTitle>
+              <DialogDescription className="text-center mx-auto max-w-[90%]">
+                Bạn có chắc chắn muốn xóa sản phẩm <span className="font-semibold text-foreground">"{deleteDialog.product?.nameVi}"</span> không?
+                <br />
+                <span className="text-sm mt-2 block text-muted-foreground">Sản phẩm sẽ được chuyển vào thùng rác và có thể khôi phục tại mục Thùng rác.</span>
+              </DialogDescription>
+            </div>
           </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteDialog({ open: false, product: null })}>
+          <DialogFooter className="sm:justify-center sm:space-x-4 gap-2 mt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => setDeleteDialog({ open: false, product: null })}
+              className="w-full sm:w-32"
+            >
               {t('cancel')}
             </Button>
-            <Button variant="destructive" onClick={handleDelete}>
-              Chuyển vào thùng rác
+            <Button 
+              variant="destructive" 
+              onClick={handleDelete}
+              className="w-full sm:w-32 bg-[#4A4238] hover:bg-[#4A4238]/90 text-white"
+            >
+              {t('delete')}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -250,6 +250,18 @@ class ApiClient {
     )
   }
 
+  async getAdminProductStats(): Promise<{
+    totalProducts: number
+    activeProducts: number
+    featuredProducts: number
+  }> {
+    return this.request<{
+      totalProducts: number
+      activeProducts: number
+      featuredProducts: number
+    }>('/products/admin/stats')
+  }
+
   async getProductById(id: string): Promise<Product> {
     return this.request<Product>(`/products/admin/id/${id}`)
   }

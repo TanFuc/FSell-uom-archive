@@ -121,12 +121,13 @@ model Product {
   relatedTo       Product[] @relation("RelatedProducts")
 
   // Audit fields
-  createdAt DateTime  @default(now())
-  createdBy String? // User ID who created this product
-  updatedAt DateTime  @updatedAt
-  updatedBy String? // User ID who last updated
-  deletedAt DateTime? // Soft delete timestamp
-  deletedBy String? // User ID who deleted
+  createdAt     DateTime  @default(now())
+  createdBy     String? // User ID who created this product
+  updatedAt     DateTime  @updatedAt
+  updatedBy     String? // User ID who last updated
+  deletedAt     DateTime? // Soft delete timestamp
+  deletedBy     String? // User ID who deleted
+  hardDeletedAt DateTime? // Permanent delete timestamp (hidden in trash)
 
   // Relations for audit trail
   creator User? @relation("ProductCreator", fields: [createdBy], references: [id], onDelete: SetNull)
