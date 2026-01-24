@@ -166,7 +166,7 @@ export function BannerCarousel({ banners, locale, autoPlayInterval = 5000 }: Ban
         />
 
         {/* Subtle overlay for text readability */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/20 to-black/60 md:to-black/40" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/5 to-black/30" />
 
         {/* Text Content - Positioned at bottom left */}
         {(title || subtitle || description) && (
@@ -235,7 +235,7 @@ export function BannerCarousel({ banners, locale, autoPlayInterval = 5000 }: Ban
               e.stopPropagation() // Prevent event bubbling
               goToPrevious()
             }}
-            className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/20 p-2 opacity-0 backdrop-blur-sm transition-all hover:bg-white/30 hover:opacity-100 group-hover:opacity-100 md:left-8 md:p-3"
+            className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/30 p-2 opacity-0 backdrop-blur-sm transition-all hover:bg-white/40 hover:opacity-100 group-hover:opacity-100 md:left-8 md:p-3"
             aria-label="Previous banner"
           >
             <ChevronLeft className="h-5 w-5 text-white md:h-6 md:w-6" />
@@ -246,7 +246,7 @@ export function BannerCarousel({ banners, locale, autoPlayInterval = 5000 }: Ban
               e.stopPropagation() // Prevent event bubbling
               goToNext()
             }}
-            className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/20 p-2 opacity-0 backdrop-blur-sm transition-all hover:bg-white/30 hover:opacity-100 group-hover:opacity-100 md:right-8 md:p-3"
+            className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/30 p-2 opacity-0 backdrop-blur-sm transition-all hover:bg-white/40 hover:opacity-100 group-hover:opacity-100 md:right-8 md:p-3"
             aria-label="Next banner"
           >
             <ChevronRight className="h-5 w-5 text-white md:h-6 md:w-6" />
@@ -256,7 +256,7 @@ export function BannerCarousel({ banners, locale, autoPlayInterval = 5000 }: Ban
 
       {/* Improved Indicators/Dots - Only show if multiple banners */}
       {sortedBanners.length > 1 && (
-        <div className="absolute bottom-6 left-1/2 flex -translate-x-1/2 gap-2 rounded-full bg-black/20 px-4 py-2 backdrop-blur-sm md:bottom-8">
+        <div className="absolute bottom-6 left-1/2 flex -translate-x-1/2 gap-2 rounded-full bg-black/30 px-4 py-2 backdrop-blur-sm md:bottom-8">
           {sortedBanners.map((_, index) => (
             <button
               key={index}

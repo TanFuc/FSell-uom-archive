@@ -15,7 +15,7 @@ export function Footer() {
   const currentYear = new Date().getFullYear()
 
   return (
-    <footer className="border-t border-foreground/10 bg-primary/15">
+    <footer className="border-t border-foreground/5 bg-background">
       <div className="container-custom spacing-md">
         {/* Main Footer Content */}
         <div className="mb-8 grid grid-cols-1 gap-8 md:grid-cols-3 md:gap-12">
@@ -25,7 +25,7 @@ export function Footer() {
               href={`/${locale}`}
               className="mb-4 inline-block font-playfair text-3xl font-bold tracking-widest text-foreground transition-opacity duration-300 hover:opacity-80 md:text-4xl"
             >
-              ƯƠM<span className="text-primary">.</span>
+              ƯƠM<span className="text-black">.</span>
             </Link>
             <p className="max-w-xs text-muted-foreground">{t('description')}</p>
           </div>
@@ -74,7 +74,7 @@ export function Footer() {
         </div>
 
         {/* Copyright */}
-        <div className="border-t border-foreground/10 pt-8 text-center md:text-left">
+        <div className="border-t border-foreground/5 pt-8 text-center md:text-left">
           <p className="text-muted-foreground">
             © {currentYear} Ươm Archive. {t('rights')}
           </p>

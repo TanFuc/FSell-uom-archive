@@ -26,7 +26,7 @@ export default function Logo({
   const logoContent = () => {
     if (variant === 'text') {
       return (
-        <span className={`font-serif uppercase tracking-widest text-earthy-brown ${className}`}>
+        <span className={`font-serif uppercase tracking-[0.3em] text-foreground ${className}`}>
           Ươm.
         </span>
       )

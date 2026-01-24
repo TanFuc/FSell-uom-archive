@@ -32,7 +32,7 @@ export default function Navigation() {
         >
           VN
         </button>
-        <span className="text-earthy-brown">|</span>
+        <span className="text-foreground/20">|</span>
         <button
           onClick={() => switchLocale('en')}
           className={`nav-link ${locale === 'en' ? 'italic' : ''}`}

@@ -86,10 +86,10 @@ export function Header() {
       className={cn(
         'fixed left-0 right-0 top-0 z-50 transition-[height,background-color,border-color,box-shadow] duration-500',
         showSearch
-          ? 'h-screen bg-[#1a1a1a] shadow-2xl lg:h-20'
+          ? 'h-screen bg-black shadow-2xl lg:h-20'
           : showMobileMenu
-            ? 'h-16 border-b border-foreground/10 bg-background shadow-sm lg:h-20'
-            : 'h-16 border-b border-foreground/10 bg-primary/15 backdrop-blur-md lg:h-20',
+            ? 'h-16 border-b border-foreground/5 bg-background shadow-sm lg:h-20'
+            : 'h-16 border-b border-foreground/5 bg-background backdrop-blur-md lg:h-20',
       )}
     >
       <div className="container-custom flex h-16 items-center justify-between lg:h-20">
@@ -100,7 +100,7 @@ export function Header() {
               href={`/${locale}`}
               className="z-[60] font-playfair text-2xl font-bold tracking-widest text-foreground transition-opacity duration-300 hover:opacity-80 lg:text-3xl xl:text-4xl"
             >
-              ƯƠM<span className="text-primary">.</span>
+              ƯƠM<span className="text-black">.</span>
             </Link>
 
             {/* Desktop Navigation */}
@@ -125,7 +125,7 @@ export function Header() {
                   {locale === 'vi' ? 'DANH MỤC' : 'CATEGORIES'}
                 </button>
 
-                <div className="invisible absolute -left-4 top-full z-[60] w-56 translate-y-2 border border-foreground/10 bg-white py-4 opacity-0 shadow-xl transition-all duration-300 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
+                <div className="invisible absolute -left-4 top-full z-[60] w-56 translate-y-2 border-[0.5px] border-foreground/20 bg-white py-4 opacity-0 shadow-xl transition-all duration-300 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
                   <nav className="flex flex-col">
                     {categories?.map((category) => (
                       <Link
@@ -237,7 +237,7 @@ export function Header() {
         {/* Backdrop */}
         <div
           className={cn(
-            'absolute inset-0 bg-black/80 backdrop-blur-md transition-opacity duration-500',
+            'absolute inset-0 bg-black/90 backdrop-blur-md transition-opacity duration-500',
             showMobileMenu ? 'opacity-100' : 'opacity-0',
           )}
           onClick={() => setShowMobileMenu(false)}
@@ -246,7 +246,7 @@ export function Header() {
         {/* Drawer Panel */}
         <div
           className={cn(
-            'absolute right-0 top-16 flex h-[calc(100vh-4rem)] w-full flex-col border-l border-white/10 bg-background shadow-2xl transition-transform duration-500 ease-out md:w-[400px]',
+            'absolute right-0 top-16 flex h-[calc(100vh-4rem)] w-full flex-col border-l border-white/5 bg-background shadow-2xl transition-transform duration-500 ease-out md:w-[400px]',
             showMobileMenu ? 'translate-x-0' : 'translate-x-full',
           )}
         >

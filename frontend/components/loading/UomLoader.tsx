@@ -54,7 +54,7 @@ export function UomLoader({ isLoading, showLoadingBar = true }: UomLoaderProps) 
 
         {/* Optional: Subtle loading bar */}
         {showLoadingBar && (
-          <div className="h-0.5 w-64 overflow-hidden bg-muted">
+          <div className="h-0.5 w-64 overflow-hidden bg-muted/50">
             <div className="animate-loading-bar h-full bg-foreground" />
           </div>
         )}
