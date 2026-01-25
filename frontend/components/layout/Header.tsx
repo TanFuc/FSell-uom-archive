@@ -16,18 +16,18 @@ import { motion, AnimatePresence } from 'framer-motion'
 // Optimized Result Item
 const SearchResultItem = memo(({ product, locale, onClick }: any) => (
   <div className="group space-y-3 flex flex-col items-center text-center">
-    <Link 
-      href={`/${locale}/shop/${product.slug}`} 
-      onClick={onClick} 
+    <Link
+      href={`/${locale}/shop/${product.slug}`}
+      onClick={onClick}
       className="relative aspect-square w-24 md:w-28 overflow-hidden rounded-full bg-muted/5 border border-foreground/[0.03] block"
     >
       {product.images?.[0] && (
-        <Image 
-          src={product.images[0]} 
-          alt="" 
-          fill 
+        <Image
+          src={product.images[0]}
+          alt=""
+          fill
           sizes="(max-width: 768px) 96px, 112px"
-          className="object-cover" 
+          className="object-cover"
         />
       )}
     </Link>
@@ -45,7 +45,7 @@ export function Header() {
   const router = useRouter()
   const t = useTranslations('Navigation')
   const { data: socialLinks } = useSocialLinks()
-  
+
   const [showSearch, setShowSearch] = useState(false)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -123,76 +123,76 @@ export function Header() {
         isHeaderOpaque && !isScrolled ? "border-b border-foreground/[0.03]" : "border-b-0"
       )}>
         <div className="flex w-full items-center justify-between">
-            {/* Left */}
-            <div className="flex w-1/3 items-center">
-              <button 
-                onClick={() => { setShowMobileMenu(!showMobileMenu); setShowSearch(false) }}
-                className="group flex items-center gap-2 py-2 outline-none"
-              >
-                <div className="flex items-center justify-center">
-                  <AnimatePresence mode="wait">
-                    {showMobileMenu ? (
-                      <motion.div key="close" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
-                        <X className={cn("transition-all duration-500", isScrolled ? "h-5 w-5 lg:h-6 lg:w-6" : "h-6 w-6 lg:h-8 lg:w-8")} />
-                      </motion.div>
-                    ) : (
-                      <motion.div key="menu" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
-                        <Menu className={cn("transition-all duration-500", isScrolled ? "h-5 w-5 lg:h-6 lg:w-6" : "h-6 w-6 lg:h-8 lg:w-8")} />
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              </button>
-            </div>
-
-            {/* Middle Logo */}
-            <div className="flex w-1/3 justify-center overflow-hidden">
-              <Link 
-                href={`/${locale}`} 
-                className={cn(
-                  "font-playfair font-black tracking-tighter transition-all duration-500",
-                  "text-4xl lg:text-6xl",
-                  isScrolled ? "opacity-0 -translate-y-8 pointer-events-none scale-90 blur-sm" : "opacity-100 translate-y-0 hover:opacity-80"
-                )}
-                tabIndex={isScrolled ? -1 : 0}
-              >
-                ƯƠM.
-              </Link>
-            </div>
-
-            {/* Right Socials + Search + Lang */}
-            <div className="flex w-1/3 items-center justify-end gap-3 lg:gap-8">
-              {/* Desktop Socials */}
-              <div className="hidden lg:flex items-center gap-5 mr-2">
-                {socialLinks?.instagramUsername && (
-                  <a href={`https://instagram.com/${socialLinks.instagramUsername}`} target="_blank" rel="noopener noreferrer" className="hover:opacity-50 transition-opacity">
-                    <Instagram className="h-5 w-5" />
-                  </a>
-                )}
-                {socialLinks?.facebookPageUrl && (
-                  <a href={socialLinks.facebookPageUrl} target="_blank" rel="noopener noreferrer" className="hover:opacity-50 transition-opacity">
-                    <Facebook className="h-5 w-5" />
-                  </a>
-                )}
+          {/* Left */}
+          <div className="flex w-1/3 items-center">
+            <button
+              onClick={() => { setShowMobileMenu(!showMobileMenu); setShowSearch(false) }}
+              className="group flex items-center gap-2 py-2 outline-none"
+            >
+              <div className="flex items-center justify-center">
+                <AnimatePresence mode="wait">
+                  {showMobileMenu ? (
+                    <motion.div key="close" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
+                      <X className={cn("transition-all duration-500", isScrolled ? "h-5 w-5 lg:h-6 lg:w-6" : "h-6 w-6 lg:h-8 lg:w-8")} />
+                    </motion.div>
+                  ) : (
+                    <motion.div key="menu" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
+                      <Menu className={cn("transition-all duration-500", isScrolled ? "h-5 w-5 lg:h-6 lg:w-6" : "h-6 w-6 lg:h-8 lg:w-8")} />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
+            </button>
+          </div>
 
-              <button 
-                onClick={() => { setShowSearch(!showSearch); setShowMobileMenu(false) }} 
-                className="flex items-center gap-2 py-1 outline-none"
-              >
-                {showSearch ? <X className="h-5 w-5 lg:h-6 lg:w-6" /> : <Search className="h-5 w-5 lg:h-6 lg:w-6" />}
-                <span className="hidden text-xs font-bold tracking-widest lg:inline uppercase leading-none">
-                  {showSearch ? 'CLOSE' : 'SEARCH'}
-                </span>
-              </button>
-              
-              <Link 
-                href={newPath} 
-                className="flex h-full items-center text-xs lg:text-sm font-bold tracking-widest uppercase leading-none"
-              >
-                {switchLocale}
-              </Link>
+          {/* Middle Logo */}
+          <div className="flex w-1/3 justify-center overflow-hidden">
+            <Link
+              href={`/${locale}`}
+              className={cn(
+                "font-playfair font-black tracking-tighter transition-all duration-500",
+                "text-2xl lg:text-4xl",
+                isScrolled ? "opacity-0 -translate-y-8 pointer-events-none scale-90 blur-sm" : "opacity-100 translate-y-0 hover:opacity-80"
+              )}
+              tabIndex={isScrolled ? -1 : 0}
+            >
+              ƯƠM.
+            </Link>
+          </div>
+
+          {/* Right Socials + Search + Lang */}
+          <div className="flex w-1/3 items-center justify-end gap-3 lg:gap-8">
+            {/* Desktop Socials */}
+            <div className="hidden lg:flex items-center gap-5 mr-2">
+              {socialLinks?.instagramUsername && (
+                <a href={`https://instagram.com/${socialLinks.instagramUsername}`} target="_blank" rel="noopener noreferrer" className="hover:opacity-50 transition-opacity">
+                  <Instagram className="h-5 w-5" />
+                </a>
+              )}
+              {socialLinks?.facebookPageUrl && (
+                <a href={socialLinks.facebookPageUrl} target="_blank" rel="noopener noreferrer" className="hover:opacity-50 transition-opacity">
+                  <Facebook className="h-5 w-5" />
+                </a>
+              )}
             </div>
+
+            <button
+              onClick={() => { setShowSearch(!showSearch); setShowMobileMenu(false) }}
+              className="flex items-center gap-2 py-1 outline-none"
+            >
+              {showSearch ? <X className="h-5 w-5 lg:h-6 lg:w-6" /> : <Search className="h-5 w-5 lg:h-6 lg:w-6" />}
+              <span className="hidden text-xs font-bold tracking-widest lg:inline uppercase leading-none">
+                {showSearch ? 'CLOSE' : 'SEARCH'}
+              </span>
+            </button>
+
+            <Link
+              href={newPath}
+              className="flex h-full items-center text-xs lg:text-sm font-bold tracking-widest uppercase leading-none"
+            >
+              {switchLocale}
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -225,24 +225,24 @@ export function Header() {
                   </form>
 
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
-                     <div className="md:col-span-3">
-                        <h4 className="text-[8px] font-bold uppercase tracking-[0.4em] text-foreground/30 mb-6">SUGGESTED</h4>
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 md:gap-8 justify-items-center">
-                          {suggestedProducts?.data.map((product) => (
-                            <SearchResultItem key={product.id} product={product} locale={locale} onClick={() => setShowSearch(false)} />
-                          ))}
-                        </div>
-                     </div>
-                     <div className="space-y-6">
-                        <h4 className="text-[8px] font-bold uppercase tracking-[0.4em] text-foreground/30 mb-6">CATEGORIES</h4>
-                        <nav className="flex flex-col gap-3">
-                          {categories?.map((cat) => (
-                            <Link key={cat.id} href={`/${locale}/shop?categoryId=${cat.id}`} onClick={() => setShowSearch(false)} className="text-[10px] font-bold uppercase tracking-widest hover:pl-2 transition-all">
-                              {locale === 'vi' ? cat.nameVi : cat.nameEn}
-                            </Link>
-                          ))}
-                        </nav>
-                     </div>
+                    <div className="md:col-span-3">
+                      <h4 className="text-[8px] font-bold uppercase tracking-[0.4em] text-foreground/30 mb-6">SUGGESTED</h4>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 md:gap-8 justify-items-center">
+                        {suggestedProducts?.data.map((product) => (
+                          <SearchResultItem key={product.id} product={product} locale={locale} onClick={() => setShowSearch(false)} />
+                        ))}
+                      </div>
+                    </div>
+                    <div className="space-y-6">
+                      <h4 className="text-[8px] font-bold uppercase tracking-[0.4em] text-foreground/30 mb-6">CATEGORIES</h4>
+                      <nav className="flex flex-col gap-3">
+                        {categories?.map((cat) => (
+                          <Link key={cat.id} href={`/${locale}/shop?categoryId=${cat.id}`} onClick={() => setShowSearch(false)} className="text-[10px] font-bold uppercase tracking-widest hover:pl-2 transition-all">
+                            {locale === 'vi' ? cat.nameVi : cat.nameEn}
+                          </Link>
+                        ))}
+                      </nav>
+                    </div>
                   </div>
                 </motion.div>
               </div>
