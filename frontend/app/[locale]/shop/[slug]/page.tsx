@@ -245,17 +245,17 @@ export default function ProductPage({ params }: ProductPageProps) {
                     <>
                       <button
                         onClick={() => scrollImage('left')}
-                        className="absolute bottom-4 left-4 z-10 rounded-full bg-black/20 p-1.5 text-white backdrop-blur-[2px] transition-all hover:bg-black/40 active:scale-95 md:hidden"
+                        className="absolute bottom-4 left-4 z-10 p-2 text-white drop-shadow-md transition-all active:scale-95 md:hidden"
                         aria-label="Previous image"
                       >
-                        <ChevronLeft className="h-3 w-3" />
+                        <ChevronLeft className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => scrollImage('right')}
-                        className="absolute bottom-4 right-4 z-10 rounded-full bg-black/20 p-1.5 text-white backdrop-blur-[2px] transition-all hover:bg-black/40 active:scale-95 md:hidden"
+                        className="absolute bottom-4 right-4 z-10 p-2 text-white drop-shadow-md transition-all active:scale-95 md:hidden"
                         aria-label="Next image"
                       >
-                        <ChevronRight className="h-3 w-3" />
+                        <ChevronRight className="h-4 w-4" />
                       </button>
                     </>
                   )}
@@ -303,15 +303,15 @@ export default function ProductPage({ params }: ProductPageProps) {
                <div className="md:sticky md:top-32 space-y-4 md:space-y-12 pb-12 md:pb-24 pt-10 md:pt-0">
                 {/* Info Header */}
                 <div className="space-y-2 mb-8">
-                  <h1 className="font-sans text-2xl md:text-3xl font-light uppercase leading-tight tracking-wide text-foreground">
+                  <h1 className="font-sans text-[10px] font-bold uppercase leading-tight tracking-[0.2em] text-foreground">
                     {name}
                   </h1>
                   <div className="flex items-center gap-4">
-                    <p className="font-sans text-lg font-normal tracking-wide text-foreground">
+                    <p className="font-sans text-[10px] font-medium tracking-wide text-foreground">
                       {priceDisplay.currentPrice}
                     </p>
                     {priceDisplay.hasDiscount && priceDisplay.originalPrice && (
-                      <p className="text-xs font-light text-foreground/30 line-through">
+                      <p className="text-[10px] font-light text-foreground/30 line-through">
                         {priceDisplay.originalPrice}
                       </p>
                     )}
@@ -320,24 +320,24 @@ export default function ProductPage({ params }: ProductPageProps) {
 
                 {/* Details Section */}
                 <div className="space-y-4">
-                  <h4 className="text-xs font-bold uppercase tracking-widest text-foreground">
+                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-foreground">
                     DETAILS
                   </h4>
                   
                   {/* Technical Specs List */}
-                  <div className="flex flex-col gap-1 text-xs font-normal text-foreground leading-relaxed">
+                  <div className="flex flex-col gap-1 text-[10px] font-normal text-foreground leading-relaxed">
                      {product.dimensions && <p>Height: {product.dimensions}</p>}
                      {product.material && <p>Material: {product.material}</p>}
                   </div>
 
                   {/* HTML Description */}
                   <div 
-                    className="prose prose-sm max-w-none text-xs font-normal text-foreground leading-relaxed"
+                    className="prose prose-sm max-w-none text-[10px] font-normal text-foreground leading-relaxed"
                     dangerouslySetInnerHTML={{ __html: description || '' }}
                   />
                   
                   {/* Caring & Warranty Link (Placeholder flavor) */}
-                  <p className="text-xs text-foreground/70 mt-2 cursor-pointer hover:underline">(Caring & Warranty)</p>
+                  <p className="text-[10px] text-foreground/70 mt-2 cursor-pointer hover:underline">(Caring & Warranty)</p>
                 </div>
 
                 {/* Inquiry Buttons */}
