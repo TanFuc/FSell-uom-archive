@@ -133,7 +133,7 @@ export default function AdminAboutPage() {
                           <Input
                             {...field}
                             placeholder={
-                              activeTab === 'vi' ? 'VỀ ƯƠM ARCHIVE' : 'ABOUT ƯƠM ARCHIVE'
+                              activeTab === 'vi' ? 'VỀ ƯƠM. ARCHIVE' : 'ABOUT ƯƠM. ARCHIVE'
                             }
                           />
                         </FormControl>

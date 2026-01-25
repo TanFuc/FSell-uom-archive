@@ -51,6 +51,15 @@ export function Header() {
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const [isPanelReady, setIsPanelReady] = useState(false)
+  const [isScrolled, setIsScrolled] = useState(false)
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50)
+    }
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -109,8 +118,9 @@ export function Header() {
       isHeaderOpaque ? 'bg-white shadow-sm' : 'bg-transparent'
     )}>
       <div className={cn(
-        "relative z-[70] flex h-16 items-center px-6 lg:h-20 lg:px-12 bg-inherit transition-all duration-300",
-        isHeaderOpaque ? "border-b border-foreground/[0.03]" : "border-b-0"
+        "relative z-[70] flex items-center px-6 lg:px-12 bg-inherit transition-all duration-500",
+        isScrolled ? "h-16 lg:h-20" : "h-20 lg:h-28",
+        isHeaderOpaque && !isScrolled ? "border-b border-foreground/[0.03]" : "border-b-0"
       )}>
         <div className="flex w-full items-center justify-between">
             {/* Left */}
@@ -119,26 +129,35 @@ export function Header() {
                 onClick={() => { setShowMobileMenu(!showMobileMenu); setShowSearch(false) }}
                 className="group flex items-center gap-2 py-2 outline-none"
               >
-                <div className="h-5 w-5 flex items-center justify-center">
+                <div className="flex items-center justify-center">
                   <AnimatePresence mode="wait">
                     {showMobileMenu ? (
                       <motion.div key="close" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
-                        <X className="h-5 w-5" />
+                        <X className={cn("transition-all duration-500", isScrolled ? "h-5 w-5 lg:h-6 lg:w-6" : "h-6 w-6 lg:h-8 lg:w-8")} />
                       </motion.div>
                     ) : (
                       <motion.div key="menu" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
-                        <Menu className="h-5 w-5" />
+                        <Menu className={cn("transition-all duration-500", isScrolled ? "h-5 w-5 lg:h-6 lg:w-6" : "h-6 w-6 lg:h-8 lg:w-8")} />
                       </motion.div>
                     )}
                   </AnimatePresence>
                 </div>
-                <span className="hidden text-[10px] font-bold tracking-[0.2em] lg:inline uppercase">{showMobileMenu ? 'CLOSE' : 'MENU'}</span>
               </button>
             </div>
 
             {/* Middle Logo */}
-            <div className="flex w-1/3 justify-center">
-              <Link href={`/${locale}`} className="font-playfair text-3xl font-bold tracking-tighter transition-all hover:opacity-80">Ươm.</Link>
+            <div className="flex w-1/3 justify-center overflow-hidden">
+              <Link 
+                href={`/${locale}`} 
+                className={cn(
+                  "font-playfair font-black tracking-tighter transition-all duration-500",
+                  "text-4xl lg:text-6xl",
+                  isScrolled ? "opacity-0 -translate-y-8 pointer-events-none scale-90 blur-sm" : "opacity-100 translate-y-0 hover:opacity-80"
+                )}
+                tabIndex={isScrolled ? -1 : 0}
+              >
+                ƯƠM.
+              </Link>
             </div>
 
             {/* Right Socials + Search + Lang */}
@@ -147,12 +166,12 @@ export function Header() {
               <div className="hidden lg:flex items-center gap-5 mr-2">
                 {socialLinks?.instagramUsername && (
                   <a href={`https://instagram.com/${socialLinks.instagramUsername}`} target="_blank" rel="noopener noreferrer" className="hover:opacity-50 transition-opacity">
-                    <Instagram className="h-4 w-4" />
+                    <Instagram className="h-5 w-5" />
                   </a>
                 )}
                 {socialLinks?.facebookPageUrl && (
                   <a href={socialLinks.facebookPageUrl} target="_blank" rel="noopener noreferrer" className="hover:opacity-50 transition-opacity">
-                    <Facebook className="h-4 w-4" />
+                    <Facebook className="h-5 w-5" />
                   </a>
                 )}
               </div>
@@ -161,15 +180,15 @@ export function Header() {
                 onClick={() => { setShowSearch(!showSearch); setShowMobileMenu(false) }} 
                 className="flex items-center gap-2 py-1 outline-none"
               >
-                {showSearch ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
-                <span className="hidden text-[10px] font-bold tracking-widest lg:inline uppercase leading-none">
+                {showSearch ? <X className="h-5 w-5 lg:h-6 lg:w-6" /> : <Search className="h-5 w-5 lg:h-6 lg:w-6" />}
+                <span className="hidden text-xs font-bold tracking-widest lg:inline uppercase leading-none">
                   {showSearch ? 'CLOSE' : 'SEARCH'}
                 </span>
               </button>
               
               <Link 
                 href={newPath} 
-                className="flex h-full items-center text-[10px] font-bold tracking-widest uppercase leading-none"
+                className="flex h-full items-center text-xs lg:text-sm font-bold tracking-widest uppercase leading-none"
               >
                 {switchLocale}
               </Link>

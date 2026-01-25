@@ -50,7 +50,7 @@ export default function CategoryFormPage() {
   })
 
   const categoryName = form.watch('nameVi') || form.watch('nameEn') || t('category')
-  useDocumentTitle(isNew ? t('createCategory') : categoryName, 'Admin - Ươm Archive')
+  useDocumentTitle(isNew ? t('createCategory') : categoryName, 'Admin - ƯƠM. Archive')
 
   // Load category data if editing
   useEffect(() => {

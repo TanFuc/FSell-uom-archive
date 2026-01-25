@@ -27,7 +27,7 @@ export default function Logo({
     if (variant === 'text') {
       return (
         <span className={`font-serif uppercase tracking-[0.3em] text-foreground ${className}`}>
-          Ươm.
+          ƯƠM.
         </span>
       )
     }
@@ -41,7 +41,7 @@ export default function Logo({
     return (
       <Image
         src={logoSrc}
-        alt={locale === 'vi' ? 'Ươm Archive' : 'Uom Archive'}
+        alt={locale === 'vi' ? 'ƯƠM. Archive' : 'Uom Archive'}
         width={width}
         height={height}
         priority

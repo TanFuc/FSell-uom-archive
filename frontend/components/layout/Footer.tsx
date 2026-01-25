@@ -23,7 +23,7 @@ export function Footer() {
               href={`/${locale}`}
               className="inline-block font-playfair text-2xl font-bold tracking-tighter text-foreground transition-opacity hover:opacity-70"
             >
-              Ươm.
+              ƯƠM.
             </Link>
             <p className="text-[9px] leading-relaxed uppercase tracking-[0.2em] font-medium text-foreground/40 hidden md:block">
               {t('description')}
@@ -92,7 +92,7 @@ export function Footer() {
         {/* Bottom Bar: Merged into the flow, no border */}
         <div className="flex justify-between items-center pt-4">
           <p className="text-[8px] uppercase tracking-[0.4em] font-bold text-foreground/30">
-            © {currentYear} <span className="font-playfair text-xs lowercase">Ươm.</span>
+            © {currentYear} <span className="font-playfair text-xs lowercase">ƯƠM.</span>
           </p>
           <div className="flex gap-6 opacity-20">
              <span className="text-[8px] tracking-[0.5em] font-bold">VI</span>

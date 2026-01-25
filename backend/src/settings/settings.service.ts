@@ -92,10 +92,10 @@ export class SettingsService {
         'menu.inquiry.en': 'INQUIRE',
         'menu.shipping.vi': 'VẬN CHUYỂN & ĐỔI TRẢ',
         'menu.shipping.en': 'SHIPPING & RETURNS',
-        'brand.name.vi': 'Ươm Archive',
-        'brand.name.en': 'Ươm Archive',
-        'footer.text.vi': '© 2026 Ươm Archive. Tất cả quyền được bảo lưu.',
-        'footer.text.en': '© 2026 Ươm Archive. All rights reserved.',
+        'brand.name.vi': 'ƯƠM. Archive',
+        'brand.name.en': 'ƯƠM. Archive',
+        'footer.text.vi': '© 2026 ƯƠM. Archive. Tất cả quyền được bảo lưu.',
+        'footer.text.en': '© 2026 ƯƠM. Archive. All rights reserved.',
       }
 
       await this.prisma.siteContent.createMany({

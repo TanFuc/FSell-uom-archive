@@ -68,8 +68,8 @@ async function bootstrap() {
   // Swagger documentation (only in development)
   if (nodeEnv === 'development') {
     const config = new DocumentBuilder()
-      .setTitle('Ươm Archive API')
-      .setDescription('E-commerce API for Ươm Archive - Minimalist design shop')
+      .setTitle('ƯƠM. Archive API')
+      .setDescription('E-commerce API for ƯƠM. Archive - Minimalist design shop')
       .setVersion('1.0')
       .addBearerAuth(
         {

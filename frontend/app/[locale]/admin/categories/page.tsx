@@ -16,7 +16,7 @@ export default function CategoriesPage() {
   const t = useTranslations('admin')
   const { toast } = useToast()
 
-  useDocumentTitle(t('categories'), 'Admin - Ươm Archive')
+  useDocumentTitle(t('categories'), 'Admin - ƯƠM. Archive')
 
   const [categories, setCategories] = useState<Category[]>([])
   const [isLoading, setIsLoading] = useState(true)

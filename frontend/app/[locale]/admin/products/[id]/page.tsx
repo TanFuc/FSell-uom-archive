@@ -126,7 +126,7 @@ export default function ProductFormPage() {
   const productName = form.watch('nameVi') || form.watch('nameEn')
   useDocumentTitle(
     isNew ? t('createProduct') : productName || t('updateProduct'),
-    'Admin - Ươm Archive',
+    'Admin - ƯƠM. Archive',
   )
 
   // Auto-convert prices

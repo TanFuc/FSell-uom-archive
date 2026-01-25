@@ -69,19 +69,19 @@ export function ProductCard({ product, locale }: ProductCardProps) {
           </div>
         )}
       </div>
-      <div className="mt-4 space-y-1.5">
+      <div className="mt-3 space-y-1">
         <h3
-          className="line-clamp-2 h-8 overflow-hidden text-ellipsis font-sans text-[11px] font-medium leading-tight md:h-10 md:text-sm"
+          className="line-clamp-2 h-7 overflow-hidden text-ellipsis font-sans text-[10px] font-medium leading-tight tracking-wide md:h-8 md:text-xs"
           title={name}
         >
           {name}
         </h3>
         <div className="flex flex-wrap items-center gap-2">
-          <p className="font-sans text-[11px] font-medium text-foreground md:text-sm">
+          <p className="font-sans text-[10px] font-medium text-foreground md:text-xs">
             {priceDisplay.currentPrice}
           </p>
           {priceDisplay.hasDiscount && priceDisplay.originalPrice && (
-            <p className="text-[9px] text-muted-foreground/30 line-through md:text-[11px]">
+            <p className="text-[8px] text-muted-foreground/40 line-through md:text-[10px]">
               {priceDisplay.originalPrice}
             </p>
           )}

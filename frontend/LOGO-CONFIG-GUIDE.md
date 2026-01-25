@@ -21,11 +21,11 @@ import Logo from '@/public/assets/logo.svg'
 
 export function Header() {
   return (
-    <header className="fixed top-0 left-0 p-4 z-10">
+    <header className="fixed left-0 top-0 z-10 p-4">
       <Link href="/">
-        <Image 
+        <Image
           src={Logo}
-          alt="Ươm Archive"
+          alt="ƯƠM. Archive"
           width={120}
           height={40}
           priority
@@ -40,25 +40,13 @@ export function Header() {
 ### 2. Smaller Logo (Product Pages)
 
 ```tsx
-<Image 
-  src={Logo}
-  alt="Ươm"
-  width={80}
-  height={24}
-  className="object-contain"
-/>
+<Image src={Logo} alt="ƯƠM." width={80} height={24} className="object-contain" />
 ```
 
 ### 3. Admin Dashboard
 
 ```tsx
-<Image 
-  src={Logo}
-  alt="Ươm Archive Admin"
-  width={160}
-  height={48}
-  className="object-contain"
-/>
+<Image src={Logo} alt="ƯƠM. Archive Admin" width={160} height={48} className="object-contain" />
 ```
 
 ---
@@ -72,42 +60,42 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: {
-    default: 'Ươm Archive - Curated Vietnamese Fashion',
-    template: '%s | Ươm Archive'
+    default: 'ƯƠM. Archive - Curated Vietnamese Fashion',
+    template: '%s | ƯƠM. Archive',
   },
   description: 'Discover timeless Vietnamese fashion pieces curated with care.',
   keywords: ['fashion', 'vietnamese', 'archive', 'minimalist', 'clothing'],
-  authors: [{ name: 'Ươm Archive' }],
-  creator: 'Ươm Archive',
-  publisher: 'Ươm Archive',
-  
+  authors: [{ name: 'ƯƠM. Archive' }],
+  creator: 'ƯƠM. Archive',
+  publisher: 'ƯƠM. Archive',
+
   // Open Graph (Facebook, LinkedIn)
   openGraph: {
     type: 'website',
     locale: 'vi_VN',
     url: 'https://uomarchive.com',
-    title: 'Ươm Archive - Curated Vietnamese Fashion',
+    title: 'ƯƠM. Archive - Curated Vietnamese Fashion',
     description: 'Discover timeless Vietnamese fashion pieces curated with care.',
-    siteName: 'Ươm Archive',
+    siteName: 'ƯƠM. Archive',
     images: [
       {
         url: '/assets/logo.png', // Use logo.png with background
         width: 1200,
         height: 630,
-        alt: 'Ươm Archive Logo',
+        alt: 'ƯƠM. Archive Logo',
       },
     ],
   },
-  
+
   // Twitter Card
   twitter: {
     card: 'summary_large_image',
-    title: 'Ươm Archive',
+    title: 'ƯƠM. Archive',
     description: 'Discover timeless Vietnamese fashion pieces curated with care.',
     images: ['/assets/logo.png'],
     creator: '@uomarchive',
   },
-  
+
   // Icons & Favicons
   icons: {
     icon: [
@@ -115,11 +103,9 @@ export const metadata: Metadata = {
       { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
       { url: '/icon-512.png', sizes: '512x512', type: 'image/png' },
     ],
-    apple: [
-      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
-    ],
+    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
   },
-  
+
   // Manifest for PWA
   manifest: '/manifest.json',
 }
@@ -170,8 +156,8 @@ Create `/public/manifest.json`:
 
 ```json
 {
-  "name": "Ươm Archive",
-  "short_name": "Ươm",
+  "name": "ƯƠM. Archive",
+  "short_name": "ƯƠM.",
   "description": "Curated Vietnamese Fashion Archive",
   "start_url": "/",
   "display": "standalone",
@@ -259,7 +245,7 @@ npm run dev
 
 ## 🚨 Important Notes
 
-1. **DO NOT use logo images for loading screen** - Use custom "Ươm." text animation instead
+1. **DO NOT use logo images for loading screen** - Use custom "ƯƠM." text animation instead
 2. **SVG for web header** - Best quality, scalable
 3. **PNG for social sharing** - Better compatibility with OG/Twitter cards
 4. **Transparent background** - Use logo-remove.png for UI components

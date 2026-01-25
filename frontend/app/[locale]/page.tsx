@@ -126,7 +126,7 @@ export default function HomePage() {
   const t = useTranslations('Home')
   const locale = useLocale() as 'vi' | 'en'
 
-  useDocumentTitle('', 'Ươm.')
+  useDocumentTitle('', 'ƯƠM.')
 
   const { data: latestProducts, isLoading: isLoadingLatest } = useProducts({
     page: 1,
@@ -169,27 +169,27 @@ export default function HomePage() {
           viewport={{ once: true }}
           className="mb-16 flex items-end justify-between pb-8 px-6 lg:px-12"
         >
-          <div className="space-y-4">
-            <h2 className="text-[10px] font-bold uppercase tracking-[0.5em] text-foreground/40">
+          <div className="space-y-3">
+            <h2 className="text-[8px] font-bold uppercase tracking-[0.4em] text-foreground/40">
               {locale === 'vi' ? 'BST MỚI NHẤT' : 'NEW COLLECTIONS'}
             </h2>
-            <p className="font-sans text-2xl font-bold uppercase tracking-[0.1em]">
+            <p className="font-sans text-lg font-bold uppercase tracking-[0.1em]">
               {locale === 'vi' ? 'Sản phẩm gợi ý' : 'Suggested for you'}
             </p>
           </div>
           <Link
             href={`/${locale}/shop`}
-            className="group flex items-center gap-4 text-[10px] font-bold uppercase tracking-[0.3em] transition-all"
+            className="group flex items-center gap-2 text-[8px] font-bold uppercase tracking-[0.2em] transition-colors hover:opacity-60"
           >
-            <span>{t('viewAll')}</span>
-            <div className="h-[1px] w-8 bg-foreground transition-all group-hover:w-12" />
+            <span>{t('showMore')}</span>
+            <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
           </Link>
         </motion.div>
 
         {isLoadingLatest ? (
           <div className="flex gap-6 overflow-hidden px-6 lg:px-12">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="w-[85vw] shrink-0 space-y-6 md:w-[45vw] lg:w-[31vw]">
+              <div key={i} className="w-[calc(100vw-64px)] shrink-0 space-y-6 md:w-[45vw] lg:w-[31vw]">
                 <div className="aspect-[4/5] animate-pulse bg-muted/30" />
               </div>
             ))}
@@ -212,11 +212,11 @@ export default function HomePage() {
                 {latestProducts?.data.map((product, idx) => (
                   <motion.div
                     key={product.id}
-                    initial={{ opacity: 0, x: 50 }}
-                    whileInView={{ opacity: 1, x: 0.01 }}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ delay: idx * 0.05, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                    className="w-[85vw] shrink-0 md:w-[45vw] lg:w-[31vw]"
+                    className="w-[calc(100vw-64px)] shrink-0 md:w-[45vw] lg:w-[31vw]"
                   >
                     <ProductCard product={product} locale={locale} />
                   </motion.div>
@@ -230,27 +230,27 @@ export default function HomePage() {
       {/* Section: JOURNAL */}
       <section className="w-full py-24 bg-white border-t border-foreground/[0.03]">
         <div className="mb-16 flex items-end justify-between pb-8 px-6 lg:px-12">
-           <div className="space-y-4">
-            <h2 className="text-[10px] font-bold uppercase tracking-[0.5em] text-foreground/40">
+           <div className="space-y-3">
+            <h2 className="text-[8px] font-bold uppercase tracking-[0.4em] text-foreground/40">
               JOURNAL
             </h2>
-            <p className="font-sans text-2xl font-bold uppercase tracking-[0.1em]">
+            <p className="font-sans text-lg font-bold uppercase tracking-[0.1em]">
               {locale === 'vi' ? 'Nhật ký & Câu chuyện' : 'Stories & Journal'}
             </p>
           </div>
           <Link
             href={`/${locale}/shop?isFeatured=true`}
-            className="group flex items-center gap-4 text-[10px] font-bold uppercase tracking-[0.3em]"
+            className="group flex items-center gap-2 text-[8px] font-bold uppercase tracking-[0.2em] transition-colors hover:opacity-60"
           >
-            <span>DISCOVER</span>
-            <div className="h-[1px] w-8 bg-foreground transition-all group-hover:w-12" />
+            <span>{t('showMore')}</span>
+            <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
           </Link>
         </div>
 
         {isLoadingFeatured ? (
           <div className="flex gap-6 overflow-hidden px-6 lg:px-12">
              {[...Array(2)].map((_, i) => (
-              <div key={i} className="w-[85vw] shrink-0 space-y-6 md:w-[45vw] lg:w-[48vw]">
+              <div key={i} className="w-[calc(100vw-64px)] shrink-0 space-y-6 md:w-[45vw] lg:w-[calc(50vw-48px)]">
                 <div className="aspect-[4/5] animate-pulse bg-muted/30" />
               </div>
             ))}
@@ -273,11 +273,11 @@ export default function HomePage() {
                 {featuredProducts?.data.map((product, idx) => (
                   <motion.div
                     key={product.id}
-                    initial={{ opacity: 0, x: 50 }}
-                    whileInView={{ opacity: 1, x: 0.01 }}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ delay: idx * 0.05, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                    className="w-[85vw] shrink-0 md:w-[45vw] lg:w-[48vw]"
+                    className="w-[calc(100vw-64px)] shrink-0 md:w-[45vw] lg:w-[calc(50vw-48px)]"
                   >
                     <ProductCard product={product} locale={locale} />
                   </motion.div>

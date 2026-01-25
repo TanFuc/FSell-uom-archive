@@ -302,12 +302,12 @@ export default function ProductPage({ params }: ProductPageProps) {
             <div className="relative px-0 md:px-0">
                <div className="md:sticky md:top-32 space-y-4 md:space-y-12 pb-12 md:pb-24 pt-10 md:pt-0">
                 {/* Info Header */}
-                <div className="space-y-2 md:space-y-6">
-                  <h1 className="font-sans text-base md:text-2xl font-bold uppercase leading-tight tracking-[0.1em] text-foreground lg:text-3xl">
+                <div className="space-y-2 mb-8">
+                  <h1 className="font-sans text-2xl md:text-3xl font-light uppercase leading-tight tracking-wide text-foreground">
                     {name}
                   </h1>
-                  <div className="flex items-center gap-4 pb-2 md:pb-8">
-                    <p className="font-sans text-sm md:text-xl font-medium text-foreground">
+                  <div className="flex items-center gap-4">
+                    <p className="font-sans text-lg font-normal tracking-wide text-foreground">
                       {priceDisplay.currentPrice}
                     </p>
                     {priceDisplay.hasDiscount && priceDisplay.originalPrice && (
@@ -318,31 +318,26 @@ export default function ProductPage({ params }: ProductPageProps) {
                   </div>
                 </div>
 
-                {/* Dimensions & Material */}
-                <div className="grid grid-cols-2 gap-8 pb-8">
-                  <div className="space-y-2">
-                    <h4 className="text-[9px] font-bold uppercase tracking-[0.3em] text-foreground/30">
-                      {t('material')}
-                    </h4>
-                    <p className="text-[11px] uppercase tracking-[0.1em] font-medium">{product.material || 'N/A'}</p>
-                  </div>
-                  <div className="space-y-2">
-                    <h4 className="text-[9px] font-bold uppercase tracking-[0.3em] text-foreground/30">
-                      {t('dimensions')}
-                    </h4>
-                    <p className="text-[11px] uppercase tracking-[0.1em] font-medium">{product.dimensions || 'N/A'}</p>
-                  </div>
-                </div>
-
-                {/* Description Section */}
-                <div className="space-y-6">
-                  <h4 className="text-[9px] font-bold uppercase tracking-[0.3em] text-foreground/30">
-                    Description
+                {/* Details Section */}
+                <div className="space-y-4">
+                  <h4 className="text-xs font-bold uppercase tracking-widest text-foreground">
+                    DETAILS
                   </h4>
+                  
+                  {/* Technical Specs List */}
+                  <div className="flex flex-col gap-1 text-xs font-normal text-foreground leading-relaxed">
+                     {product.dimensions && <p>Height: {product.dimensions}</p>}
+                     {product.material && <p>Material: {product.material}</p>}
+                  </div>
+
+                  {/* HTML Description */}
                   <div 
-                    className="prose prose-sm max-w-none text-[11px] leading-loose text-foreground/60 uppercase tracking-[0.1em]"
+                    className="prose prose-sm max-w-none text-xs font-normal text-foreground leading-relaxed"
                     dangerouslySetInnerHTML={{ __html: description || '' }}
                   />
+                  
+                  {/* Caring & Warranty Link (Placeholder flavor) */}
+                  <p className="text-xs text-foreground/70 mt-2 cursor-pointer hover:underline">(Caring & Warranty)</p>
                 </div>
 
                 {/* Inquiry Buttons */}

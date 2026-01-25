@@ -30,7 +30,7 @@ export default function AboutPage() {
       <section className="container-custom">
         <div className="mx-auto max-w-4xl text-center">
           <h1 className="animate-fade-in mb-8 text-2xl uppercase tracking-[0.2em] md:text-3xl">
-            {getVal('about.heroTitle', 'VỀ ƯƠM ARCHIVE')}
+            {getVal('about.heroTitle', 'VỀ ƯƠM. ARCHIVE')}
           </h1>
           <p className="animate-slide-up leading-relaxed text-muted-foreground">
             {getVal(
@@ -58,7 +58,7 @@ export default function AboutPage() {
               {getVal('about.storyTitle', 'CÂU CHUYỆN CỦA CHÚNG TÔI')}
             </h2>
             <div className="space-y-4 whitespace-pre-line leading-relaxed text-muted-foreground">
-              {getVal('about.storyContent', 'Ươm Archive được sinh ra từ niềm đam mê...')}
+              {getVal('about.storyContent', 'ƯƠM. Archive được sinh ra từ niềm đam mê...')}
             </div>
           </div>
         </div>

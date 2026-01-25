@@ -49,7 +49,7 @@ export default function ProductsPage() {
   const { toast } = useToast()
 
   // Update document title
-  useDocumentTitle(t('products'), 'Admin - Ươm Archive')
+  useDocumentTitle(t('products'), 'Admin - ƯƠM. Archive')
 
   const [products, setProducts] = useState<Product[]>([])
   const [isLoading, setIsLoading] = useState(true)

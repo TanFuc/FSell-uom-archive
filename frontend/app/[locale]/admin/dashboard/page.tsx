@@ -25,7 +25,7 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true)
 
   // Update document title
-  useDocumentTitle(t('dashboard'), 'Admin - Ươm Archive')
+  useDocumentTitle(t('dashboard'), 'Admin - ƯƠM. Archive')
 
   useEffect(() => {
     const fetchStats = async () => {

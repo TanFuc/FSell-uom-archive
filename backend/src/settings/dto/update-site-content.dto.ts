@@ -32,22 +32,22 @@ export class UpdateSiteContentDto {
   @IsOptional()
   'menu.shipping.en'?: string
 
-  @ApiPropertyOptional({ example: 'Ươm Archive' })
+  @ApiPropertyOptional({ example: 'ƯƠM. Archive' })
   @IsString()
   @IsOptional()
   'brand.name.vi'?: string
 
-  @ApiPropertyOptional({ example: 'Ươm Archive' })
+  @ApiPropertyOptional({ example: 'ƯƠM. Archive' })
   @IsString()
   @IsOptional()
   'brand.name.en'?: string
 
-  @ApiPropertyOptional({ example: '© 2026 Ươm Archive. Tất cả quyền được bảo lưu.' })
+  @ApiPropertyOptional({ example: '© 2026 ƯƠM. Archive. Tất cả quyền được bảo lưu.' })
   @IsString()
   @IsOptional()
   'footer.text.vi'?: string
 
-  @ApiPropertyOptional({ example: '© 2026 Ươm Archive. All rights reserved.' })
+  @ApiPropertyOptional({ example: '© 2026 ƯƠM. Archive. All rights reserved.' })
   @IsString()
   @IsOptional()
   'footer.text.en'?: string
