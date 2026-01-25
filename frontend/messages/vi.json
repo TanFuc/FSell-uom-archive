@@ -15,7 +15,7 @@
     "viewMore": "Xem thêm..."
   },
   "Home": {
-    "title": "ƯƠM ARCHIVE",
+    "title": "ƯƠM. ARCHIVE",
     "subtitle": "Lưu giữ vẻ đẹp tối giản của nghệ thuật thủ công Việt Nam",
     "explore": "KHÁM PHÁ",
     "featured": "SẢN PHẨM NỔI BẬT",
@@ -29,7 +29,7 @@
   "nav": {
     "shop": "SẢN PHẨM",
     "shipping": "VẬN CHUYỂN & ĐỔI TRẢ",
-    "brand": "ƯƠM ARCHIVE"
+    "brand": "ƯƠM. ARCHIVE"
   },
   "home": {
     "heroTitle": "Vẻ đẹp trong sự tĩnh lặng",
@@ -38,6 +38,7 @@
     "newCollection": "Bộ sưu tập mới"
   },
   "product": {
+    "back": "Quay lại cửa hàng",
     "askAboutProduct": "HỎI VỀ SẢN PHẨM",
     "contactForAvailability": "Liên hệ để biết thêm chi tiết",
     "choosePlatform": "Chọn nền tảng để liên hệ:",
@@ -51,13 +52,13 @@
     "description": "Mô tả",
     "details": "Chi tiết sản phẩm",
     "contactOrder": "Liên hệ đặt hàng",
-    "contactNote": "Sản phẩm tại Ươm là độc bản hoặc số lượng giới hạn. Vui lòng liên hệ để kiểm tra tình trạng hàng.",
+    "contactNote": "Sản phẩm tại ƯƠM. là độc bản hoặc số lượng giới hạn. Vui lòng liên hệ để kiểm tra tình trạng hàng.",
     "handcrafted": "Thủ công tinh xảo",
     "handcraftedDesc": "Mỗi sản phẩm là một câu chuyện độc đáo từ bàn tay nghệ nhân.",
     "safeShipping": "Vận chuyển an toàn",
     "safeShippingDesc": "Đóng gói cẩn thận, đảm bảo sản phẩm đến tay bạn nguyên vẹn.",
     "support": "Hỗ trợ tận tâm",
-    "supportDesc": "Đội ngũ Ươm luôn sẵn sàng tư vấn và hỗ trợ bạn.",
+    "supportDesc": "Đội ngũ ƯƠM. luôn sẵn sàng tư vấn và hỗ trợ bạn.",
     "relatedProducts": "Có thể bạn sẽ thích",
     "noImages": "Không có ảnh",
     "viewDetails": "Xem chi tiết sản phẩm",
@@ -84,7 +85,7 @@
     "allCategories": "Tất cả danh mục"
   },
   "footer": {
-    "copyright": "© 2026 Ươm Archive. Tất cả quyền được bảo lưu.",
+    "copyright": "© 2026 ƯƠM. Archive. Tất cả quyền được bảo lưu.",
     "followUs": "Theo dõi chúng tôi"
   },
   "admin": {
@@ -118,7 +119,7 @@
     "loading": "Đang tải",
     "error": "Lỗi",
     "success": "Thành công",
-    "welcomeMessage": "Chào mừng đến với bảng điều khiển Ươm Archive",
+    "welcomeMessage": "Chào mừng đến với bảng điều khiển ƯƠM. Archive",
     "quickActions": "Thao tác nhanh",
     "manageProducts": "Quản lý sản phẩm",
     "manageProductsDesc": "Thêm, sửa, xóa sản phẩm",
@@ -168,7 +169,7 @@
     "accentColorHint": "Màu phụ/nhấn (mặc định: đất sét)",
     "livePreview": "Xem trước",
     "livePreviewHint": "Xem các thay đổi của bạn sẽ trông như thế nào",
-    "previewTitle": "ƯƠM ARCHIVE",
+    "previewTitle": "ƯƠM. ARCHIVE",
     "previewSubtitle": "Khám phá những sản phẩm thời trang Việt Nam vượt thời gian được chọn lọc kỹ lưỡng.",
     "previewNewCollection": "Bộ sưu tập mới đã có mặt",
     "shopNow": "Mua ngay",
