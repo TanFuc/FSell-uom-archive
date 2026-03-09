@@ -7,6 +7,7 @@ import {
   UpdateSiteContentDto,
   UpdateSocialLinksDto,
   UpdateExchangeRateDto,
+  UpdateBrandingDto,
 } from './dto'
 import { JwtAuthGuard, RolesGuard } from '../auth/guards'
 import { Roles, CurrentUser, JwtPayload } from '../auth/decorators'
@@ -111,5 +112,27 @@ export class SettingsController {
     @CurrentUser() user: JwtPayload,
   ) {
     return this.settingsService.updateExchangeRate(dto.rate)
+  }
+
+  // ==================== BRANDING ====================
+
+  @Get('branding')
+  @ApiOperation({ summary: 'Get branding settings: logo, brand name, site title, loading text (public)' })
+  @ApiResponse({ status: 200, description: 'Branding settings' })
+  async getBranding() {
+    return this.settingsService.getBranding()
+  }
+
+  @Put('branding')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.MANAGER)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Update branding settings (logo, brand name, site title, loading text)' })
+  @ApiResponse({ status: 200, description: 'Branding updated' })
+  async updateBranding(
+    @Body() dto: UpdateBrandingDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.settingsService.updateBranding(dto, user.sub)
   }
 }

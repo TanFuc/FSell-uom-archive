@@ -5,6 +5,7 @@ import {
   UpdateThemeDto,
   UpdateSiteContentDto,
   UpdateSocialLinksDto,
+  UpdateBrandingDto,
 } from './dto'
 
 const CACHE_TTL = 3600 // 1 hour in seconds
@@ -240,5 +241,85 @@ export class SettingsService {
       socialLinks,
       exchangeRate: exchangeRate.rate,
     }
+  }
+
+  // ==================== BRANDING ====================
+
+  async getBranding() {
+    const cached = await this.redis.get('branding_settings')
+    if (cached) {
+      return JSON.parse(cached)
+    }
+
+    const content = await this.prisma.siteContent.findMany({
+      where: {
+        key: {
+          in: [
+            'brand.name.vi',
+            'brand.name.en',
+            'site.title.vi',
+            'site.title.en',
+            'site.description.vi',
+            'site.description.en',
+            'site.logoUrl',
+            'site.loadingText',
+          ],
+        },
+      },
+    })
+
+    const map = content.reduce(
+      (acc, item) => {
+        acc[item.key] = item.value
+        return acc
+      },
+      {} as Record<string, string>,
+    )
+
+    const branding = {
+      brandNameVi: map['brand.name.vi'] || 'ƯƠM. Archive',
+      brandNameEn: map['brand.name.en'] || 'ƯƠM. Archive',
+      siteTitleVi: map['site.title.vi'] || 'ƯƠM. Archive - Gốm sứ thủ công Việt Nam',
+      siteTitleEn: map['site.title.en'] || 'ƯƠM. Archive - Handcrafted Ceramics from Vietnam',
+      siteDescriptionVi: map['site.description.vi'] || 'Gốm sứ thủ công được tuyển chọn kỹ lưỡng từ Việt Nam.',
+      siteDescriptionEn: map['site.description.en'] || 'Discover timeless Vietnamese ceramics curated with care.',
+      logoUrl: map['site.logoUrl'] || '',
+      loadingText: map['site.loadingText'] || 'ƯƠM.',
+    }
+
+    await this.redis.set('branding_settings', JSON.stringify(branding), CACHE_TTL)
+    return branding
+  }
+
+  async updateBranding(dto: UpdateBrandingDto, userId?: string) {
+    const keyMap: Record<string, keyof UpdateBrandingDto> = {
+      'brand.name.vi': 'brandNameVi',
+      'brand.name.en': 'brandNameEn',
+      'site.title.vi': 'siteTitleVi',
+      'site.title.en': 'siteTitleEn',
+      'site.description.vi': 'siteDescriptionVi',
+      'site.description.en': 'siteDescriptionEn',
+      'site.logoUrl': 'logoUrl',
+      'site.loadingText': 'loadingText',
+    }
+
+    const updates = Object.entries(keyMap)
+      .filter(([, dtoKey]) => dto[dtoKey] !== undefined)
+      .map(([contentKey, dtoKey]) =>
+        this.prisma.siteContent.upsert({
+          where: { key: contentKey },
+          update: { value: dto[dtoKey] as string, updatedBy: userId },
+          create: { key: contentKey, value: dto[dtoKey] as string, updatedBy: userId },
+        }),
+      )
+
+    await this.prisma.$transaction(updates)
+
+    // Invalidate both branding and site_content caches
+    await this.redis.del('branding_settings')
+    await this.redis.del('site_content')
+
+    this.logger.log('Branding settings updated')
+    return this.getBranding()
   }
 }
