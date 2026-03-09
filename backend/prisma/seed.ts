@@ -109,6 +109,26 @@ async function main() {
 
   console.log('Exchange rate created')
 
+  // Create branding settings
+  const brandingDefaults = [
+    { key: 'site.title.vi', value: 'ƯƠM. Archive - Gốm sứ thủ công Việt Nam' },
+    { key: 'site.title.en', value: 'ƯƠM. Archive - Handcrafted Ceramics from Vietnam' },
+    { key: 'site.description.vi', value: 'Gốm sứ thủ công được tuyển chọn kỹ lưỡng từ Việt Nam.' },
+    { key: 'site.description.en', value: 'Discover timeless Vietnamese ceramics curated with care.' },
+    { key: 'site.logoUrl', value: '' },
+    { key: 'site.loadingText', value: 'ƯƠM.' },
+  ]
+
+  for (const item of brandingDefaults) {
+    await prisma.siteContent.upsert({
+      where: { key: item.key },
+      update: {},
+      create: item,
+    })
+  }
+
+  console.log('Branding settings created')
+
   // Create sample products with inquiry messages and VERIFIED REAL aesthetic images
   const sampleProducts = [
     {
