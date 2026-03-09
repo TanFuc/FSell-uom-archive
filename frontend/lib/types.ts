@@ -108,6 +108,17 @@ export interface ExchangeRate {
   updatedAt: string
 }
 
+export interface BrandingSettings {
+  brandNameVi: string
+  brandNameEn: string
+  siteTitleVi: string
+  siteTitleEn: string
+  siteDescriptionVi: string
+  siteDescriptionEn: string
+  logoUrl: string
+  loadingText: string
+}
+
 export interface CreateProductDto {
   slug: string
   nameVi: string

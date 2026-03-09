@@ -10,6 +10,7 @@ import type {
   SiteContent,
   ExchangeRate,
   AllSettings,
+  BrandingSettings,
   User,
   CreateUserDto,
   UpdateUserDto,
@@ -229,6 +230,14 @@ class ApiClient {
 
   async updateExchangeRate(rate: number): Promise<ExchangeRate> {
     return this.client.put('/settings/exchange-rate', { rate })
+  }
+
+  async getBranding(): Promise<BrandingSettings> {
+    return this.client.get('/settings/branding')
+  }
+
+  async updateBranding(data: Partial<BrandingSettings>): Promise<BrandingSettings> {
+    return this.client.put('/settings/branding', data)
   }
 
   // ==================== USERS (ADMIN) ====================

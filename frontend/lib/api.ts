@@ -13,6 +13,7 @@ import type {
   SiteContent,
   ExchangeRate,
   AllSettings,
+  BrandingSettings,
   User,
   CreateUserDto,
   UpdateUserDto,
@@ -374,6 +375,17 @@ class ApiClient {
     return this.request<ExchangeRate>('/settings/exchange-rate', {
       method: 'PUT',
       body: JSON.stringify({ rate }),
+    })
+  }
+
+  async getBranding(): Promise<BrandingSettings> {
+    return this.request<BrandingSettings>('/settings/branding')
+  }
+
+  async updateBranding(data: Partial<BrandingSettings>): Promise<BrandingSettings> {
+    return this.request<BrandingSettings>('/settings/branding', {
+      method: 'PUT',
+      body: JSON.stringify(data),
     })
   }
 
