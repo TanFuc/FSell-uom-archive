@@ -87,7 +87,10 @@ export async function generateMetadata({
       template: `%s | ${brandName}`,
     },
     description,
-    keywords: ['fashion', 'vietnamese', 'archive', 'minimalist', 'clothing', 'ƯƠM.'],
+    keywords: [
+      'gốm sứ', 'ceramics', 'đồ gốm thủ công', 'Vietnamese ceramics',
+      'handcrafted ceramics', 'ƯƠM. Archive', 'gốm Việt Nam', 'ceramic art',
+    ],
     authors: [{ name: brandName }],
     creator: brandName,
     publisher: brandName,
