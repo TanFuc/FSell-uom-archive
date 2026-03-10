@@ -181,7 +181,7 @@ export default function ShopClient() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: (idx % 4) * 0.1 }}
                     >
-                      <ProductCard product={product} locale={locale} />
+                      <ProductCard product={product} locale={locale} priority={idx === 0} />
                     </motion.div>
                   ))}
                 </div>

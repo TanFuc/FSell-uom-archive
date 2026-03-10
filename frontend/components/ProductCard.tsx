@@ -10,9 +10,10 @@ import { optimizeProductImage } from '@/lib/utils'
 interface ProductCardProps {
   product: Product
   locale: 'vi' | 'en'
+  priority?: boolean
 }
 
-export function ProductCard({ product, locale }: ProductCardProps) {
+export function ProductCard({ product, locale, priority }: ProductCardProps) {
   const t = useTranslations('admin')
   const name = locale === 'vi' ? product.nameVi : product.nameEn
   const hasImages = product.images && product.images.length > 0
@@ -41,7 +42,8 @@ export function ProductCard({ product, locale }: ProductCardProps) {
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
               className="z-0 object-cover object-center transition-transform duration-500 group-hover:scale-105"
               style={{ objectFit: 'cover', objectPosition: 'center' }}
-              loading="lazy"
+              priority={priority}
+              loading={priority ? 'eager' : 'lazy'}
               draggable="false"
             />
             {hoverImage && (

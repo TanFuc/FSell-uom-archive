@@ -215,7 +215,7 @@ export default function HomeClient() {
                     transition={{ delay: idx * 0.05, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                     className="w-[calc(100vw-64px)] shrink-0 md:w-[45vw] lg:w-[31vw]"
                   >
-                    <ProductCard product={product} locale={locale} />
+                    <ProductCard product={product} locale={locale} priority={idx === 0} />
                   </motion.div>
                 ))}
               </AnimatePresence>
@@ -276,7 +276,7 @@ export default function HomeClient() {
                     transition={{ delay: idx * 0.05, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                     className="w-[calc(100vw-64px)] shrink-0 md:w-[45vw] lg:w-[calc(50vw-48px)]"
                   >
-                    <ProductCard product={product} locale={locale} />
+                    <ProductCard product={product} locale={locale} priority={idx === 0} />
                   </motion.div>
                 ))}
               </AnimatePresence>
