@@ -1,18 +1,7 @@
 ﻿import { type Metadata } from 'next'
 import { getLocale } from 'next-intl/server'
+import { fetchBranding } from '@/lib/server-utils'
 import HomeClient from './home-client'
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
-
-async function fetchBranding() {
-  try {
-    const res = await fetch(`${API_URL}/settings/branding`, { next: { revalidate: 3600 } })
-    if (!res.ok) return null
-    return res.json()
-  } catch {
-    return null
-  }
-}
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale()
@@ -37,5 +26,23 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default function HomePage() {
-  return <HomeClient />
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'Organization',
+            name: 'ƯƠM. Archive',
+            url: 'https://uomarchive.com',
+            logo: 'https://uomarchive.com/assets/logo.png',
+            sameAs: [],
+            description: 'Gốm sứ thủ công Việt Nam — Vietnamese Handcrafted Ceramics',
+          }),
+        }}
+      />
+      <HomeClient />
+    </>
+  )
 }

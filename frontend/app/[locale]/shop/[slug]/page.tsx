@@ -1,5 +1,6 @@
 ﻿import { type Metadata } from 'next'
 import { getLocale } from 'next-intl/server'
+import { fetchBranding } from '@/lib/server-utils'
 import ProductClient from './product-client'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
@@ -7,16 +8,6 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
 async function fetchProduct(slug: string) {
   try {
     const res = await fetch(`${API_URL}/products/${slug}`, { next: { revalidate: 300 } })
-    if (!res.ok) return null
-    return res.json()
-  } catch {
-    return null
-  }
-}
-
-async function fetchBranding() {
-  try {
-    const res = await fetch(`${API_URL}/settings/branding`, { next: { revalidate: 3600 } })
     if (!res.ok) return null
     return res.json()
   } catch {
@@ -68,6 +59,70 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default function ProductPage({ params }: Props) {
-  return <ProductClient params={params} />
+export default async function ProductPage({ params }: Props) {
+  const locale = await getLocale()
+  const product = await fetchProduct(params.slug)
+
+  const jsonLd = product
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'Product',
+        name: locale === 'vi' ? product.nameVi : product.nameEn,
+        description: locale === 'vi'
+          ? (product.shortDescriptionVi || product.descriptionVi || '')
+              .replace(/<[^>]*>/g, '')
+              .slice(0, 300)
+          : (product.shortDescriptionEn || product.descriptionEn || '')
+              .replace(/<[^>]*>/g, '')
+              .slice(0, 300),
+        image: product.images ?? [],
+        sku: product.slug,
+        offers: {
+          '@type': 'Offer',
+          priceCurrency: 'VND',
+          price: product.salePriceVND ?? product.priceVND,
+          availability: product.stock > 0
+            ? 'https://schema.org/InStock'
+            : 'https://schema.org/OutOfStock',
+          url: `https://uomarchive.com/${locale}/shop/${params.slug}`,
+        },
+        brand: {
+          '@type': 'Brand',
+          name: 'ƯƠM. Archive',
+        },
+      }
+    : null
+
+  return (
+    <>
+      {jsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      )}
+      {product && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'BreadcrumbList',
+              itemListElement: [
+                { '@type': 'ListItem', position: 1, name: 'Home', item: `https://uomarchive.com/${locale}` },
+                { '@type': 'ListItem', position: 2, name: 'Shop', item: `https://uomarchive.com/${locale}/shop` },
+                {
+                  '@type': 'ListItem',
+                  position: 3,
+                  name: locale === 'vi' ? product.nameVi : product.nameEn,
+                  item: `https://uomarchive.com/${locale}/shop/${params.slug}`,
+                },
+              ],
+            }),
+          }}
+        />
+      )}
+      <ProductClient params={params} />
+    </>
+  )
 }

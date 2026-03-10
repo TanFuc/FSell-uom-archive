@@ -1,18 +1,7 @@
 import { type Metadata } from 'next'
 import { getLocale } from 'next-intl/server'
+import { fetchBranding } from '@/lib/server-utils'
 import AboutClient from './about-client'
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
-
-async function fetchBranding() {
-  try {
-    const res = await fetch(`${API_URL}/settings/branding`, { next: { revalidate: 3600 } })
-    if (!res.ok) return null
-    return res.json()
-  } catch {
-    return null
-  }
-}
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale()
