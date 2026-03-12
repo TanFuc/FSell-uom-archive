@@ -8,6 +8,7 @@ import { ProductCard } from '@/components/ProductCard'
 import { useCategories } from '@/hooks/use-categories'
 import { useProducts } from '@/hooks/use-products'
 import { cn } from '@/lib/utils'
+import { useDocumentTitle } from '@/hooks/use-document-title'
 import { motion, AnimatePresence } from 'framer-motion'
 
 export default function ShopClient() {

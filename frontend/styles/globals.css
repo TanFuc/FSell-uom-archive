@@ -306,6 +306,15 @@
   }
 }
 
+@keyframes slideProgress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
 .animate-slow-zoom {
   animation: slowZoom 20s infinite alternate ease-in-out;
 }

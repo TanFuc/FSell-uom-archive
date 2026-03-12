@@ -140,7 +140,7 @@ async function main() {
       descriptionEn:
         'Tall ceramic vase with natural ivory glaze, featuring a subtle handcrafted texture. Perfect for dried branches or standing alone as a statement piece.',
       priceVND: 1850000,
-      images: ['https://images.unsplash.com/photo-1581783342308-f792ca11df53?q=80&w=1000&auto=format&fit=crop'],
+      images: ['https://images.unsplash.com/photo-1610701596007-11502861dcfa?q=80&w=1000&auto=format&fit=crop'],
       material: 'Đất sét trắng / White clay',
       dimensions: '18cm x 45cm',
       stock: 5,
@@ -203,7 +203,7 @@ async function main() {
       descriptionEn:
         'Handleless tea cup, perfect fit in hand. Matte textured glaze retains heat well and offers a warm tactile feel in winter.',
       priceVND: 250000,
-      images: ['https://images.unsplash.com/photo-1581783342308-f792ca11df53?q=80&w=1000&auto=format&fit=crop'],
+      images: ['https://images.unsplash.com/photo-1610701596061-2ecf227e85b2?q=80&w=1000&auto=format&fit=crop'],
       material: 'Gốm tráng men mờ / Matte glazed ceramic',
       dimensions: '8cm x 6cm',
       stock: 50,

@@ -114,7 +114,7 @@ export default function DashboardPage() {
         <CardContent className="grid gap-4 md:grid-cols-3">
           <a
             href="./products"
-            className="flex items-center gap-3 border p-4 transition-colors hover:bg-accent"
+            className="flex items-center gap-3 border p-4 transition-colors hover:bg-stone-100"
           >
             <Package className="h-5 w-5" />
             <div>
@@ -124,7 +124,7 @@ export default function DashboardPage() {
           </a>
           <a
             href="./theme"
-            className="flex items-center gap-3 border p-4 transition-colors hover:bg-accent"
+            className="flex items-center gap-3 border p-4 transition-colors hover:bg-stone-100"
           >
             <Eye className="h-5 w-5" />
             <div>
@@ -134,7 +134,7 @@ export default function DashboardPage() {
           </a>
           <a
             href="./categories"
-            className="flex items-center gap-3 border p-4 transition-colors hover:bg-accent"
+            className="flex items-center gap-3 border p-4 transition-colors hover:bg-stone-100"
           >
             <LayoutGrid className="h-5 w-5" />
             <div>
@@ -144,7 +144,7 @@ export default function DashboardPage() {
           </a>
           <a
             href="./settings"
-            className="flex items-center gap-3 border p-4 transition-colors hover:bg-accent"
+            className="flex items-center gap-3 border p-4 transition-colors hover:bg-stone-100"
           >
             <DollarSign className="h-5 w-5" />
             <div>

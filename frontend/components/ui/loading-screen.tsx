@@ -1,6 +1,9 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { useBranding } from '@/hooks/use-settings'
+
+const DEFAULT_LOADING_TEXT = 'ƯƠM.'
 
 interface LoadingScreenProps {
   text?: string
@@ -8,7 +11,15 @@ interface LoadingScreenProps {
 
 export function LoadingScreen({ text }: LoadingScreenProps) {
   const { data: branding } = useBranding()
-  const displayText = text ?? branding?.loadingText ?? 'ƯƠM.'
+  const [displayText, setDisplayText] = useState(text ?? DEFAULT_LOADING_TEXT)
+
+  useEffect(() => {
+    if (text) {
+      setDisplayText(text)
+    } else if (branding?.loadingText) {
+      setDisplayText(branding.loadingText)
+    }
+  }, [text, branding?.loadingText])
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">

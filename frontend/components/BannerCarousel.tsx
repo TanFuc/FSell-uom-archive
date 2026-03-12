@@ -1,6 +1,6 @@
 'use client'
 
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+
 import Image from 'next/image'
 import Link from 'next/link'
 import { useState, useEffect, useCallback, useRef } from 'react'
@@ -18,9 +18,21 @@ export function BannerCarousel({ banners, locale, autoPlayInterval = 5000 }: Ban
   const [isAutoPlaying, setIsAutoPlaying] = useState(true)
   const [touchStart, setTouchStart] = useState(0)
   const [touchEnd, setTouchEnd] = useState(0)
-  const [isDragging, setIsDragging] = useState(false)
-  const [dragStart, setDragStart] = useState(0)
   const shouldPreventClick = useRef(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  // Block horizontal wheel/trackpad swipe from triggering browser back/forward navigation
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const onWheel = (e: WheelEvent) => {
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+        e.preventDefault()
+      }
+    }
+    el.addEventListener('wheel', onWheel, { passive: false })
+    return () => el.removeEventListener('wheel', onWheel)
+  }, [])
 
   // Sort banners by order
   const sortedBanners = [...banners].sort((a, b) => a.order - b.order)
@@ -89,56 +101,6 @@ export function BannerCarousel({ banners, locale, autoPlayInterval = 5000 }: Ban
     setTouchEnd(0)
   }
 
-  // Mouse drag handlers for desktop (supports both left and right mouse buttons)
-  const handleMouseDown = (e: React.MouseEvent) => {
-    // Accept both left (0) and right (2) mouse buttons
-    if (e.button === 0 || e.button === 2) {
-      e.preventDefault() // Prevent default behavior for right-click
-      setIsDragging(true)
-      setDragStart(e.clientX)
-      shouldPreventClick.current = false
-    }
-  }
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging) return
-    e.preventDefault()
-  }
-
-  const handleMouseUp = (e: React.MouseEvent) => {
-    if (!isDragging) return
-
-    const distance = dragStart - e.clientX
-    const isLeftDrag = distance > 50
-    const isRightDrag = distance < -50
-
-    if (isLeftDrag) {
-      goToNext()
-      shouldPreventClick.current = true
-    } else if (isRightDrag) {
-      goToPrevious()
-      shouldPreventClick.current = true
-    } else {
-      // If movement is very small, we don't prevent click
-      shouldPreventClick.current = Math.abs(distance) > 5
-    }
-
-    setIsDragging(false)
-    setDragStart(0)
-  }
-
-  const handleMouseLeave = () => {
-    setIsDragging(false)
-    setDragStart(0)
-  }
-
-  // Prevent context menu when dragging with right mouse button
-  const handleContextMenu = (e: React.MouseEvent) => {
-    if (isDragging) {
-      e.preventDefault()
-    }
-  }
-
   const handleLinkClick = (e: React.MouseEvent) => {
     if (shouldPreventClick.current) {
       e.preventDefault()
@@ -199,16 +161,12 @@ export function BannerCarousel({ banners, locale, autoPlayInterval = 5000 }: Ban
 
   return (
     <div
+      ref={containerRef}
       className="group relative w-full select-none overflow-hidden"
+      style={{ overscrollBehaviorX: 'none' }}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseLeave}
-      onContextMenu={handleContextMenu}
-      style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
     >
       {/* Clickable Content Area */}
       {currentBanner.link ? (
@@ -226,37 +184,9 @@ export function BannerCarousel({ banners, locale, autoPlayInterval = 5000 }: Ban
         </div>
       )}
 
-      {/* Navigation Arrows - Only show if multiple banners */}
+      {/* Slim line indicators at bottom edge */}
       {sortedBanners.length > 1 && (
-        <>
-          <button
-            onClick={(e) => {
-              e.preventDefault()
-              e.stopPropagation() // Prevent event bubbling
-              goToPrevious()
-            }}
-            className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/30 p-2 opacity-0 backdrop-blur-sm transition-all hover:bg-white/40 hover:opacity-100 group-hover:opacity-100 md:left-8 md:p-3"
-            aria-label="Previous banner"
-          >
-            <ChevronLeft className="h-5 w-5 text-white md:h-6 md:w-6" />
-          </button>
-          <button
-            onClick={(e) => {
-              e.preventDefault()
-              e.stopPropagation() // Prevent event bubbling
-              goToNext()
-            }}
-            className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/30 p-2 opacity-0 backdrop-blur-sm transition-all hover:bg-white/40 hover:opacity-100 group-hover:opacity-100 md:right-8 md:p-3"
-            aria-label="Next banner"
-          >
-            <ChevronRight className="h-5 w-5 text-white md:h-6 md:w-6" />
-          </button>
-        </>
-      )}
-
-      {/* Improved Indicators/Dots - Only show if multiple banners */}
-      {sortedBanners.length > 1 && (
-        <div className="absolute bottom-6 left-1/2 flex -translate-x-1/2 gap-2 rounded-full bg-black/30 px-4 py-2 backdrop-blur-sm md:bottom-8">
+        <div className="absolute bottom-0 left-0 flex w-full">
           {sortedBanners.map((_, index) => (
             <button
               key={index}
@@ -265,13 +195,21 @@ export function BannerCarousel({ banners, locale, autoPlayInterval = 5000 }: Ban
                 e.stopPropagation()
                 goToSlide(index)
               }}
-              className={`rounded-full transition-all duration-300 ${
-                index === currentIndex
-                  ? 'h-1.5 w-8 bg-white shadow-lg md:w-10'
-                  : 'h-1.5 w-1.5 bg-white/40 hover:scale-125 hover:bg-white/60'
-              }`}
+              className="group/bar relative h-[3px] flex-1 overflow-hidden bg-white/25 transition-colors hover:bg-white/40"
               aria-label={`Go to banner ${index + 1}`}
-            />
+            >
+              {index === currentIndex && (
+                <span
+                  className="absolute inset-y-0 left-0 w-full origin-left bg-white"
+                  style={{
+                    animation: isAutoPlaying
+                      ? `slideProgress ${autoPlayInterval}ms linear forwards`
+                      : 'none',
+                    transform: isAutoPlaying ? undefined : 'scaleX(1)',
+                  }}
+                />
+              )}
+            </button>
           ))}
         </div>
       )}
