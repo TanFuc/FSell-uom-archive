@@ -4,8 +4,6 @@ import * as bcrypt from 'bcrypt'
 const prisma = new PrismaClient()
 
 async function main() {
-  console.log('Starting database seed...')
-
   // Create admin user
   const passwordHash = await bcrypt.hash('admin123', 10)
 
@@ -20,9 +18,6 @@ async function main() {
       isActive: true,
     },
   })
-
-  console.log(`Admin user created: ${admin.email}`)
-
   // Create manager user for testing
   const managerPasswordHash = await bcrypt.hash('manager123', 10)
 
@@ -38,9 +33,6 @@ async function main() {
       createdBy: admin.id,
     },
   })
-
-  console.log(`Manager user created: ${manager.email}`)
-
   // Create default theme settings
   await prisma.themeSettings.upsert({
     where: { id: 'singleton' },
@@ -52,9 +44,6 @@ async function main() {
       accentColor: '#8C7E6A',
     },
   })
-
-  console.log('Theme settings created')
-
   // Create social settings for inquiry feature
   await prisma.socialSettings.upsert({
     where: { id: 'singleton' },
@@ -65,9 +54,6 @@ async function main() {
       instagramUsername: 'uomarchive',
     },
   })
-
-  console.log('Social settings created (for inquiry feature)')
-
   // Create default site content
   const defaultContent = [
     { key: 'menu.shop.vi', value: 'SẢN PHẨM' },
@@ -86,8 +72,16 @@ async function main() {
     { key: 'hero.subtitle.en', value: 'Handcrafted ceramics from Vietnam' },
     { key: 'inquiry.button.vi', value: 'Hỏi sản phẩm' },
     { key: 'inquiry.button.en', value: 'Inquire' },
-    { key: 'hero.image.vi', value: 'https://images.unsplash.com/photo-1610701596007-11502861dcfa?q=80&w=2070&auto=format&fit=crop' },
-    { key: 'hero.image.en', value: 'https://images.unsplash.com/photo-1610701596007-11502861dcfa?q=80&w=2070&auto=format&fit=crop' }
+    {
+      key: 'hero.image.vi',
+      value:
+        'https://images.unsplash.com/photo-1610701596007-11502861dcfa?q=80&w=2070&auto=format&fit=crop',
+    },
+    {
+      key: 'hero.image.en',
+      value:
+        'https://images.unsplash.com/photo-1610701596007-11502861dcfa?q=80&w=2070&auto=format&fit=crop',
+    },
   ]
 
   for (const item of defaultContent) {
@@ -97,24 +91,21 @@ async function main() {
       create: item,
     })
   }
-
-  console.log('Site content created')
-
   // Create exchange rate
   await prisma.siteSettings.upsert({
     where: { key: 'exchange_rate' },
     update: {},
     create: { key: 'exchange_rate', value: '25000' },
   })
-
-  console.log('Exchange rate created')
-
   // Create branding settings
   const brandingDefaults = [
     { key: 'site.title.vi', value: 'ƯƠM. Archive - Gốm sứ thủ công Việt Nam' },
     { key: 'site.title.en', value: 'ƯƠM. Archive - Handcrafted Ceramics from Vietnam' },
     { key: 'site.description.vi', value: 'Gốm sứ thủ công được tuyển chọn kỹ lưỡng từ Việt Nam.' },
-    { key: 'site.description.en', value: 'Discover timeless Vietnamese ceramics curated with care.' },
+    {
+      key: 'site.description.en',
+      value: 'Discover timeless Vietnamese ceramics curated with care.',
+    },
     { key: 'site.logoUrl', value: '' },
     { key: 'site.loadingText', value: 'ƯƠM.' },
   ]
@@ -126,9 +117,6 @@ async function main() {
       create: item,
     })
   }
-
-  console.log('Branding settings created')
-
   // Create sample products with inquiry messages and VERIFIED REAL aesthetic images
   const sampleProducts = [
     {
@@ -140,7 +128,9 @@ async function main() {
       descriptionEn:
         'Tall ceramic vase with natural ivory glaze, featuring a subtle handcrafted texture. Perfect for dried branches or standing alone as a statement piece.',
       priceVND: 1850000,
-      images: ['https://images.unsplash.com/photo-1610701596007-11502861dcfa?q=80&w=1000&auto=format&fit=crop'],
+      images: [
+        'https://images.unsplash.com/photo-1610701596007-11502861dcfa?q=80&w=1000&auto=format&fit=crop',
+      ],
       material: 'Đất sét trắng / White clay',
       dimensions: '18cm x 45cm',
       stock: 5,
@@ -162,7 +152,7 @@ async function main() {
       priceVND: 3200000,
       images: [
         'https://images.unsplash.com/photo-1610701596007-11502861dcfa?q=80&w=1000&auto=format&fit=crop',
-        'https://images.unsplash.com/photo-1610701596061-2ecf227e85b2?q=80&w=1000&auto=format&fit=crop'
+        'https://images.unsplash.com/photo-1610701596061-2ecf227e85b2?q=80&w=1000&auto=format&fit=crop',
       ],
       material: 'Gốm sành / Stoneware',
       dimensions: 'Đa dạng / Assorted',
@@ -183,7 +173,9 @@ async function main() {
       descriptionEn:
         'A bold combination of ceramics and raw concrete texture. Modern design with strong geometric layout.',
       priceVND: 950000,
-      images: ['https://images.unsplash.com/photo-1610701596061-2ecf227e85b2?q=80&w=1000&auto=format&fit=crop'],
+      images: [
+        'https://images.unsplash.com/photo-1610701596061-2ecf227e85b2?q=80&w=1000&auto=format&fit=crop',
+      ],
       material: 'Gốm lai xi măng / Ceramic-concrete hybrid',
       dimensions: '22cm x 22cm',
       stock: 12,
@@ -203,7 +195,9 @@ async function main() {
       descriptionEn:
         'Handleless tea cup, perfect fit in hand. Matte textured glaze retains heat well and offers a warm tactile feel in winter.',
       priceVND: 250000,
-      images: ['https://images.unsplash.com/photo-1610701596061-2ecf227e85b2?q=80&w=1000&auto=format&fit=crop'],
+      images: [
+        'https://images.unsplash.com/photo-1610701596061-2ecf227e85b2?q=80&w=1000&auto=format&fit=crop',
+      ],
       material: 'Gốm tráng men mờ / Matte glazed ceramic',
       dimensions: '8cm x 6cm',
       stock: 50,
@@ -223,7 +217,9 @@ async function main() {
       descriptionEn:
         'Ceramic plate featuring classic crackle glaze technique in deep jade green. Elegant and nostalgic.',
       priceVND: 550000,
-      images: ['https://images.unsplash.com/photo-1610701596007-11502861dcfa?q=80&w=1000&auto=format&fit=crop'],
+      images: [
+        'https://images.unsplash.com/photo-1610701596007-11502861dcfa?q=80&w=1000&auto=format&fit=crop',
+      ],
       material: 'Gốm men rạn / Crackle wear',
       dimensions: '26cm diameter',
       stock: 18,
@@ -243,7 +239,9 @@ async function main() {
       descriptionEn:
         'Abstract design with Asymmetric curves. Functions as both a flower vase and an art sculpture.',
       priceVND: 2100000,
-      images: ['https://images.unsplash.com/photo-1610701596061-2ecf227e85b2?q=80&w=1000&auto=format&fit=crop'],
+      images: [
+        'https://images.unsplash.com/photo-1610701596061-2ecf227e85b2?q=80&w=1000&auto=format&fit=crop',
+      ],
       material: 'Đất cao lanh / Kaolin',
       dimensions: '30cm x 18cm',
       stock: 4,
@@ -263,7 +261,9 @@ async function main() {
       descriptionEn:
         'Abstract design with Asymmetric curves. Functions as both a flower vase and an art sculpture.',
       priceVND: 2100000,
-      images: ['https://images.unsplash.com/photo-1610701596061-2ecf227e85b2?q=80&w=1000&auto=format&fit=crop'],
+      images: [
+        'https://images.unsplash.com/photo-1610701596061-2ecf227e85b2?q=80&w=1000&auto=format&fit=crop',
+      ],
       material: 'Đất cao lanh / Kaolin',
       dimensions: '30cm x 18cm',
       stock: 4,
@@ -273,7 +273,7 @@ async function main() {
       inquiryMessageVi: `Tôi rất thích mẫu "Bình Hoa Abstract".`,
       inquiryMessageEn: `I love the "Abstract Form Vase".`,
       createdBy: admin.id,
-    }
+    },
   ]
 
   const productsMap: Record<string, any> = {}
@@ -289,28 +289,24 @@ async function main() {
 
   // Link related products (Example: Lieng Vase relates to Abstract Vase)
   if (productsMap['binh-gom-trang-lieng'] && productsMap['binh-hoa-abstract']) {
-    console.log('Linking related products...')
     await prisma.product.update({
       where: { id: productsMap['binh-gom-trang-lieng'].id },
       data: {
         relatedProducts: {
-          connect: [{ id: productsMap['binh-hoa-abstract'].id }]
-        }
-      }
+          connect: [{ id: productsMap['binh-hoa-abstract'].id }],
+        },
+      },
     })
   }
-
-  console.log('Sample products created with inquiry messages')
-
   // Create Banners
-  console.log('Creating banners...')
   const banners = [
     {
       titleVi: 'Vẻ đẹp trong sự tĩnh lặng',
       titleEn: 'Beauty in Stillness',
       subtitleVi: 'Gốm sứ thủ công từ Việt Nam',
       subtitleEn: 'Handcrafted ceramics from Vietnam',
-      imageUrl: 'https://images.unsplash.com/photo-1610701596007-11502861dcfa?q=80&w=2070&auto=format&fit=crop',
+      imageUrl:
+        'https://images.unsplash.com/photo-1610701596007-11502861dcfa?q=80&w=2070&auto=format&fit=crop',
       link: '/shop',
       order: 1,
       isActive: true,
@@ -323,14 +319,15 @@ async function main() {
       titleEn: 'New Collection',
       subtitleVi: 'Khám phá những mẫu thiết kế độc đáo',
       subtitleEn: 'Discover unique designs',
-      imageUrl: 'https://images.unsplash.com/photo-1610701596061-2ecf227e85b2?q=80&w=2070&auto=format&fit=crop',
+      imageUrl:
+        'https://images.unsplash.com/photo-1610701596061-2ecf227e85b2?q=80&w=2070&auto=format&fit=crop',
       link: '/shop?sort=newest',
       order: 2,
       isActive: true,
       textPosition: 'left',
       textColor: '#FFFFFF',
       createdBy: admin.id,
-    }
+    },
   ]
 
   // Use any cast if Banner type is not yet generated in client
@@ -339,34 +336,15 @@ async function main() {
   for (const banner of banners) {
     // Check if banner exists by image url to avoid dups in this simple seed
     const existing = await prismaAny.banner.findFirst({
-      where: { imageUrl: banner.imageUrl }
+      where: { imageUrl: banner.imageUrl },
     })
-    
+
     if (!existing) {
       await prismaAny.banner.create({
-        data: banner
+        data: banner,
       })
     }
   }
-  console.log('Banners created')
-
-  console.log('\n========================================')
-  console.log('Seeding completed!')
-  console.log('========================================')
-  console.log('\nAdmin credentials:')
-  console.log('  Email: admin@uomarchive.com')
-  console.log('  Password: admin123')
-  console.log('\nManager credentials:')
-  console.log('  Email: manager@uomarchive.com')
-  console.log('  Password: manager123')
-  console.log('\nFeatures implemented:')
-  console.log('  - Inquiry Feature (replaces Orders)')
-  console.log('  - Soft Delete with Audit Trail')
-  console.log('  - Role-based Access (ADMIN/MANAGER)')
-  console.log('  - Bulk Operations')
-  console.log('  - Product Duplication')
-  console.log('  - Redis Caching')
-  console.log('========================================\n')
 }
 
 main()

@@ -80,7 +80,7 @@ export function UomLoaderBreathing({ isLoading }: { isLoading: boolean }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background">
       <div className="flex flex-col items-center">
         <h1 className="animate-breathe select-none font-serif text-8xl tracking-wide text-foreground">
-          ƯƠM.
+          ƯƠM..
         </h1>
       </div>
     </div>

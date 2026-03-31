@@ -50,7 +50,7 @@ export class UpdateSiteContentDto {
   @ApiPropertyOptional({ example: '© 2026 ƯƠM. Archive. All rights reserved.' })
   @IsString()
   @IsOptional()
-  'footer.text.en'?: string
+  'footer.text.en'?: string;
 
   // Allow any additional content keys
   [key: string]: string | undefined

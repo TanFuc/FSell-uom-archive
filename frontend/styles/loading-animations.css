@@ -16,7 +16,8 @@
    ============================================ */
 
 @keyframes pulse-char {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 0.2;
     transform: translateY(0);
   }
@@ -31,11 +32,18 @@
 }
 
 /* Staggered animation delays for each character */
-.animation-delay-0 { animation-delay: 0s; }
-.animation-delay-100 { animation-delay: 0.1s; }
-.animation-delay-200 { animation-delay: 0.2s; }
-.animation-delay-300 { animation-delay: 0.3s; }
-
+.animation-delay-0 {
+  animation-delay: 0s;
+}
+.animation-delay-100 {
+  animation-delay: 0.1s;
+}
+.animation-delay-200 {
+  animation-delay: 0.2s;
+}
+.animation-delay-300 {
+  animation-delay: 0.3s;
+}
 
 /* ============================================
    LOADING BAR ANIMATION
@@ -43,14 +51,17 @@
    ============================================ */
 
 @keyframes loading-bar {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 .animate-loading-bar {
   animation: loading-bar 1.5s ease-in-out infinite;
 }
-
 
 /* ============================================
    ALTERNATIVE: BREATHING EFFECT
@@ -58,7 +69,8 @@
    ============================================ */
 
 @keyframes breathe {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 0.3;
     transform: scale(0.98);
   }
@@ -72,20 +84,20 @@
   animation: breathe 2s ease-in-out infinite;
 }
 
-
 /* ============================================
    ALTERNATIVE: FADE WAVE
    Sequential fade with slight blur
    ============================================ */
 
 @keyframes fade-wave {
-  0%, 100% { 
-    opacity: 0.2; 
-    filter: blur(0px); 
+  0%,
+  100% {
+    opacity: 0.2;
+    filter: blur(0px);
   }
-  50% { 
-    opacity: 1; 
-    filter: blur(1px); 
+  50% {
+    opacity: 1;
+    filter: blur(1px);
   }
 }
 
@@ -93,27 +105,25 @@
   animation: fade-wave 1.6s ease-in-out infinite;
 }
 
-
 /* ============================================
    ALTERNATIVE: FADE IN (Typewriter)
    Characters appear one by one
    ============================================ */
 
 @keyframes fade-in {
-  from { 
-    opacity: 0; 
-    transform: translateY(10px); 
+  from {
+    opacity: 0;
+    transform: translateY(10px);
   }
-  to { 
-    opacity: 1; 
-    transform: translateY(0); 
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
 .animate-fade-in {
   animation: fade-in 0.3s ease-out;
 }
-
 
 /* ============================================
    PERFORMANCE OPTIMIZATION
@@ -128,7 +138,6 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-
 
 /* ============================================
    MOBILE OPTIMIZATION

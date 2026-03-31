@@ -9,6 +9,7 @@ import { ConditionalLayout } from '@/components/layout/ConditionalLayout'
 import { QueryProvider } from '@/components/providers/QueryProvider'
 import { Toaster } from '@/components/ui/toaster'
 import { locales } from '@/i18n'
+import { fetchBranding } from '@/lib/server-utils'
 import '@/styles/globals.css'
 import '@/styles/loading-animations.css'
 
@@ -43,25 +44,13 @@ export function generateStaticParams() {
   return locales.map((locale) => ({ locale }))
 }
 
-async function fetchBranding(locale: string) {
-  try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
-    const res = await fetch(`${apiUrl}/settings/branding`, {
-      next: { revalidate: 3600 },
-    })
-    if (!res.ok) return null
-    return res.json()
-  } catch {
-    return null
-  }
-}
-
 export async function generateMetadata({
   params: { locale },
 }: {
   params: { locale: string }
 }): Promise<Metadata> {
-  const branding = await fetchBranding(locale)
+  const branding = await fetchBranding()
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
   const defaultTitle =
     locale === 'vi'
@@ -81,15 +70,21 @@ export async function generateMetadata({
   const logoUrl = branding?.logoUrl || '/assets/logo.png'
 
   return {
-    metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
+    metadataBase: new URL(baseUrl),
     title: {
       default: defaultTitle,
       template: `%s | ${brandName}`,
     },
     description,
     keywords: [
-      'gốm sứ', 'ceramics', 'đồ gốm thủ công', 'Vietnamese ceramics',
-      'handcrafted ceramics', 'ƯƠM. Archive', 'gốm Việt Nam', 'ceramic art',
+      'gốm sứ',
+      'ceramics',
+      'đồ gốm thủ công',
+      'Vietnamese ceramics',
+      'handcrafted ceramics',
+      'ƯƠM. Archive',
+      'gốm Việt Nam',
+      'ceramic art',
     ],
     authors: [{ name: brandName }],
     creator: brandName,
@@ -97,7 +92,7 @@ export async function generateMetadata({
     openGraph: {
       type: 'website',
       locale: locale === 'vi' ? 'vi_VN' : 'en_US',
-      url: 'https://uomarchive.com',
+      url: `${baseUrl}/${locale}`,
       title: defaultTitle,
       description,
       siteName: brandName,

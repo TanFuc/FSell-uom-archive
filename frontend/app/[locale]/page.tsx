@@ -25,7 +25,13 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
-export default function HomePage() {
+export default async function HomePage() {
+  const branding = await fetchBranding()
+  const logo = branding?.logoUrl || 'https://uomarchive.com/assets/logo.png'
+  const name = branding?.brandNameVi || 'ƯƠM. Archive'
+  const description =
+    branding?.siteDescriptionVi || 'Gốm sứ thủ công Việt Nam — Vietnamese Handcrafted Ceramics'
+
   return (
     <>
       <script
@@ -34,11 +40,11 @@ export default function HomePage() {
           __html: JSON.stringify({
             '@context': 'https://schema.org',
             '@type': 'Organization',
-            name: 'ƯƠM. Archive',
+            name: name,
             url: 'https://uomarchive.com',
-            logo: 'https://uomarchive.com/assets/logo.png',
+            logo: logo,
             sameAs: [],
-            description: 'Gốm sứ thủ công Việt Nam — Vietnamese Handcrafted Ceramics',
+            description: description,
           }),
         }}
       />

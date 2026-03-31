@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { FileUpload, MultipleFileUpload } from '@/components/FileUpload'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useToast } from '@/hooks/use-toast'
+import { optimizeAndResizeImage } from '@/lib/image-upload'
 
 export default function FileUploadTestPage() {
   const [uploadedUrl, setUploadedUrl] = useState<string>('')
@@ -35,6 +36,32 @@ export default function FileUploadTestPage() {
       title: 'Upload thất bại',
       description: error,
       variant: 'destructive',
+    })
+  }
+
+  const [optimizeStats, setOptimizeStats] = useState<{
+    beforeKb: number
+    afterKb: number
+    ms: number
+  } | null>(null)
+
+  const runLocalOptimizeCheck = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const start = performance.now()
+    const optimized = await optimizeAndResizeImage(file, {
+      maxWidth: 1800,
+      maxHeight: 1800,
+      quality: 0.86,
+      outputType: 'image/webp',
+    })
+    const end = performance.now()
+
+    setOptimizeStats({
+      beforeKb: Math.round(file.size / 1024),
+      afterKb: Math.round(optimized.size / 1024),
+      ms: Math.round(end - start),
     })
   }
 
@@ -80,6 +107,23 @@ export default function FileUploadTestPage() {
                   <img src={uploadedUrl} alt="Uploaded" className="h-full w-full object-cover" />
                 </div>
               </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Local Optimize Check</CardTitle>
+          <CardDescription>Kiểm tra tốc độ và mức nén trước khi upload</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <input type="file" accept="image/*" onChange={runLocalOptimizeCheck} />
+          {optimizeStats && (
+            <div className="rounded-md border bg-muted p-3 text-sm">
+              <div>Trước: {optimizeStats.beforeKb} KB</div>
+              <div>Sau: {optimizeStats.afterKb} KB</div>
+              <div>Thời gian optimize: {optimizeStats.ms} ms</div>
             </div>
           )}
         </CardContent>

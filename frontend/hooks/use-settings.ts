@@ -169,7 +169,8 @@ export function useBranding() {
       saveBrandingToStorage(data)
       return data
     },
-    staleTime: 10 * 60 * 1000,
+    staleTime: 0,
+    refetchOnMount: 'always',
     // Hiện giá trị localStorage ngay, không chờ fetch
     placeholderData: getBrandingFromStorage,
   })

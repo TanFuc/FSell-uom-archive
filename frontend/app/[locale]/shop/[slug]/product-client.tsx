@@ -1,6 +1,17 @@
 'use client'
 
-import { Instagram, Facebook, Loader2, ArrowLeft, Info, Search, X, Menu, ChevronLeft, ChevronRight } from 'lucide-react'
+import {
+  Instagram,
+  Facebook,
+  Loader2,
+  ArrowLeft,
+  Info,
+  Search,
+  X,
+  Menu,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { notFound, usePathname, useRouter } from 'next/navigation'
@@ -34,7 +45,7 @@ interface ProductPageProps {
 function useDragScroll() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [isDragging, setIsDragging] = useState(false)
-  
+
   const startX = useRef(0)
   const scrollLeftValue = useRef(0)
   const velocity = useRef(0)
@@ -48,7 +59,7 @@ function useDragScroll() {
     if (Math.abs(velocity.current) > 0.1) {
       scrollRef.current.scrollLeft += velocity.current
       velocity.current *= 0.965
-      
+
       animationFrame.current = requestAnimationFrame(step)
     } else {
       velocity.current = 0
@@ -80,13 +91,13 @@ function useDragScroll() {
       const dt = now - lastTime.current
       const dx = e.pageX - lastX.current
       if (dt > 0) {
-        const newVelocity = -dx / dt * 18
+        const newVelocity = (-dx / dt) * 18
         velocity.current = velocity.current * 0.2 + newVelocity * 0.8
       }
       lastX.current = e.pageX
       lastTime.current = now
     },
-    [isDragging]
+    [isDragging],
   )
 
   const handleMouseUp = useCallback(() => {
@@ -150,23 +161,30 @@ export default function ProductClient({ params }: ProductPageProps) {
   const cursorYSpring = useSpring(cursorY, springConfig)
   const [isHoveringImage, setIsHoveringImage] = useState(false)
 
-  const handleMouseMoveCursor = useCallback((e: React.MouseEvent) => {
-    cursorX.set(e.clientX)
-    cursorY.set(e.clientY)
-  }, [cursorX, cursorY])
+  const handleMouseMoveCursor = useCallback(
+    (e: React.MouseEvent) => {
+      cursorX.set(e.clientX)
+      cursorY.set(e.clientY)
+    },
+    [cursorX, cursorY],
+  )
 
-  const scrollImage = useCallback((direction: 'left' | 'right') => {
-    if (!imageDrag.scrollRef.current) return
-    const scrollAmount = imageDrag.scrollRef.current.clientWidth
-    const targetScroll = direction === 'left'
-      ? imageDrag.scrollRef.current.scrollLeft - scrollAmount
-      : imageDrag.scrollRef.current.scrollLeft + scrollAmount
+  const scrollImage = useCallback(
+    (direction: 'left' | 'right') => {
+      if (!imageDrag.scrollRef.current) return
+      const scrollAmount = imageDrag.scrollRef.current.clientWidth
+      const targetScroll =
+        direction === 'left'
+          ? imageDrag.scrollRef.current.scrollLeft - scrollAmount
+          : imageDrag.scrollRef.current.scrollLeft + scrollAmount
 
-    imageDrag.scrollRef.current.scrollTo({
-      left: targetScroll,
-      behavior: 'smooth'
-    })
-  }, [imageDrag.scrollRef])
+      imageDrag.scrollRef.current.scrollTo({
+        left: targetScroll,
+        behavior: 'smooth',
+      })
+    },
+    [imageDrag.scrollRef],
+  )
 
   const name = product ? (locale === 'vi' ? product.nameVi : product.nameEn) : t('loading')
 
@@ -196,7 +214,7 @@ export default function ProductClient({ params }: ProductPageProps) {
         className="group fixed left-0 top-0 z-50 hidden h-full w-24 cursor-pointer items-center justify-center transition-all hover:bg-gradient-to-r hover:from-black/5 lg:flex"
         title={t('back')}
       >
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-lg opacity-0 transition-all duration-300 transform translate-x-[-16px] group-hover:opacity-100 group-hover:translate-x-[12px]">
+        <div className="flex h-12 w-12 translate-x-[-16px] transform items-center justify-center rounded-full bg-white opacity-0 shadow-lg transition-all duration-300 group-hover:translate-x-[12px] group-hover:opacity-100">
           <ArrowLeft className="h-5 w-5 text-foreground" />
         </div>
       </Link>
@@ -211,7 +229,7 @@ export default function ProductClient({ params }: ProductPageProps) {
             style={{
               translateX: cursorXSpring,
               translateY: cursorYSpring,
-              left: -40, 
+              left: -40,
               top: -40,
             }}
             className="pointer-events-none fixed z-[100] hidden h-20 w-20 items-center justify-center rounded-full border border-white/20 bg-black/20 text-[10px] font-bold tracking-widest text-white backdrop-blur-md lg:flex"
@@ -227,13 +245,13 @@ export default function ProductClient({ params }: ProductPageProps) {
           {/* Back Button (Mobile/Tablet Only) */}
           <Link
             href={`/${locale}/shop`}
-            className="mb-6 inline-flex items-center transition-all hover:translate-x-[-4px] pt-8 lg:hidden"
+            className="mb-6 inline-flex items-center pt-8 transition-all hover:translate-x-[-4px] lg:hidden"
           >
             <ArrowLeft className="h-4 w-4" />
           </Link>
 
           {/* Main Product Layout: Image Vertical Stack + Sticky Info */}
-          <div className="grid grid-cols-1 gap-0 md:gap-12 md:grid-cols-[1fr_400px] lg:grid-cols-[55vw_400px] lg:gap-32 justify-center">
+          <div className="grid grid-cols-1 justify-center gap-0 md:grid-cols-[1fr_400px] md:gap-12 lg:grid-cols-[55vw_400px] lg:gap-32">
             {/* 1. Left Column: Vertical Image Stack (Desktop) / Carousel (Mobile) */}
             <div className="relative w-full pb-0 md:max-w-[700px] md:pb-24">
               {product.images && product.images.length > 0 ? (
@@ -258,23 +276,33 @@ export default function ProductClient({ params }: ProductPageProps) {
                     </>
                   )}
 
-                  <div 
+                  <div
                     ref={imageDrag.scrollRef}
-                    onMouseDown={(e) => { imageDrag.onMouseDown(e) }}
-                    onMouseMove={(e) => { imageDrag.onMouseMove(e); handleMouseMoveCursor(e) }}
-                    onMouseUp={(e) => { imageDrag.onMouseUp() }}
-                    onMouseLeave={(e) => { imageDrag.onMouseLeave(); setIsHoveringImage(false) }}
+                    onMouseDown={(e) => {
+                      imageDrag.onMouseDown(e)
+                    }}
+                    onMouseMove={(e) => {
+                      imageDrag.onMouseMove(e)
+                      handleMouseMoveCursor(e)
+                    }}
+                    onMouseUp={(e) => {
+                      imageDrag.onMouseUp()
+                    }}
+                    onMouseLeave={(e) => {
+                      imageDrag.onMouseLeave()
+                      setIsHoveringImage(false)
+                    }}
                     onMouseEnter={() => setIsHoveringImage(true)}
                     onClickCapture={imageDrag.onClickCapture}
                     className={cn(
-                      "flex w-[calc(100%+48px)] -ml-6 snap-x snap-mandatory gap-0 overflow-x-auto pb-0 hide-scrollbar md:w-full md:ml-0 md:flex-col md:gap-12 md:px-0 lg:cursor-none",
-                      imageDrag.isDragging ? 'cursor-grabbing' : 'cursor-grab lg:cursor-none'
+                      'hide-scrollbar -ml-6 flex w-[calc(100%+48px)] snap-x snap-mandatory gap-0 overflow-x-auto pb-0 md:ml-0 md:w-full md:flex-col md:gap-12 md:px-0 lg:cursor-none',
+                      imageDrag.isDragging ? 'cursor-grabbing' : 'cursor-grab lg:cursor-none',
                     )}
                   >
                     {product.images.map((image, index) => (
                       <div
                         key={index}
-                        className="relative w-full aspect-[3/4] h-auto shrink-0 snap-center overflow-hidden bg-muted/10 md:h-auto md:w-full md:hover:shadow-xl rounded-sm"
+                        className="relative aspect-[3/4] h-auto w-full shrink-0 snap-center overflow-hidden rounded-sm bg-muted/10 md:h-auto md:w-full md:hover:shadow-xl"
                       >
                         <Image
                           src={optimizeProductImage(image, { width: 1200, height: 1600 })}
@@ -290,7 +318,7 @@ export default function ProductClient({ params }: ProductPageProps) {
                   </div>
                 </>
               ) : (
-                <div className="aspect-[3/4] flex items-center justify-center bg-muted/20 text-[10px] uppercase tracking-widest text-foreground/30">
+                <div className="flex aspect-[3/4] items-center justify-center bg-muted/20 text-[10px] uppercase tracking-widest text-foreground/30">
                   {t('noImages')}
                 </div>
               )}
@@ -298,9 +326,9 @@ export default function ProductClient({ params }: ProductPageProps) {
 
             {/* 2. Right Column: Sticky Product Details */}
             <div className="relative px-0 md:px-0">
-               <div className="md:sticky md:top-32 space-y-4 md:space-y-12 pb-12 md:pb-24 pt-10 md:pt-0">
+              <div className="space-y-4 pb-12 pt-10 md:sticky md:top-32 md:space-y-12 md:pb-24 md:pt-0">
                 {/* Info Header */}
-                <div className="space-y-2 mb-8">
+                <div className="mb-8 space-y-2">
                   <h1 className="font-sans text-[10px] font-bold uppercase leading-tight tracking-[0.2em] text-foreground">
                     {name}
                   </h1>
@@ -321,21 +349,23 @@ export default function ProductClient({ params }: ProductPageProps) {
                   <h4 className="text-[10px] font-bold uppercase tracking-widest text-foreground">
                     DETAILS
                   </h4>
-                  
+
                   {/* Technical Specs List */}
-                  <div className="flex flex-col gap-1 text-[10px] font-normal text-foreground leading-relaxed">
-                     {product.dimensions && <p>Height: {product.dimensions}</p>}
-                     {product.material && <p>Material: {product.material}</p>}
+                  <div className="flex flex-col gap-1 text-[10px] font-normal leading-relaxed text-foreground">
+                    {product.dimensions && <p>Height: {product.dimensions}</p>}
+                    {product.material && <p>Material: {product.material}</p>}
                   </div>
 
                   {/* HTML Description */}
-                  <div 
-                    className="prose prose-sm max-w-none text-[10px] font-normal text-foreground leading-relaxed"
+                  <div
+                    className="prose prose-sm max-w-none text-[10px] font-normal leading-relaxed text-foreground"
                     dangerouslySetInnerHTML={{ __html: description || '' }}
                   />
-                  
+
                   {/* Caring & Warranty Link (Placeholder flavor) */}
-                  <p className="text-[10px] text-foreground/70 mt-2 cursor-pointer hover:underline">(Caring & Warranty)</p>
+                  <p className="mt-2 cursor-pointer text-[10px] text-foreground/70 hover:underline">
+                    (Caring & Warranty)
+                  </p>
                 </div>
 
                 {/* Inquiry Buttons */}
@@ -379,7 +409,7 @@ export default function ProductClient({ params }: ProductPageProps) {
       </div>
 
       {/* Related Products Section */}
-      <section className="w-full py-24 px-6 lg:px-12 bg-white">
+      <section className="w-full bg-white px-6 py-24 lg:px-12">
         <div className="mb-16 flex items-end justify-between">
           <div className="space-y-3">
             <h2 className="text-[8px] font-bold uppercase tracking-[0.4em] text-foreground/40">
@@ -398,7 +428,7 @@ export default function ProductClient({ params }: ProductPageProps) {
           </Link>
         </div>
 
-        <div className="relative group/container">
+        <div className="group/container relative">
           <div
             ref={relatedDrag.scrollRef}
             onMouseDown={relatedDrag.onMouseDown}
@@ -407,8 +437,8 @@ export default function ProductClient({ params }: ProductPageProps) {
             onMouseLeave={relatedDrag.onMouseLeave}
             onClickCapture={relatedDrag.onClickCapture}
             className={cn(
-              'hide-scrollbar flex select-none gap-6 overflow-x-auto pb-12 transition-transform duration-500 ease-out -mx-6 px-4 w-[calc(100%+48px)] lg:mx-0 lg:px-0 lg:w-full',
-              relatedDrag.isDragging ? 'cursor-grabbing scale-[0.995]' : 'cursor-grab'
+              'hide-scrollbar -mx-6 flex w-[calc(100%+48px)] select-none gap-6 overflow-x-auto px-4 pb-12 transition-transform duration-500 ease-out lg:mx-0 lg:w-full lg:px-0',
+              relatedDrag.isDragging ? 'scale-[0.995] cursor-grabbing' : 'cursor-grab',
             )}
           >
             <AnimatePresence mode="popLayout">

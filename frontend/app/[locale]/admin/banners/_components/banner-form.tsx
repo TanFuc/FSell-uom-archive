@@ -32,6 +32,7 @@ import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api'
+import { optimizeAndResizeImage } from '@/lib/image-upload'
 import { Banner } from '@/lib/types'
 import { optimizeProductImage } from '@/lib/utils'
 
@@ -65,12 +66,12 @@ export default function BannerForm({ initialData }: BannerFormProps) {
   const locale = useLocale()
   const t = useTranslations('admin')
   const { toast } = useToast()
-  
+
   const [isUploading, setIsUploading] = useState(false)
-  
+
   const createBanner = useCreateBanner()
   const updateBanner = useUpdateBanner()
-  
+
   const isSaving = createBanner.isPending || updateBanner.isPending
 
   const defaultValues: BannerFormValues = {
@@ -99,14 +100,23 @@ export default function BannerForm({ initialData }: BannerFormProps) {
   const imageUrl = form.watch('imageUrl')
   const mobileImageUrl = form.watch('mobileImageUrl')
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, fieldName: 'imageUrl' | 'mobileImageUrl') => {
+  const handleImageUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    fieldName: 'imageUrl' | 'mobileImageUrl',
+  ) => {
     // ... (keep upload logic, it uses api directly which is fine for simple upload, or use upload hook)
     const file = e.target.files?.[0]
     if (!file) return
 
     setIsUploading(true)
     try {
-      const { url } = await api.uploadImage(file, 'banners')
+      const optimizedFile = await optimizeAndResizeImage(file, {
+        maxWidth: fieldName === 'mobileImageUrl' ? 1080 : 1920,
+        maxHeight: fieldName === 'mobileImageUrl' ? 1440 : 1080,
+        quality: 0.86,
+        outputType: 'image/webp',
+      })
+      const { url } = await api.uploadImage(optimizedFile, 'banners')
       form.setValue(fieldName, url)
       toast({ title: t('success'), description: 'Image uploaded' })
     } catch (error) {
@@ -141,9 +151,7 @@ export default function BannerForm({ initialData }: BannerFormProps) {
           </Button>
         </Link>
         <div>
-          <h1 className="font-serif text-2xl">
-            {initialData ? 'Edit Banner' : 'Create Banner'}
-          </h1>
+          <h1 className="font-serif text-2xl">{initialData ? 'Edit Banner' : 'Create Banner'}</h1>
         </div>
       </div>
 
@@ -280,7 +288,12 @@ export default function BannerForm({ initialData }: BannerFormProps) {
                           <FormLabel>Màu chữ</FormLabel>
                           <div className="flex gap-2">
                             <FormControl>
-                              <Input {...field} placeholder="#FFFFFF" type="color" className="w-12 h-10 p-1" />
+                              <Input
+                                {...field}
+                                placeholder="#FFFFFF"
+                                type="color"
+                                className="h-10 w-12 p-1"
+                              />
                             </FormControl>
                             <FormControl>
                               <Input {...field} placeholder="#FFFFFF" />
@@ -327,22 +340,17 @@ export default function BannerForm({ initialData }: BannerFormProps) {
                         </FormItem>
                       )}
                     />
-                     <FormField
+                    <FormField
                       control={form.control}
                       name="isActive"
                       render={({ field }) => (
                         <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                           <div className="space-y-0.5">
                             <FormLabel>Trạng thái hoạt động</FormLabel>
-                            <FormDescription>
-                              Hiển thị banner này trên trang chủ
-                            </FormDescription>
+                            <FormDescription>Hiển thị banner này trên trang chủ</FormDescription>
                           </div>
                           <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
+                            <Switch checked={field.value} onCheckedChange={field.onChange} />
                           </FormControl>
                         </FormItem>
                       )}
@@ -471,9 +479,7 @@ export default function BannerForm({ initialData }: BannerFormProps) {
                             />
                           </div>
                         </FormControl>
-                        <FormDescription>
-                          Nếu không có, sẽ sử dụng ảnh desktop.
-                        </FormDescription>
+                        <FormDescription>Nếu không có, sẽ sử dụng ảnh desktop.</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}

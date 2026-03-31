@@ -1,13 +1,31 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useBranding } from '@/hooks/use-settings'
 
 export function SplashScreen() {
-  const [mounted, setMounted] = useState(false)
+  const { data: branding } = useBranding()
   const [show, setShow] = useState(true)
 
+  const BRANDING_CACHE_KEY = 'uom_branding_cache'
+
+  const getCachedLoadingText = () => {
+    if (typeof window === 'undefined') return undefined
+    try {
+      const stored = localStorage.getItem(BRANDING_CACHE_KEY)
+      if (!stored) return undefined
+      const parsed = JSON.parse(stored) as { loadingText?: string }
+      return parsed.loadingText
+    } catch {
+      return undefined
+    }
+  }
+
+  const [cachedLoadingText, setCachedLoadingText] = useState<string | undefined>(() =>
+    getCachedLoadingText(),
+  )
+
   useEffect(() => {
-    setMounted(true)
     const timer = setTimeout(() => {
       setShow(false)
     }, 2000)
@@ -15,8 +33,11 @@ export function SplashScreen() {
     return () => clearTimeout(timer)
   }, [])
 
-  // Prevent hydration mismatch by not rendering on server
-  if (!mounted) return null
+  useEffect(() => {
+    setCachedLoadingText(getCachedLoadingText())
+  }, [branding?.loadingText])
+
+  const displayText = branding?.loadingText || cachedLoadingText || ''
 
   return (
     <div
@@ -24,8 +45,11 @@ export function SplashScreen() {
       aria-hidden={!show}
     >
       <div className="relative">
-        <h1 className="animate-pulse font-playfair text-6xl font-bold tracking-widest text-foreground md:text-8xl">
-          ƯƠM<span className="text-primary">.</span>
+        <h1
+          className="animate-pulse font-playfair text-6xl font-bold tracking-widest text-foreground md:text-8xl"
+          suppressHydrationWarning
+        >
+          {displayText}
         </h1>
       </div>
     </div>

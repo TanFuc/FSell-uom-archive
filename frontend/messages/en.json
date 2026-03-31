@@ -2,6 +2,9 @@
   "Navigation": {
     "shop": "SHOP",
     "about": "ABOUT US",
+    "journal": "JOURNAL",
+    "search": "SEARCH",
+    "close": "CLOSE",
     "suggestedCategories": "Suggested Categories"
   },
   "Footer": {
@@ -338,6 +341,12 @@
       "brandNameDesc": "Displayed in navigation, footer, and tab titles.",
       "brandNameVi": "Brand Name (Vietnamese)",
       "brandNameEn": "Brand Name (English)",
+      "brandTaglineVi": "Tagline (Vietnamese)",
+      "brandTaglineEn": "Tagline (English)",
+      "brandTaglineDesc": "A short line that describes your brand. Optional.",
+      "previewTitle": "Brand Preview",
+      "previewDesc": "Shows how name and tagline appear to users.",
+      "taglinePlaceholder": "Your brand tagline",
       "seoSection": "SEO & Page Titles",
       "seoDesc": "These appear in browser tabs and search engine results.",
       "siteTitleVi": "Site Title (Vietnamese)",

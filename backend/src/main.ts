@@ -17,6 +17,10 @@ async function bootstrap() {
   const port = configService.get<number>('PORT') || 3001
   const frontendUrl = configService.get<string>('FRONTEND_URL') || 'http://localhost:3000'
   const nodeEnv = configService.get<string>('NODE_ENV') || 'development'
+  const frontendUrls = (configService.get<string>('FRONTEND_URLS') || frontendUrl)
+    .split(',')
+    .map((url) => url.trim())
+    .filter(Boolean)
 
   // Security
   app.use(
@@ -27,7 +31,20 @@ async function bootstrap() {
 
   // CORS
   app.enableCors({
-    origin: true, // Allow all origins (reflects the request origin)
+    origin: (origin, callback) => {
+      // Non-browser clients (no origin) are allowed.
+      if (!origin) return callback(null, true)
+
+      if (nodeEnv !== 'production') {
+        return callback(null, true)
+      }
+
+      if (frontendUrls.includes(origin)) {
+        return callback(null, true)
+      }
+
+      return callback(new Error('Not allowed by CORS'), false)
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: [

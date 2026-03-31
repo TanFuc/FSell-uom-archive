@@ -77,8 +77,6 @@ export default function LoginPage() {
       // Redirect to dashboard
       router.push(`/${locale}/admin/dashboard`)
     } catch (error: any) {
-      console.error('Login failed:', error)
-
       // Extract detailed error information from API response
       let errorTitle = tAuth('loginError')
       let errorMessage = tAuth('genericError')

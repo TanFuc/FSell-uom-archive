@@ -46,6 +46,7 @@ import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api'
 import { DEFAULT_EXCHANGE_RATE } from '@/lib/constants'
 import { vndToUsd, usdToVnd } from '@/lib/currency'
+import { optimizeAndResizeImage, optimizeAndResizeImages } from '@/lib/image-upload'
 import { Product, type Category } from '@/lib/types'
 import { getImageUrl, slugify } from '@/lib/utils'
 
@@ -266,7 +267,13 @@ export default function ProductFormPage() {
 
     setIsUploading(true)
     try {
-      const uploadPromises = Array.from(files).map((file) => api.uploadImage(file))
+      const optimizedFiles = await optimizeAndResizeImages(Array.from(files), {
+        maxWidth: 1800,
+        maxHeight: 1800,
+        quality: 0.86,
+        outputType: 'image/webp',
+      })
+      const uploadPromises = optimizedFiles.map((file) => api.uploadImage(file, 'products'))
       const results = await Promise.all(uploadPromises)
       setImages((prev) => [...prev, ...results.map((r) => r.url)])
       toast({ title: t('success'), description: 'Images uploaded' })
@@ -976,7 +983,13 @@ export default function ProductFormPage() {
                         if (!file) return
                         setIsUploading(true)
                         try {
-                          const result = await api.uploadImage(file)
+                          const optimizedFile = await optimizeAndResizeImage(file, {
+                            maxWidth: 1800,
+                            maxHeight: 1800,
+                            quality: 0.86,
+                            outputType: 'image/webp',
+                          })
+                          const result = await api.uploadImage(optimizedFile, 'products')
                           setHoverImage(result.url)
                           toast({ title: t('success'), description: 'Hover image uploaded' })
                         } catch (error) {

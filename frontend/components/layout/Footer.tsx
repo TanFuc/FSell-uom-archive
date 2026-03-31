@@ -3,18 +3,25 @@
 import { Instagram, Facebook } from 'lucide-react'
 import Link from 'next/link'
 import { useLocale, useTranslations } from 'next-intl'
-import { useSocialLinks } from '@/hooks/use-settings'
+import { useEffect, useState } from 'react'
+import { useBranding, useSocialLinks } from '@/hooks/use-settings'
 
 export function Footer() {
   const locale = useLocale() as 'vi' | 'en'
   const t = useTranslations('Footer')
+  const { data: branding } = useBranding()
   const { data: socialLinks } = useSocialLinks()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const currentYear = new Date().getFullYear()
 
   return (
-    <footer className="bg-white py-12 px-6 lg:px-12 text-foreground">
-      <div className="w-full flex flex-col gap-10">
+    <footer className="bg-white px-6 py-12 text-foreground lg:px-12">
+      <div className="flex w-full flex-col gap-10">
         {/* Main Footer: Compact Grid */}
         <div className="grid grid-cols-2 gap-8 md:grid-cols-4 lg:grid-cols-4">
           {/* Brand */}
@@ -23,10 +30,18 @@ export function Footer() {
               href={`/${locale}`}
               className="inline-block font-playfair text-2xl font-bold tracking-tighter text-foreground transition-opacity hover:opacity-70"
             >
-              ƯƠM.
+              {mounted
+                ? locale === 'vi'
+                  ? branding?.brandNameVi || 'ƯƠM. Archive'
+                  : branding?.brandNameEn || 'Uom Archive'
+                : 'Uom Archive'}
             </Link>
-            <p className="text-[9px] leading-relaxed uppercase tracking-[0.2em] font-medium text-foreground/40 hidden md:block">
-              {t('description')}
+            <p className="hidden text-[9px] font-medium uppercase leading-relaxed tracking-[0.2em] text-foreground/40 md:block">
+              {mounted
+                ? locale === 'vi'
+                  ? branding?.brandTaglineVi || t('description')
+                  : branding?.brandTaglineEn || t('description')
+                : t('description')}
             </p>
           </div>
 
@@ -36,13 +51,22 @@ export function Footer() {
               {t('navigation')}
             </h4>
             <nav className="flex flex-col gap-2">
-              <Link href={`/${locale}/shop`} className="text-[10px] uppercase tracking-[0.15em] font-medium transition-all hover:opacity-60">
+              <Link
+                href={`/${locale}/shop`}
+                className="text-[10px] font-medium uppercase tracking-[0.15em] transition-all hover:opacity-60"
+              >
                 {t('shop')}
               </Link>
-              <Link href={`/${locale}/about`} className="text-[10px] uppercase tracking-[0.15em] font-medium transition-all hover:opacity-60">
+              <Link
+                href={`/${locale}/about`}
+                className="text-[10px] font-medium uppercase tracking-[0.15em] transition-all hover:opacity-60"
+              >
                 ABOUT US
               </Link>
-              <Link href={`/${locale}/journal`} className="text-[10px] uppercase tracking-[0.15em] font-medium transition-all hover:opacity-60">
+              <Link
+                href={`/${locale}/journal`}
+                className="text-[10px] font-medium uppercase tracking-[0.15em] transition-all hover:opacity-60"
+              >
                 JOURNAL
               </Link>
             </nav>
@@ -59,9 +83,9 @@ export function Footer() {
                   href={`https://instagram.com/${socialLinks.instagramUsername}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[10px] uppercase tracking-[0.15em] font-medium transition-all hover:opacity-60"
+                  className="text-[10px] font-medium uppercase tracking-[0.15em] transition-all hover:opacity-60"
                 >
-                   Instagram
+                  Instagram
                 </a>
               )}
               {socialLinks?.facebookPageUrl && (
@@ -69,7 +93,7 @@ export function Footer() {
                   href={socialLinks.facebookPageUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[10px] uppercase tracking-[0.15em] font-medium transition-all hover:opacity-60"
+                  className="text-[10px] font-medium uppercase tracking-[0.15em] transition-all hover:opacity-60"
                 >
                   Facebook
                 </a>
@@ -79,24 +103,28 @@ export function Footer() {
 
           {/* Legal - Compact */}
           <div className="space-y-4">
-             <h4 className="text-[10px] font-bold uppercase tracking-[0.4em] text-foreground">
+            <h4 className="text-[10px] font-bold uppercase tracking-[0.4em] text-foreground">
               LEGAL
             </h4>
             <div className="flex flex-col gap-2">
-               <span className="text-[10px] uppercase tracking-[0.15em] font-medium text-foreground/30">Terms</span>
-               <span className="text-[10px] uppercase tracking-[0.15em] font-medium text-foreground/30">Privacy</span>
+              <span className="text-[10px] font-medium uppercase tracking-[0.15em] text-foreground/30">
+                Terms
+              </span>
+              <span className="text-[10px] font-medium uppercase tracking-[0.15em] text-foreground/30">
+                Privacy
+              </span>
             </div>
           </div>
         </div>
 
         {/* Bottom Bar: Merged into the flow, no border */}
-        <div className="flex justify-between items-center pt-4">
-          <p className="text-[8px] uppercase tracking-[0.4em] font-bold text-foreground/30">
+        <div className="flex items-center justify-between pt-4">
+          <p className="text-[8px] font-bold uppercase tracking-[0.4em] text-foreground/30">
             © {currentYear} <span className="font-playfair text-xs lowercase">ƯƠM.</span>
           </p>
           <div className="flex gap-6 opacity-20">
-             <span className="text-[8px] tracking-[0.5em] font-bold">VI</span>
-             <span className="text-[8px] tracking-[0.5em] font-bold">EN</span>
+            <span className="text-[8px] font-bold tracking-[0.5em]">VI</span>
+            <span className="text-[8px] font-bold tracking-[0.5em]">EN</span>
           </div>
         </div>
       </div>

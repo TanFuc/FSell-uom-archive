@@ -24,24 +24,34 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const products = await fetchAllProducts()
   const now = new Date()
 
+  const getAlternates = (path: string) => ({
+    languages: {
+      vi: `${BASE_URL}/vi${path}`,
+      en: `${BASE_URL}/en${path}`,
+    },
+  })
+
   const staticPages: MetadataRoute.Sitemap = LOCALES.flatMap((locale) => [
     {
       url: `${BASE_URL}/${locale}`,
       lastModified: now,
       changeFrequency: 'daily',
       priority: 1.0,
+      alternates: getAlternates(''),
     },
     {
       url: `${BASE_URL}/${locale}/shop`,
       lastModified: now,
       changeFrequency: 'daily',
       priority: 0.9,
+      alternates: getAlternates('/shop'),
     },
     {
       url: `${BASE_URL}/${locale}/about`,
       lastModified: now,
       changeFrequency: 'monthly',
       priority: 0.6,
+      alternates: getAlternates('/about'),
     },
   ])
 
@@ -51,7 +61,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date(p.updatedAt),
       changeFrequency: 'weekly' as const,
       priority: 0.8,
-    }))
+      alternates: getAlternates(`/shop/${p.slug}`),
+    })),
   )
 
   return [...staticPages, ...productPages]

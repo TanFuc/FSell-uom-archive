@@ -28,7 +28,8 @@ export class CloudinaryService {
   }
 
   async uploadFile(file: Express.Multer.File, folder?: string): Promise<CloudinaryResponse> {
-    const uploadFolder = folder || this.configService.get<string>('CLOUDINARY_FOLDER') || 'uom-archive'
+    const uploadFolder =
+      folder || this.configService.get<string>('CLOUDINARY_FOLDER') || 'uom-archive'
 
     return new Promise((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
@@ -53,7 +54,7 @@ export class CloudinaryService {
           }
           this.logger.log(`File uploaded successfully: ${result.public_id}`)
           resolve(result as CloudinaryResponse)
-        }
+        },
       )
 
       streamifier.createReadStream(file.buffer).pipe(uploadStream)
@@ -62,7 +63,7 @@ export class CloudinaryService {
 
   async uploadMultipleFiles(
     files: Express.Multer.File[],
-    folder?: string
+    folder?: string,
   ): Promise<CloudinaryResponse[]> {
     const uploadPromises = files.map((file) => this.uploadFile(file, folder))
     return Promise.all(uploadPromises)

@@ -1,6 +1,5 @@
 'use client'
 
-
 import Image from 'next/image'
 import Link from 'next/link'
 import { useState, useEffect, useCallback, useRef } from 'react'
@@ -170,9 +169,9 @@ export function BannerCarousel({ banners, locale, autoPlayInterval = 5000 }: Ban
     >
       {/* Clickable Content Area */}
       {currentBanner.link ? (
-        <Link 
-          href={currentBanner.link} 
-          className="block h-full w-full" 
+        <Link
+          href={currentBanner.link}
+          className="block h-full w-full"
           onClick={handleLinkClick}
           draggable={false}
         >

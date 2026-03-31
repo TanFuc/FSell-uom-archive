@@ -11,6 +11,7 @@ import {
   Power,
   PowerOff,
   Trash,
+  ExternalLink,
 } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -290,6 +291,7 @@ export default function ProductsPage() {
               <TableHead className="w-32">{t('category')}</TableHead>
               <TableHead className="w-32">{t('priceLabel')}</TableHead>
               <TableHead className="w-24">{t('stockLabel')}</TableHead>
+              <TableHead className="w-24 text-center">Link</TableHead>
               <TableHead className="w-32 text-center">{t('activeStatus')}</TableHead>
               <TableHead className="w-32 text-center">{t('featuredStatus')}</TableHead>
               <TableHead className="w-32">{t('actions')}</TableHead>
@@ -298,13 +300,13 @@ export default function ProductsPage() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={8} className="h-[400px] text-center">
+                <TableCell colSpan={10} className="h-[400px] text-center">
                   <span className="text-muted-foreground">{t('loading')}...</span>
                 </TableCell>
               </TableRow>
             ) : products.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="h-[400px] text-center">
+                <TableCell colSpan={10} className="h-[400px] text-center">
                   <span className="text-muted-foreground">{t('noResults')}</span>
                 </TableCell>
               </TableRow>
@@ -369,6 +371,17 @@ export default function ProductsPage() {
                     <span className={product.stock <= 0 ? 'font-medium text-destructive' : ''}>
                       {product.stock}
                     </span>
+                  </TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()} className="text-center">
+                    <a
+                      href={`/${locale}/shop/${product.slug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-md border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                      title="Xem sản phẩm ngoài trang public"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                    </a>
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()} className="text-center">
                     <Button

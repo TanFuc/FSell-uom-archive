@@ -44,10 +44,7 @@ export class CategoriesController {
     @Query('includeDeleted') includeDeleted?: string,
     @Query('includeInactive') includeInactive?: string,
   ) {
-    return this.categoriesService.findAll(
-      includeDeleted === 'true',
-      includeInactive === 'true',
-    )
+    return this.categoriesService.findAll(includeDeleted === 'true', includeInactive === 'true')
   }
 
   @Get('slug/:slug')

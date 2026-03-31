@@ -257,6 +257,8 @@ export class SettingsService {
           in: [
             'brand.name.vi',
             'brand.name.en',
+            'brand.tagline.vi',
+            'brand.tagline.en',
             'site.title.vi',
             'site.title.en',
             'site.description.vi',
@@ -279,10 +281,14 @@ export class SettingsService {
     const branding = {
       brandNameVi: map['brand.name.vi'] || 'ƯƠM. Archive',
       brandNameEn: map['brand.name.en'] || 'ƯƠM. Archive',
+      brandTaglineVi: map['brand.tagline.vi'] || '',
+      brandTaglineEn: map['brand.tagline.en'] || '',
       siteTitleVi: map['site.title.vi'] || 'ƯƠM. Archive - Gốm sứ thủ công Việt Nam',
       siteTitleEn: map['site.title.en'] || 'ƯƠM. Archive - Handcrafted Ceramics from Vietnam',
-      siteDescriptionVi: map['site.description.vi'] || 'Gốm sứ thủ công được tuyển chọn kỹ lưỡng từ Việt Nam.',
-      siteDescriptionEn: map['site.description.en'] || 'Discover timeless Vietnamese ceramics curated with care.',
+      siteDescriptionVi:
+        map['site.description.vi'] || 'Gốm sứ thủ công được tuyển chọn kỹ lưỡng từ Việt Nam.',
+      siteDescriptionEn:
+        map['site.description.en'] || 'Discover timeless Vietnamese ceramics curated with care.',
       logoUrl: map['site.logoUrl'] || '',
       loadingText: map['site.loadingText'] || 'ƯƠM.',
     }
@@ -295,6 +301,8 @@ export class SettingsService {
     const keyMap: Record<string, keyof UpdateBrandingDto> = {
       'brand.name.vi': 'brandNameVi',
       'brand.name.en': 'brandNameEn',
+      'brand.tagline.vi': 'brandTaglineVi',
+      'brand.tagline.en': 'brandTaglineEn',
       'site.title.vi': 'siteTitleVi',
       'site.title.en': 'siteTitleEn',
       'site.description.vi': 'siteDescriptionVi',

@@ -48,8 +48,6 @@ export default function CloudinarySettingsPage() {
     try {
       // In a real application, you would send this to your backend
       // which would update the environment variables securely
-      console.log('Cloudinary settings:', data)
-
       // For now, we'll show a warning that these need to be set in .env
       toast({
         title: 'Lưu ý quan trọng',

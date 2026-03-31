@@ -1,14 +1,6 @@
 'use client'
 
-import {
-  Plus,
-  Edit,
-  Trash2,
-  Power,
-  PowerOff,
-  MoveVertical,
-  Loader2
-} from 'lucide-react'
+import { Plus, Edit, Trash2, Power, PowerOff, MoveVertical, Loader2 } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -42,7 +34,7 @@ import { useUpdateBanner, useDeleteBanner } from '@/hooks/use-banners'
 export default function BannersPage() {
   const router = useRouter()
   const locale = useLocale()
-  const t = useTranslations('admin') 
+  const t = useTranslations('admin')
   const { toast } = useToast()
 
   const [banners, setBanners] = useState<Banner[]>([])
@@ -83,7 +75,7 @@ export default function BannersPage() {
   // For now, to minimize changes, we'll keep fetchBanners but call it after mutation success.
   // Actually, useDeleteBanner invalidates cache, but fetchBanners calls API directly!
   // It's better to refetch explicitly.
-  
+
   const handleDelete = async () => {
     if (!deleteDialog.banner) return
 
@@ -108,7 +100,11 @@ export default function BannersPage() {
       })
       fetchBanners() // Re-fetch list
     } catch (error) {
-      toast({ title: t('error'), description: t('banners.statusUpdateError'), variant: 'destructive' })
+      toast({
+        title: t('error'),
+        description: t('banners.statusUpdateError'),
+        variant: 'destructive',
+      })
     }
   }
 
@@ -173,14 +169,16 @@ export default function BannersPage() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="font-medium">{banner.titleVi || banner.titleEn || t('banners.untitled')}</div>
-                    <div className="text-xs text-muted-foreground truncate max-w-[200px]">
+                    <div className="font-medium">
+                      {banner.titleVi || banner.titleEn || t('banners.untitled')}
+                    </div>
+                    <div className="max-w-[200px] truncate text-xs text-muted-foreground">
                       {banner.subtitleVi || banner.subtitleEn}
                     </div>
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
                     {banner.link ? (
-                      <span className="text-xs font-mono text-muted-foreground">{banner.link}</span>
+                      <span className="font-mono text-xs text-muted-foreground">{banner.link}</span>
                     ) : (
                       <span className="text-xs text-muted-foreground">-</span>
                     )}
@@ -244,9 +242,7 @@ export default function BannersPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('banners.deleteConfirmTitle')}</DialogTitle>
-            <DialogDescription>
-              {t('banners.deleteConfirmDesc')}
-            </DialogDescription>
+            <DialogDescription>{t('banners.deleteConfirmDesc')}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button

@@ -12,6 +12,16 @@ export class UpdateBrandingDto {
   @IsOptional()
   brandNameEn?: string
 
+  @ApiPropertyOptional({ example: 'Gốm sứ thủ công Việt Nam' })
+  @IsString()
+  @IsOptional()
+  brandTaglineVi?: string
+
+  @ApiPropertyOptional({ example: 'Handcrafted Ceramics from Vietnam' })
+  @IsString()
+  @IsOptional()
+  brandTaglineEn?: string
+
   @ApiPropertyOptional({ example: 'ƯƠM. Archive - Gốm sứ thủ công Việt Nam' })
   @IsString()
   @IsOptional()

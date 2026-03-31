@@ -2,6 +2,9 @@
   "Navigation": {
     "shop": "SẢN PHẨM",
     "about": "VỀ CHÚNG TÔI",
+    "journal": "TẠP CHÍ",
+    "search": "TÌM KIẾM",
+    "close": "ĐÓNG",
     "suggestedCategories": "Gợi ý danh mục"
   },
   "Footer": {
@@ -335,6 +338,12 @@
       "brandNameDesc": "Hiển thị trên thanh điều hướng, footer và tiêu đề tab.",
       "brandNameVi": "Tên thương hiệu (Tiếng Việt)",
       "brandNameEn": "Tên thương hiệu (Tiếng Anh)",
+      "brandTaglineVi": "Slogan/Tagline (Tiếng Việt)",
+      "brandTaglineEn": "Slogan/Tagline (Tiếng Anh)",
+      "brandTaglineDesc": "Một câu ngắn mô tả thương hiệu. Có thể để trống.",
+      "previewTitle": "Xem trước thương hiệu",
+      "previewDesc": "Hiển thị tên và slogan trên website người dùng.",
+      "taglinePlaceholder": "Slogan thương hiệu của bạn",
       "seoSection": "SEO & Tiêu đề trang",
       "seoDesc": "Hiển thị trên tab trình duyệt và kết quả tìm kiếm.",
       "siteTitleVi": "Tiêu đề trang (Tiếng Việt)",

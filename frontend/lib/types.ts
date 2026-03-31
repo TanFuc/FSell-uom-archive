@@ -111,6 +111,8 @@ export interface ExchangeRate {
 export interface BrandingSettings {
   brandNameVi: string
   brandNameEn: string
+  brandTaglineVi: string
+  brandTaglineEn: string
   siteTitleVi: string
   siteTitleEn: string
   siteDescriptionVi: string

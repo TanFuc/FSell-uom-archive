@@ -21,10 +21,13 @@ import { Input } from '@/components/ui/input'
 import { useToast } from '@/hooks/use-toast'
 import { useBranding, useUpdateBranding } from '@/hooks/use-settings'
 import { api } from '@/lib/api'
+import { optimizeAndResizeImage } from '@/lib/image-upload'
 
 const brandingSchema = z.object({
   brandNameVi: z.string().min(1, 'Brand name (VI) is required'),
   brandNameEn: z.string().min(1, 'Brand name (EN) is required'),
+  brandTaglineVi: z.string().optional(),
+  brandTaglineEn: z.string().optional(),
   siteTitleVi: z.string().min(1, 'Site title (VI) is required'),
   siteTitleEn: z.string().min(1, 'Site title (EN) is required'),
   siteDescriptionVi: z.string().optional(),
@@ -49,6 +52,8 @@ export default function BrandingPage() {
     defaultValues: {
       brandNameVi: 'ƯƠM. Archive',
       brandNameEn: 'ƯƠM. Archive',
+      brandTaglineVi: '',
+      brandTaglineEn: '',
       siteTitleVi: 'ƯƠM. Archive - Gốm sứ thủ công Việt Nam',
       siteTitleEn: 'ƯƠM. Archive - Handcrafted Ceramics from Vietnam',
       siteDescriptionVi: '',
@@ -63,6 +68,8 @@ export default function BrandingPage() {
       form.reset({
         brandNameVi: branding.brandNameVi,
         brandNameEn: branding.brandNameEn,
+        brandTaglineVi: branding.brandTaglineVi,
+        brandTaglineEn: branding.brandTaglineEn,
         siteTitleVi: branding.siteTitleVi,
         siteTitleEn: branding.siteTitleEn,
         siteDescriptionVi: branding.siteDescriptionVi,
@@ -79,11 +86,21 @@ export default function BrandingPage() {
 
     setIsUploadingLogo(true)
     try {
-      const { url } = await api.uploadImage(file, 'branding')
+      const optimizedFile = await optimizeAndResizeImage(file, {
+        maxWidth: 1200,
+        maxHeight: 1200,
+        quality: 0.9,
+        outputType: 'image/webp',
+      })
+      const { url } = await api.uploadImage(optimizedFile, 'branding')
       form.setValue('logoUrl', url)
       toast({ title: t('success'), description: t('branding.logoUploaded') })
     } catch {
-      toast({ title: t('error'), description: t('branding.logoUploadFailed'), variant: 'destructive' })
+      toast({
+        title: t('error'),
+        description: t('branding.logoUploadFailed'),
+        variant: 'destructive',
+      })
     } finally {
       setIsUploadingLogo(false)
       if (fileInputRef.current) fileInputRef.current.value = ''
@@ -104,6 +121,10 @@ export default function BrandingPage() {
 
   const logoUrl = form.watch('logoUrl')
   const loadingText = form.watch('loadingText')
+  const brandNameVi = form.watch('brandNameVi')
+  const brandNameEn = form.watch('brandNameEn')
+  const brandTaglineVi = form.watch('brandTaglineVi')
+  const brandTaglineEn = form.watch('brandTaglineEn')
 
   return (
     <div className="space-y-6">
@@ -182,7 +203,9 @@ export default function BrandingPage() {
           {/* Brand Name */}
           <Card>
             <CardHeader>
-              <CardTitle className="uppercase tracking-wide">{t('branding.brandNameSection')}</CardTitle>
+              <CardTitle className="uppercase tracking-wide">
+                {t('branding.brandNameSection')}
+              </CardTitle>
               <CardDescription>{t('branding.brandNameDesc')}</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-2">
@@ -212,6 +235,53 @@ export default function BrandingPage() {
                   </FormItem>
                 )}
               />
+              <FormField
+                control={form.control}
+                name="brandTaglineVi"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('branding.brandTaglineVi')}</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="Gốm sứ thủ công Việt Nam" />
+                    </FormControl>
+                    <FormDescription>{t('branding.brandTaglineDesc')}</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="brandTaglineEn"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('branding.brandTaglineEn')}</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="Handcrafted Ceramics from Vietnam" />
+                    </FormControl>
+                    <FormDescription>{t('branding.brandTaglineDesc')}</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="uppercase tracking-wide">
+                {t('branding.previewTitle')}
+              </CardTitle>
+              <CardDescription>{t('branding.previewDesc')}</CardDescription>
+            </CardHeader>
+            <CardContent className="rounded-lg border bg-background p-6 text-center">
+              <p className="text-xs uppercase tracking-[0.4em] text-muted-foreground">
+                {locale === 'vi' ? brandNameVi || 'ƯƠM. Archive' : brandNameEn || 'ƯƠM. Archive'}
+              </p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {locale === 'vi'
+                  ? brandTaglineVi || t('branding.taglinePlaceholder')
+                  : brandTaglineEn || t('branding.taglinePlaceholder')}
+              </p>
             </CardContent>
           </Card>
 
@@ -287,7 +357,9 @@ export default function BrandingPage() {
           {/* Loading Screen */}
           <Card>
             <CardHeader>
-              <CardTitle className="uppercase tracking-wide">{t('branding.loadingSection')}</CardTitle>
+              <CardTitle className="uppercase tracking-wide">
+                {t('branding.loadingSection')}
+              </CardTitle>
               <CardDescription>{t('branding.loadingDesc')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">

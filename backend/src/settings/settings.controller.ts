@@ -41,10 +41,7 @@ export class SettingsController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Update theme settings' })
   @ApiResponse({ status: 200, description: 'Theme updated' })
-  async updateTheme(
-    @Body() dto: UpdateThemeDto,
-    @CurrentUser() user: JwtPayload,
-  ) {
+  async updateTheme(@Body() dto: UpdateThemeDto, @CurrentUser() user: JwtPayload) {
     return this.settingsService.updateTheme(dto, user.sub)
   }
 
@@ -63,10 +60,7 @@ export class SettingsController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Update site content' })
   @ApiResponse({ status: 200, description: 'Site content updated' })
-  async updateSiteContent(
-    @Body() dto: UpdateSiteContentDto,
-    @CurrentUser() user: JwtPayload,
-  ) {
+  async updateSiteContent(@Body() dto: UpdateSiteContentDto, @CurrentUser() user: JwtPayload) {
     return this.settingsService.updateSiteContent(dto, user.sub)
   }
 
@@ -85,10 +79,7 @@ export class SettingsController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Update social media links (ADMIN only)' })
   @ApiResponse({ status: 200, description: 'Social links updated' })
-  async updateSocialLinks(
-    @Body() dto: UpdateSocialLinksDto,
-    @CurrentUser() user: JwtPayload,
-  ) {
+  async updateSocialLinks(@Body() dto: UpdateSocialLinksDto, @CurrentUser() user: JwtPayload) {
     return this.settingsService.updateSocialLinks(dto, user.sub)
   }
 
@@ -107,17 +98,16 @@ export class SettingsController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Update exchange rate (ADMIN only)' })
   @ApiResponse({ status: 200, description: 'Exchange rate updated' })
-  async updateExchangeRate(
-    @Body() dto: UpdateExchangeRateDto,
-    @CurrentUser() user: JwtPayload,
-  ) {
+  async updateExchangeRate(@Body() dto: UpdateExchangeRateDto, @CurrentUser() user: JwtPayload) {
     return this.settingsService.updateExchangeRate(dto.rate)
   }
 
   // ==================== BRANDING ====================
 
   @Get('branding')
-  @ApiOperation({ summary: 'Get branding settings: logo, brand name, site title, loading text (public)' })
+  @ApiOperation({
+    summary: 'Get branding settings: logo, brand name, site title, loading text (public)',
+  })
   @ApiResponse({ status: 200, description: 'Branding settings' })
   async getBranding() {
     return this.settingsService.getBranding()
@@ -127,12 +117,11 @@ export class SettingsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MANAGER)
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: 'Update branding settings (logo, brand name, site title, loading text)' })
+  @ApiOperation({
+    summary: 'Update branding settings (logo, brand name, site title, loading text)',
+  })
   @ApiResponse({ status: 200, description: 'Branding updated' })
-  async updateBranding(
-    @Body() dto: UpdateBrandingDto,
-    @CurrentUser() user: JwtPayload,
-  ) {
+  async updateBranding(@Body() dto: UpdateBrandingDto, @CurrentUser() user: JwtPayload) {
     return this.settingsService.updateBranding(dto, user.sub)
   }
 }

@@ -39,6 +39,9 @@ export default function AdminLayoutClient({ children }: AdminLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
+  const switchLocale = locale === 'vi' ? 'en' : 'vi'
+  const newPath = pathname.replace(`/${locale}`, `/${switchLocale}`)
+
   const isLoginPage = pathname.includes('/admin/login')
 
   useEffect(() => {
@@ -101,6 +104,12 @@ export default function AdminLayoutClient({ children }: AdminLayoutProps) {
           </Button>
           <Logo variant="text" customHref={`/${locale}/admin/dashboard`} />
         </div>
+        <Link
+          href={newPath}
+          className="text-xs font-semibold uppercase tracking-widest text-muted-foreground"
+        >
+          {switchLocale}
+        </Link>
       </div>
 
       {/* Sidebar */}
@@ -111,21 +120,29 @@ export default function AdminLayoutClient({ children }: AdminLayoutProps) {
       >
         <div className="flex h-full flex-col">
           {/* Logo with Dashboard text */}
-          <div className="relative flex h-16 items-center justify-center gap-2 border-b px-6">
+          <div className="flex h-16 items-center gap-2 border-b px-6">
             <Logo variant="text" customHref={`/${locale}/admin/dashboard`} />
             <span className="text-xs uppercase tracking-widest text-muted-foreground">
               {t('dashboard')}
             </span>
+            <div className="ml-auto flex items-center gap-2">
+              <Link
+                href={newPath}
+                className="text-xs font-semibold uppercase tracking-widest text-muted-foreground"
+              >
+                {switchLocale}
+              </Link>
 
-            {/* Mobile Close Button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-2 md:hidden"
-              onClick={() => setIsSidebarOpen(false)}
-            >
-              <X className="h-4 w-4" />
-            </Button>
+              {/* Mobile Close Button */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="md:hidden"
+                onClick={() => setIsSidebarOpen(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
 
           {/* Navigation */}

@@ -9,6 +9,7 @@ const apiProtocol = apiUrlObj.protocol.replace(':', '')
 const apiPort = apiUrlObj.port
 
 const nextConfig = {
+  output: 'standalone',
   eslint: {
     // Warning: This allows production builds to successfully complete even if
     // your project has ESLint errors.
@@ -35,7 +36,7 @@ const nextConfig = {
   reactStrictMode: true,
   // Experimental features for better performance
   experimental: {
-    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons', 'framer-motion'],
+    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
   },
 }
 

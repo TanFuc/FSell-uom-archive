@@ -26,11 +26,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!product) return { title: 'Product Not Found' }
 
   const isVi = locale === 'vi'
-  const brandName = isVi ? (branding?.brandNameVi ?? 'Æ¯Æ M. Archive') : (branding?.brandNameEn ?? 'Æ¯Æ M. Archive')
+  const brandName = isVi
+    ? (branding?.brandNameVi ?? 'ƯƠM. Archive')
+    : (branding?.brandNameEn ?? 'ƯƠM. Archive')
   const name = isVi ? product.nameVi : product.nameEn
   const rawDescription = isVi
-    ? (product.shortDescriptionVi || product.descriptionVi || '')
-    : (product.shortDescriptionEn || product.descriptionEn || '')
+    ? product.shortDescriptionVi || product.descriptionVi || ''
+    : product.shortDescriptionEn || product.descriptionEn || ''
   const description = rawDescription.replace(/<[^>]*>/g, '').slice(0, 160) || undefined
   const firstImage = product.images?.[0]
 
@@ -61,34 +63,38 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ProductPage({ params }: Props) {
   const locale = await getLocale()
-  const product = await fetchProduct(params.slug)
+  const [product, branding] = await Promise.all([fetchProduct(params.slug), fetchBranding()])
+  const brandName =
+    locale === 'vi'
+      ? (branding?.brandNameVi ?? 'ƯƠM. Archive')
+      : (branding?.brandNameEn ?? 'ƯƠM. Archive')
 
   const jsonLd = product
     ? {
         '@context': 'https://schema.org',
         '@type': 'Product',
         name: locale === 'vi' ? product.nameVi : product.nameEn,
-        description: locale === 'vi'
-          ? (product.shortDescriptionVi || product.descriptionVi || '')
-              .replace(/<[^>]*>/g, '')
-              .slice(0, 300)
-          : (product.shortDescriptionEn || product.descriptionEn || '')
-              .replace(/<[^>]*>/g, '')
-              .slice(0, 300),
+        description:
+          locale === 'vi'
+            ? (product.shortDescriptionVi || product.descriptionVi || '')
+                .replace(/<[^>]*>/g, '')
+                .slice(0, 300)
+            : (product.shortDescriptionEn || product.descriptionEn || '')
+                .replace(/<[^>]*>/g, '')
+                .slice(0, 300),
         image: product.images ?? [],
         sku: product.slug,
         offers: {
           '@type': 'Offer',
           priceCurrency: 'VND',
           price: product.salePriceVND ?? product.priceVND,
-          availability: product.stock > 0
-            ? 'https://schema.org/InStock'
-            : 'https://schema.org/OutOfStock',
+          availability:
+            product.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
           url: `https://uomarchive.com/${locale}/shop/${params.slug}`,
         },
         brand: {
           '@type': 'Brand',
-          name: 'ƯƠM. Archive',
+          name: brandName,
         },
       }
     : null
@@ -109,8 +115,18 @@ export default async function ProductPage({ params }: Props) {
               '@context': 'https://schema.org',
               '@type': 'BreadcrumbList',
               itemListElement: [
-                { '@type': 'ListItem', position: 1, name: 'Home', item: `https://uomarchive.com/${locale}` },
-                { '@type': 'ListItem', position: 2, name: 'Shop', item: `https://uomarchive.com/${locale}/shop` },
+                {
+                  '@type': 'ListItem',
+                  position: 1,
+                  name: 'Home',
+                  item: `https://uomarchive.com/${locale}`,
+                },
+                {
+                  '@type': 'ListItem',
+                  position: 2,
+                  name: 'Shop',
+                  item: `https://uomarchive.com/${locale}/shop`,
+                },
                 {
                   '@type': 'ListItem',
                   position: 3,

@@ -11,7 +11,7 @@ export default function EditBannerPage() {
   const params = useParams()
   const router = useRouter()
   const id = params.id as string
-  
+
   const [banner, setBanner] = useState<Banner | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
@@ -23,7 +23,7 @@ export default function EditBannerPage() {
       } catch (error) {
         console.error('Failed to fetch banner:', error)
         // Redirect to list if not found
-        // router.push('/admin/banners') 
+        // router.push('/admin/banners')
       } finally {
         setIsLoading(false)
       }

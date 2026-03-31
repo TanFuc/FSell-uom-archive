@@ -119,9 +119,9 @@ class ApiClient {
           }
         }
 
-        // Handle 404 Not Found - redirect to appropriate page
+        // Handle 404 Not Found
         if (error.response?.status === 404) {
-          console.error('Resource not found:', error.config?.url)
+          // Silent catch to prevent console spam
         }
 
         return Promise.reject(error)
@@ -235,12 +235,12 @@ class ApiClient {
 
   // ==================== BANNERS ENDPOINTS ====================
   async getBanners(activeOnly = true): Promise<Banner[]> {
-    return this.request<Banner[]>('/banners', { 
-      headers: { 
-        'ngrok-skip-browser-warning': 'true' 
+    return this.request<Banner[]>('/banners', {
+      headers: {
+        'ngrok-skip-browser-warning': 'true',
       },
-      method: 'GET'
-    }).then(data => {
+      method: 'GET',
+    }).then((data) => {
       // Handle filtering on client side if needed, or rely on backend
       if (activeOnly) return data.filter((b: Banner) => b.isActive)
       return data

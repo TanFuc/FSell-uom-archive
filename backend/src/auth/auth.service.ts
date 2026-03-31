@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  UnauthorizedException,
-  ConflictException,
-  Logger,
-} from '@nestjs/common'
+import { Injectable, UnauthorizedException, ConflictException, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { JwtService } from '@nestjs/jwt'
 import * as bcrypt from 'bcrypt'
@@ -67,7 +62,9 @@ export class AuthService {
     return tokens
   }
 
-  async login(dto: LoginDto): Promise<Tokens & { user: { id: string; email: string; fullName: string; role: string } }> {
+  async login(
+    dto: LoginDto,
+  ): Promise<Tokens & { user: { id: string; email: string; fullName: string; role: string } }> {
     // Find user
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
@@ -95,7 +92,7 @@ export class AuthService {
     await this.updateRefreshToken(user.id, tokens.refreshToken)
 
     this.logger.log(`User logged in: ${user.email}`)
-    
+
     return {
       ...tokens,
       user: {

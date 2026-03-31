@@ -21,6 +21,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { useDocumentTitle } from '@/hooks/use-document-title'
 import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api'
+import { optimizeAndResizeImage } from '@/lib/image-upload'
 import { Category, type CreateCategoryDto, type UpdateCategoryDto } from '@/lib/types'
 
 export default function CategoryFormPage() {
@@ -103,16 +104,26 @@ export default function CategoryFormPage() {
     form.setValue('slug', slug)
   }
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
-    setImageFile(file)
-    const reader = new FileReader()
-    reader.onloadend = () => {
-      setImagePreview(reader.result as string)
+    try {
+      const optimizedFile = await optimizeAndResizeImage(file, {
+        maxWidth: 1200,
+        maxHeight: 1200,
+        quality: 0.88,
+        outputType: 'image/webp',
+      })
+      setImageFile(optimizedFile)
+      setImagePreview(URL.createObjectURL(optimizedFile))
+    } catch {
+      toast({
+        title: t('error'),
+        description: 'Không thể tối ưu ảnh trước khi upload',
+        variant: 'destructive',
+      })
     }
-    reader.readAsDataURL(file)
   }
 
   const removeImage = () => {

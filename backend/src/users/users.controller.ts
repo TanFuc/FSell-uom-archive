@@ -1,21 +1,5 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Put,
-  Delete,
-  Body,
-  Param,
-  Query,
-  UseGuards,
-} from '@nestjs/common'
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-  ApiParam,
-} from '@nestjs/swagger'
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards } from '@nestjs/common'
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger'
 import { Role } from '@prisma/client'
 import { UsersService } from './users.service'
 import { CreateUserDto, UpdateUserDto, QueryUsersDto } from './dto'
@@ -51,10 +35,7 @@ export class UsersController {
   @ApiOperation({ summary: 'Create a new user (ADMIN only)' })
   @ApiResponse({ status: 201, description: 'User created' })
   @ApiResponse({ status: 409, description: 'Email already exists' })
-  async create(
-    @Body() dto: CreateUserDto,
-    @CurrentUser() user: JwtPayload,
-  ) {
+  async create(@Body() dto: CreateUserDto, @CurrentUser() user: JwtPayload) {
     return this.usersService.create(dto, user.sub)
   }
 
@@ -76,10 +57,7 @@ export class UsersController {
   @ApiParam({ name: 'id', description: 'User ID' })
   @ApiResponse({ status: 200, description: 'User deleted' })
   @ApiResponse({ status: 404, description: 'User not found' })
-  async softDelete(
-    @Param('id') id: string,
-    @CurrentUser() user: JwtPayload,
-  ) {
+  async softDelete(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.usersService.softDelete(id, user.sub)
   }
 
@@ -88,10 +66,7 @@ export class UsersController {
   @ApiParam({ name: 'id', description: 'User ID' })
   @ApiResponse({ status: 200, description: 'User restored' })
   @ApiResponse({ status: 404, description: 'User not found' })
-  async restore(
-    @Param('id') id: string,
-    @CurrentUser() user: JwtPayload,
-  ) {
+  async restore(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.usersService.restore(id, user.sub)
   }
 }
