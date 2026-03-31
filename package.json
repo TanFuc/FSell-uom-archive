@@ -1,0 +1,20 @@
+{
+  "name": "fsell-uom-archive-workspace",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "prepare": "lefthook install",
+    "hook:install": "lefthook install",
+    "cleanup:code": "node scripts/cleanup-code.js --write",
+    "cleanup:code:check": "node scripts/cleanup-code.js --check",
+    "test": "cd backend && npm run test -- --runInBand && cd ../frontend && npm run test",
+    "format:check": "npm --prefix backend run format:check && npm --prefix frontend run format:check",
+    "docker:prod:build": "docker compose -f docker-compose.prod.yml build",
+    "docker:prod:up": "docker compose -f docker-compose.prod.yml up -d --build",
+    "docker:prod:down": "docker compose -f docker-compose.prod.yml down",
+    "docker:prod:logs": "docker compose -f docker-compose.prod.yml logs -f"
+  },
+  "devDependencies": {
+    "lefthook": "^1.7.16"
+  }
+}

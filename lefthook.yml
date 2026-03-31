@@ -1,0 +1,16 @@
+pre-commit:
+  parallel: false
+  commands:
+    cleanup:
+      run: npm run cleanup:code
+      stage_fixed: true
+    backend_format:
+      run: cd backend && npm run format
+      stage_fixed: true
+    frontend_format:
+      run: cd frontend && npm run format
+      stage_fixed: true
+    backend_test:
+      run: cd backend && npm run test -- --runInBand
+    frontend_test:
+      run: cd frontend && npm run test
