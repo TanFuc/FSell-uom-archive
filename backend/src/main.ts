@@ -5,9 +5,11 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger'
 import { NestExpressApplication } from '@nestjs/platform-express'
 import helmet from 'helmet'
 import { join } from 'path'
+import * as express from 'express'
 import { AppModule } from './app.module'
 import { AllExceptionsFilter } from './common/filters/http-exception.filter'
 import { TransformInterceptor } from './common/interceptors/transform.interceptor'
+import { loginPayloadNormalizerMiddleware } from './common/middleware/login-payload-normalizer.middleware'
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap')
@@ -76,6 +78,10 @@ async function bootstrap() {
 
   // API prefix
   app.setGlobalPrefix('api')
+
+  // Accept non-JSON clients for login and normalize payload to { email, password }.
+  app.use('/api/auth/login', express.text({ type: '*/*', limit: '1mb' }))
+  app.use('/api/auth/login', loginPayloadNormalizerMiddleware)
 
   // Static files (uploads)
   app.useStaticAssets(join(__dirname, '..', 'uploads'), {

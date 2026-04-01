@@ -14,6 +14,23 @@ interface ExceptionResponse {
   statusCode?: number
 }
 
+function isMalformedJsonMessage(message: string): boolean {
+  const normalized = message.toLowerCase()
+  return normalized.includes('json') && normalized.includes('position')
+}
+
+function normalizeClientMessage(status: number, message: string | string[]): string | string[] {
+  if (Array.isArray(message)) {
+    return message
+  }
+
+  if (status === HttpStatus.BAD_REQUEST && isMalformedJsonMessage(message)) {
+    return 'Invalid JSON payload. Use valid JSON with double-quoted keys, e.g. {"email":"admin@uomarchive.com","password":"your-password"}.'
+  }
+
+  return message
+}
+
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
   private readonly logger = new Logger(AllExceptionsFilter.name)
@@ -41,15 +58,22 @@ export class AllExceptionsFilter implements ExceptionFilter {
       message = exception.message
     }
 
+    const normalizedMessage = normalizeClientMessage(status, message)
+
     const errorResponse = {
       statusCode: status,
       timestamp: new Date().toISOString(),
       path: request.url,
       method: request.method,
-      message,
+      message: normalizedMessage,
     }
 
-    this.logger.error(`${request.method} ${request.url} - ${status}`, JSON.stringify(errorResponse))
+    const logPayload = JSON.stringify(errorResponse)
+    if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
+      this.logger.error(`${request.method} ${request.url} - ${status}`, logPayload)
+    } else {
+      this.logger.warn(`${request.method} ${request.url} - ${status}`, logPayload)
+    }
 
     response.status(status).json(errorResponse)
   }
