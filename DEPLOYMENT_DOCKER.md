@@ -17,12 +17,62 @@ Update all secrets before running in production:
 - `JWT_REFRESH_SECRET`
 - Cloudinary credentials
 
+## 1.1) One-shot deploy script (recommended)
+
+From repository root:
+
+```bash
+npm run deploy:prod
+```
+
+Linux server:
+
+```bash
+chmod +x ./scripts/deploy-production.sh
+npm run deploy:prod:linux
+```
+
+This script runs the full flow in order:
+1. Validate compose config
+2. Build backend + frontend images
+3. Start postgres + redis
+4. Run Prisma migrate deploy
+5. Start backend and wait for backend healthcheck = healthy
+6. Run DB seed
+7. Start frontend
+7. Show final service status
+
+Optional variants:
+
+```bash
+npm run deploy:prod:skip-build
+npm run deploy:prod:skip-seed
+npm run deploy:prod:linux:skip-build
+npm run deploy:prod:linux:skip-seed
+```
+
 ## 2) Build and run
 
 From the repository root:
 
 ```bash
 docker compose -f docker-compose.prod.yml up -d --build
+```
+
+Build/run separately if needed:
+
+```bash
+# Build only backend image
+docker compose -f docker-compose.prod.yml build backend
+
+# Build only frontend image
+docker compose -f docker-compose.prod.yml build frontend
+
+# Run only backend service (with required dependencies)
+docker compose -f docker-compose.prod.yml up -d --build backend
+
+# Run only frontend service
+docker compose -f docker-compose.prod.yml up -d --build frontend
 ```
 
 Services:
@@ -53,6 +103,13 @@ docker compose -f docker-compose.prod.yml logs -f frontend
 
 ```bash
 docker compose -f docker-compose.prod.yml up -d --build
+```
+
+Or rebuild a single service:
+
+```bash
+docker compose -f docker-compose.prod.yml up -d --build backend
+docker compose -f docker-compose.prod.yml up -d --build frontend
 ```
 
 ## 6) Optional: reset all data
