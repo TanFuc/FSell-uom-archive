@@ -1,10 +1,16 @@
 ﻿import { type Metadata } from 'next'
-import { getLocale } from 'next-intl/server'
+import Script from 'next/script'
 import { fetchBranding } from '@/lib/server-utils'
 import ShopClient from './shop-client'
 
-export async function generateMetadata(): Promise<Metadata> {
-  const locale = await getLocale()
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://uomarchive.com'
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { locale: string }
+}): Promise<Metadata> {
+  const locale = params.locale
   const branding = await fetchBranding()
 
   const isVi = locale === 'vi'
@@ -16,7 +22,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const description = isVi
     ? 'Khám phá bộ sưu tập gốm sứ thủ công được tuyển chọn từ các nghệ nhân Việt Nam.'
     : 'Discover our curated collection of handcrafted ceramics from Vietnamese artisans.'
-  const logoUrl = branding?.logoUrl || '/assets/logo.png'
+  const logoUrl = branding?.logoUrl || `${BASE_URL}/assets/logo.png`
 
   return {
     title,
@@ -24,6 +30,7 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: {
       title: `${title} | ${brandName}`,
       description,
+      url: `${BASE_URL}/${locale}/shop`,
       type: 'website',
       images: [{ url: logoUrl, width: 1200, height: 630, alt: `${brandName} Logo` }],
     },
@@ -40,6 +47,60 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
-export default function ShopPage() {
-  return <ShopClient />
+export default async function ShopPage({ params }: { params: { locale: string } }) {
+  const locale = params.locale
+  const branding = await fetchBranding()
+  const brandName =
+    locale === 'vi'
+      ? (branding?.brandNameVi ?? 'ƯƠM. Archive')
+      : (branding?.brandNameEn ?? 'ƯƠM. Archive')
+  const description =
+    locale === 'vi'
+      ? 'Khám phá bộ sưu tập gốm sứ thủ công được tuyển chọn từ các nghệ nhân Việt Nam.'
+      : 'Discover our curated collection of handcrafted ceramics from Vietnamese artisans.'
+
+  return (
+    <>
+      <Script
+        id="shop-collection-jsonld"
+        strategy="beforeInteractive"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'CollectionPage',
+            name: `${brandName} Shop`,
+            url: `${BASE_URL}/${locale}/shop`,
+            description,
+          }),
+        }}
+      />
+      <Script
+        id="shop-breadcrumb-jsonld"
+        strategy="beforeInteractive"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+              {
+                '@type': 'ListItem',
+                position: 1,
+                name: 'Home',
+                item: `${BASE_URL}/${locale}`,
+              },
+              {
+                '@type': 'ListItem',
+                position: 2,
+                name: locale === 'vi' ? 'Cua hang' : 'Shop',
+                item: `${BASE_URL}/${locale}/shop`,
+              },
+            ],
+          }),
+        }}
+      />
+      <ShopClient />
+    </>
+  )
 }

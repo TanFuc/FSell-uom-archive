@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
+import { useExchangeRate } from '@/hooks/use-settings'
 import { getDisplayPrice } from '@/lib/currency'
 import type { Product } from '@/lib/types'
 import { optimizeProductImage } from '@/lib/utils'
@@ -15,13 +16,14 @@ interface ProductCardProps {
 
 export function ProductCard({ product, locale, priority }: ProductCardProps) {
   const t = useTranslations('admin')
+  const { data: exchangeRate } = useExchangeRate()
   const name = locale === 'vi' ? product.nameVi : product.nameEn
   const hasImages = product.images && product.images.length > 0
   const mainImage = hasImages ? product.images[0] : null
   const hoverImage = product.hoverImage
 
   // Get price display with sale logic
-  const priceDisplay = getDisplayPrice(product, locale)
+  const priceDisplay = getDisplayPrice(product, locale, exchangeRate?.rate)
 
   return (
     <Link

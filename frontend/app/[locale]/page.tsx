@@ -1,10 +1,16 @@
 ﻿import { type Metadata } from 'next'
-import { getLocale } from 'next-intl/server'
+import Script from 'next/script'
 import { fetchBranding } from '@/lib/server-utils'
 import HomeClient from './home-client'
 
-export async function generateMetadata(): Promise<Metadata> {
-  const locale = await getLocale()
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://uomarchive.com'
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { locale: string }
+}): Promise<Metadata> {
+  const locale = params.locale
   const branding = await fetchBranding()
 
   const isVi = locale === 'vi'
@@ -14,10 +20,24 @@ export async function generateMetadata(): Promise<Metadata> {
   const description = isVi
     ? (branding?.siteDescriptionVi ?? 'Gốm sứ thủ công được tuyển chọn kỹ lưỡng từ Việt Nam.')
     : (branding?.siteDescriptionEn ?? 'Discover timeless Vietnamese ceramics curated with care.')
+  const logo = branding?.logoUrl || `${BASE_URL}/assets/logo.png`
 
   return {
     title: { absolute: siteTitle },
     description,
+    openGraph: {
+      title: siteTitle,
+      description,
+      url: `${BASE_URL}/${locale}`,
+      type: 'website',
+      images: [{ url: logo, width: 1200, height: 630, alt: siteTitle }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: siteTitle,
+      description,
+      images: [logo],
+    },
     alternates: {
       canonical: `/${locale}`,
       languages: { vi: '/vi', en: '/en' },
@@ -25,16 +45,19 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
-export default async function HomePage() {
+export default async function HomePage({ params }: { params: { locale: string } }) {
+  const locale = params.locale
   const branding = await fetchBranding()
-  const logo = branding?.logoUrl || 'https://uomarchive.com/assets/logo.png'
+  const logo = branding?.logoUrl || `${BASE_URL}/assets/logo.png`
   const name = branding?.brandNameVi || 'ƯƠM. Archive'
   const description =
     branding?.siteDescriptionVi || 'Gốm sứ thủ công Việt Nam — Vietnamese Handcrafted Ceramics'
 
   return (
     <>
-      <script
+      <Script
+        id="home-org-jsonld"
+        strategy="beforeInteractive"
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify({
@@ -45,6 +68,24 @@ export default async function HomePage() {
             logo: logo,
             sameAs: [],
             description: description,
+          }),
+        }}
+      />
+      <Script
+        id="home-website-jsonld"
+        strategy="beforeInteractive"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'WebSite',
+            name,
+            url: `${BASE_URL}/${locale}`,
+            potentialAction: {
+              '@type': 'SearchAction',
+              target: `${BASE_URL}/${locale}/shop?search={search_term_string}`,
+              'query-input': 'required name=search_term_string',
+            },
           }),
         }}
       />

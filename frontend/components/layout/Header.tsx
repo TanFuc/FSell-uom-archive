@@ -8,13 +8,13 @@ import { useLocale, useTranslations } from 'next-intl'
 import { useState, useEffect, useLayoutEffect, memo } from 'react'
 import { useCategories } from '@/hooks/use-categories'
 import { useProducts } from '@/hooks/use-products'
-import { useBranding, useSocialLinks } from '@/hooks/use-settings'
+import { useBranding, useExchangeRate, useSocialLinks } from '@/hooks/use-settings'
 import { cn } from '@/lib/utils'
 import { getDisplayPrice } from '@/lib/currency'
 import { motion, AnimatePresence } from 'framer-motion'
 
 // Optimized Result Item
-const SearchResultItem = memo(({ product, locale, onClick }: any) => (
+const SearchResultItem = memo(({ product, locale, exchangeRate, onClick }: any) => (
   <div className="group flex flex-col items-center space-y-3 text-center">
     <Link
       href={`/${locale}/shop/${product.slug}`}
@@ -36,7 +36,7 @@ const SearchResultItem = memo(({ product, locale, onClick }: any) => (
         {locale === 'vi' ? product.nameVi : product.nameEn}
       </p>
       <p className="text-[7.5px] font-medium uppercase text-foreground/30">
-        {getDisplayPrice(product, locale).currentPrice}
+        {getDisplayPrice(product, locale, exchangeRate).currentPrice}
       </p>
     </div>
   </div>
@@ -49,6 +49,7 @@ export function Header() {
   const router = useRouter()
   const t = useTranslations('Navigation')
   const { data: branding } = useBranding()
+  const { data: exchangeRate } = useExchangeRate()
   const { data: socialLinks } = useSocialLinks()
 
   const [showSearch, setShowSearch] = useState(false)
@@ -327,6 +328,7 @@ export function Header() {
                             key={product.id}
                             product={product}
                             locale={locale}
+                            exchangeRate={exchangeRate?.rate}
                             onClick={() => setShowSearch(false)}
                           />
                         ))}

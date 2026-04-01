@@ -30,7 +30,7 @@ import {
 } from '@/components/ui/dialog'
 import { useBanners } from '@/hooks/use-banners'
 import { useProduct, useProducts } from '@/hooks/use-products'
-import { useSocialLinks } from '@/hooks/use-settings'
+import { useExchangeRate, useSocialLinks } from '@/hooks/use-settings'
 import { getDisplayPrice } from '@/lib/currency'
 import { optimizeProductImage, cn, formatPriceVND } from '@/lib/utils'
 import { motion, AnimatePresence, useMotionValue, useSpring } from 'framer-motion'
@@ -38,6 +38,69 @@ import { motion, AnimatePresence, useMotionValue, useSpring } from 'framer-motio
 interface ProductPageProps {
   params: {
     slug: string
+  }
+}
+
+type VariantInfo = {
+  cleanText: string
+  types: string[]
+  colors: string[]
+  sizes: string[]
+}
+
+function parseVariantSummary(raw?: string): VariantInfo {
+  if (!raw) {
+    return { cleanText: '', types: [], colors: [], sizes: [] }
+  }
+
+  const normalizeValues = (value: string) =>
+    value
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean)
+
+  const types: string[] = []
+  const colors: string[] = []
+  const sizes: string[] = []
+  const cleanParts: string[] = []
+
+  const segments = raw
+    .split('\n')
+    .flatMap((line) => line.split('|'))
+    .map((segment) => segment.trim())
+    .filter(Boolean)
+
+  for (const segment of segments) {
+    const match = segment.match(/^([A-Za-z\s]+?)(?:\s*\(\d+\))?\s*:\s*(.+)$/)
+    if (!match) {
+      cleanParts.push(segment)
+      continue
+    }
+
+    const label = match[1].toLowerCase().trim()
+    const values = normalizeValues(match[2])
+
+    if (values.length === 0) {
+      cleanParts.push(segment)
+      continue
+    }
+
+    if (label === 'types' || label === 'type') {
+      types.push(...values)
+    } else if (label === 'colors' || label === 'color') {
+      colors.push(...values)
+    } else if (label === 'sizes' || label === 'size') {
+      sizes.push(...values)
+    } else {
+      cleanParts.push(segment)
+    }
+  }
+
+  return {
+    cleanText: cleanParts.join(' ').trim(),
+    types: Array.from(new Set(types)),
+    colors: Array.from(new Set(colors)),
+    sizes: Array.from(new Set(sizes)),
   }
 }
 
@@ -137,6 +200,7 @@ export default function ProductClient({ params }: ProductPageProps) {
   const tCommon = useTranslations('common')
   const tHome = useTranslations('Home')
   const { data: product, isLoading, error } = useProduct(params.slug)
+  const { data: exchangeRate } = useExchangeRate()
   const { data: socialLinks } = useSocialLinks()
   const { data: banners } = useBanners(true)
 
@@ -201,8 +265,10 @@ export default function ProductClient({ params }: ProductPageProps) {
   }
 
   const description = locale === 'vi' ? product.descriptionVi : product.descriptionEn
-  const priceDisplay = getDisplayPrice(product, locale)
-
+  const shortDescriptionRaw = locale === 'vi' ? product.shortDescriptionVi : product.shortDescriptionEn
+  const variants = parseVariantSummary(shortDescriptionRaw)
+  const shortDescription = variants.cleanText
+  const priceDisplay = getDisplayPrice(product, locale, exchangeRate?.rate)
   return (
     <div className="w-full">
       {/* Header padding for fixed header */}
@@ -349,6 +415,74 @@ export default function ProductClient({ params }: ProductPageProps) {
                   <h4 className="text-[10px] font-bold uppercase tracking-widest text-foreground">
                     DETAILS
                   </h4>
+
+                  {shortDescription ? (
+                    <p className="text-[10px] font-normal leading-relaxed text-foreground/80">
+                      {shortDescription}
+                    </p>
+                  ) : null}
+
+                  {(variants.types.length > 0 ||
+                    variants.colors.length > 0 ||
+                    variants.sizes.length > 0) && (
+                    <div className="space-y-4 rounded-sm border border-foreground/10 p-4">
+                      {variants.types.length > 0 && (
+                        <div className="space-y-2">
+                          <p className="text-[9px] font-bold uppercase tracking-[0.3em] text-foreground/50">
+                            {locale === 'vi' ? `Loai (${variants.types.length})` : `Types (${variants.types.length})`}
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {variants.types.map((item) => (
+                              <span
+                                key={`type-${item}`}
+                                className="rounded-full border border-foreground/15 px-3 py-1 text-[10px] uppercase tracking-wide"
+                              >
+                                {item}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {variants.colors.length > 0 && (
+                        <div className="space-y-2">
+                          <p className="text-[9px] font-bold uppercase tracking-[0.3em] text-foreground/50">
+                            {locale === 'vi'
+                              ? `Mau sac (${variants.colors.length})`
+                              : `Colors (${variants.colors.length})`}
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {variants.colors.map((item) => (
+                              <span
+                                key={`color-${item}`}
+                                className="rounded-full border border-foreground/15 px-3 py-1 text-[10px] uppercase tracking-wide"
+                              >
+                                {item}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {variants.sizes.length > 0 && (
+                        <div className="space-y-2">
+                          <p className="text-[9px] font-bold uppercase tracking-[0.3em] text-foreground/50">
+                            {locale === 'vi' ? `Kich co (${variants.sizes.length})` : `Sizes (${variants.sizes.length})`}
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {variants.sizes.map((item) => (
+                              <span
+                                key={`size-${item}`}
+                                className="rounded-full border border-foreground/15 px-3 py-1 text-[10px] uppercase tracking-wide"
+                              >
+                                {item}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Technical Specs List */}
                   <div className="flex flex-col gap-1 text-[10px] font-normal leading-relaxed text-foreground">

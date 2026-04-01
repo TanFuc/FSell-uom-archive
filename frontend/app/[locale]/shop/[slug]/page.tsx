@@ -1,4 +1,5 @@
 ﻿import { type Metadata } from 'next'
+import Script from 'next/script'
 import { getLocale } from 'next-intl/server'
 import { fetchBranding } from '@/lib/server-utils'
 import ProductClient from './product-client'
@@ -19,6 +20,15 @@ interface Props {
   params: { slug: string }
 }
 
+function getBrandName(
+  locale: string,
+  branding: { brandNameVi?: string | null; brandNameEn?: string | null } | null,
+) {
+  return locale === 'vi'
+    ? (branding?.brandNameVi ?? 'ƯƠM. Archive')
+    : (branding?.brandNameEn ?? 'ƯƠM. Archive')
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const locale = await getLocale()
   const [product, branding] = await Promise.all([fetchProduct(params.slug), fetchBranding()])
@@ -26,9 +36,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!product) return { title: 'Product Not Found' }
 
   const isVi = locale === 'vi'
-  const brandName = isVi
-    ? (branding?.brandNameVi ?? 'ƯƠM. Archive')
-    : (branding?.brandNameEn ?? 'ƯƠM. Archive')
+  const brandName = getBrandName(locale, branding)
   const name = isVi ? product.nameVi : product.nameEn
   const rawDescription = isVi
     ? product.shortDescriptionVi || product.descriptionVi || ''
@@ -64,10 +72,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ProductPage({ params }: Props) {
   const locale = await getLocale()
   const [product, branding] = await Promise.all([fetchProduct(params.slug), fetchBranding()])
-  const brandName =
-    locale === 'vi'
-      ? (branding?.brandNameVi ?? 'ƯƠM. Archive')
-      : (branding?.brandNameEn ?? 'ƯƠM. Archive')
+  const brandName = getBrandName(locale, branding)
 
   const jsonLd = product
     ? {
@@ -102,13 +107,17 @@ export default async function ProductPage({ params }: Props) {
   return (
     <>
       {jsonLd && (
-        <script
+        <Script
+          id="product-jsonld"
+          strategy="beforeInteractive"
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       )}
       {product && (
-        <script
+        <Script
+          id="product-breadcrumb-jsonld"
+          strategy="beforeInteractive"
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
