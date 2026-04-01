@@ -1,7 +1,7 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Save, Upload, X, Languages } from 'lucide-react'
+import { Save, X } from 'lucide-react'
 import Image from 'next/image'
 import { useTranslations } from 'next-intl'
 import { useEffect, useState } from 'react'
@@ -19,12 +19,10 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { Separator } from '@/components/ui/separator'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { useSiteContent, useUpdateSiteContent } from '@/hooks/use-settings'
 import { useToast } from '@/hooks/use-toast'
-import { api } from '@/lib/api'
 import { getImageUrl } from '@/lib/utils'
 
 // Define the keys we manage on this page

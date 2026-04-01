@@ -10,7 +10,7 @@ interface LoadingScreenProps {
 export function LoadingScreen({ text }: LoadingScreenProps) {
   const { data: branding } = useBranding()
   const displayText = useMemo(
-    () => text ?? branding?.loadingText ?? '',
+    () => text ?? branding?.loadingText ?? 'ƯƠM.',
     [text, branding?.loadingText],
   )
 

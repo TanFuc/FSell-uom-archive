@@ -3,10 +3,8 @@
 import { Trash2, RotateCcw, X, AlertTriangle } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 import { useState } from 'react'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
@@ -34,7 +32,6 @@ import { formatPriceVND, getImageUrl, optimizeProductImage } from '@/lib/utils'
 export default function TrashPage() {
   const locale = useLocale()
   const t = useTranslations('admin')
-  const router = useRouter()
   const { toast } = useToast()
   const [selectedProducts, setSelectedProducts] = useState<string[]>([])
   const [restoreDialog, setRestoreDialog] = useState<{

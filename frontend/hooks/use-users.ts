@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { apiClient } from '@/lib/api-client'
-import type { User, CreateUserDto, UpdateUserDto, QueryUsersDto } from '@/lib/types'
+import type { CreateUserDto, UpdateUserDto, QueryUsersDto } from '@/lib/types'
 
 // Query keys
 export const userKeys = {

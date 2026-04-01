@@ -22,7 +22,7 @@ import { useDocumentTitle } from '@/hooks/use-document-title'
 import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api'
 import { optimizeAndResizeImage } from '@/lib/image-upload'
-import { Category, type CreateCategoryDto, type UpdateCategoryDto } from '@/lib/types'
+import { type CreateCategoryDto, type UpdateCategoryDto } from '@/lib/types'
 
 export default function CategoryFormPage() {
   const router = useRouter()

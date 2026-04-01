@@ -109,7 +109,7 @@ export class AuthService {
       where: { id: userId },
     })
 
-    if (!user || !user.refreshToken) {
+    if (!user?.refreshToken) {
       throw new UnauthorizedException('Refresh token không hợp lệ')
     }
 

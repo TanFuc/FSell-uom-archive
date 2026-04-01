@@ -1,5 +1,5 @@
-import { IsString, IsOptional } from 'class-validator'
 import { ApiPropertyOptional } from '@nestjs/swagger'
+import { IsString, IsOptional } from 'class-validator'
 
 export class UpdateSiteContentDto {
   @ApiPropertyOptional({ example: 'SẢN PHẨM' })

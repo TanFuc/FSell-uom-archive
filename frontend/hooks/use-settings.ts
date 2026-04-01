@@ -3,14 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { apiClient } from '@/lib/api-client'
-import type {
-  AllSettings,
-  ThemeSettings,
-  SocialLinks,
-  SiteContent,
-  ExchangeRate,
-  BrandingSettings,
-} from '@/lib/types'
+import type { ThemeSettings, SocialLinks, SiteContent, BrandingSettings } from '@/lib/types'
 
 // ==================== BRANDING LOCALSTORAGE CACHE ====================
 // Cho phép LoadingScreen đọc giá trị đồng bộ ngay khi mount,
@@ -169,8 +162,8 @@ export function useBranding() {
       saveBrandingToStorage(data)
       return data
     },
-    staleTime: 0,
-    refetchOnMount: 'always',
+    staleTime: 10 * 60 * 1000,
+    refetchOnMount: false,
     // Hiện giá trị localStorage ngay, không chờ fetch
     placeholderData: getBrandingFromStorage,
   })

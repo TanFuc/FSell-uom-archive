@@ -2,7 +2,6 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api-client'
-import type { Banner } from '@/lib/types'
 
 // Query keys for cache management
 export const bannerKeys = {

@@ -61,7 +61,19 @@ export function slugify(str: string): string {
 }
 
 export function getImageUrl(path: string): string {
-  if (path.startsWith('http')) return path
+  if (path.startsWith('http')) {
+    try {
+      const url = new URL(path)
+      const r2PublicUrl = (process.env.NEXT_PUBLIC_R2_PUBLIC_URL || '').replace(/\/$/, '')
+      if (r2PublicUrl && url.hostname.endsWith('.r2.dev')) {
+        const normalizedPath = url.pathname.replace(/^\/uom-archive\//, '/').replace(/^\//, '')
+        return `${r2PublicUrl}/${normalizedPath}`
+      }
+    } catch {
+      return path
+    }
+    return path
+  }
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
   return `${baseUrl}${path}`
 }

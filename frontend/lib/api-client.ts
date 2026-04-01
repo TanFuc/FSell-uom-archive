@@ -232,6 +232,10 @@ class ApiClient {
     return this.client.put('/settings/exchange-rate', { rate })
   }
 
+  async recalculateUsdPrices(): Promise<ExchangeRate> {
+    return this.client.put('/settings/exchange-rate/recalculate')
+  }
+
   async getBranding(): Promise<BrandingSettings> {
     return this.client.get('/settings/branding')
   }

@@ -21,7 +21,7 @@ async function main() {
   // Create manager user for testing
   const managerPasswordHash = await bcrypt.hash('manager123', 10)
 
-  const manager = await prisma.user.upsert({
+  await prisma.user.upsert({
     where: { email: 'manager@uomarchive.com' },
     update: {},
     create: {

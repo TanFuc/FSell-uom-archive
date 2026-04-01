@@ -1,9 +1,9 @@
-import { Injectable, BadRequestException, Logger } from '@nestjs/common'
-import { ConfigService } from '@nestjs/config'
-import { CloudinaryService } from '../common/cloudinary/cloudinary.service'
-import * as sharp from 'sharp'
 import { randomUUID } from 'crypto'
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3'
+import { Injectable, BadRequestException, Logger } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
+import * as sharp from 'sharp'
+import { CloudinaryService } from '../common/cloudinary/cloudinary.service'
 
 type UploadProvider = 'cloudinary' | 'r2'
 
@@ -14,6 +14,7 @@ export class UploadService {
   private readonly s3Client?: S3Client
   private readonly r2Bucket: string
   private readonly r2PublicUrl: string
+  private readonly r2PublicBaseUrl: string
 
   constructor(
     private configService: ConfigService,
@@ -23,6 +24,7 @@ export class UploadService {
       'cloudinary') as UploadProvider
     this.r2Bucket = this.configService.get<string>('R2_BUCKET') || ''
     this.r2PublicUrl = (this.configService.get<string>('R2_PUBLIC_URL') || '').replace(/\/$/, '')
+    this.r2PublicBaseUrl = this.normalizeR2PublicBaseUrl(this.r2PublicUrl, this.r2Bucket)
 
     if (this.uploadProvider === 'r2') {
       const endpoint = this.configService.get<string>('R2_ENDPOINT') || ''
@@ -129,9 +131,41 @@ export class UploadService {
     await this.s3Client.send(command)
 
     return {
-      url: `${this.r2PublicUrl}/${key}`,
+      url: `${this.r2PublicBaseUrl}/${key}`,
       publicId: key,
     }
+  }
+
+  private normalizeR2PublicBaseUrl(publicUrl: string, bucket: string): string {
+    if (!publicUrl) {
+      return ''
+    }
+
+    try {
+      const parsed = new URL(publicUrl)
+      const path = parsed.pathname.replace(/\/$/, '')
+      const bucketPath = `/${bucket}`
+
+      // If R2 public URL was configured as .../bucket, trim bucket to avoid duplicated paths.
+      if (bucket && path === bucketPath) {
+        return parsed.origin
+      }
+
+      return `${parsed.origin}${path}`.replace(/\/$/, '')
+    } catch {
+      return publicUrl.replace(/\/$/, '')
+    }
+  }
+
+  private extractR2KeyFromUrl(url: string): string {
+    const parsed = new URL(url)
+    let key = parsed.pathname.replace(/^\/+/, '')
+
+    if (this.r2Bucket && key.startsWith(`${this.r2Bucket}/`)) {
+      key = key.slice(this.r2Bucket.length + 1)
+    }
+
+    return key
   }
 
   async uploadMultipleImages(
@@ -163,10 +197,14 @@ export class UploadService {
 
         let key = publicIdOrUrl
         if (publicIdOrUrl.startsWith('http')) {
-          if (!this.r2PublicUrl) {
-            throw new BadRequestException('Thiếu R2_PUBLIC_URL để phân giải key')
+          try {
+            key = this.extractR2KeyFromUrl(publicIdOrUrl)
+          } catch {
+            if (!this.r2PublicBaseUrl) {
+              throw new BadRequestException('Thiếu R2_PUBLIC_URL để phân giải key')
+            }
+            key = publicIdOrUrl.replace(`${this.r2PublicBaseUrl}/`, '')
           }
-          key = publicIdOrUrl.replace(`${this.r2PublicUrl}/`, '')
         }
 
         await this.s3Client.send(

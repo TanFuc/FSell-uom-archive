@@ -41,7 +41,14 @@ import { useDocumentTitle } from '@/hooks/use-document-title'
 import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api'
 import { type Product } from '@/lib/types'
-import { formatPriceVND, getImageUrl, optimizeProductImage, slugify } from '@/lib/utils'
+import { formatPriceVND, getImageUrl, optimizeProductImage } from '@/lib/utils'
+
+function formatUsdValue(value?: number | null): string {
+  if (value === null || value === undefined || Number.isNaN(value)) {
+    return '-'
+  }
+  return `$${value.toFixed(2)}`
+}
 
 export default function ProductsPage() {
   const router = useRouter()
@@ -290,6 +297,7 @@ export default function ProductsPage() {
               <TableHead>{t('name')}</TableHead>
               <TableHead className="w-32">{t('category')}</TableHead>
               <TableHead className="w-32">{t('priceLabel')}</TableHead>
+              <TableHead className="w-32">USD</TableHead>
               <TableHead className="w-24">{t('stockLabel')}</TableHead>
               <TableHead className="w-24 text-center">Link</TableHead>
               <TableHead className="w-32 text-center">{t('activeStatus')}</TableHead>
@@ -300,13 +308,13 @@ export default function ProductsPage() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={10} className="h-[400px] text-center">
+                <TableCell colSpan={11} className="h-[400px] text-center">
                   <span className="text-muted-foreground">{t('loading')}...</span>
                 </TableCell>
               </TableRow>
             ) : products.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={10} className="h-[400px] text-center">
+                <TableCell colSpan={11} className="h-[400px] text-center">
                   <span className="text-muted-foreground">{t('noResults')}</span>
                 </TableCell>
               </TableRow>
@@ -367,6 +375,7 @@ export default function ProductsPage() {
                     )}
                   </TableCell>
                   <TableCell>{formatPriceVND(product.priceVND)}</TableCell>
+                  <TableCell>{formatUsdValue(product.priceUSD)}</TableCell>
                   <TableCell>
                     <span className={product.stock <= 0 ? 'font-medium text-destructive' : ''}>
                       {product.stock}

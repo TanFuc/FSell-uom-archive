@@ -105,6 +105,7 @@ export interface SiteContent {
 
 export interface ExchangeRate {
   rate: number
+  updatedProducts?: number
   updatedAt: string
 }
 

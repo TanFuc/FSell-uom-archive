@@ -3,12 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { api } from '@/lib/api'
-import type {
-  Category,
-  CreateCategoryDto,
-  UpdateCategoryDto,
-  QueryCategoriesDto,
-} from '@/lib/types'
+import type { CreateCategoryDto, UpdateCategoryDto, QueryCategoriesDto } from '@/lib/types'
 
 export const categoryKeys = {
   all: ['categories'] as const,
@@ -18,10 +13,11 @@ export const categoryKeys = {
   detail: (id: string) => [...categoryKeys.details(), id] as const,
 }
 
-export function useCategories(params?: QueryCategoriesDto) {
+export function useCategories(params?: QueryCategoriesDto, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: categoryKeys.list(params || {}),
     queryFn: () => api.getCategories(params),
+    enabled: options?.enabled ?? true,
     staleTime: 10 * 60 * 1000, // 10 minutes
   })
 }

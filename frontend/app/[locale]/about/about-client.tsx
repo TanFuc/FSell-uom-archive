@@ -1,13 +1,11 @@
 ﻿'use client'
 
 import Image from 'next/image'
-import { useTranslations, useLocale } from 'next-intl'
+import { useLocale } from 'next-intl'
 import { useSiteContent } from '@/hooks/use-settings'
-import { getLocalizedValue, getImageUrl } from '@/lib/utils'
+import { getImageUrl } from '@/lib/utils'
 
 export default function AboutClient() {
-  const t = useTranslations('Home') // Fallback translations
-  const tNav = useTranslations('Navigation')
   const locale = useLocale() as 'vi' | 'en'
   const { data: content } = useSiteContent()
 

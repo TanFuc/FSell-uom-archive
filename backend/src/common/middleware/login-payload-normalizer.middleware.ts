@@ -46,11 +46,7 @@ function parseRawPayload(raw: string): LoginPayload | null {
   return parseUrlEncodedPayload(trimmed)
 }
 
-export function loginPayloadNormalizerMiddleware(
-  req: Request,
-  _res: Response,
-  next: NextFunction,
-) {
+export function loginPayloadNormalizerMiddleware(req: Request, _res: Response, next: NextFunction) {
   const body = req.body as unknown
 
   if (body && typeof body === 'object' && !Array.isArray(body)) {

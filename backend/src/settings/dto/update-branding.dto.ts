@@ -1,5 +1,5 @@
-import { IsString, IsOptional, IsUrl } from 'class-validator'
 import { ApiPropertyOptional } from '@nestjs/swagger'
+import { IsString, IsOptional } from 'class-validator'
 
 export class UpdateBrandingDto {
   @ApiPropertyOptional({ example: 'ƯƠM. Archive' })

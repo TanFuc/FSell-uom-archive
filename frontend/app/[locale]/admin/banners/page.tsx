@@ -23,12 +23,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { useUpdateBanner, useDeleteBanner } from '@/hooks/use-banners'
 import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api'
-import { Banner } from '@/lib/types'
+import { type Banner } from '@/lib/types'
 import { optimizeProductImage } from '@/lib/utils'
 
-import { useUpdateBanner, useDeleteBanner } from '@/hooks/use-banners'
 // ... (keep other imports)
 
 export default function BannersPage() {

@@ -1,6 +1,5 @@
 'use client'
 
-import { Instagram, Facebook } from 'lucide-react'
 import Link from 'next/link'
 import { useLocale, useTranslations } from 'next-intl'
 import { useEffect, useState } from 'react'
@@ -11,11 +10,53 @@ export function Footer() {
   const t = useTranslations('Footer')
   const { data: branding } = useBranding()
   const { data: socialLinks } = useSocialLinks()
-  const [mounted, setMounted] = useState(false)
+  const BRANDING_CACHE_KEY = 'uom_branding_cache'
+
+  const getCachedBranding = () => {
+    if (typeof window === 'undefined') return undefined
+    try {
+      const stored = localStorage.getItem(BRANDING_CACHE_KEY)
+      return stored
+        ? (JSON.parse(stored) as {
+            brandNameVi?: string
+            brandNameEn?: string
+            brandTaglineVi?: string
+            brandTaglineEn?: string
+          })
+        : undefined
+    } catch {
+      return undefined
+    }
+  }
+
+  const [cachedBranding, setCachedBranding] = useState<
+    | {
+        brandNameVi?: string
+        brandNameEn?: string
+        brandTaglineVi?: string
+        brandTaglineEn?: string
+      }
+    | undefined
+  >(undefined)
 
   useEffect(() => {
-    setMounted(true)
-  }, [])
+    setCachedBranding(getCachedBranding())
+  }, [
+    branding?.brandNameVi,
+    branding?.brandNameEn,
+    branding?.brandTaglineVi,
+    branding?.brandTaglineEn,
+  ])
+
+  const brandName =
+    locale === 'vi'
+      ? branding?.brandNameVi || cachedBranding?.brandNameVi || 'ƯƠM. Archive'
+      : branding?.brandNameEn || cachedBranding?.brandNameEn || 'Uom Archive'
+
+  const brandTagline =
+    locale === 'vi'
+      ? branding?.brandTaglineVi || cachedBranding?.brandTaglineVi || t('description')
+      : branding?.brandTaglineEn || cachedBranding?.brandTaglineEn || t('description')
 
   const currentYear = new Date().getFullYear()
 
@@ -30,18 +71,10 @@ export function Footer() {
               href={`/${locale}`}
               className="inline-block font-playfair text-2xl font-bold tracking-tighter text-foreground transition-opacity hover:opacity-70"
             >
-              {mounted
-                ? locale === 'vi'
-                  ? branding?.brandNameVi || 'ƯƠM. Archive'
-                  : branding?.brandNameEn || 'Uom Archive'
-                : 'Uom Archive'}
+              {brandName}
             </Link>
             <p className="hidden text-[9px] font-medium uppercase leading-relaxed tracking-[0.2em] text-foreground/40 md:block">
-              {mounted
-                ? locale === 'vi'
-                  ? branding?.brandTaglineVi || t('description')
-                  : branding?.brandTaglineEn || t('description')
-                : t('description')}
+              {brandTagline}
             </p>
           </div>
 

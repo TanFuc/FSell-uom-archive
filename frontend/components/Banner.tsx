@@ -15,19 +15,6 @@ export function Banner({ banner, locale, className = '' }: BannerProps) {
   const subtitle = locale === 'vi' ? banner.subtitleVi : banner.subtitleEn
   const description = locale === 'vi' ? banner.descriptionVi : banner.descriptionEn
 
-  const textAlign =
-    banner.textPosition === 'left'
-      ? 'text-left'
-      : banner.textPosition === 'right'
-        ? 'text-right'
-        : 'text-center'
-  const justifyContent =
-    banner.textPosition === 'left'
-      ? 'justify-start'
-      : banner.textPosition === 'right'
-        ? 'justify-end'
-        : 'justify-center'
-
   const content = (
     <div className={`relative w-full overflow-hidden ${className}`}>
       {/* Background Image - Hero Style */}

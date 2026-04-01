@@ -1,15 +1,15 @@
 ﻿'use client'
 
-import { Search, Loader2, X } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Search, X } from 'lucide-react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 import { useState, useEffect, useCallback } from 'react'
 import { ProductCard } from '@/components/ProductCard'
 import { useCategories } from '@/hooks/use-categories'
+import { useDocumentTitle } from '@/hooks/use-document-title'
 import { useProducts } from '@/hooks/use-products'
 import { cn } from '@/lib/utils'
-import { useDocumentTitle } from '@/hooks/use-document-title'
-import { motion, AnimatePresence } from 'framer-motion'
 
 export default function ShopClient() {
   const locale = useLocale() as 'vi' | 'en'

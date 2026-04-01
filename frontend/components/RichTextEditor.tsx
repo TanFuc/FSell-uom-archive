@@ -187,11 +187,18 @@ export function RichTextEditor({
       className={cn(
         'flex flex-col rounded-md border bg-background transition-all duration-200',
         className,
-        isMaximized && 'fixed inset-0 z-[100] h-screen w-screen rounded-none border-none',
+        isMaximized &&
+          'fixed inset-0 z-[100] h-screen w-screen rounded-none border-none bg-slate-100/95 p-5 backdrop-blur-sm',
       )}
     >
       {/* Toolbar */}
-      <div className="sticky top-0 z-10 flex w-full flex-wrap items-center gap-1 overflow-x-auto border-b bg-muted/30 p-2">
+      <div
+        className={cn(
+          'sticky top-0 z-10 flex w-full flex-wrap items-center gap-1 overflow-x-auto border-b bg-muted/30 p-2',
+          isMaximized &&
+            'mx-auto w-full max-w-5xl rounded-t-md border border-slate-300 bg-white shadow-sm',
+        )}
+      >
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleBold().run()}
           isActive={editor.isActive('bold')}
@@ -371,7 +378,7 @@ export function RichTextEditor({
           '[&_.ProseMirror]:text-left',
           disabled && 'cursor-not-allowed opacity-50',
           isMaximized &&
-            'mx-auto max-w-4xl border-x border-border/10 p-8 shadow-sm [&_.ProseMirror]:min-h-[calc(100vh-100px)]',
+            'mx-auto w-full max-w-5xl rounded-b-md border border-slate-300 bg-white p-8 shadow-md [&_.ProseMirror]:min-h-[calc(100vh-180px)]',
         )}
       />
     </div>

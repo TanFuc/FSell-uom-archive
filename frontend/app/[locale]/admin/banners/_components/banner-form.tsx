@@ -33,7 +33,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api'
 import { optimizeAndResizeImage } from '@/lib/image-upload'
-import { Banner } from '@/lib/types'
+import { type Banner } from '@/lib/types'
 import { optimizeProductImage } from '@/lib/utils'
 
 const bannerSchema = z.object({
@@ -95,10 +95,6 @@ export default function BannerForm({ initialData }: BannerFormProps) {
     resolver: zodResolver(bannerSchema),
     defaultValues,
   })
-
-  // Watch image URLs for preview
-  const imageUrl = form.watch('imageUrl')
-  const mobileImageUrl = form.watch('mobileImageUrl')
 
   const handleImageUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,

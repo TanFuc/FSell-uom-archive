@@ -1,4 +1,61 @@
-# Production Docker Deployment
+# Docker Deployment
+
+## Local Docker Setup (Full Stack)
+
+This repository now includes a root `docker-compose.yml` for local full-stack run:
+
+- Frontend
+- Backend
+- PostgreSQL
+- Redis
+- Optional monitoring stack (Prometheus + Grafana)
+
+### 1) Prepare local env
+
+From repository root:
+
+```bash
+cp .env.docker.example .env.docker
+```
+
+Update secrets and URLs as needed in `.env.docker`.
+
+### 2) Run full stack
+
+```bash
+npm run docker:up
+```
+
+Services:
+
+- Frontend: `http://localhost:3000`
+- Backend: `http://localhost:3001`
+- API Docs (dev only): `http://localhost:3001/api/docs`
+
+### 3) Run monitoring profile
+
+```bash
+npm run docker:monitoring:up
+```
+
+Monitoring endpoints:
+
+- Prometheus: `http://localhost:9090`
+- Grafana: `http://localhost:3002`
+
+### 4) Stop local stack
+
+```bash
+npm run docker:down
+```
+
+### 5) View logs
+
+```bash
+npm run docker:logs
+```
+
+## Production Docker Deployment
 
 This project can run fully in containers with one command.
 

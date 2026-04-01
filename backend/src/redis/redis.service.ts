@@ -91,6 +91,10 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     await this.client.flushAll()
   }
 
+  async ping(): Promise<string> {
+    return this.client.ping()
+  }
+
   // Pattern-based key deletion
   async delPattern(pattern: string): Promise<number> {
     const keys = await this.keys(pattern)

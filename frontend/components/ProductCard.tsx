@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
+import { useState } from 'react'
 import { useExchangeRate } from '@/hooks/use-settings'
 import { getDisplayPrice } from '@/lib/currency'
 import type { Product } from '@/lib/types'
@@ -21,6 +22,7 @@ export function ProductCard({ product, locale, priority }: ProductCardProps) {
   const hasImages = product.images && product.images.length > 0
   const mainImage = hasImages ? product.images[0] : null
   const hoverImage = product.hoverImage
+  const [shouldLoadHoverImage, setShouldLoadHoverImage] = useState(false)
 
   // Get price display with sale logic
   const priceDisplay = getDisplayPrice(product, locale, exchangeRate?.rate)
@@ -29,7 +31,10 @@ export function ProductCard({ product, locale, priority }: ProductCardProps) {
     <Link
       href={`/${locale}/shop/${product.slug}`}
       className="animate-fade-in group block"
+      prefetch={false}
       draggable="false"
+      onMouseEnter={() => setShouldLoadHoverImage(true)}
+      onTouchStart={() => setShouldLoadHoverImage(true)}
     >
       <div
         className="relative mb-4 w-full overflow-hidden rounded-sm bg-muted/20"
@@ -48,7 +53,7 @@ export function ProductCard({ product, locale, priority }: ProductCardProps) {
               loading={priority ? 'eager' : 'lazy'}
               draggable="false"
             />
-            {hoverImage && (
+            {hoverImage && shouldLoadHoverImage && (
               <Image
                 src={optimizeProductImage(hoverImage)}
                 alt={name}

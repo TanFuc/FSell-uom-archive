@@ -1,5 +1,5 @@
-import { IsArray, IsString, IsOptional, IsBoolean } from 'class-validator'
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
+import { IsArray, IsString, IsOptional, IsBoolean } from 'class-validator'
 
 export class BulkDeleteDto {
   @ApiProperty({

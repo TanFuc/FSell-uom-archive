@@ -2,9 +2,6 @@ import axios, { type AxiosInstance, type AxiosError } from 'axios'
 import type {
   Product,
   Category,
-  CreateProductDto,
-  UpdateProductDto,
-  QueryProductsDto,
   CreateCategoryDto,
   UpdateCategoryDto,
   PaginatedResponse,
@@ -15,11 +12,6 @@ import type {
   AllSettings,
   BrandingSettings,
   User,
-  CreateUserDto,
-  UpdateUserDto,
-  QueryUsersDto,
-  BulkDeleteDto,
-  BulkUpdateDto,
   Banner,
 } from './types'
 
@@ -375,6 +367,12 @@ class ApiClient {
     return this.request<ExchangeRate>('/settings/exchange-rate', {
       method: 'PUT',
       body: JSON.stringify({ rate }),
+    })
+  }
+
+  async recalculateUsdPrices(): Promise<ExchangeRate> {
+    return this.request<ExchangeRate>('/settings/exchange-rate/recalculate', {
+      method: 'PUT',
     })
   }
 

@@ -67,7 +67,7 @@ export function ProductInquiryForm({ product, locale }: ProductInquiryFormProps)
     }
   }, [open, productName, locale, form, isSuccess])
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  function onSubmit(_values: z.infer<typeof formSchema>) {
     // Here you would typically send the data to your backend
     // Simulate API call
     setTimeout(() => {

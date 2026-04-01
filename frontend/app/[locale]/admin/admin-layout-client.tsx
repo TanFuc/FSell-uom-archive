@@ -23,7 +23,6 @@ import { LoadingScreen } from '@/components/ui/loading-screen'
 import { Separator } from '@/components/ui/separator'
 import { api } from '@/lib/api'
 import { useAuthStore } from '@/lib/store'
-import { User } from '@/lib/types'
 
 interface AdminLayoutProps {
   children: React.ReactNode

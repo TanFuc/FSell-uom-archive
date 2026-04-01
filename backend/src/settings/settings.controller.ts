@@ -1,7 +1,8 @@
 import { Controller, Get, Put, Body, UseGuards } from '@nestjs/common'
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger'
 import { Role } from '@prisma/client'
-import { SettingsService } from './settings.service'
+import { Roles, CurrentUser, JwtPayload } from '../auth/decorators'
+import { JwtAuthGuard, RolesGuard } from '../auth/guards'
 import {
   UpdateThemeDto,
   UpdateSiteContentDto,
@@ -9,8 +10,7 @@ import {
   UpdateExchangeRateDto,
   UpdateBrandingDto,
 } from './dto'
-import { JwtAuthGuard, RolesGuard } from '../auth/guards'
-import { Roles, CurrentUser, JwtPayload } from '../auth/decorators'
+import { SettingsService } from './settings.service'
 
 @ApiTags('settings')
 @Controller('settings')
@@ -99,7 +99,19 @@ export class SettingsController {
   @ApiOperation({ summary: 'Update exchange rate (ADMIN only)' })
   @ApiResponse({ status: 200, description: 'Exchange rate updated' })
   async updateExchangeRate(@Body() dto: UpdateExchangeRateDto, @CurrentUser() user: JwtPayload) {
-    return this.settingsService.updateExchangeRate(dto.rate)
+    return this.settingsService.updateExchangeRate(dto.rate, user.sub)
+  }
+
+  @Put('exchange-rate/recalculate')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Recalculate all product USD prices with current exchange rate (ADMIN only)',
+  })
+  @ApiResponse({ status: 200, description: 'USD prices recalculated' })
+  async recalculateUsdPrices(@CurrentUser() user: JwtPayload) {
+    return this.settingsService.recalculateUsdPrices(user.sub)
   }
 
   // ==================== BRANDING ====================

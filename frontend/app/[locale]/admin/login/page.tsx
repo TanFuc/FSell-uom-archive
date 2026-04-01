@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Eye, EyeOff } from 'lucide-react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -31,7 +31,6 @@ type LoginFormValues = {
 
 export default function LoginPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const locale = useLocale()
   const t = useTranslations('admin')
   const tAuth = useTranslations('auth')
@@ -40,8 +39,6 @@ export default function LoginPage() {
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
-
-  const redirect = searchParams.get('redirect') || `/${locale}/admin/dashboard`
 
   const loginSchema = z.object({
     email: z.string().email(tValidation('emailRequired')),
@@ -81,9 +78,6 @@ export default function LoginPage() {
       let errorTitle = tAuth('loginError')
       let errorMessage = tAuth('genericError')
       let statusCode: number | undefined
-      let path: string | undefined
-      let method: string | undefined
-      let timestamp: string | undefined
 
       if (error.response) {
         // API returned an error response
@@ -92,9 +86,6 @@ export default function LoginPage() {
 
         // Extract error details from backend response
         errorMessage = errorData?.message || error.response.statusText || tAuth('genericError')
-        path = errorData?.path
-        method = errorData?.method
-        timestamp = errorData?.timestamp
 
         // Customize error title based on status code
         if (statusCode === 401) {

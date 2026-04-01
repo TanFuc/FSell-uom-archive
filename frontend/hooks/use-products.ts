@@ -4,7 +4,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { apiClient } from '@/lib/api-client'
 import type {
-  Product,
   CreateProductDto,
   UpdateProductDto,
   QueryProductsDto,
@@ -23,7 +22,7 @@ export const productKeys = {
 }
 
 // Public: Get products list (or Admin list if includeDeleted is true)
-export function useProducts(params?: QueryProductsDto) {
+export function useProducts(params?: QueryProductsDto, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: productKeys.list(params || {}),
     queryFn: () => {
@@ -33,6 +32,7 @@ export function useProducts(params?: QueryProductsDto) {
       }
       return apiClient.getProducts(params)
     },
+    enabled: options?.enabled ?? true,
     staleTime: 5 * 60 * 1000, // 5 minutes
   })
 }

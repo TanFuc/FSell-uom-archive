@@ -1,25 +1,27 @@
-import { NestFactory } from '@nestjs/core'
+import { join } from 'path'
 import { ValidationPipe, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger'
+import { NestFactory } from '@nestjs/core'
 import { NestExpressApplication } from '@nestjs/platform-express'
-import helmet from 'helmet'
-import { join } from 'path'
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger'
 import * as express from 'express'
+import helmet from 'helmet'
 import { AppModule } from './app.module'
 import { AllExceptionsFilter } from './common/filters/http-exception.filter'
+import { RequestLoggingInterceptor } from './common/interceptors/request-logging.interceptor'
 import { TransformInterceptor } from './common/interceptors/transform.interceptor'
 import { loginPayloadNormalizerMiddleware } from './common/middleware/login-payload-normalizer.middleware'
+import { MonitoringService } from './monitoring/monitoring.service'
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap')
   const app = await NestFactory.create<NestExpressApplication>(AppModule)
 
   const configService = app.get(ConfigService)
-  const port = configService.get<number>('PORT') || 3001
-  const frontendUrl = configService.get<string>('FRONTEND_URL') || 'http://localhost:3000'
-  const nodeEnv = configService.get<string>('NODE_ENV') || 'development'
-  const frontendUrls = (configService.get<string>('FRONTEND_URLS') || frontendUrl)
+  const port = configService.get<number>('PORT') ?? 3001
+  const frontendUrl = configService.get<string>('FRONTEND_URL') ?? 'http://localhost:3000'
+  const nodeEnv = configService.get<string>('NODE_ENV') ?? 'development'
+  const frontendUrls = (configService.get<string>('FRONTEND_URLS') ?? frontendUrl)
     .split(',')
     .map((url) => url.trim())
     .filter(Boolean)
@@ -74,7 +76,11 @@ async function bootstrap() {
   app.useGlobalFilters(new AllExceptionsFilter())
 
   // Global interceptors
-  app.useGlobalInterceptors(new TransformInterceptor())
+  const monitoringService = app.get(MonitoringService)
+  app.useGlobalInterceptors(
+    new RequestLoggingInterceptor(monitoringService),
+    new TransformInterceptor(),
+  )
 
   // API prefix
   app.setGlobalPrefix('api')
@@ -123,4 +129,4 @@ async function bootstrap() {
   logger.log(`Environment: ${nodeEnv}`)
 }
 
-bootstrap()
+void bootstrap()

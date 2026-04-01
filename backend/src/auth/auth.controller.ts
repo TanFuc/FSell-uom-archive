@@ -1,9 +1,9 @@
 import { Controller, Post, Body, UseGuards, Get, HttpCode, HttpStatus } from '@nestjs/common'
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger'
 import { AuthService } from './auth.service'
+import { CurrentUser, JwtPayload } from './decorators'
 import { LoginDto, RegisterDto } from './dto'
 import { JwtAuthGuard, JwtRefreshGuard } from './guards'
-import { CurrentUser, JwtPayload } from './decorators'
 
 @ApiTags('auth')
 @Controller('auth')

@@ -12,6 +12,11 @@ const targets = ['backend', 'frontend']
 const allowedExtensions = new Set(['.ts', '.tsx', '.js', '.jsx'])
 const ignoredDirs = new Set(['node_modules', '.next', 'dist', 'coverage', '.git'])
 
+function shouldSkipFile(filePath) {
+  const baseName = path.basename(filePath)
+  return baseName.endsWith('.d.ts') || baseName === 'next-env.d.ts'
+}
+
 function walk(dirPath, files = []) {
   const entries = fs.readdirSync(dirPath, { withFileTypes: true })
 
@@ -25,6 +30,7 @@ function walk(dirPath, files = []) {
     }
 
     if (!allowedExtensions.has(path.extname(entry.name))) continue
+    if (shouldSkipFile(fullPath)) continue
     files.push(fullPath)
   }
 

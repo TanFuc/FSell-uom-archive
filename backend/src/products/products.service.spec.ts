@@ -1,8 +1,8 @@
-import { Test, TestingModule } from '@nestjs/testing'
 import { NotFoundException } from '@nestjs/common'
-import { ProductsService } from './products.service'
+import { Test, TestingModule } from '@nestjs/testing'
 import { PrismaService } from '../prisma/prisma.service'
 import { RedisService } from '../redis/redis.service'
+import { ProductsService } from './products.service'
 
 describe('ProductsService', () => {
   let service: ProductsService

@@ -1,39 +1,17 @@
 'use client'
 
-import {
-  Instagram,
-  Facebook,
-  Loader2,
-  ArrowLeft,
-  Info,
-  Search,
-  X,
-  Menu,
-  ChevronLeft,
-  ChevronRight,
-} from 'lucide-react'
+import { motion, AnimatePresence, useMotionValue, useSpring } from 'framer-motion'
+import { Instagram, Facebook, Loader2, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { notFound, usePathname, useRouter } from 'next/navigation'
+import { notFound } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
-import { useRef, useState, useEffect, useCallback, useLayoutEffect } from 'react'
-import { BannerCarousel } from '@/components/BannerCarousel'
+import { useRef, useState, useEffect, useCallback } from 'react'
 import { ProductCard } from '@/components/ProductCard'
-import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
-import { useBanners } from '@/hooks/use-banners'
 import { useProduct, useProducts } from '@/hooks/use-products'
 import { useExchangeRate, useSocialLinks } from '@/hooks/use-settings'
 import { getDisplayPrice } from '@/lib/currency'
-import { optimizeProductImage, cn, formatPriceVND } from '@/lib/utils'
-import { motion, AnimatePresence, useMotionValue, useSpring } from 'framer-motion'
+import { optimizeProductImage, cn } from '@/lib/utils'
 
 interface ProductPageProps {
   params: {
@@ -43,14 +21,24 @@ interface ProductPageProps {
 
 type VariantInfo = {
   cleanText: string
-  types: string[]
-  colors: string[]
-  sizes: string[]
+  groups: Array<{
+    label: string
+    values: string[]
+  }>
 }
 
-function parseVariantSummary(raw?: string): VariantInfo {
+type VariantGroupPayload = {
+  labelVi?: string
+  labelEn?: string
+  valuesVi?: string[]
+  valuesEn?: string[]
+}
+
+const VARIANT_GROUPS_PREFIX = '[[VARIANT_GROUPS]]'
+
+function parseVariantSummary(raw: string | undefined, locale: 'vi' | 'en'): VariantInfo {
   if (!raw) {
-    return { cleanText: '', types: [], colors: [], sizes: [] }
+    return { cleanText: '', groups: [] }
   }
 
   const normalizeValues = (value: string) =>
@@ -59,12 +47,52 @@ function parseVariantSummary(raw?: string): VariantInfo {
       .map((item) => item.trim())
       .filter(Boolean)
 
-  const types: string[] = []
-  const colors: string[] = []
-  const sizes: string[] = []
+  const lines = raw.split('\n')
+  const cleanLines: string[] = []
+  let parsedGroups: VariantGroupPayload[] = []
+
+  for (const line of lines) {
+    const trimmed = line.trim()
+    if (trimmed.startsWith(VARIANT_GROUPS_PREFIX)) {
+      try {
+        const json = trimmed.slice(VARIANT_GROUPS_PREFIX.length)
+        const parsed = JSON.parse(json)
+        if (Array.isArray(parsed)) {
+          parsedGroups = parsed
+        }
+      } catch {
+        cleanLines.push(line)
+      }
+    } else {
+      cleanLines.push(line)
+    }
+  }
+
+  const cleanText = cleanLines.join('\n').trim()
+
+  if (parsedGroups.length > 0) {
+    const groups = parsedGroups
+      .map((group) => {
+        const label = locale === 'vi' ? group.labelVi || '' : group.labelEn || ''
+        const values = locale === 'vi' ? group.valuesVi || [] : group.valuesEn || []
+        const normalized = values.map((value) => String(value).trim()).filter(Boolean)
+        return {
+          label: label.trim(),
+          values: Array.from(new Set(normalized)),
+        }
+      })
+      .filter((group) => group.label && group.values.length > 0)
+
+    return {
+      cleanText,
+      groups,
+    }
+  }
+
+  const fallbackGroups: Array<{ label: string; values: string[] }> = []
   const cleanParts: string[] = []
 
-  const segments = raw
+  const segments = cleanText
     .split('\n')
     .flatMap((line) => line.split('|'))
     .map((segment) => segment.trim())
@@ -77,20 +105,28 @@ function parseVariantSummary(raw?: string): VariantInfo {
       continue
     }
 
-    const label = match[1].toLowerCase().trim()
+    const key = match[1].toLowerCase().trim()
     const values = normalizeValues(match[2])
-
     if (values.length === 0) {
       cleanParts.push(segment)
       continue
     }
 
-    if (label === 'types' || label === 'type') {
-      types.push(...values)
-    } else if (label === 'colors' || label === 'color') {
-      colors.push(...values)
-    } else if (label === 'sizes' || label === 'size') {
-      sizes.push(...values)
+    if (key === 'types' || key === 'type') {
+      fallbackGroups.push({
+        label: locale === 'vi' ? 'Loai' : 'Types',
+        values: Array.from(new Set(values)),
+      })
+    } else if (key === 'colors' || key === 'color') {
+      fallbackGroups.push({
+        label: locale === 'vi' ? 'Mau sac' : 'Colors',
+        values: Array.from(new Set(values)),
+      })
+    } else if (key === 'sizes' || key === 'size') {
+      fallbackGroups.push({
+        label: locale === 'vi' ? 'Kich co' : 'Sizes',
+        values: Array.from(new Set(values)),
+      })
     } else {
       cleanParts.push(segment)
     }
@@ -98,9 +134,7 @@ function parseVariantSummary(raw?: string): VariantInfo {
 
   return {
     cleanText: cleanParts.join(' ').trim(),
-    types: Array.from(new Set(types)),
-    colors: Array.from(new Set(colors)),
-    sizes: Array.from(new Set(sizes)),
+    groups: fallbackGroups,
   }
 }
 
@@ -197,12 +231,10 @@ function useDragScroll() {
 export default function ProductClient({ params }: ProductPageProps) {
   const locale = useLocale() as 'vi' | 'en'
   const t = useTranslations('product')
-  const tCommon = useTranslations('common')
   const tHome = useTranslations('Home')
   const { data: product, isLoading, error } = useProduct(params.slug)
   const { data: exchangeRate } = useExchangeRate()
   const { data: socialLinks } = useSocialLinks()
-  const { data: banners } = useBanners(true)
 
   const { data: relatedProducts } = useProducts({
     page: 1,
@@ -265,8 +297,9 @@ export default function ProductClient({ params }: ProductPageProps) {
   }
 
   const description = locale === 'vi' ? product.descriptionVi : product.descriptionEn
-  const shortDescriptionRaw = locale === 'vi' ? product.shortDescriptionVi : product.shortDescriptionEn
-  const variants = parseVariantSummary(shortDescriptionRaw)
+  const shortDescriptionRaw =
+    locale === 'vi' ? product.shortDescriptionVi : product.shortDescriptionEn
+  const variants = parseVariantSummary(shortDescriptionRaw, locale)
   const shortDescription = variants.cleanText
   const priceDisplay = getDisplayPrice(product, locale, exchangeRate?.rate)
   return (
@@ -351,10 +384,10 @@ export default function ProductClient({ params }: ProductPageProps) {
                       imageDrag.onMouseMove(e)
                       handleMouseMoveCursor(e)
                     }}
-                    onMouseUp={(e) => {
+                    onMouseUp={() => {
                       imageDrag.onMouseUp()
                     }}
-                    onMouseLeave={(e) => {
+                    onMouseLeave={() => {
                       imageDrag.onMouseLeave()
                       setIsHoveringImage(false)
                     }}
@@ -376,7 +409,7 @@ export default function ProductClient({ params }: ProductPageProps) {
                           fill
                           sizes="(max-width: 768px) 100vw, 60vw"
                           className="object-cover object-center md:h-full md:w-full"
-                          priority={index < 4}
+                          priority={index === 0}
                           draggable="false"
                         />
                       </div>
@@ -422,19 +455,17 @@ export default function ProductClient({ params }: ProductPageProps) {
                     </p>
                   ) : null}
 
-                  {(variants.types.length > 0 ||
-                    variants.colors.length > 0 ||
-                    variants.sizes.length > 0) && (
+                  {variants.groups.length > 0 && (
                     <div className="space-y-4 rounded-sm border border-foreground/10 p-4">
-                      {variants.types.length > 0 && (
-                        <div className="space-y-2">
+                      {variants.groups.map((group) => (
+                        <div key={group.label} className="space-y-2">
                           <p className="text-[9px] font-bold uppercase tracking-[0.3em] text-foreground/50">
-                            {locale === 'vi' ? `Loai (${variants.types.length})` : `Types (${variants.types.length})`}
+                            {`${group.label} (${group.values.length})`}
                           </p>
                           <div className="flex flex-wrap gap-2">
-                            {variants.types.map((item) => (
+                            {group.values.map((item) => (
                               <span
-                                key={`type-${item}`}
+                                key={`${group.label}-${item}`}
                                 className="rounded-full border border-foreground/15 px-3 py-1 text-[10px] uppercase tracking-wide"
                               >
                                 {item}
@@ -442,45 +473,7 @@ export default function ProductClient({ params }: ProductPageProps) {
                             ))}
                           </div>
                         </div>
-                      )}
-
-                      {variants.colors.length > 0 && (
-                        <div className="space-y-2">
-                          <p className="text-[9px] font-bold uppercase tracking-[0.3em] text-foreground/50">
-                            {locale === 'vi'
-                              ? `Mau sac (${variants.colors.length})`
-                              : `Colors (${variants.colors.length})`}
-                          </p>
-                          <div className="flex flex-wrap gap-2">
-                            {variants.colors.map((item) => (
-                              <span
-                                key={`color-${item}`}
-                                className="rounded-full border border-foreground/15 px-3 py-1 text-[10px] uppercase tracking-wide"
-                              >
-                                {item}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {variants.sizes.length > 0 && (
-                        <div className="space-y-2">
-                          <p className="text-[9px] font-bold uppercase tracking-[0.3em] text-foreground/50">
-                            {locale === 'vi' ? `Kich co (${variants.sizes.length})` : `Sizes (${variants.sizes.length})`}
-                          </p>
-                          <div className="flex flex-wrap gap-2">
-                            {variants.sizes.map((item) => (
-                              <span
-                                key={`size-${item}`}
-                                className="rounded-full border border-foreground/15 px-3 py-1 text-[10px] uppercase tracking-wide"
-                              >
-                                {item}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
+                      ))}
                     </div>
                   )}
 

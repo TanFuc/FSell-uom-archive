@@ -1,10 +1,10 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards } from '@nestjs/common'
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger'
 import { Role } from '@prisma/client'
-import { UsersService } from './users.service'
-import { CreateUserDto, UpdateUserDto, QueryUsersDto } from './dto'
-import { JwtAuthGuard, RolesGuard } from '../auth/guards'
 import { Roles, CurrentUser, JwtPayload } from '../auth/decorators'
+import { JwtAuthGuard, RolesGuard } from '../auth/guards'
+import { CreateUserDto, UpdateUserDto, QueryUsersDto } from './dto'
+import { UsersService } from './users.service'
 
 @ApiTags('users')
 @Controller('users')

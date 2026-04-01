@@ -1,17 +1,14 @@
 'use client'
 
-import Image from 'next/image'
+import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
-import { useRef, useState, useEffect, useCallback } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
+import { useRef, useState, useEffect, useCallback } from 'react'
 import { BannerCarousel } from '@/components/BannerCarousel'
 import { ProductCard } from '@/components/ProductCard'
 import { useBanners } from '@/hooks/use-banners'
-import { useCategories } from '@/hooks/use-categories'
 import { useProducts } from '@/hooks/use-products'
-import { useSiteContent } from '@/hooks/use-settings'
 import { cn } from '@/lib/utils'
-import { motion, AnimatePresence } from 'framer-motion'
 
 function usePremiumSmoothScroll() {
   const scrollRef = useRef<HTMLDivElement>(null)

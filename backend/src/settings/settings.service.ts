@@ -212,17 +212,81 @@ export class SettingsService {
     return { rate }
   }
 
-  async updateExchangeRate(rate: number) {
-    await this.prisma.siteSettings.upsert({
-      where: { key: 'exchange_rate' },
-      update: { value: rate.toString() },
-      create: { key: 'exchange_rate', value: rate.toString() },
+  async updateExchangeRate(rate: number, userId?: string) {
+    const normalizedRate = Number(rate)
+    const updatedProducts = await this.prisma.$transaction(async (tx) => {
+      await tx.siteSettings.upsert({
+        where: { key: 'exchange_rate' },
+        update: { value: normalizedRate.toString() },
+        create: { key: 'exchange_rate', value: normalizedRate.toString() },
+      })
+
+      return this.recalculateUsdPricesTx(tx, normalizedRate, userId)
     })
 
     await this.redis.del('exchange_rate')
+    await this.invalidateProductPriceCaches()
 
-    this.logger.log(`Exchange rate updated to ${rate}`)
-    return { rate }
+    this.logger.log(
+      `Exchange rate updated to ${normalizedRate}, recalculated ${updatedProducts} products`,
+    )
+    return { rate: normalizedRate, updatedProducts }
+  }
+
+  async recalculateUsdPrices(userId?: string) {
+    const { rate } = await this.getExchangeRate()
+
+    const updatedProducts = await this.prisma.$transaction((tx) =>
+      this.recalculateUsdPricesTx(tx, rate, userId),
+    )
+
+    await this.invalidateProductPriceCaches()
+    this.logger.log(`Recalculated USD prices for ${updatedProducts} products at rate ${rate}`)
+
+    return { rate, updatedProducts }
+  }
+
+  private async recalculateUsdPricesTx(tx: any, rate: number, userId?: string) {
+    const products = await tx.product.findMany({
+      where: { hardDeletedAt: null },
+      select: {
+        id: true,
+        priceVND: true,
+        salePriceVND: true,
+      },
+    })
+
+    if (products.length === 0) {
+      return 0
+    }
+
+    const updates = products.map(
+      (product: { id: string; priceVND: number; salePriceVND: number | null }) =>
+        tx.product.update({
+          where: { id: product.id },
+          data: {
+            priceUSD: Math.round((product.priceVND / rate) * 100) / 100,
+            salePriceUSD:
+              product.salePriceVND !== null
+                ? Math.round((product.salePriceVND / rate) * 100) / 100
+                : null,
+            updatedBy: userId,
+          },
+        }),
+    )
+
+    await Promise.all(updates)
+    return products.length
+  }
+
+  private async invalidateProductPriceCaches() {
+    const productListKeys = await this.redis.keys('products:*')
+    const productSlugKeys = await this.redis.keys('product:slug:*')
+    const keysToDelete = [...productListKeys, ...productSlugKeys]
+
+    if (keysToDelete.length > 0) {
+      await Promise.all(keysToDelete.map((key) => this.redis.del(key)))
+    }
   }
 
   // ==================== ALL PUBLIC SETTINGS ====================

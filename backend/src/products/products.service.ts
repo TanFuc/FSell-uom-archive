@@ -7,13 +7,12 @@ import {
   Logger,
 } from '@nestjs/common'
 import { Prisma, Role } from '@prisma/client'
+import { createFlexibleSearchConditions } from '../common/utils/vietnamese-search.util'
 import { PrismaService } from '../prisma/prisma.service'
 import { RedisService } from '../redis/redis.service'
 import { CreateProductDto, UpdateProductDto, QueryProductsDto, BulkUpdateDto } from './dto'
-import { createFlexibleSearchConditions } from '../common/utils/vietnamese-search.util'
 
 const CACHE_TTL = 300 // 5 minutes
-const USD_EXCHANGE_RATE = 24500 // 1 USD = 24,500 VND (configurable)
 
 @Injectable()
 export class ProductsService {
@@ -214,6 +213,7 @@ export class ProductsService {
 
   async create(dto: CreateProductDto, userId: string) {
     const { relatedProductIds, ...productData } = dto
+    const exchangeRate = await this.getCurrentExchangeRate()
 
     // Check if slug already exists
     const existingProduct = await this.prisma.product.findUnique({
@@ -225,7 +225,7 @@ export class ProductsService {
     }
 
     // Auto-calculate USD prices if not provided
-    const priceData = this.preparePriceData(dto)
+    const priceData = this.preparePriceData(dto, exchangeRate)
 
     const product = await this.prisma.product.create({
       data: {
@@ -234,8 +234,12 @@ export class ProductsService {
         createdBy: userId,
         updatedBy: userId,
         // Auto-generate inquiry messages if empty
-        inquiryMessageVi: dto.inquiryMessageVi || this.generateDefaultMessage(dto, 'vi'),
-        inquiryMessageEn: dto.inquiryMessageEn || this.generateDefaultMessage(dto, 'en'),
+        inquiryMessageVi:
+          dto.inquiryMessageVi ||
+          this.generateDefaultMessage(dto, 'vi', exchangeRate, priceData.priceUSD),
+        inquiryMessageEn:
+          dto.inquiryMessageEn ||
+          this.generateDefaultMessage(dto, 'en', exchangeRate, priceData.priceUSD),
         relatedProducts: relatedProductIds
           ? { connect: relatedProductIds.map((id) => ({ id })) }
           : undefined,
@@ -252,6 +256,7 @@ export class ProductsService {
 
   async update(id: string, dto: UpdateProductDto, userId: string) {
     const { relatedProductIds, ...updateData } = dto
+    const exchangeRate = await this.getCurrentExchangeRate()
 
     const product = await this.prisma.product.findUnique({
       where: { id },
@@ -277,7 +282,7 @@ export class ProductsService {
     }
 
     // Auto-calculate USD prices if not provided
-    const priceData = this.preparePriceData(dto)
+    const priceData = this.preparePriceData(dto, exchangeRate)
 
     const updatedProduct = await this.prisma.product.update({
       where: { id },
@@ -302,7 +307,7 @@ export class ProductsService {
 
   // ==================== SOFT DELETE ====================
 
-  async softDelete(id: string, userId: string, userRole: Role) {
+  async softDelete(id: string, userId: string, _userRole: Role) {
     const product = await this.prisma.product.findUnique({ where: { id } })
 
     if (!product) {
@@ -446,7 +451,7 @@ export class ProductsService {
 
   // ==================== BULK SOFT DELETE ====================
 
-  async bulkSoftDelete(ids: string[], userId: string, userRole: Role) {
+  async bulkSoftDelete(ids: string[], userId: string, _userRole: Role) {
     // Validate all products exist and not deleted
     const products = await this.prisma.product.findMany({
       where: {
@@ -524,14 +529,37 @@ export class ProductsService {
   /**
    * Convert VND to USD using exchange rate
    */
-  private convertVndToUsd(vnd: number): number {
-    return Math.round((vnd / USD_EXCHANGE_RATE) * 100) / 100 // Round to 2 decimal places
+  private convertVndToUsd(vnd: number, exchangeRate: number): number {
+    return Math.round((vnd / exchangeRate) * 100) / 100
+  }
+
+  private async getCurrentExchangeRate(): Promise<number> {
+    const cached = await this.redis.get('exchange_rate')
+    if (cached) {
+      const parsed = parseFloat(cached)
+      if (!Number.isNaN(parsed) && parsed > 0) {
+        return parsed
+      }
+    }
+
+    const setting = await this.prisma.siteSettings.findUnique({
+      where: { key: 'exchange_rate' },
+    })
+
+    const parsed = setting ? parseFloat(setting.value) : NaN
+    const rate = !Number.isNaN(parsed) && parsed > 0 ? parsed : 25000
+
+    await this.redis.set('exchange_rate', rate.toString(), 3600)
+    return rate
   }
 
   /**
    * Prepare price data with auto-conversion
    */
-  private preparePriceData(dto: CreateProductDto | UpdateProductDto): {
+  private preparePriceData(
+    dto: CreateProductDto | UpdateProductDto,
+    exchangeRate: number,
+  ): {
     priceUSD?: number
     salePriceUSD?: number | null
   } {
@@ -539,7 +567,7 @@ export class ProductsService {
 
     // Auto-calculate priceUSD if not provided but priceVND is
     if (dto.priceVND !== undefined && dto.priceUSD === undefined) {
-      result.priceUSD = this.convertVndToUsd(dto.priceVND)
+      result.priceUSD = this.convertVndToUsd(dto.priceVND, exchangeRate)
     } else if (dto.priceUSD !== undefined) {
       result.priceUSD = dto.priceUSD
     }
@@ -547,7 +575,7 @@ export class ProductsService {
     // Auto-calculate salePriceUSD if salePriceVND is provided
     if (dto.salePriceVND !== undefined) {
       if (dto.salePriceUSD === undefined && dto.salePriceVND !== null) {
-        result.salePriceUSD = this.convertVndToUsd(dto.salePriceVND)
+        result.salePriceUSD = this.convertVndToUsd(dto.salePriceVND, exchangeRate)
       } else {
         result.salePriceUSD = dto.salePriceUSD
       }
@@ -556,7 +584,12 @@ export class ProductsService {
     return result
   }
 
-  private generateDefaultMessage(dto: CreateProductDto | any, language: 'vi' | 'en'): string {
+  private generateDefaultMessage(
+    dto: CreateProductDto | any,
+    language: 'vi' | 'en',
+    exchangeRate: number,
+    computedPriceUSD?: number,
+  ): string {
     if (language === 'vi') {
       return `Xin chào! Tôi quan tâm đến sản phẩm "${dto.nameVi}".
 
@@ -567,7 +600,7 @@ Thông tin sản phẩm:
 
 Bạn có thể cho tôi biết thêm chi tiết không?`
     } else {
-      const priceUSD = Math.round(dto.priceVND / 25000)
+      const priceUSD = computedPriceUSD ?? this.convertVndToUsd(dto.priceVND, exchangeRate)
       return `Hello! I'm interested in the "${dto.nameEn}".
 
 Product details:

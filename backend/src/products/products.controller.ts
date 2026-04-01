@@ -12,7 +12,8 @@ import {
 } from '@nestjs/common'
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger'
 import { Role } from '@prisma/client'
-import { ProductsService } from './products.service'
+import { Roles, CurrentUser, JwtPayload } from '../auth/decorators'
+import { JwtAuthGuard, RolesGuard } from '../auth/guards'
 import {
   CreateProductDto,
   UpdateProductDto,
@@ -21,8 +22,7 @@ import {
   BulkUpdateDto,
   BulkRestoreDto,
 } from './dto'
-import { JwtAuthGuard, RolesGuard } from '../auth/guards'
-import { Roles, CurrentUser, JwtPayload } from '../auth/decorators'
+import { ProductsService } from './products.service'
 
 @ApiTags('products')
 @Controller('products')

@@ -1,16 +1,20 @@
 pre-commit:
-  parallel: false
+  parallel: true
   commands:
-    cleanup:
-      run: npm run cleanup:code
-      stage_fixed: true
-    backend_format:
-      run: cd backend && npm run format
-      stage_fixed: true
-    frontend_format:
-      run: cd frontend && npm run format
-      stage_fixed: true
-    backend_test:
-      run: cd backend && npm run test -- --runInBand
-    frontend_test:
-      run: cd frontend && npm run test
+    cleanup_check:
+      run: npm run cleanup:code:check
+    prettier_staged:
+      glob: "**/*.{ts,tsx,js,jsx,json,css,md,yml,yaml}"
+      run: npx prettier --check {staged_files}
+    backend_lint_staged:
+      glob: "backend/**/*.{ts,tsx,js,jsx}"
+      run: npx --prefix backend eslint --max-warnings 0 {staged_files}
+    frontend_lint_staged:
+      glob: "frontend/**/*.{ts,tsx,js,jsx}"
+      run: npx --prefix frontend eslint --max-warnings 0 {staged_files}
+    backend_test_staged:
+      glob: "backend/**/*.{ts,tsx,js,jsx}"
+      run: npm --prefix backend exec jest -- --findRelatedTests {staged_files} --passWithNoTests --runInBand
+    frontend_test_staged:
+      glob: "frontend/**/*.{ts,tsx,js,jsx}"
+      run: npm --prefix frontend exec jest -- --findRelatedTests {staged_files} --passWithNoTests --runInBand

@@ -21,9 +21,7 @@ export function SplashScreen() {
     }
   }
 
-  const [cachedLoadingText, setCachedLoadingText] = useState<string | undefined>(() =>
-    getCachedLoadingText(),
-  )
+  const [cachedLoadingText, setCachedLoadingText] = useState<string | undefined>(undefined)
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -37,7 +35,7 @@ export function SplashScreen() {
     setCachedLoadingText(getCachedLoadingText())
   }, [branding?.loadingText])
 
-  const displayText = branding?.loadingText || cachedLoadingText || ''
+  const displayText = branding?.loadingText || cachedLoadingText || 'ƯƠM.'
 
   return (
     <div

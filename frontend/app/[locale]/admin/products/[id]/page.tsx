@@ -47,7 +47,7 @@ import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api'
 import { vndToUsd } from '@/lib/currency'
 import { optimizeAndResizeImage, optimizeAndResizeImages } from '@/lib/image-upload'
-import { Product, type Category } from '@/lib/types'
+import { type Category } from '@/lib/types'
 import { getImageUrl, slugify } from '@/lib/utils'
 
 const productSchema = z.object({
@@ -71,12 +71,26 @@ const productSchema = z.object({
   inquiryEnabled: z.boolean().default(true),
   inquiryMessageVi: z.string().optional(),
   inquiryMessageEn: z.string().optional(),
-  variantTypes: z.string().optional(),
-  variantColors: z.string().optional(),
-  variantSizes: z.string().optional(),
 })
 
 type ProductFormValues = z.infer<typeof productSchema>
+
+type VariantGroupPayload = {
+  labelVi: string
+  labelEn: string
+  valuesVi: string[]
+  valuesEn: string[]
+}
+
+type VariantGroupDraft = {
+  id: string
+  labelVi: string
+  labelEn: string
+  valuesVi: string
+  valuesEn: string
+}
+
+const VARIANT_GROUPS_PREFIX = '[[VARIANT_GROUPS]]'
 
 function parseVariantValues(value?: string): string[] {
   if (!value) return []
@@ -84,6 +98,136 @@ function parseVariantValues(value?: string): string[] {
     .split(',')
     .map((item) => item.trim())
     .filter(Boolean)
+}
+
+function parseLegacyVariantSummary(raw?: string) {
+  if (!raw) {
+    return { cleanText: '', groups: [] as VariantGroupPayload[] }
+  }
+
+  const groups: VariantGroupPayload[] = []
+  const cleanParts: string[] = []
+
+  const segments = raw
+    .split('\n')
+    .flatMap((line) => line.split('|'))
+    .map((segment) => segment.trim())
+    .filter(Boolean)
+
+  for (const segment of segments) {
+    const match = segment.match(/^([A-Za-z\s]+?)(?:\s*\(\d+\))?\s*:\s*(.+)$/)
+    if (!match) {
+      cleanParts.push(segment)
+      continue
+    }
+
+    const key = match[1].toLowerCase().trim()
+    const values = parseVariantValues(match[2])
+    if (values.length === 0) {
+      cleanParts.push(segment)
+      continue
+    }
+
+    if (key === 'types' || key === 'type') {
+      groups.push({ labelVi: 'Loai', labelEn: 'Types', valuesVi: values, valuesEn: values })
+    } else if (key === 'colors' || key === 'color') {
+      groups.push({ labelVi: 'Mau sac', labelEn: 'Colors', valuesVi: values, valuesEn: values })
+    } else if (key === 'sizes' || key === 'size') {
+      groups.push({ labelVi: 'Kich co', labelEn: 'Sizes', valuesVi: values, valuesEn: values })
+    } else {
+      cleanParts.push(segment)
+    }
+  }
+
+  return {
+    cleanText: cleanParts.join(' ').trim(),
+    groups,
+  }
+}
+
+function parseVariantGroupsFromShortDescriptions(
+  shortDescriptionVi?: string,
+  shortDescriptionEn?: string,
+) {
+  const parseDescription = (raw?: string) => {
+    const lines = (raw || '').split('\n')
+    let groups: VariantGroupPayload[] = []
+    const cleanLines: string[] = []
+
+    for (const line of lines) {
+      const trimmed = line.trim()
+      if (trimmed.startsWith(VARIANT_GROUPS_PREFIX)) {
+        try {
+          const json = trimmed.slice(VARIANT_GROUPS_PREFIX.length)
+          const parsed = JSON.parse(json)
+          if (Array.isArray(parsed)) {
+            groups = parsed
+              .map((item) => ({
+                labelVi: String(item?.labelVi || '').trim(),
+                labelEn: String(item?.labelEn || '').trim(),
+                valuesVi: Array.isArray(item?.valuesVi)
+                  ? item.valuesVi.map((v: unknown) => String(v).trim()).filter(Boolean)
+                  : [],
+                valuesEn: Array.isArray(item?.valuesEn)
+                  ? item.valuesEn.map((v: unknown) => String(v).trim()).filter(Boolean)
+                  : [],
+              }))
+              .filter(
+                (item) =>
+                  Boolean(item.labelVi || item.labelEn) &&
+                  (item.valuesVi.length > 0 || item.valuesEn.length > 0),
+              )
+          }
+        } catch {
+          cleanLines.push(line)
+        }
+      } else {
+        cleanLines.push(line)
+      }
+    }
+
+    return {
+      cleanText: cleanLines.join('\n').trim(),
+      groups,
+    }
+  }
+
+  const viParsed = parseDescription(shortDescriptionVi)
+  const enParsed = parseDescription(shortDescriptionEn)
+
+  if (viParsed.groups.length > 0 || enParsed.groups.length > 0) {
+    const groups = viParsed.groups.length > 0 ? viParsed.groups : enParsed.groups
+    return {
+      shortDescriptionVi: viParsed.cleanText,
+      shortDescriptionEn: enParsed.cleanText,
+      groups,
+    }
+  }
+
+  const legacyVi = parseLegacyVariantSummary(shortDescriptionVi)
+  const legacyEn = parseLegacyVariantSummary(shortDescriptionEn)
+  const legacyGroups = legacyVi.groups.length > 0 ? legacyVi.groups : legacyEn.groups
+
+  return {
+    shortDescriptionVi: legacyVi.cleanText || (shortDescriptionVi || '').trim(),
+    shortDescriptionEn: legacyEn.cleanText || (shortDescriptionEn || '').trim(),
+    groups: legacyGroups,
+  }
+}
+
+function serializeVariantGroups(groups: VariantGroupPayload[]) {
+  if (groups.length === 0) return ''
+  return `${VARIANT_GROUPS_PREFIX}${JSON.stringify(groups)}`
+}
+
+function toVariantDrafts(groups: VariantGroupPayload[]): VariantGroupDraft[] {
+  return groups.map((group, index) => ({
+    id: `variant-group-${index}-${Date.now()}`,
+    labelVi: group.labelVi,
+    labelEn: group.labelEn,
+    valuesVi: group.valuesVi.join(', '),
+    valuesEn: group.valuesEn.join(', '),
+  }))
 }
 
 export default function ProductFormPage() {
@@ -102,11 +246,11 @@ export default function ProductFormPage() {
   const [hoverImage, setHoverImage] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [categories, setCategories] = useState<Category[]>([])
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false)
   const [isCreatingCategory, setIsCreatingCategory] = useState(false)
   const [newCatNameVi, setNewCatNameVi] = useState('')
   const [newCatNameEn, setNewCatNameEn] = useState('')
+  const [variantGroups, setVariantGroups] = useState<VariantGroupDraft[]>([])
   const { data: exchangeRateData } = useExchangeRate()
   const exchangeRate = exchangeRateData?.rate
 
@@ -133,11 +277,35 @@ export default function ProductFormPage() {
       inquiryEnabled: true,
       inquiryMessageVi: '',
       inquiryMessageEn: '',
-      variantTypes: '',
-      variantColors: '',
-      variantSizes: '',
     },
   })
+
+  const addVariantGroup = () => {
+    setVariantGroups((prev) => [
+      ...prev,
+      {
+        id: `variant-group-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        labelVi: '',
+        labelEn: '',
+        valuesVi: '',
+        valuesEn: '',
+      },
+    ])
+  }
+
+  const removeVariantGroup = (id: string) => {
+    setVariantGroups((prev) => prev.filter((group) => group.id !== id))
+  }
+
+  const updateVariantGroup = (
+    id: string,
+    field: 'labelVi' | 'labelEn' | 'valuesVi' | 'valuesEn',
+    value: string,
+  ) => {
+    setVariantGroups((prev) =>
+      prev.map((group) => (group.id === id ? { ...group, [field]: value } : group)),
+    )
+  }
 
   // Update document title based on product name or "Create Product"
   const productName = form.watch('nameVi') || form.watch('nameEn')
@@ -179,12 +347,16 @@ export default function ProductFormPage() {
 
     try {
       const product = await api.getProductById(id)
+      const parsedVariants = parseVariantGroupsFromShortDescriptions(
+        product.shortDescriptionVi || '',
+        product.shortDescriptionEn || '',
+      )
       form.reset({
         slug: product.slug,
         nameVi: product.nameVi,
         nameEn: product.nameEn,
-        shortDescriptionVi: product.shortDescriptionVi || '',
-        shortDescriptionEn: product.shortDescriptionEn || '',
+        shortDescriptionVi: parsedVariants.shortDescriptionVi,
+        shortDescriptionEn: parsedVariants.shortDescriptionEn,
         descriptionVi: product.descriptionVi,
         descriptionEn: product.descriptionEn,
         priceVND: product.priceVND,
@@ -200,13 +372,10 @@ export default function ProductFormPage() {
         inquiryEnabled: product.inquiryEnabled,
         inquiryMessageVi: product.inquiryMessageVi || '',
         inquiryMessageEn: product.inquiryMessageEn || '',
-        variantTypes: '',
-        variantColors: '',
-        variantSizes: '',
       })
+      setVariantGroups(toVariantDrafts(parsedVariants.groups))
       setImages(product.images)
       setHoverImage(product.hoverImage || null)
-      setSelectedCategoryId(product.categoryId || null)
       // Disable auto-convert when loading existing product with custom USD prices
       if (product.priceUSD) {
         setAutoConvertPrice(false)
@@ -295,24 +464,32 @@ export default function ProductFormPage() {
 
     setIsSaving(true)
     try {
-      const variantTypes = parseVariantValues(data.variantTypes)
-      const variantColors = parseVariantValues(data.variantColors)
-      const variantSizes = parseVariantValues(data.variantSizes)
+      const normalizedVariantGroups: VariantGroupPayload[] = variantGroups
+        .map((group) => {
+          const valuesVi = parseVariantValues(group.valuesVi)
+          const valuesEn = parseVariantValues(group.valuesEn)
+          return {
+            labelVi: group.labelVi.trim(),
+            labelEn: group.labelEn.trim(),
+            valuesVi,
+            valuesEn,
+          }
+        })
+        .filter(
+          (group) =>
+            Boolean(group.labelVi || group.labelEn) &&
+            (group.valuesVi.length > 0 || group.valuesEn.length > 0),
+        )
 
-      const variantSummary = [
-        variantTypes.length > 0 ? `Types (${variantTypes.length}): ${variantTypes.join(', ')}` : '',
-        variantColors.length > 0
-          ? `Colors (${variantColors.length}): ${variantColors.join(', ')}`
-          : '',
-        variantSizes.length > 0 ? `Sizes (${variantSizes.length}): ${variantSizes.join(', ')}` : '',
-      ]
+      const variantMeta = serializeVariantGroups(normalizedVariantGroups)
+      const shortDescriptionVi = [data.shortDescriptionVi?.trim(), variantMeta]
         .filter(Boolean)
-        .join(' | ')
+        .join('\n')
+      const shortDescriptionEn = [data.shortDescriptionEn?.trim(), variantMeta]
+        .filter(Boolean)
+        .join('\n')
 
-      const shortDescriptionVi = [data.shortDescriptionVi, variantSummary].filter(Boolean).join('\n')
-      const shortDescriptionEn = [data.shortDescriptionEn, variantSummary].filter(Boolean).join('\n')
-
-      const { variantTypes: _variantTypes, variantColors: _variantColors, variantSizes: _variantSizes, ...restData } = data
+      const restData = data
 
       const productData = {
         ...restData,
@@ -525,7 +702,11 @@ export default function ProductFormPage() {
                             <FormItem>
                               <FormLabel>Short Description (English)</FormLabel>
                               <FormControl>
-                                <Textarea {...field} rows={3} placeholder="Summary description..." />
+                                <Textarea
+                                  {...field}
+                                  rows={3}
+                                  placeholder="Summary description..."
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -717,58 +898,107 @@ export default function ProductFormPage() {
 
                   <Card className="bg-muted/30">
                     <CardHeader className="pb-3">
-                      <CardTitle className="text-base">Variant Classification (Optional)</CardTitle>
-                      <CardDescription>
-                        Use comma-separated values. This helps users quickly understand available
-                        types, colors and sizes.
-                      </CardDescription>
+                      <CardTitle className="text-base">{t('variantClassificationTitle')}</CardTitle>
+                      <CardDescription>{t('variantClassificationDesc')}</CardDescription>
                     </CardHeader>
-                    <CardContent className="grid gap-4 md:grid-cols-3">
-                      <FormField
-                        control={form.control}
-                        name="variantTypes"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Types</FormLabel>
-                            <FormControl>
-                              <Textarea {...field} rows={3} placeholder="Classic, Premium" />
-                            </FormControl>
-                            <FormDescription>
-                              {parseVariantValues(field.value).length} type(s)
-                            </FormDescription>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="variantColors"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Colors</FormLabel>
-                            <FormControl>
-                              <Textarea {...field} rows={3} placeholder="Ivory, Sand, Moss" />
-                            </FormControl>
-                            <FormDescription>
-                              {parseVariantValues(field.value).length} color(s)
-                            </FormDescription>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="variantSizes"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Sizes</FormLabel>
-                            <FormControl>
-                              <Textarea {...field} rows={3} placeholder="S, M, L" />
-                            </FormControl>
-                            <FormDescription>
-                              {parseVariantValues(field.value).length} size(s)
-                            </FormDescription>
-                          </FormItem>
-                        )}
-                      />
+                    <CardContent className="space-y-4">
+                      {variantGroups.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">{t('variantNoGroups')}</p>
+                      ) : null}
+
+                      {variantGroups.map((group, index) => (
+                        <div key={group.id} className="space-y-3 rounded-md border p-4">
+                          <div className="flex items-center justify-between">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                              {t('variantGroupLabel', { index: index + 1 })}
+                            </p>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeVariantGroup(group.id)}
+                              className="h-7 px-2 text-xs"
+                            >
+                              <X className="mr-1 h-3 w-3" />
+                              {t('delete')}
+                            </Button>
+                          </div>
+
+                          <div className="grid gap-3 md:grid-cols-2">
+                            <div className="space-y-2">
+                              <Label htmlFor={`${group.id}-label-vi`}>{t('variantLabelVi')}</Label>
+                              <Input
+                                id={`${group.id}-label-vi`}
+                                value={group.labelVi}
+                                onChange={(e) =>
+                                  updateVariantGroup(group.id, 'labelVi', e.target.value)
+                                }
+                                placeholder="Loai"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor={`${group.id}-label-en`}>{t('variantLabelEn')}</Label>
+                              <Input
+                                id={`${group.id}-label-en`}
+                                value={group.labelEn}
+                                onChange={(e) =>
+                                  updateVariantGroup(group.id, 'labelEn', e.target.value)
+                                }
+                                placeholder="Types"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="grid gap-3 md:grid-cols-2">
+                            <div className="space-y-2">
+                              <Label htmlFor={`${group.id}-values-vi`}>
+                                {t('variantValuesVi')}
+                              </Label>
+                              <Textarea
+                                id={`${group.id}-values-vi`}
+                                rows={2}
+                                value={group.valuesVi}
+                                onChange={(e) =>
+                                  updateVariantGroup(group.id, 'valuesVi', e.target.value)
+                                }
+                                placeholder="Thuong, Cao cap"
+                              />
+                              <FormDescription>
+                                {t('variantValuesCount', {
+                                  count: parseVariantValues(group.valuesVi).length,
+                                })}
+                              </FormDescription>
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor={`${group.id}-values-en`}>
+                                {t('variantValuesEn')}
+                              </Label>
+                              <Textarea
+                                id={`${group.id}-values-en`}
+                                rows={2}
+                                value={group.valuesEn}
+                                onChange={(e) =>
+                                  updateVariantGroup(group.id, 'valuesEn', e.target.value)
+                                }
+                                placeholder="Classic, Premium"
+                              />
+                              <FormDescription>
+                                {t('variantValuesCount', {
+                                  count: parseVariantValues(group.valuesEn).length,
+                                })}
+                              </FormDescription>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs text-muted-foreground">{t('variantValuesHint')}</p>
+                        <Button type="button" variant="outline" size="sm" onClick={addVariantGroup}>
+                          <Plus className="mr-2 h-4 w-4" />
+                          {t('addVariantGroup')}
+                        </Button>
+                      </div>
                     </CardContent>
                   </Card>
 

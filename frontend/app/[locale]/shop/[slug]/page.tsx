@@ -1,8 +1,8 @@
 ﻿import { type Metadata } from 'next'
 import Script from 'next/script'
 import { getLocale } from 'next-intl/server'
-import { fetchBranding } from '@/lib/server-utils'
 import ProductClient from './product-client'
+import { fetchBranding } from '@/lib/server-utils'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
 

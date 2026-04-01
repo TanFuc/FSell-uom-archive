@@ -1,5 +1,6 @@
 'use client'
 
+import { motion, AnimatePresence } from 'framer-motion'
 import { Search, X, Loader2, Menu, Instagram, Facebook } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -9,9 +10,8 @@ import { useState, useEffect, useLayoutEffect, memo } from 'react'
 import { useCategories } from '@/hooks/use-categories'
 import { useProducts } from '@/hooks/use-products'
 import { useBranding, useExchangeRate, useSocialLinks } from '@/hooks/use-settings'
-import { cn } from '@/lib/utils'
 import { getDisplayPrice } from '@/lib/currency'
-import { motion, AnimatePresence } from 'framer-motion'
+import { cn, optimizeProductImage } from '@/lib/utils'
 
 // Optimized Result Item
 const SearchResultItem = memo(({ product, locale, exchangeRate, onClick }: any) => (
@@ -19,11 +19,12 @@ const SearchResultItem = memo(({ product, locale, exchangeRate, onClick }: any) 
     <Link
       href={`/${locale}/shop/${product.slug}`}
       onClick={onClick}
+      prefetch={false}
       className="relative block aspect-square w-24 overflow-hidden rounded-full border border-foreground/[0.03] bg-muted/5 md:w-28"
     >
       {product.images?.[0] && (
         <Image
-          src={product.images[0]}
+          src={optimizeProductImage(product.images[0], { width: 320, height: 320 })}
           alt=""
           fill
           sizes="(max-width: 768px) 96px, 112px"
@@ -69,28 +70,29 @@ export function Header() {
 
   const BRANDING_CACHE_KEY = 'uom_branding_cache'
 
-  const getCachedBrandName = () => {
+  const getCachedBranding = () => {
     if (typeof window === 'undefined') return undefined
     try {
       const stored = localStorage.getItem(BRANDING_CACHE_KEY)
       if (!stored) return undefined
-      const parsed = JSON.parse(stored) as { brandNameVi?: string; brandNameEn?: string }
-      return locale === 'vi' ? parsed.brandNameVi : parsed.brandNameEn
+      return JSON.parse(stored) as { brandNameVi?: string; brandNameEn?: string }
     } catch {
       return undefined
     }
   }
 
-  const [cachedBrandName, setCachedBrandName] = useState<string | undefined>(() =>
-    getCachedBrandName(),
-  )
+  const [cachedBranding, setCachedBranding] = useState<
+    { brandNameVi?: string; brandNameEn?: string } | undefined
+  >(undefined)
 
   useEffect(() => {
-    setCachedBrandName(getCachedBrandName())
-  }, [locale, branding?.brandNameVi, branding?.brandNameEn])
+    setCachedBranding(getCachedBranding())
+  }, [branding?.brandNameVi, branding?.brandNameEn])
 
   const brandText =
-    (locale === 'vi' ? branding?.brandNameVi : branding?.brandNameEn) || cachedBrandName
+    locale === 'vi'
+      ? branding?.brandNameVi || cachedBranding?.brandNameVi || 'ƯƠM. Archive'
+      : branding?.brandNameEn || cachedBranding?.brandNameEn || 'Uom Archive'
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -99,7 +101,10 @@ export function Header() {
     return () => clearTimeout(timer)
   }, [searchQuery])
 
-  const { data: categories } = useCategories({ includeInactive: false })
+  const { data: categories } = useCategories(
+    { includeInactive: false },
+    { enabled: showSearch || showMobileMenu },
+  )
 
   useLayoutEffect(() => {
     if (showSearch || showMobileMenu) {
@@ -115,11 +120,16 @@ export function Header() {
     setShowMobileMenu(false)
   }, [pathname])
 
-  const { data: suggestedProducts, isLoading: isSearching } = useProducts({
-    search: debouncedQuery,
-    limit: 4,
-    isActive: true,
-  })
+  const { data: suggestedProducts, isLoading: isSearching } = useProducts(
+    {
+      search: debouncedQuery,
+      limit: 4,
+      isActive: true,
+    },
+    {
+      enabled: showSearch && debouncedQuery.trim().length >= 2,
+    },
+  )
 
   const navigation = [
     { name: t('shop'), href: `/${locale}/shop` },
@@ -219,7 +229,7 @@ export function Header() {
               tabIndex={isScrolled ? -1 : 0}
               suppressHydrationWarning
             >
-              {brandText || ''}
+              {brandText}
             </Link>
           </div>
 
