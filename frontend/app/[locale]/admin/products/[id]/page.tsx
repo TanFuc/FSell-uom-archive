@@ -1,7 +1,7 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { ArrowLeft, Upload, X, Plus, Languages, RefreshCw } from 'lucide-react'
+import { ArrowLeft, Upload, X, Plus, RefreshCw } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter, useParams } from 'next/navigation'
@@ -42,10 +42,10 @@ import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { useDocumentTitle } from '@/hooks/use-document-title'
+import { useExchangeRate } from '@/hooks/use-settings'
 import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api'
-import { DEFAULT_EXCHANGE_RATE } from '@/lib/constants'
-import { vndToUsd, usdToVnd } from '@/lib/currency'
+import { vndToUsd } from '@/lib/currency'
 import { optimizeAndResizeImage, optimizeAndResizeImages } from '@/lib/image-upload'
 import { Product, type Category } from '@/lib/types'
 import { getImageUrl, slugify } from '@/lib/utils'
@@ -71,9 +71,20 @@ const productSchema = z.object({
   inquiryEnabled: z.boolean().default(true),
   inquiryMessageVi: z.string().optional(),
   inquiryMessageEn: z.string().optional(),
+  variantTypes: z.string().optional(),
+  variantColors: z.string().optional(),
+  variantSizes: z.string().optional(),
 })
 
 type ProductFormValues = z.infer<typeof productSchema>
+
+function parseVariantValues(value?: string): string[] {
+  if (!value) return []
+  return value
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean)
+}
 
 export default function ProductFormPage() {
   const router = useRouter()
@@ -96,6 +107,8 @@ export default function ProductFormPage() {
   const [isCreatingCategory, setIsCreatingCategory] = useState(false)
   const [newCatNameVi, setNewCatNameVi] = useState('')
   const [newCatNameEn, setNewCatNameEn] = useState('')
+  const { data: exchangeRateData } = useExchangeRate()
+  const exchangeRate = exchangeRateData?.rate
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
@@ -120,6 +133,9 @@ export default function ProductFormPage() {
       inquiryEnabled: true,
       inquiryMessageVi: '',
       inquiryMessageEn: '',
+      variantTypes: '',
+      variantColors: '',
+      variantSizes: '',
     },
   })
 
@@ -133,71 +149,30 @@ export default function ProductFormPage() {
   // Auto-convert prices
   const [autoConvertPrice, setAutoConvertPrice] = useState(true)
   const [autoConvertSalePrice, setAutoConvertSalePrice] = useState(true)
-  const [isTranslating, setIsTranslating] = useState(false)
 
   const priceVND = useWatch({ control: form.control, name: 'priceVND' })
   const salePriceVND = useWatch({ control: form.control, name: 'salePriceVND' })
+  const nameViWatch = useWatch({ control: form.control, name: 'nameVi' })
+
+  useEffect(() => {
+    const nextSlug = slugify(nameViWatch || '')
+    form.setValue('slug', nextSlug, { shouldDirty: true })
+  }, [form, nameViWatch])
 
   // Auto-convert VND to USD when VND changes
   useEffect(() => {
     if (autoConvertPrice && priceVND) {
-      const usdValue = vndToUsd(priceVND)
+      const usdValue = vndToUsd(priceVND, exchangeRate)
       form.setValue('priceUSD', usdValue)
     }
-  }, [priceVND, autoConvertPrice, form])
+  }, [priceVND, autoConvertPrice, form, exchangeRate])
 
   useEffect(() => {
     if (autoConvertSalePrice && salePriceVND) {
-      const usdValue = vndToUsd(salePriceVND)
+      const usdValue = vndToUsd(salePriceVND, exchangeRate)
       form.setValue('salePriceUSD', usdValue)
     }
-  }, [salePriceVND, autoConvertSalePrice, form])
-
-  // Simple mock translation function
-  const translateText = async (
-    text: string,
-    from: 'vi' | 'en',
-    to: 'vi' | 'en',
-  ): Promise<string> => {
-    // In a real implementation, this would call a translation API (e.g. Google Translate)
-    // Currently, we'll just return the original text so the user can edit it
-    // This acts as a "Copy" or "Fill" feature when API is not available
-    if (from === to || !text.trim()) return text
-
-    // Mock translation - just return text
-    return text
-  }
-
-  const handleTranslate = async (
-    field: 'name' | 'description',
-    direction: 'vi-to-en' | 'en-to-vi',
-  ) => {
-    setIsTranslating(true)
-    try {
-      if (field === 'name') {
-        if (direction === 'vi-to-en') {
-          const translated = await translateText(form.getValues('nameVi'), 'vi', 'en')
-          form.setValue('nameEn', translated)
-        } else {
-          const translated = await translateText(form.getValues('nameEn'), 'en', 'vi')
-          form.setValue('nameVi', translated)
-        }
-      } else {
-        if (direction === 'vi-to-en') {
-          const translated = await translateText(form.getValues('descriptionVi'), 'vi', 'en')
-          form.setValue('descriptionEn', translated)
-        } else {
-          const translated = await translateText(form.getValues('descriptionEn'), 'en', 'vi')
-          form.setValue('descriptionVi', translated)
-        }
-      }
-      toast({ title: t('success'), description: 'Translation completed' })
-    } catch (error) {
-      toast({ title: t('error'), description: 'Translation failed', variant: 'destructive' })
-    } finally {
-      setIsTranslating(false)
-    }
-  }
+  }, [salePriceVND, autoConvertSalePrice, form, exchangeRate])
 
   const fetchProduct = useCallback(async () => {
     if (isNew) return
@@ -225,6 +200,9 @@ export default function ProductFormPage() {
         inquiryEnabled: product.inquiryEnabled,
         inquiryMessageVi: product.inquiryMessageVi || '',
         inquiryMessageEn: product.inquiryMessageEn || '',
+        variantTypes: '',
+        variantColors: '',
+        variantSizes: '',
       })
       setImages(product.images)
       setHoverImage(product.hoverImage || null)
@@ -288,6 +266,23 @@ export default function ProductFormPage() {
     setImages((prev) => prev.filter((_, i) => i !== index))
   }
 
+  const copyImageUrl = async (image: string) => {
+    try {
+      await navigator.clipboard.writeText(getImageUrl(image))
+      toast({ title: t('success'), description: 'Image URL copied' })
+    } catch {
+      toast({ title: t('error'), description: 'Failed to copy URL', variant: 'destructive' })
+    }
+  }
+
+  const insertImageIntoDescription = (field: 'descriptionVi' | 'descriptionEn', image: string) => {
+    const current = form.getValues(field) || ''
+    const imageHtml = `<p><img src="${getImageUrl(image)}" alt="product-image" /></p>`
+    const nextValue = current ? `${current}\n${imageHtml}` : imageHtml
+    form.setValue(field, nextValue, { shouldDirty: true })
+    toast({ title: t('success'), description: `Inserted image into ${field}` })
+  }
+
   const onSubmit = async (data: ProductFormValues) => {
     if (images.length === 0) {
       toast({
@@ -300,7 +295,32 @@ export default function ProductFormPage() {
 
     setIsSaving(true)
     try {
-      const productData = { ...data, images, hoverImage }
+      const variantTypes = parseVariantValues(data.variantTypes)
+      const variantColors = parseVariantValues(data.variantColors)
+      const variantSizes = parseVariantValues(data.variantSizes)
+
+      const variantSummary = [
+        variantTypes.length > 0 ? `Types (${variantTypes.length}): ${variantTypes.join(', ')}` : '',
+        variantColors.length > 0
+          ? `Colors (${variantColors.length}): ${variantColors.join(', ')}`
+          : '',
+        variantSizes.length > 0 ? `Sizes (${variantSizes.length}): ${variantSizes.join(', ')}` : '',
+      ]
+        .filter(Boolean)
+        .join(' | ')
+
+      const shortDescriptionVi = [data.shortDescriptionVi, variantSummary].filter(Boolean).join('\n')
+      const shortDescriptionEn = [data.shortDescriptionEn, variantSummary].filter(Boolean).join('\n')
+
+      const { variantTypes: _variantTypes, variantColors: _variantColors, variantSizes: _variantSizes, ...restData } = data
+
+      const productData = {
+        ...restData,
+        shortDescriptionVi,
+        shortDescriptionEn,
+        images,
+        hoverImage,
+      }
 
       if (isNew) {
         await api.createProduct(productData)
@@ -315,13 +335,6 @@ export default function ProductFormPage() {
       toast({ title: t('error'), description: 'Failed to save product', variant: 'destructive' })
     } finally {
       setIsSaving(false)
-    }
-  }
-
-  const generateSlug = () => {
-    const nameVi = form.getValues('nameVi')
-    if (nameVi) {
-      form.setValue('slug', slugify(nameVi))
     }
   }
 
@@ -408,169 +421,135 @@ export default function ProductFormPage() {
                       name="slug"
                       render={({ field }) => (
                         <FormItem className="flex-1">
-                          <FormLabel>Slug</FormLabel>
+                          <FormLabel>Slug (auto from Vietnamese name)</FormLabel>
                           <FormControl>
-                            <div className="flex gap-2">
-                              <Input {...field} placeholder="product-slug" />
-                              <Button type="button" variant="outline" onClick={generateSlug}>
-                                Generate
-                              </Button>
-                            </div>
+                            <Input {...field} readOnly placeholder="auto-generated-slug" />
                           </FormControl>
+                          {field.value ? (
+                            <FormDescription>
+                              Product link:{' '}
+                              <a
+                                href={`/${locale}/shop/${field.value}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="underline"
+                              >
+                                /{locale}/shop/{field.value}
+                              </a>
+                            </FormDescription>
+                          ) : null}
                           <FormMessage />
                         </FormItem>
                       )}
                     />
                   </div>
 
-                  {/* Name Fields with Translation */}
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <FormField
-                      control={form.control}
-                      name="nameVi"
-                      render={({ field }) => (
-                        <FormItem>
-                          <div className="flex items-center justify-between">
-                            <FormLabel>{t('vietnameseName')}</FormLabel>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleTranslate('name', 'en-to-vi')}
-                              disabled={isTranslating}
-                              className="h-6 text-xs"
-                            >
-                              <Languages className="mr-1 h-3 w-3" />
-                              EN → VI
-                            </Button>
-                          </div>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="nameEn"
-                      render={({ field }) => (
-                        <FormItem>
-                          <div className="flex items-center justify-between">
-                            <FormLabel>{t('englishName')}</FormLabel>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleTranslate('name', 'vi-to-en')}
-                              disabled={isTranslating}
-                              className="h-6 text-xs"
-                            >
-                              <Languages className="mr-1 h-3 w-3" />
-                              VI → EN
-                            </Button>
-                          </div>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    <Card className="border-primary/20">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-sm uppercase tracking-wide">
+                          Vietnamese Content
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <FormField
+                          control={form.control}
+                          name="nameVi"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>{t('vietnameseName')}</FormLabel>
+                              <FormControl>
+                                <Input {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="shortDescriptionVi"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Mo ta ngan (Tieng Viet)</FormLabel>
+                              <FormControl>
+                                <Textarea {...field} rows={3} placeholder="Mo ta tom tat..." />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="descriptionVi"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>{t('vietnameseDescription')}</FormLabel>
+                              <FormControl>
+                                <RichTextEditor
+                                  content={field.value}
+                                  onChange={field.onChange}
+                                  placeholder={t('enterDescription')}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </CardContent>
+                    </Card>
 
-                  {/* Short Description Fields */}
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <FormField
-                      control={form.control}
-                      name="shortDescriptionVi"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Mô tả ngắn (Tiếng Việt)</FormLabel>
-                          <FormControl>
-                            <Textarea {...field} rows={3} placeholder="Mô tả tóm tắt..." />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="shortDescriptionEn"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Short Description (English)</FormLabel>
-                          <FormControl>
-                            <Textarea {...field} rows={3} placeholder="Summary description..." />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  {/* Description Fields with Rich Text Editor and Translation */}
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <FormField
-                      control={form.control}
-                      name="descriptionVi"
-                      render={({ field }) => (
-                        <FormItem>
-                          <div className="flex items-center justify-between">
-                            <FormLabel>{t('vietnameseDescription')}</FormLabel>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleTranslate('description', 'en-to-vi')}
-                              disabled={isTranslating}
-                              className="h-6 text-xs"
-                            >
-                              <Languages className="mr-1 h-3 w-3" />
-                              EN → VI
-                            </Button>
-                          </div>
-                          <FormControl>
-                            <RichTextEditor
-                              content={field.value}
-                              onChange={field.onChange}
-                              placeholder={t('enterDescription')}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="descriptionEn"
-                      render={({ field }) => (
-                        <FormItem>
-                          <div className="flex items-center justify-between">
-                            <FormLabel>{t('englishDescription')}</FormLabel>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleTranslate('description', 'vi-to-en')}
-                              disabled={isTranslating}
-                              className="h-6 text-xs"
-                            >
-                              <Languages className="mr-1 h-3 w-3" />
-                              VI → EN
-                            </Button>
-                          </div>
-                          <FormControl>
-                            <RichTextEditor
-                              content={field.value}
-                              onChange={field.onChange}
-                              placeholder={t('enterDescription')}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    <Card className="border-primary/20">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-sm uppercase tracking-wide">
+                          English Content
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <FormField
+                          control={form.control}
+                          name="nameEn"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>{t('englishName')}</FormLabel>
+                              <FormControl>
+                                <Input {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="shortDescriptionEn"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Short Description (English)</FormLabel>
+                              <FormControl>
+                                <Textarea {...field} rows={3} placeholder="Summary description..." />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="descriptionEn"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>{t('englishDescription')}</FormLabel>
+                              <FormControl>
+                                <RichTextEditor
+                                  content={field.value}
+                                  onChange={field.onChange}
+                                  placeholder={t('enterDescription')}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </CardContent>
+                    </Card>
                   </div>
 
                   {/* Price Fields */}
@@ -735,6 +714,63 @@ export default function ProductFormPage() {
                       )}
                     />
                   </div>
+
+                  <Card className="bg-muted/30">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base">Variant Classification (Optional)</CardTitle>
+                      <CardDescription>
+                        Use comma-separated values. This helps users quickly understand available
+                        types, colors and sizes.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="grid gap-4 md:grid-cols-3">
+                      <FormField
+                        control={form.control}
+                        name="variantTypes"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Types</FormLabel>
+                            <FormControl>
+                              <Textarea {...field} rows={3} placeholder="Classic, Premium" />
+                            </FormControl>
+                            <FormDescription>
+                              {parseVariantValues(field.value).length} type(s)
+                            </FormDescription>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="variantColors"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Colors</FormLabel>
+                            <FormControl>
+                              <Textarea {...field} rows={3} placeholder="Ivory, Sand, Moss" />
+                            </FormControl>
+                            <FormDescription>
+                              {parseVariantValues(field.value).length} color(s)
+                            </FormDescription>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="variantSizes"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Sizes</FormLabel>
+                            <FormControl>
+                              <Textarea {...field} rows={3} placeholder="S, M, L" />
+                            </FormControl>
+                            <FormDescription>
+                              {parseVariantValues(field.value).length} size(s)
+                            </FormDescription>
+                          </FormItem>
+                        )}
+                      />
+                    </CardContent>
+                  </Card>
 
                   {/* Category and Stock */}
                   <div className="grid gap-4 md:grid-cols-2">
@@ -914,20 +950,50 @@ export default function ProductFormPage() {
                             Main Display
                           </div>
                         )}
-                        <div className="absolute inset-x-0 bottom-0 flex translate-y-full justify-center bg-black/60 p-2 transition-transform duration-300 group-hover:translate-y-0">
+                        <div className="absolute inset-x-0 bottom-0 grid translate-y-full grid-cols-2 gap-1 bg-black/70 p-2 transition-transform duration-300 group-hover:translate-y-0">
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            className="h-7 text-[10px]"
+                            onClick={() => copyImageUrl(image)}
+                          >
+                            Copy URL
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            className="h-7 text-[10px]"
+                            onClick={() => insertImageIntoDescription('descriptionVi', image)}
+                          >
+                            Insert VI
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            className="h-7 text-[10px]"
+                            onClick={() => insertImageIntoDescription('descriptionEn', image)}
+                          >
+                            Insert EN
+                          </Button>
                           <Button
                             type="button"
                             variant="destructive"
                             size="sm"
-                            className="h-7 w-7 rounded-full p-0"
+                            className="h-7 text-[10px]"
                             onClick={() => removeImage(index)}
                           >
-                            <X className="h-4 w-4" />
+                            Remove
                           </Button>
                         </div>
                       </div>
                     ))}
                   </div>
+                  <p className="text-xs text-muted-foreground">
+                    Tip: Use Insert VI/EN to quickly place selected image into product description.
+                  </p>
 
                   <div className="relative">
                     <input
