@@ -14,7 +14,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U postgres -d uom_archive']
+      test: ['CMD-SHELL', 'pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -29,7 +29,7 @@ services:
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ['CMD', 'redis-cli', '-a', '${REDIS_PASSWORD}', 'ping']
+      test: ['CMD-SHELL', 'redis-cli -a "$$REDIS_PASSWORD" ping | grep -q PONG']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -50,7 +50,8 @@ services:
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
       JWT_ACCESS_EXPIRATION: ${JWT_ACCESS_EXPIRATION}
       JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION}
-      PORT: ${BACKEND_PORT}
+      # Keep container listen port fixed; BACKEND_PORT is host-exposed port.
+      PORT: 3001
       NODE_ENV: production
       FRONTEND_URL: ${FRONTEND_URL}
       FRONTEND_URLS: ${FRONTEND_URLS}
@@ -96,7 +97,8 @@ services:
       - ./.env.prod
     environment:
       NODE_ENV: production
-      PORT: ${FRONTEND_PORT}
+      # Keep container listen port fixed; FRONTEND_PORT is host-exposed port.
+      PORT: 3000
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
       NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
     ports:

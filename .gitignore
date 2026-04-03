@@ -1,1 +1,5 @@
 nul
+
+# Root environment files (secrets)
+.env.prod
+.env.docker
