@@ -3,7 +3,7 @@ import Script from 'next/script'
 import HomeClient from './home-client'
 import { fetchBranding } from '@/lib/server-utils'
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://uomarchive.com'
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://www.uomarchive.com'
 
 export async function generateMetadata({
   params,
@@ -64,7 +64,7 @@ export default async function HomePage({ params }: { params: { locale: string } 
             '@context': 'https://schema.org',
             '@type': 'Organization',
             name: name,
-            url: 'https://uomarchive.com',
+            url: 'https://www.uomarchive.com',
             logo: logo,
             sameAs: [],
             description: description,

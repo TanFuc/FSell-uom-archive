@@ -3,7 +3,7 @@ import Script from 'next/script'
 import AboutClient from './about-client'
 import { fetchBranding } from '@/lib/server-utils'
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://uomarchive.com'
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://www.uomarchive.com'
 
 export async function generateMetadata({
   params,

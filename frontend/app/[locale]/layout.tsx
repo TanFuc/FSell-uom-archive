@@ -44,13 +44,24 @@ export function generateStaticParams() {
   return locales.map((locale) => ({ locale }))
 }
 
+function getSafeBaseUrl(): string {
+  const fallback = 'https://www.uomarchive.com'
+  const raw = process.env.NEXT_PUBLIC_APP_URL?.trim() || fallback
+
+  try {
+    return new URL(raw).toString().replace(/\/$/, '')
+  } catch {
+    return fallback
+  }
+}
+
 export async function generateMetadata({
   params: { locale },
 }: {
   params: { locale: string }
 }): Promise<Metadata> {
   const branding = await fetchBranding()
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  const baseUrl = getSafeBaseUrl()
 
   const defaultTitle =
     locale === 'vi'
@@ -68,6 +79,7 @@ export async function generateMetadata({
       : (branding?.siteDescriptionEn ?? 'Discover timeless Vietnamese ceramics curated with care.')
 
   const logoUrl = branding?.logoUrl || '/assets/logo.png'
+  const tabIconUrl = '/assets/logo.png'
 
   return {
     metadataBase: new URL(baseUrl),
@@ -105,10 +117,14 @@ export async function generateMetadata({
       images: [logoUrl],
     },
     icons: {
-      icon: [{ url: '/favicon.ico' }, { url: logoUrl, sizes: 'any' }],
-      apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
+      icon: [
+        { url: tabIconUrl, type: 'image/png' },
+        { url: '/assets/logo.svg', type: 'image/svg+xml' },
+      ],
+      shortcut: [{ url: tabIconUrl, type: 'image/png' }],
+      apple: [{ url: tabIconUrl, sizes: '180x180', type: 'image/png' }],
     },
-    manifest: '/manifest.json',
+    manifest: '/manifest.webmanifest',
   }
 }
 
@@ -123,7 +139,8 @@ export default async function RootLayout({ children, params: { locale } }: RootL
   }
 
   unstable_setRequestLocale(locale)
-  const messages = await getMessages()
+  const [messages, branding] = await Promise.all([getMessages(), fetchBranding()])
+  const initialLoadingText = branding?.loadingText?.trim() || undefined
 
   return (
     <html lang={locale} suppressHydrationWarning>
@@ -133,7 +150,7 @@ export default async function RootLayout({ children, params: { locale } }: RootL
         <DisableRightClick />
         <NextIntlClientProvider messages={messages}>
           <QueryProvider>
-            <ConditionalLayout>{children}</ConditionalLayout>
+            <ConditionalLayout initialLoadingText={initialLoadingText}>{children}</ConditionalLayout>
             <Toaster />
             <SonnerToaster />
           </QueryProvider>

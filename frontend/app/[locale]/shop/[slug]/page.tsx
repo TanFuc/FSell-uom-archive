@@ -5,12 +5,71 @@ import ProductClient from './product-client'
 import { fetchBranding } from '@/lib/server-utils'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+const BASE_URL = (process.env.NEXT_PUBLIC_APP_URL || 'https://www.uomarchive.com').replace(/\/$/, '')
 
-async function fetchProduct(slug: string) {
+type ProductDetail = {
+  slug: string
+  nameVi?: string
+  nameEn?: string
+  shortDescriptionVi?: string
+  shortDescriptionEn?: string
+  descriptionVi?: string
+  descriptionEn?: string
+  images?: string[]
+  priceVND?: number
+  salePriceVND?: number | null
+  stock?: number
+  material?: string
+  dimensions?: string
+  updatedAt?: string
+  category?: {
+    nameVi?: string
+    nameEn?: string
+  } | null
+}
+
+type ProductResponse = {
+  data?: ProductDetail
+}
+
+function stripHtml(value: string | undefined): string {
+  return (value ?? '').replace(/<[^>]*>/g, '').trim()
+}
+
+function toAbsoluteUrl(value: string): string {
+  if (/^https?:\/\//i.test(value)) {
+    return value
+  }
+
+  return `${BASE_URL}${value.startsWith('/') ? value : `/${value}`}`
+}
+
+function unwrapProductResponse(payload: unknown): ProductDetail | null {
+  if (!payload || typeof payload !== 'object') {
+    return null
+  }
+
+  const root = payload as { data?: unknown }
+
+  if (root.data && typeof root.data === 'object' && !Array.isArray(root.data)) {
+    const nested = root.data as ProductResponse
+
+    if (nested.data && typeof nested.data === 'object') {
+      return nested.data
+    }
+
+    return root.data as ProductDetail
+  }
+
+  return null
+}
+
+async function fetchProduct(slug: string): Promise<ProductDetail | null> {
   try {
     const res = await fetch(`${API_URL}/products/${slug}`, { next: { revalidate: 300 } })
     if (!res.ok) return null
-    return res.json()
+    const payload = (await res.json()) as unknown
+    return unwrapProductResponse(payload)
   } catch {
     return null
   }
@@ -33,16 +92,26 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const locale = await getLocale()
   const [product, branding] = await Promise.all([fetchProduct(params.slug), fetchBranding()])
 
-  if (!product) return { title: 'Product Not Found' }
+  if (!product) {
+    return {
+      title: 'Product Not Found',
+      robots: {
+        index: false,
+        follow: false,
+      },
+    }
+  }
 
   const isVi = locale === 'vi'
   const brandName = getBrandName(locale, branding)
   const name = isVi ? product.nameVi : product.nameEn
-  const rawDescription = isVi
-    ? product.shortDescriptionVi || product.descriptionVi || ''
-    : product.shortDescriptionEn || product.descriptionEn || ''
-  const description = rawDescription.replace(/<[^>]*>/g, '').slice(0, 160) || undefined
-  const firstImage = product.images?.[0]
+  const rawDescription =
+    (isVi
+      ? product.shortDescriptionVi || product.descriptionVi
+      : product.shortDescriptionEn || product.descriptionEn) ?? ''
+  const description = stripHtml(rawDescription).slice(0, 160) || undefined
+  const firstImage = product.images?.[0] ? toAbsoluteUrl(product.images[0]) : undefined
+  const canonicalPath = `/${locale}/shop/${params.slug}`
 
   return {
     title: name,
@@ -50,6 +119,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title: `${name} | ${brandName}`,
       description,
+      url: `${BASE_URL}${canonicalPath}`,
       type: 'website',
       images: firstImage ? [{ url: firstImage, width: 1200, height: 1600, alt: name }] : undefined,
     },
@@ -60,10 +130,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       images: firstImage ? [firstImage] : undefined,
     },
     alternates: {
-      canonical: `/${locale}/shop/${params.slug}`,
+      canonical: canonicalPath,
       languages: {
         vi: `/vi/shop/${params.slug}`,
         en: `/en/shop/${params.slug}`,
+        'x-default': `/vi/shop/${params.slug}`,
       },
     },
   }
@@ -73,34 +144,63 @@ export default async function ProductPage({ params }: Props) {
   const locale = await getLocale()
   const [product, branding] = await Promise.all([fetchProduct(params.slug), fetchBranding()])
   const brandName = getBrandName(locale, branding)
+  const isVi = locale === 'vi'
+  const name = product ? (isVi ? product.nameVi : product.nameEn) : ''
+  const description =
+    product
+      ? stripHtml(
+          isVi
+            ? product.shortDescriptionVi || product.descriptionVi || ''
+            : product.shortDescriptionEn || product.descriptionEn || '',
+        ).slice(0, 300)
+      : ''
+  const productUrl = `${BASE_URL}/${locale}/shop/${params.slug}`
+  const images = (product?.images ?? []).map((value) => toAbsoluteUrl(value))
+  const categoryName = isVi ? product?.category?.nameVi : product?.category?.nameEn
 
   const jsonLd = product
     ? {
         '@context': 'https://schema.org',
         '@type': 'Product',
-        name: locale === 'vi' ? product.nameVi : product.nameEn,
-        description:
-          locale === 'vi'
-            ? (product.shortDescriptionVi || product.descriptionVi || '')
-                .replace(/<[^>]*>/g, '')
-                .slice(0, 300)
-            : (product.shortDescriptionEn || product.descriptionEn || '')
-                .replace(/<[^>]*>/g, '')
-                .slice(0, 300),
-        image: product.images ?? [],
+        '@id': productUrl,
+        url: productUrl,
+        name,
+        description,
+        image: images,
         sku: product.slug,
+        category: categoryName || undefined,
+        inLanguage: isVi ? 'vi-VN' : 'en-US',
         offers: {
           '@type': 'Offer',
+          url: productUrl,
           priceCurrency: 'VND',
-          price: product.salePriceVND ?? product.priceVND,
+          price: String(product.salePriceVND ?? product.priceVND ?? 0),
+          itemCondition: 'https://schema.org/NewCondition',
           availability:
-            product.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
-          url: `https://uomarchive.com/${locale}/shop/${params.slug}`,
+            (product.stock ?? 0) > 0
+              ? 'https://schema.org/InStock'
+              : 'https://schema.org/OutOfStock',
         },
         brand: {
           '@type': 'Brand',
           name: brandName,
         },
+        additionalProperty: [
+          product.material
+            ? {
+                '@type': 'PropertyValue',
+                name: isVi ? 'Chất liệu' : 'Material',
+                value: product.material,
+              }
+            : null,
+          product.dimensions
+            ? {
+                '@type': 'PropertyValue',
+                name: isVi ? 'Kích thước' : 'Dimensions',
+                value: product.dimensions,
+              }
+            : null,
+        ].filter(Boolean),
       }
     : null
 
@@ -128,19 +228,19 @@ export default async function ProductPage({ params }: Props) {
                   '@type': 'ListItem',
                   position: 1,
                   name: 'Home',
-                  item: `https://uomarchive.com/${locale}`,
+                  item: `https://www.uomarchive.com/${locale}`,
                 },
                 {
                   '@type': 'ListItem',
                   position: 2,
                   name: 'Shop',
-                  item: `https://uomarchive.com/${locale}/shop`,
+                  item: `https://www.uomarchive.com/${locale}/shop`,
                 },
                 {
                   '@type': 'ListItem',
                   position: 3,
-                  name: locale === 'vi' ? product.nameVi : product.nameEn,
-                  item: `https://uomarchive.com/${locale}/shop/${params.slug}`,
+                  name,
+                  item: productUrl,
                 },
               ],
             }),
