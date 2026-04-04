@@ -10,6 +10,16 @@ const apiPort = apiUrlObj.port
 
 const nextConfig = {
   output: 'standalone',
+  async redirects() {
+    return [
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'uomarchive.com' }],
+        destination: 'https://www.uomarchive.com/:path*',
+        permanent: true,
+      },
+    ]
+  },
   eslint: {
     // Warning: This allows production builds to successfully complete even if
     // your project has ESLint errors.
