@@ -237,10 +237,17 @@ export interface CreateUserDto {
 }
 
 export interface UpdateUserDto {
+  email?: string
   fullName?: string
   role?: 'ADMIN' | 'MANAGER'
   isActive?: boolean
   password?: string
+}
+
+export interface UpdateMyProfileDto {
+  email?: string
+  currentPassword?: string
+  newPassword?: string
 }
 
 export interface QueryUsersDto {

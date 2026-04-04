@@ -1,9 +1,15 @@
-import { Injectable, UnauthorizedException, ConflictException, Logger } from '@nestjs/common'
+import {
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+  Logger,
+  BadRequestException,
+} from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { JwtService } from '@nestjs/jwt'
 import * as bcrypt from 'bcrypt'
 import { PrismaService } from '../prisma/prisma.service'
-import { LoginDto, RegisterDto } from './dto'
+import { LoginDto, RegisterDto, UpdateProfileDto } from './dto'
 
 export interface TokenPayload {
   sub: string
@@ -154,6 +160,66 @@ export class AuthService {
     }
 
     return user
+  }
+
+  async updateProfile(userId: string, dto: UpdateProfileDto) {
+    if (!dto.email && !dto.newPassword) {
+      throw new BadRequestException('No profile changes provided')
+    }
+
+    const user = await this.prisma.user.findUnique({ where: { id: userId } })
+
+    if (!user) {
+      throw new UnauthorizedException('Không tìm thấy người dùng')
+    }
+
+    if (dto.newPassword && !dto.currentPassword) {
+      throw new BadRequestException('Current password is required to change password')
+    }
+
+    if (dto.currentPassword && !dto.newPassword) {
+      throw new BadRequestException('New password is required')
+    }
+
+    if (dto.email && dto.email !== user.email) {
+      const existingUser = await this.prisma.user.findUnique({
+        where: { email: dto.email },
+      })
+
+      if (existingUser && existingUser.id !== userId) {
+        throw new ConflictException(`User with email "${dto.email}" already exists`)
+      }
+    }
+
+    const updateData: { email?: string; passwordHash?: string } = {}
+
+    if (dto.email && dto.email !== user.email) {
+      updateData.email = dto.email
+    }
+
+    if (dto.newPassword && dto.currentPassword) {
+      const currentPasswordValid = await bcrypt.compare(dto.currentPassword, user.passwordHash)
+      if (!currentPasswordValid) {
+        throw new UnauthorizedException('Current password is incorrect')
+      }
+
+      updateData.passwordHash = await bcrypt.hash(dto.newPassword, 10)
+    }
+
+    const updated = await this.prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        role: true,
+        createdAt: true,
+      },
+    })
+
+    this.logger.log(`User profile updated: ${updated.email}`)
+    return updated
   }
 
   private async generateTokens(payload: TokenPayload): Promise<Tokens> {

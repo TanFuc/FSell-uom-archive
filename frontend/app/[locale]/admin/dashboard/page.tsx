@@ -1,11 +1,26 @@
 'use client'
 
+import { zodResolver } from '@hookform/resolvers/zod'
 import { Package, Users, DollarSign, Eye, LayoutGrid, CheckCircle, Star } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useEffect, useState } from 'react'
+import { useForm } from 'react-hook-form'
+import * as z from 'zod'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 import { useDocumentTitle } from '@/hooks/use-document-title'
+import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api'
+import { useAuthStore } from '@/lib/store'
 
 interface DashboardStats {
   totalProducts: number
@@ -14,8 +29,55 @@ interface DashboardStats {
   totalUsers: number
 }
 
+const accountSchema = z
+  .object({
+    email: z.string().email('Invalid email'),
+    currentPassword: z.string().optional().or(z.literal('')),
+    newPassword: z
+      .string()
+      .min(8, 'Password must be at least 8 characters')
+      .optional()
+      .or(z.literal('')),
+    confirmNewPassword: z
+      .string()
+      .min(8, 'Password must be at least 8 characters')
+      .optional()
+      .or(z.literal('')),
+  })
+  .superRefine((data, ctx) => {
+    if ((data.newPassword || data.confirmNewPassword) && data.newPassword !== data.confirmNewPassword) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['confirmNewPassword'],
+        message: 'Passwords do not match',
+      })
+    }
+
+    if (data.newPassword && !data.currentPassword) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['currentPassword'],
+        message: 'Current password is required',
+      })
+    }
+  })
+
+type AccountFormValues = z.infer<typeof accountSchema>
+
+function extractBackendMessages(error: unknown): string[] {
+  const responseMessage = (error as any)?.response?.data?.message
+
+  if (Array.isArray(responseMessage)) return responseMessage.map((message) => String(message))
+  if (typeof responseMessage === 'string') return [responseMessage]
+  if (typeof (error as any)?.message === 'string') return [(error as any).message]
+
+  return []
+}
+
 export default function DashboardPage() {
   const t = useTranslations('admin')
+  const { toast } = useToast()
+  const { user: currentUser, setUser } = useAuthStore()
   const [stats, setStats] = useState<DashboardStats>({
     totalProducts: 0,
     activeProducts: 0,
@@ -24,8 +86,29 @@ export default function DashboardPage() {
   })
   const [isLoading, setIsLoading] = useState(true)
 
+  const accountForm = useForm<AccountFormValues>({
+    resolver: zodResolver(accountSchema),
+    defaultValues: {
+      email: '',
+      currentPassword: '',
+      newPassword: '',
+      confirmNewPassword: '',
+    },
+  })
+
   // Update document title
   useDocumentTitle(t('dashboard'), 'Admin - ƯƠM. Archive')
+
+  useEffect(() => {
+    if (!currentUser?.email) return
+
+    accountForm.reset({
+      email: currentUser.email,
+      currentPassword: '',
+      newPassword: '',
+      confirmNewPassword: '',
+    })
+  }, [currentUser?.email, accountForm])
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -50,6 +133,75 @@ export default function DashboardPage() {
 
     fetchStats()
   }, [])
+
+  const onUpdateAccount = async (data: AccountFormValues) => {
+    accountForm.clearErrors(['email', 'currentPassword', 'newPassword', 'confirmNewPassword'])
+
+    const payload: { email?: string; currentPassword?: string; newPassword?: string } = {}
+
+    if (data.email && data.email !== currentUser?.email) {
+      payload.email = data.email
+    }
+
+    if (data.newPassword) {
+      payload.currentPassword = data.currentPassword
+      payload.newPassword = data.newPassword
+    }
+
+    if (!payload.email && !payload.newPassword) {
+      toast({ title: t('error'), description: t('noChangesToUpdate'), variant: 'destructive' })
+      return
+    }
+
+    try {
+      const updatedUser = await api.updateMyProfile(payload)
+      setUser({
+        ...currentUser,
+        ...updatedUser,
+      })
+
+      accountForm.reset({
+        email: updatedUser.email,
+        currentPassword: '',
+        newPassword: '',
+        confirmNewPassword: '',
+      })
+
+      toast({ title: t('success'), description: t('accountUpdated') })
+    } catch (error) {
+      const messages = extractBackendMessages(error)
+      let hasFieldError = false
+
+      messages.forEach((message) => {
+        const normalized = message.toLowerCase()
+
+        if (normalized.includes('email')) {
+          accountForm.setError('email', { type: 'server', message })
+          hasFieldError = true
+          return
+        }
+
+        if (normalized.includes('current password')) {
+          accountForm.setError('currentPassword', { type: 'server', message })
+          hasFieldError = true
+          return
+        }
+
+        if (normalized.includes('password')) {
+          accountForm.setError('newPassword', { type: 'server', message })
+          hasFieldError = true
+        }
+      })
+
+      if (!hasFieldError) {
+        toast({
+          title: t('error'),
+          description: messages[0] || t('failedToUpdateAccount'),
+          variant: 'destructive',
+        })
+      }
+    }
+  }
 
   const statCards = [
     {
@@ -152,6 +304,79 @@ export default function DashboardPage() {
               <p className="text-sm text-muted-foreground">{t('settingsDesc')}</p>
             </div>
           </a>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm font-medium uppercase tracking-wide">
+            {t('accountManagement')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Form {...accountForm}>
+            <form onSubmit={accountForm.handleSubmit(onUpdateAccount)} className="space-y-4">
+              <FormField
+                control={accountForm.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('loginAccountEmail')}</FormLabel>
+                    <FormControl>
+                      <Input {...field} type="email" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <FormField
+                  control={accountForm.control}
+                  name="currentPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('currentPassword')}</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="password" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={accountForm.control}
+                  name="newPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('newPassword')}</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="password" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={accountForm.control}
+                name="confirmNewPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('confirmNewPassword')}</FormLabel>
+                    <FormControl>
+                      <Input {...field} type="password" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <Button type="submit">{t('updateAccount')}</Button>
+            </form>
+          </Form>
         </CardContent>
       </Card>
     </div>

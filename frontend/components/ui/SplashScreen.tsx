@@ -3,25 +3,54 @@
 import { useEffect, useState } from 'react'
 import { useBranding } from '@/hooks/use-settings'
 
-export function SplashScreen() {
+const BRANDING_CACHE_KEY = 'uom_branding_cache'
+const DEFAULT_LOADING_TEXT = ''
+
+function getCachedLoadingText() {
+  if (typeof window === 'undefined') return undefined
+  try {
+    const stored = localStorage.getItem(BRANDING_CACHE_KEY)
+    if (!stored) return undefined
+    const parsed = JSON.parse(stored) as { loadingText?: string }
+    return parsed.loadingText
+  } catch {
+    return undefined
+  }
+}
+
+function syncLoadingTextToCache(initialLoadingText?: string) {
+  if (typeof window === 'undefined') return
+
+  const normalized = initialLoadingText?.trim()
+  if (!normalized) return
+
+  try {
+    const stored = localStorage.getItem(BRANDING_CACHE_KEY)
+    const parsed = stored ? (JSON.parse(stored) as Record<string, unknown>) : {}
+    localStorage.setItem(
+      BRANDING_CACHE_KEY,
+      JSON.stringify({
+        ...parsed,
+        loadingText: normalized,
+      }),
+    )
+  } catch {
+    // no-op
+  }
+}
+
+export function SplashScreen({ initialLoadingText }: { initialLoadingText?: string }) {
   const { data: branding } = useBranding()
   const [show, setShow] = useState(true)
 
-  const BRANDING_CACHE_KEY = 'uom_branding_cache'
+  const [cachedLoadingText, setCachedLoadingText] = useState<string | undefined>(() =>
+    getCachedLoadingText(),
+  )
 
-  const getCachedLoadingText = () => {
-    if (typeof window === 'undefined') return undefined
-    try {
-      const stored = localStorage.getItem(BRANDING_CACHE_KEY)
-      if (!stored) return undefined
-      const parsed = JSON.parse(stored) as { loadingText?: string }
-      return parsed.loadingText
-    } catch {
-      return undefined
-    }
-  }
-
-  const [cachedLoadingText, setCachedLoadingText] = useState<string | undefined>(undefined)
+  useEffect(() => {
+    syncLoadingTextToCache(initialLoadingText)
+    setCachedLoadingText(getCachedLoadingText())
+  }, [initialLoadingText])
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -35,20 +64,25 @@ export function SplashScreen() {
     setCachedLoadingText(getCachedLoadingText())
   }, [branding?.loadingText])
 
-  const displayText = branding?.loadingText || cachedLoadingText || 'ƯƠM.'
+  const displayText =
+    initialLoadingText || branding?.loadingText || cachedLoadingText || DEFAULT_LOADING_TEXT
+  const normalizedDisplayText = displayText.trim()
 
   return (
     <div
       className={`fixed inset-0 z-[100] flex items-center justify-center bg-background transition-opacity duration-500 ${show ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
       aria-hidden={!show}
     >
-      <div className="relative">
-        <h1
-          className="animate-pulse font-playfair text-6xl font-bold tracking-widest text-foreground md:text-8xl"
-          suppressHydrationWarning
-        >
-          {displayText}
-        </h1>
+      <div className="relative mx-auto w-full max-w-[90vw] px-4 text-center">
+        {normalizedDisplayText && (
+          <h1
+            className="animate-pulse break-words font-playfair text-[clamp(2rem,12vw,5rem)] font-bold leading-[0.95] tracking-[0.08em] text-foreground [overflow-wrap:anywhere] md:tracking-[0.12em]"
+            style={{ animation: 'fadeIn 180ms ease-out, pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}
+            suppressHydrationWarning
+          >
+            {normalizedDisplayText}
+          </h1>
+        )}
       </div>
     </div>
   )

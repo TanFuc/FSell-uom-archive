@@ -110,13 +110,13 @@ export default function BannersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="font-serif text-2xl">{t('banners.pageTitle')}</h1>
           <p className="text-muted-foreground">{t('banners.pageDesc')}</p>
         </div>
         <Link href={`/${locale}/admin/banners/new`}>
-          <Button>
+          <Button className="w-full sm:w-auto">
             <Plus className="mr-2 h-4 w-4" />
             {t('banners.create')}
           </Button>

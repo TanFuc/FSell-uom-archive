@@ -216,19 +216,19 @@ export default function ProductsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="font-serif text-2xl">{t('products')}</h1>
           <p className="text-muted-foreground">{t('manageProductCatalog')}</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
           <Link href={`/${locale}/admin/products/trash`}>
-            <Button variant="outline">
+            <Button variant="outline" className="w-full sm:w-auto">
               <Trash className="mr-2 h-4 w-4" />
               {t('trash')}
             </Button>
           </Link>
-          <Button onClick={() => router.push(`/${locale}/admin/products/new`)}>
+          <Button onClick={() => router.push(`/${locale}/admin/products/new`)} className="w-full sm:w-auto">
             <Plus className="mr-2 h-4 w-4" />
             {t('create')}
           </Button>
@@ -236,8 +236,8 @@ export default function ProductsPage() {
       </div>
 
       {/* Search */}
-      <div className="flex items-center gap-4">
-        <div className="relative max-w-sm flex-1">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+        <div className="relative w-full max-w-sm flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder={t('search')}
@@ -250,35 +250,71 @@ export default function ProductsPage() {
 
       {/* Bulk Actions */}
       {selectedProducts.length > 0 && (
-        <div className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/10 p-4">
-          <span className="text-sm font-medium">
+        <div className="space-y-3 rounded-lg border border-primary/20 bg-primary/10 p-4">
+          <span className="block text-sm font-medium">
             {selectedProducts.length} {t('selected')}
           </span>
-          <Button variant="outline" size="sm" onClick={() => setSelectedProducts([])}>
-            {t('clear')}
-          </Button>
-          <div className="mx-2 h-4 w-px bg-border" />
-          <Button variant="outline" size="sm" onClick={() => handleBulkToggleActive(true)}>
-            <Power className="mr-2 h-4 w-4" />
-            Bật
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => handleBulkToggleActive(false)}>
-            <PowerOff className="mr-2 h-4 w-4" />
-            Tắt
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => handleBulkToggleFeatured(true)}>
-            <Star className="mr-2 h-4 w-4" />
-            Nổi bật
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => handleBulkToggleFeatured(false)}>
-            <StarOff className="mr-2 h-4 w-4" />
-            Bỏ nổi bật
-          </Button>
-          <div className="mx-2 h-4 w-px bg-border" />
-          <Button variant="destructive" size="sm" onClick={handleBulkDelete}>
-            <Trash2 className="mr-2 h-4 w-4" />
-            {t('deleteSelected')}
-          </Button>
+          <div className="relative">
+            <div className="hide-scrollbar -mx-1 flex snap-x snap-mandatory gap-2 overflow-x-auto px-1 pb-1 md:mx-0 md:flex-wrap md:overflow-visible md:px-0 md:pb-0">
+              <Button
+                variant="outline"
+                size="sm"
+                className="snap-start shrink-0"
+                onClick={() => setSelectedProducts([])}
+              >
+                {t('clear')}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="snap-start shrink-0"
+                onClick={() => handleBulkToggleActive(true)}
+              >
+                <Power className="mr-2 h-4 w-4" />
+                Bật
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="snap-start shrink-0"
+                onClick={() => handleBulkToggleActive(false)}
+              >
+                <PowerOff className="mr-2 h-4 w-4" />
+                Tắt
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="snap-start shrink-0"
+                onClick={() => handleBulkToggleFeatured(true)}
+              >
+                <Star className="mr-2 h-4 w-4" />
+                Nổi bật
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="snap-start shrink-0"
+                onClick={() => handleBulkToggleFeatured(false)}
+              >
+                <StarOff className="mr-2 h-4 w-4" />
+                Bỏ nổi bật
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                className="snap-start shrink-0"
+                onClick={handleBulkDelete}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                {t('deleteSelected')}
+              </Button>
+            </div>
+
+            {/* Mobile hint: faded edges to indicate horizontal scroll */}
+            <div className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-primary/20 to-transparent md:hidden" />
+            <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-primary/20 to-transparent md:hidden" />
+          </div>
         </div>
       )}
 

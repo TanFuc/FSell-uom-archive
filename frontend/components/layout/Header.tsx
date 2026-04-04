@@ -1,7 +1,7 @@
 'use client'
 
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, X, Loader2, Menu, Instagram, Facebook } from 'lucide-react'
+import { Search, X, Menu, Instagram, Facebook } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
@@ -75,14 +75,18 @@ export function Header() {
     try {
       const stored = localStorage.getItem(BRANDING_CACHE_KEY)
       if (!stored) return undefined
-      return JSON.parse(stored) as { brandNameVi?: string; brandNameEn?: string }
+      return JSON.parse(stored) as {
+        brandNameVi?: string
+        brandNameEn?: string
+        loadingText?: string
+      }
     } catch {
       return undefined
     }
   }
 
   const [cachedBranding, setCachedBranding] = useState<
-    { brandNameVi?: string; brandNameEn?: string } | undefined
+    { brandNameVi?: string; brandNameEn?: string; loadingText?: string } | undefined
   >(undefined)
 
   useEffect(() => {
@@ -93,6 +97,7 @@ export function Header() {
     locale === 'vi'
       ? branding?.brandNameVi || cachedBranding?.brandNameVi || 'ƯƠM. Archive'
       : branding?.brandNameEn || cachedBranding?.brandNameEn || 'Uom Archive'
+  const globalLoadingText = branding?.loadingText?.trim() || cachedBranding?.loadingText?.trim() || ''
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -123,13 +128,56 @@ export function Header() {
   const { data: suggestedProducts, isLoading: isSearching } = useProducts(
     {
       search: debouncedQuery,
-      limit: 4,
+      limit: 8,
       isActive: true,
+      sortBy: 'updatedAt',
+      sortOrder: 'desc',
     },
     {
       enabled: showSearch && debouncedQuery.trim().length >= 2,
     },
   )
+
+  const { data: featuredSuggestions } = useProducts(
+    {
+      page: 1,
+      limit: 4,
+      isActive: true,
+      isFeatured: true,
+      sortBy: 'updatedAt',
+      sortOrder: 'desc',
+    },
+    {
+      enabled: showSearch,
+    },
+  )
+
+  const { data: latestSuggestions } = useProducts(
+    {
+      page: 1,
+      limit: 8,
+      isActive: true,
+      sortBy: 'updatedAt',
+      sortOrder: 'desc',
+    },
+    {
+      enabled: showSearch,
+    },
+  )
+
+  const featuredList = featuredSuggestions?.data ?? []
+  const latestList = latestSuggestions?.data ?? []
+  const defaultSuggestions = [
+    ...featuredList,
+    ...latestList.filter((item) => !featuredList.some((featured) => featured.id === item.id)),
+  ].slice(0, 4)
+  const searchedSuggestions = (suggestedProducts?.data ?? []).slice(0, 4)
+  const displaySuggestions =
+    debouncedQuery.trim().length >= 2
+      ? searchedSuggestions.length > 0
+        ? searchedSuggestions
+        : defaultSuggestions
+      : defaultSuggestions
 
   const navigation = [
     { name: t('shop'), href: `/${locale}/shop` },
@@ -320,9 +368,11 @@ export function Header() {
                       className="w-full border-b border-foreground/10 bg-transparent py-3 font-sans text-xl font-bold uppercase tracking-tight focus:border-primary/30 focus:outline-none lg:text-2xl"
                       autoFocus
                     />
-                    {isSearching && searchQuery && (
+                    {isSearching && searchQuery && globalLoadingText && (
                       <div className="absolute right-0 top-1/2 -translate-y-1/2">
-                        <Loader2 className="h-5 w-5 animate-spin opacity-20" />
+                        <span className="animate-pulse text-[10px] font-bold uppercase tracking-[0.25em] text-foreground/40">
+                          {globalLoadingText}
+                        </span>
                       </div>
                     )}
                   </form>
@@ -333,7 +383,7 @@ export function Header() {
                         SUGGESTED
                       </h4>
                       <div className="grid grid-cols-2 justify-items-center gap-4 sm:grid-cols-4 md:gap-8">
-                        {suggestedProducts?.data.map((product) => (
+                        {displaySuggestions.map((product) => (
                           <SearchResultItem
                             key={product.id}
                             product={product}

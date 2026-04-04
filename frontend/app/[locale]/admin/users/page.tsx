@@ -69,10 +69,33 @@ const userSchema = z.object({
     .min(8, 'Password must be at least 8 characters')
     .optional()
     .or(z.literal('')),
+  confirmPassword: z
+    .string()
+    .min(8, 'Confirm password must be at least 8 characters')
+    .optional()
+    .or(z.literal('')),
   role: z.enum(['ADMIN', 'MANAGER']),
 })
 
 type UserFormValues = z.infer<typeof userSchema>
+
+function extractBackendMessages(error: unknown): string[] {
+  const responseMessage = (error as any)?.response?.data?.message
+
+  if (Array.isArray(responseMessage)) {
+    return responseMessage.map((message) => String(message))
+  }
+
+  if (typeof responseMessage === 'string') {
+    return [responseMessage]
+  }
+
+  if (typeof (error as any)?.message === 'string') {
+    return [(error as any).message]
+  }
+
+  return []
+}
 
 export default function UsersPage() {
   const t = useTranslations('admin')
@@ -96,6 +119,7 @@ export default function UsersPage() {
       email: '',
       fullName: '',
       password: '',
+      confirmPassword: '',
       role: 'MANAGER',
     },
   })
@@ -130,6 +154,7 @@ export default function UsersPage() {
       email: '',
       fullName: '',
       password: '',
+      confirmPassword: '',
       role: 'MANAGER',
     })
     setDialogOpen(true)
@@ -141,12 +166,31 @@ export default function UsersPage() {
       email: user.email,
       fullName: user.fullName,
       password: '',
+      confirmPassword: '',
       role: user.role,
     })
     setDialogOpen(true)
   }
 
   const onSubmit = async (data: UserFormValues) => {
+    form.clearErrors(['email', 'fullName', 'password', 'confirmPassword'])
+
+    if (!editingUser && !data.password) {
+      form.setError('password', {
+        type: 'manual',
+        message: 'Password is required',
+      })
+      return
+    }
+
+    if ((data.password || data.confirmPassword) && data.password !== data.confirmPassword) {
+      form.setError('confirmPassword', {
+        type: 'manual',
+        message: 'Passwords do not match',
+      })
+      return
+    }
+
     try {
       if (editingUser) {
         const updateData: Partial<User & { password?: string }> = {
@@ -160,14 +204,10 @@ export default function UsersPage() {
         await api.updateUser(editingUser.id, updateData)
         toast({ title: t('success'), description: 'User updated' })
       } else {
-        if (!data.password) {
-          toast({ title: t('error'), description: 'Password is required', variant: 'destructive' })
-          return
-        }
         await api.createUser({
           email: data.email,
           fullName: data.fullName,
-          password: data.password,
+          password: data.password!,
           role: data.role,
         })
         toast({ title: t('success'), description: 'User created' })
@@ -175,7 +215,46 @@ export default function UsersPage() {
       setDialogOpen(false)
       fetchUsers()
     } catch (error) {
-      toast({ title: t('error'), description: 'Failed to save user', variant: 'destructive' })
+      const messages = extractBackendMessages(error)
+      let hasFieldError = false
+
+      messages.forEach((message) => {
+        const normalizedMessage = message.toLowerCase()
+
+        if (normalizedMessage.includes('email')) {
+          form.setError('email', {
+            type: 'server',
+            message,
+          })
+          hasFieldError = true
+          return
+        }
+
+        if (normalizedMessage.includes('password')) {
+          form.setError('password', {
+            type: 'server',
+            message,
+          })
+          hasFieldError = true
+          return
+        }
+
+        if (normalizedMessage.includes('full name') || normalizedMessage.includes('fullname')) {
+          form.setError('fullName', {
+            type: 'server',
+            message,
+          })
+          hasFieldError = true
+        }
+      })
+
+      if (!hasFieldError) {
+        toast({
+          title: t('error'),
+          description: messages[0] || 'Failed to save user',
+          variant: 'destructive',
+        })
+      }
     }
   }
 
@@ -213,19 +292,19 @@ export default function UsersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="font-serif text-2xl">{t('users')}</h1>
           <p className="text-muted-foreground">{t('manageAdminUsers')}</p>
         </div>
-        <Button onClick={openCreateDialog}>
+        <Button onClick={openCreateDialog} className="w-full sm:w-auto">
           <Plus className="mr-2 h-4 w-4" />
           {t('addUser')}
         </Button>
       </div>
 
-      <div className="flex items-center gap-4">
-        <div className="relative max-w-sm flex-1">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+        <div className="relative w-full max-w-sm flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder={t('search')}
@@ -234,7 +313,7 @@ export default function UsersPage() {
             className="pl-9"
           />
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 self-start sm:self-auto">
           <Switch checked={includeDeleted} onCheckedChange={setIncludeDeleted} />
           <span className="text-sm">{t('showDeleted')}</span>
         </div>
@@ -374,6 +453,20 @@ export default function UsersPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t('passwordHint')}</FormLabel>
+                    <FormControl>
+                      <Input {...field} type="password" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="confirmPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('confirmPassword')}</FormLabel>
                     <FormControl>
                       <Input {...field} type="password" />
                     </FormControl>

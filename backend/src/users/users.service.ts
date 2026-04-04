@@ -160,15 +160,28 @@ export class UsersService {
       throw new ForbiddenException('Cannot update a deleted user')
     }
 
-    const updateData: any = {
-      ...dto,
+    if (dto.email && dto.email !== user.email) {
+      const existingUser = await this.prisma.user.findUnique({
+        where: { email: dto.email },
+      })
+
+      if (existingUser && existingUser.id !== id) {
+        throw new ConflictException(`User with email "${dto.email}" already exists`)
+      }
+    }
+
+    const updateData: Prisma.UserUncheckedUpdateInput = {
       updatedBy: updaterId,
     }
+
+    if (dto.email !== undefined) updateData.email = dto.email
+    if (dto.fullName !== undefined) updateData.fullName = dto.fullName
+    if (dto.role !== undefined) updateData.role = dto.role
+    if (dto.isActive !== undefined) updateData.isActive = dto.isActive
 
     // Hash new password if provided
     if (dto.password) {
       updateData.passwordHash = await bcrypt.hash(dto.password, 10)
-      delete updateData.password
     }
 
     const updatedUser = await this.prisma.user.update({

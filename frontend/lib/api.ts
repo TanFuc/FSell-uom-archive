@@ -13,6 +13,7 @@ import type {
   BrandingSettings,
   User,
   Banner,
+  UpdateMyProfileDto,
 } from './types'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
@@ -223,6 +224,13 @@ class ApiClient {
 
   async getMe(): Promise<User> {
     return this.request<User>('/auth/profile')
+  }
+
+  async updateMyProfile(data: UpdateMyProfileDto): Promise<User> {
+    return this.request<User>('/auth/profile', {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    })
   }
 
   // ==================== BANNERS ENDPOINTS ====================

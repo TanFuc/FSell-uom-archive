@@ -6,9 +6,12 @@ import { useLocale, useTranslations } from 'next-intl'
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { BannerCarousel } from '@/components/BannerCarousel'
 import { ProductCard } from '@/components/ProductCard'
+import { LoadingScreen } from '@/components/ui/loading-screen'
 import { useBanners } from '@/hooks/use-banners'
 import { useProducts } from '@/hooks/use-products'
 import { cn } from '@/lib/utils'
+
+const HOME_FIRST_FULLSCREEN_LOADING_DONE_KEY = 'uom_home_first_fullscreen_loading_done'
 
 function usePremiumSmoothScroll() {
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -143,6 +146,33 @@ export default function HomeClient() {
   const featuredDrag = usePremiumSmoothScroll()
 
   const { data: banners, isLoading: isLoadingBanners } = useBanners(true)
+  const [hasCompletedFirstLoad, setHasCompletedFirstLoad] = useState(false)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const hasShown = sessionStorage.getItem(HOME_FIRST_FULLSCREEN_LOADING_DONE_KEY) === '1'
+    if (hasShown) {
+      setHasCompletedFirstLoad(true)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!isLoadingBanners && !isLoadingLatest && !isLoadingFeatured) {
+      setHasCompletedFirstLoad(true)
+
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem(HOME_FIRST_FULLSCREEN_LOADING_DONE_KEY, '1')
+      }
+    }
+  }, [isLoadingBanners, isLoadingLatest, isLoadingFeatured])
+
+  const shouldShowFullscreenLoading =
+    !hasCompletedFirstLoad && (isLoadingBanners || isLoadingLatest || isLoadingFeatured)
+
+  if (shouldShowFullscreenLoading) {
+    return <LoadingScreen fullscreen />
+  }
 
   return (
     <div className="overflow-hidden pt-0">
