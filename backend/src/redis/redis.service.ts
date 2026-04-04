@@ -8,35 +8,23 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   private client: RedisClientType
 
   constructor(private configService: ConfigService) {
-    const nodeEnv = this.configService.get<string>('NODE_ENV') || 'development'
-    const isProduction = nodeEnv === 'production'
+    const upstashUrl = this.configService.get<string>('UPSTASH_REDIS_URL')
+    const upstashToken = this.configService.get<string>('UPSTASH_REDIS_TOKEN')
 
-    // Use Upstash Redis in production, local Redis in development
-    let url: string | undefined
-    let password: string | undefined
+    const hasUpstashConfig = Boolean(upstashUrl && upstashToken)
+    const url = hasUpstashConfig
+      ? (upstashUrl as string)
+      : this.configService.get<string>('REDIS_URL') || 'redis://localhost:6379'
+    const password = hasUpstashConfig
+      ? (upstashToken as string)
+      : this.configService.get<string>('REDIS_PASSWORD')
 
-    if (isProduction) {
-      // Production: Use Upstash Redis
-      url = this.configService.get<string>('UPSTASH_REDIS_URL')
-      password = this.configService.get<string>('UPSTASH_REDIS_TOKEN')
-
-      if (!url || !password) {
-        throw new Error('UPSTASH_REDIS_URL and UPSTASH_REDIS_TOKEN must be set in production')
-      }
-
-      this.logger.log('Using Upstash Redis (Production)')
-    } else {
-      // Development: Use local Redis
-      url = this.configService.get<string>('REDIS_URL') || 'redis://localhost:6379'
-      password = this.configService.get<string>('REDIS_PASSWORD')
-
-      this.logger.log('Using Local Redis (Development)')
-    }
+    this.logger.log(hasUpstashConfig ? 'Using Upstash Redis' : 'Using Local Redis')
 
     this.client = createClient({
       url,
       password: password || undefined,
-      socket: isProduction
+      socket: hasUpstashConfig
         ? {
             tls: true,
             rejectUnauthorized: true,
@@ -49,7 +37,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     })
 
     this.client.on('connect', () => {
-      this.logger.log(`Redis Client Connected to ${isProduction ? 'Upstash' : 'Local Redis'}`)
+      this.logger.log(`Redis Client Connected to ${hasUpstashConfig ? 'Upstash' : 'Local Redis'}`)
     })
   }
 

@@ -67,6 +67,11 @@ Create `.env.prod` from the example at repository root:
 cp .env.prod.example .env.prod
 ```
 
+Important:
+- Production compose only reads root `.env.prod`.
+- `backend/.env` and `frontend/.env` are not consumed by `docker-compose.prod.yml`.
+- `FRONTEND_PORT` and `BACKEND_PORT` are host ports; container internal ports remain `3000` (frontend) and `3001` (backend).
+
 Update all secrets before running in production:
 - `POSTGRES_PASSWORD`
 - `REDIS_PASSWORD`

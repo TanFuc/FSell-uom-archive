@@ -25,7 +25,7 @@ function Wait-BackendHealthy {
     [int]$TimeoutSeconds
   )
 
-  $containerId = (docker compose -f $composeFile ps -q backend).Trim()
+  $containerId = (docker compose --env-file $envFile -f $composeFile ps -q backend).Trim()
   if ([string]::IsNullOrWhiteSpace($containerId)) {
     throw 'Could not find backend container ID.'
   }
@@ -59,40 +59,40 @@ if (!(Test-Path $envFile)) {
 Push-Location $repoRoot
 try {
   Invoke-Step 'Validate docker compose file' {
-    docker compose -f $composeFile config | Out-Null
+    docker compose --env-file $envFile -f $composeFile config | Out-Null
   }
 
   if (-not $SkipBuild) {
     Invoke-Step 'Build backend and frontend images' {
-      docker compose -f $composeFile build backend frontend
+      docker compose --env-file $envFile -f $composeFile build backend frontend
     }
   }
 
   Invoke-Step 'Start postgres and redis first' {
-    docker compose -f $composeFile up -d postgres redis
+    docker compose --env-file $envFile -f $composeFile up -d postgres redis
   }
 
   Invoke-Step 'Run database migrations' {
-    docker compose -f $composeFile run --rm backend npm run prisma:migrate:prod
+    docker compose --env-file $envFile -f $composeFile run --rm backend npm run prisma:migrate:prod
   }
 
   Invoke-Step 'Start backend and wait until healthy' {
-    docker compose -f $composeFile up -d backend
+    docker compose --env-file $envFile -f $composeFile up -d backend
     Wait-BackendHealthy -TimeoutSeconds $BackendHealthTimeoutSeconds
   }
 
   if (-not $SkipSeed) {
     Invoke-Step 'Run database seed' {
-      docker compose -f $composeFile exec -T backend npm run db:seed
+      docker compose --env-file $envFile -f $composeFile exec -T backend npm run db:seed
     }
   }
 
   Invoke-Step 'Start frontend' {
-    docker compose -f $composeFile up -d frontend
+    docker compose --env-file $envFile -f $composeFile up -d frontend
   }
 
   Invoke-Step 'Current service status' {
-    docker compose -f $composeFile ps
+    docker compose --env-file $envFile -f $composeFile ps
   }
 
   Write-Host "`nProduction deploy completed successfully." -ForegroundColor Green

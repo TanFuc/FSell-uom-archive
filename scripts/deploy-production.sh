@@ -25,13 +25,14 @@ SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 REPO_ROOT="$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)"
 COMPOSE_FILE="$REPO_ROOT/docker-compose.prod.yml"
 ENV_FILE="$REPO_ROOT/.env.prod"
+COMPOSE_ARGS="--env-file $ENV_FILE -f $COMPOSE_FILE"
 
 step() {
   echo "\n==> $1"
 }
 
 wait_backend_healthy() {
-  container_id="$(docker compose -f "$COMPOSE_FILE" ps -q backend | tr -d '\r')"
+  container_id="$(docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" ps -q backend | tr -d '\r')"
   if [ -z "$container_id" ]; then
     echo "Could not find backend container ID" >&2
     exit 1
@@ -70,32 +71,32 @@ fi
 cd "$REPO_ROOT"
 
 step "Validate docker compose file"
-docker compose -f "$COMPOSE_FILE" config >/dev/null
+docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" config >/dev/null
 
 if [ "$SKIP_BUILD" -eq 0 ]; then
   step "Build backend and frontend images"
-  docker compose -f "$COMPOSE_FILE" build backend frontend
+  docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" build backend frontend
 fi
 
 step "Start postgres and redis first"
-docker compose -f "$COMPOSE_FILE" up -d postgres redis
+docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d postgres redis
 
 step "Run database migrations"
-docker compose -f "$COMPOSE_FILE" run --rm backend npm run prisma:migrate:prod
+docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" run --rm backend npm run prisma:migrate:prod
 
 step "Start backend and wait until healthy"
-docker compose -f "$COMPOSE_FILE" up -d backend
+docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d backend
 wait_backend_healthy
 
 if [ "$SKIP_SEED" -eq 0 ]; then
   step "Run database seed"
-  docker compose -f "$COMPOSE_FILE" exec -T backend npm run db:seed
+  docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" exec -T backend npm run db:seed
 fi
 
 step "Start frontend"
-docker compose -f "$COMPOSE_FILE" up -d frontend
+docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d frontend
 
 step "Current service status"
-docker compose -f "$COMPOSE_FILE" ps
+docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" ps
 
 echo "\nProduction deploy completed successfully."
