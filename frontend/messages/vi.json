@@ -380,6 +380,29 @@
       "loadingText": "Chữ loading",
       "loadingTextHint": "Chữ ngắn hiển thị kèm animation pulse (ví dụ \"ƯƠM.\").",
       "loadingPreview": "Xem trước"
+    },
+    "stories": {
+      "navLabel": "Stories",
+      "title": "Stories & Journal",
+      "description": "Tạo câu chuyện hình ảnh cho trang journal phía người dùng.",
+      "addStory": "Thêm câu chuyện",
+      "editStory": "Chỉnh sửa câu chuyện",
+      "updateStory": "Cập nhật câu chuyện",
+      "formHint": "Nhập nội dung song ngữ và ảnh cho từng thẻ câu chuyện.",
+      "titleVi": "Tiêu đề (Tiếng Việt)",
+      "titleEn": "Tiêu đề (Tiếng Anh)",
+      "summaryVi": "Tóm tắt (Tiếng Việt)",
+      "summaryEn": "Tóm tắt (Tiếng Anh)",
+      "imageUrl": "Đường dẫn ảnh",
+      "uploadImage": "Tải ảnh lên",
+      "imageUploaded": "Đã tải ảnh lên",
+      "imageUploadError": "Tải ảnh thất bại",
+      "publishedAt": "Ngày đăng (tuỳ chọn)",
+      "saveAll": "Lưu stories",
+      "saved": "Đã lưu stories",
+      "loadError": "Không thể tải stories",
+      "saveError": "Không thể lưu stories",
+      "requiredFields": "Vui lòng nhập đủ các trường bắt buộc"
     }
   },
   "validation": {

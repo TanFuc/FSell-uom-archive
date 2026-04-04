@@ -10,6 +10,7 @@ import {
   Menu,
   X,
   FileText,
+  BookOpen,
   Image as ImageIcon,
   Brush,
 } from 'lucide-react'
@@ -83,6 +84,7 @@ export default function AdminLayoutClient({ children }: AdminLayoutProps) {
     { href: `/${locale}/admin/banners`, label: 'Banners', icon: ImageIcon },
     { href: `/${locale}/admin/categories`, label: t('categories'), icon: LayoutGrid },
     { href: `/${locale}/admin/branding`, label: t('branding.navLabel'), icon: Brush },
+    { href: `/${locale}/admin/stories`, label: t('stories.navLabel'), icon: BookOpen },
     { href: `/${locale}/admin/about`, label: t('aboutPage'), icon: FileText },
     { href: `/${locale}/admin/settings`, label: t('settings'), icon: Settings },
   ]

@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useLocale, useTranslations } from 'next-intl'
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { BannerCarousel } from '@/components/BannerCarousel'
@@ -9,6 +10,8 @@ import { ProductCard } from '@/components/ProductCard'
 import { LoadingScreen } from '@/components/ui/loading-screen'
 import { useBanners } from '@/hooks/use-banners'
 import { useProducts } from '@/hooks/use-products'
+import { useSiteContent } from '@/hooks/use-settings'
+import { parseStories, STORIES_CONTENT_KEY } from '@/lib/stories'
 import { cn } from '@/lib/utils'
 
 const HOME_FIRST_FULLSCREEN_LOADING_DONE_KEY = 'uom_home_first_fullscreen_loading_done'
@@ -133,14 +136,8 @@ export default function HomeClient() {
     sortOrder: 'desc',
   })
 
-  const { data: featuredProducts, isLoading: isLoadingFeatured } = useProducts({
-    page: 1,
-    limit: 8,
-    isActive: true,
-    isFeatured: true,
-    sortBy: 'createdAt',
-    sortOrder: 'desc',
-  })
+  const { data: siteContent, isLoading: isLoadingStories } = useSiteContent()
+  const stories = parseStories(siteContent?.[STORIES_CONTENT_KEY])
 
   const latestDrag = usePremiumSmoothScroll()
   const featuredDrag = usePremiumSmoothScroll()
@@ -158,17 +155,17 @@ export default function HomeClient() {
   }, [])
 
   useEffect(() => {
-    if (!isLoadingBanners && !isLoadingLatest && !isLoadingFeatured) {
+    if (!isLoadingBanners && !isLoadingLatest && !isLoadingStories) {
       setHasCompletedFirstLoad(true)
 
       if (typeof window !== 'undefined') {
         sessionStorage.setItem(HOME_FIRST_FULLSCREEN_LOADING_DONE_KEY, '1')
       }
     }
-  }, [isLoadingBanners, isLoadingLatest, isLoadingFeatured])
+  }, [isLoadingBanners, isLoadingLatest, isLoadingStories])
 
   const shouldShowFullscreenLoading =
-    !hasCompletedFirstLoad && (isLoadingBanners || isLoadingLatest || isLoadingFeatured)
+    !hasCompletedFirstLoad && (isLoadingBanners || isLoadingLatest || isLoadingStories)
 
   if (shouldShowFullscreenLoading) {
     return <LoadingScreen fullscreen />
@@ -266,7 +263,7 @@ export default function HomeClient() {
             </p>
           </div>
           <Link
-            href={`/${locale}/shop?isFeatured=true`}
+            href={`/${locale}/journal`}
             className="group flex items-center gap-2 text-[8px] font-bold uppercase tracking-[0.2em] transition-colors hover:opacity-60"
           >
             <span>{t('showMore')}</span>
@@ -274,7 +271,7 @@ export default function HomeClient() {
           </Link>
         </div>
 
-        {isLoadingFeatured ? (
+        {isLoadingStories ? (
           <div className="flex gap-6 overflow-hidden px-6 lg:px-12">
             {[...Array(2)].map((_, i) => (
               <div
@@ -284,6 +281,12 @@ export default function HomeClient() {
                 <div className="aspect-[4/5] animate-pulse bg-muted/30" />
               </div>
             ))}
+          </div>
+        ) : stories.length === 0 ? (
+          <div className="px-6 text-sm text-foreground/50 lg:px-12">
+            {locale === 'vi'
+              ? 'Stories đang được cập nhật. Xem lại sau nhé.'
+              : 'Stories are being updated. Please check back soon.'}
           </div>
         ) : (
           <div className="group/container relative">
@@ -300,16 +303,42 @@ export default function HomeClient() {
               )}
             >
               <AnimatePresence mode="popLayout">
-                {featuredProducts?.data.map((product, idx) => (
+                {stories.map((story, idx) => (
                   <motion.div
-                    key={product.id}
+                    key={story.id}
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ delay: idx * 0.05, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                     className="w-[calc(100vw-64px)] shrink-0 md:w-[45vw] lg:w-[calc(50vw-48px)]"
                   >
-                    <ProductCard product={product} locale={locale} priority={idx === 0} />
+                    <Link href={`/${locale}/journal`} className="block">
+                      <article className="group overflow-hidden rounded-2xl border border-foreground/10 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg">
+                        <div className="relative aspect-[4/5] overflow-hidden">
+                          <Image
+                            src={story.imageUrl}
+                            alt={locale === 'vi' ? story.titleVi : story.titleEn}
+                            fill
+                            className="object-cover transition duration-700 group-hover:scale-105"
+                            unoptimized
+                          />
+                          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-transparent" />
+                          {story.publishedAt && (
+                            <p className="absolute left-4 top-4 rounded-full bg-white/85 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground/70 backdrop-blur-sm">
+                              {story.publishedAt}
+                            </p>
+                          )}
+                        </div>
+                        <div className="space-y-2 p-5">
+                          <h3 className="font-playfair text-xl leading-tight text-foreground transition-colors group-hover:text-foreground/85">
+                            {locale === 'vi' ? story.titleVi : story.titleEn}
+                          </h3>
+                          <p className="line-clamp-3 text-sm leading-relaxed text-foreground/70">
+                            {locale === 'vi' ? story.summaryVi : story.summaryEn}
+                          </p>
+                        </div>
+                      </article>
+                    </Link>
                   </motion.div>
                 ))}
               </AnimatePresence>

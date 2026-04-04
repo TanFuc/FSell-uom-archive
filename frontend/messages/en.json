@@ -383,6 +383,29 @@
       "loadingText": "Loading Text",
       "loadingTextHint": "Short text displayed with a pulse animation (e.g. \"ƯƠM.\").",
       "loadingPreview": "Preview"
+    },
+    "stories": {
+      "navLabel": "Stories",
+      "title": "Stories & Journal",
+      "description": "Create visual stories for the public journal page.",
+      "addStory": "Add Story",
+      "editStory": "Edit Story",
+      "updateStory": "Update Story",
+      "formHint": "Fill in bilingual content and image for each story card.",
+      "titleVi": "Title (Vietnamese)",
+      "titleEn": "Title (English)",
+      "summaryVi": "Summary (Vietnamese)",
+      "summaryEn": "Summary (English)",
+      "imageUrl": "Image URL",
+      "uploadImage": "Upload Image",
+      "imageUploaded": "Image uploaded",
+      "imageUploadError": "Failed to upload image",
+      "publishedAt": "Published date (optional)",
+      "saveAll": "Save Stories",
+      "saved": "Stories saved",
+      "loadError": "Failed to load stories",
+      "saveError": "Failed to save stories",
+      "requiredFields": "Please fill all required fields"
     }
   },
   "validation": {
