@@ -1,13 +1,14 @@
 'use client'
 
 import { motion, AnimatePresence, useMotionValue, useSpring } from 'framer-motion'
-import { Instagram, Facebook, Loader2, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Instagram, Facebook, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { ProductCard } from '@/components/ProductCard'
+import { LoadingScreen } from '@/components/ui/loading-screen'
 import { useProduct, useProducts } from '@/hooks/use-products'
 import { useExchangeRate, useSocialLinks } from '@/hooks/use-settings'
 import { getDisplayPrice } from '@/lib/currency'
@@ -285,11 +286,7 @@ export default function ProductClient({ params }: ProductPageProps) {
   const name = product ? (locale === 'vi' ? product.nameVi : product.nameEn) : t('loading')
 
   if (isLoading) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    )
+    return <LoadingScreen fullscreen />
   }
 
   if (error || !product) {
@@ -305,7 +302,7 @@ export default function ProductClient({ params }: ProductPageProps) {
   return (
     <div className="w-full">
       {/* Header padding for fixed header */}
-      <div className="h-16 lg:h-20" />
+      <div className="h-24 lg:h-28" />
 
       {/* Floating Left-Side Back Navigation (Desktop Only) */}
       <Link

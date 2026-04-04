@@ -7,9 +7,10 @@ import { SplashScreen } from '@/components/ui/SplashScreen'
 
 interface ConditionalLayoutProps {
   children: React.ReactNode
+  initialLoadingText?: string
 }
 
-export function ConditionalLayout({ children }: ConditionalLayoutProps) {
+export function ConditionalLayout({ children, initialLoadingText }: ConditionalLayoutProps) {
   const pathname = usePathname()
 
   // Check if current path is an admin page
@@ -23,7 +24,7 @@ export function ConditionalLayout({ children }: ConditionalLayoutProps) {
   // Regular pages get header, footer, and splash screen
   return (
     <>
-      <SplashScreen />
+      <SplashScreen initialLoadingText={initialLoadingText} />
       <Header />
       <main className="flex-1">{children}</main>
       <Footer />

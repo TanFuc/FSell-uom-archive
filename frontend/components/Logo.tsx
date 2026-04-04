@@ -38,12 +38,15 @@ export default function Logo({
       'png-bg': '/assets/logo.png',
     }[variant]
 
+    const isSvgLogo = logoSrc.endsWith('.svg')
+
     return (
       <Image
         src={logoSrc}
         alt={locale === 'vi' ? 'ƯƠM. Archive' : 'Uom Archive'}
         width={width}
         height={height}
+        unoptimized={isSvgLogo}
         priority
         className={className}
       />
