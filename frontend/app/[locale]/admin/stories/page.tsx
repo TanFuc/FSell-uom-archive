@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api'
+import { pingStorySeo } from '@/lib/seo-ping'
 import {
   getStorySlug,
   parseStories,
@@ -32,6 +33,7 @@ const EMPTY_STORY: Omit<StoryItem, 'id'> = {
   contentEn: '',
   imageUrl: '',
   publishedAt: '',
+  updatedAt: '',
 }
 
 export default function AdminStoriesPage() {
@@ -50,6 +52,7 @@ export default function AdminStoriesPage() {
   const [lastUpdatedTitle, setLastUpdatedTitle] = useState<string>('')
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [filterMode, setFilterMode] = useState<'all' | 'visible' | 'hidden'>('all')
+  const [pendingPublishPingIds, setPendingPublishPingIds] = useState<string[]>([])
 
   useEffect(() => {
     const loadStories = async () => {
@@ -174,6 +177,7 @@ export default function AdminStoriesPage() {
       contentEn: story.contentEn,
       imageUrl: story.imageUrl,
       publishedAt: story.publishedAt || '',
+      updatedAt: story.updatedAt || '',
     })
 
     restoreScrollPosition(currentScrollY)
@@ -189,6 +193,8 @@ export default function AdminStoriesPage() {
   }
 
   const handleUpsert = () => {
+    const updatedAt = new Date().toISOString()
+
     if (
       !draft.titleVi.trim() ||
       !draft.titleEn.trim() ||
@@ -204,6 +210,10 @@ export default function AdminStoriesPage() {
 
     if (editingId) {
       const targetId = editingId
+      const previousStory = stories.find((story) => story.id === targetId)
+      const shouldPingOnSave =
+        previousStory?.isVisible === false && (draft.isVisible === undefined || draft.isVisible)
+
       setStories((prev) =>
         prev.map((story) =>
           story.id === editingId
@@ -230,12 +240,20 @@ export default function AdminStoriesPage() {
                   'en',
                 ),
                 publishedAt: draft.publishedAt?.trim() || undefined,
+                updatedAt,
               }
             : story,
         ),
       )
 
-      setDraft((prev) => ({ ...prev, publishedAt: prev.publishedAt?.trim() || '' }))
+      setDraft((prev) => ({
+        ...prev,
+        publishedAt: prev.publishedAt?.trim() || '',
+        updatedAt,
+      }))
+      if (shouldPingOnSave) {
+        setPendingPublishPingIds((prev) => Array.from(new Set([...prev, targetId])))
+      }
       setJustUpdatedId(targetId)
       setLastUpdatedTitle((locale === 'vi' ? draft.titleVi : draft.titleEn).trim())
       toast({
@@ -272,6 +290,7 @@ export default function AdminStoriesPage() {
             'en',
           ),
           publishedAt: draft.publishedAt?.trim() || undefined,
+          updatedAt,
         },
         ...prev,
       ])
@@ -293,6 +312,7 @@ export default function AdminStoriesPage() {
   const persistStories = async (
     nextStories: StoryItem[],
     successDescription?: string,
+    publishStoryIds: string[] = [],
   ): Promise<boolean> => {
     try {
       await api.updateSiteContent({
@@ -324,6 +344,15 @@ export default function AdminStoriesPage() {
         toast({ title: t('success'), description: successDescription })
       }
 
+      const storiesById = new Map(refreshedStories.map((story) => [story.id, story]))
+      const storiesToPing = publishStoryIds
+        .map((id) => storiesById.get(id))
+        .filter((story): story is StoryItem => story !== undefined && story.isVisible !== false)
+
+      for (const story of storiesToPing) {
+        void pingStorySeo(getStorySlug(story, 'vi'), getStorySlug(story, 'en'))
+      }
+
       return true
     } catch {
       return false
@@ -332,6 +361,7 @@ export default function AdminStoriesPage() {
 
   const handleToggleVisibility = async (id: string) => {
     const previousStories = stories
+    const previousStory = previousStories.find((story) => story.id === id)
     const nextStories = stories.map((story) =>
       story.id === id ? { ...story, isVisible: !story.isVisible } : story,
     )
@@ -348,7 +378,8 @@ export default function AdminStoriesPage() {
           ? 'Đã hiện story và lưu thành công.'
           : 'Story shown and saved successfully.'
 
-    const didPersist = await persistStories(nextStories, successDescription)
+    const shouldPing = previousStory?.isVisible === false && updatedStory?.isVisible === true
+    const didPersist = await persistStories(nextStories, successDescription, shouldPing ? [id] : [])
 
     if (!didPersist) {
       setStories(previousStories)
@@ -366,9 +397,11 @@ export default function AdminStoriesPage() {
   const handleSave = async () => {
     setIsSaving(true)
     try {
-      const didPersist = await persistStories(stories, t('stories.saved'))
+      const didPersist = await persistStories(stories, t('stories.saved'), pendingPublishPingIds)
       if (!didPersist) {
         toast({ title: t('error'), description: t('stories.saveError'), variant: 'destructive' })
+      } else {
+        setPendingPublishPingIds([])
       }
     } catch {
       toast({ title: t('error'), description: t('stories.saveError'), variant: 'destructive' })

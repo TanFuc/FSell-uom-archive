@@ -54,9 +54,16 @@ function walk(dirPath, files = []) {
 }
 
 function cleanContent(content) {
-  let next = content
-  next = next.replace(/^\s*console\.log\(.*\)\s*;?\s*$/gm, '')
-  next = next.replace(/^\s*\/\/(?!\s*(eslint|@ts-|tslint|istanbul|prettier-ignore|region|endregion)\b).*$/gim, '')
+  let next = content
+
+  next = next.replace(/^\s*console\.log\(.*\)\s*;?\s*$/gm, '')
+  next = next.replace(/\bconsole\.log\([^\n]*\)\s*;?/g, '')
+
+  next = next.replace(/\{\s*\/\*[\s\S]*?\*\/\s*\}/g, '')
+  next = next.replace(/\/\*[\s\S]*?\*\//g, '')
+  next = next.replace(/^\s*\/\/.*$/gm, '')
+  next = next.replace(/^\s*\{\s*\}\s*$/gm, '')
+
   next = next.replace(/\n{3,}/g, '\n\n')
 
   return next

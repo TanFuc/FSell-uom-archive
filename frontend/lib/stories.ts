@@ -14,6 +14,7 @@ export interface StoryItem {
   contentEn: string
   imageUrl: string
   publishedAt?: string
+  updatedAt?: string
 }
 
 function isNonEmptyString(value: unknown): value is string {
@@ -138,6 +139,7 @@ export function parseStories(raw: unknown): StoryItem[] {
           source.summaryEn,
         imageUrl: source.imageUrl,
         ...(isNonEmptyString(source.publishedAt) ? { publishedAt: source.publishedAt } : {}),
+        ...(isNonEmptyString(source.updatedAt) ? { updatedAt: source.updatedAt } : {}),
       })
 
       const added = acc[acc.length - 1]
@@ -156,6 +158,9 @@ export function parseStories(raw: unknown): StoryItem[] {
       added.slugVi = viSlug || fallback
       added.slugEn = enSlug || fallback
       added.slug = toStorySlug(sourceSlug || added.slugEn) || added.slugEn
+      if (!added.updatedAt) {
+        added.updatedAt = added.publishedAt
+      }
 
       return acc
     }, [])
@@ -180,6 +185,7 @@ export function serializeStories(stories: StoryItem[]): string {
       contentEn: story.contentEn.trim(),
       imageUrl: story.imageUrl.trim(),
       ...(story.publishedAt?.trim() ? { publishedAt: story.publishedAt.trim() } : {}),
+      ...(story.updatedAt?.trim() ? { updatedAt: story.updatedAt.trim() } : {}),
     })),
   )
 }

@@ -56,11 +56,21 @@ function walk(dirPath, files = []) {
 function cleanContent(content) {
   let next = content
 
-  // Remove whole-line console logs.
+  // Remove whole-line and inline console.log calls.
   next = next.replace(/^\s*console\.log\(.*\)\s*;?\s*$/gm, '')
+  next = next.replace(/\bconsole\.log\([^\n]*\)\s*;?/g, '')
 
-  // Remove standalone comments while preserving tooling directives.
-  next = next.replace(/^\s*\/\/(?!\s*(eslint|@ts-|tslint|istanbul|prettier-ignore|region|endregion)\b).*$/gim, '')
+  // Remove JSX comment expressions entirely: {/* ... */}
+  next = next.replace(/\{\s*\/\*[\s\S]*?\*\/\s*\}/g, '')
+
+  // Remove all block comments (including JSDoc).
+  next = next.replace(/\/\*[\s\S]*?\*\//g, '')
+
+  // Remove all standalone single-line comments.
+  next = next.replace(/^\s*\/\/.*$/gm, '')
+
+  // Clean up accidental empty JSX expressions if any remain.
+  next = next.replace(/^\s*\{\s*\}\s*$/gm, '')
 
   // Collapse 3+ blank lines to 2.
   next = next.replace(/\n{3,}/g, '\n\n')
