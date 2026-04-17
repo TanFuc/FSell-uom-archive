@@ -1,0 +1,13 @@
+pre-commit:
+  parallel: false
+  commands:
+    cleanup_write:
+      glob: "**/*.{ts,tsx,js,jsx}"
+      run: npm run cleanup:code -- --write {staged_files}
+      stage_fixed: true
+    prettier_write:
+      glob: "**/*.{ts,tsx,js,jsx,json,css,md,yml,yaml}"
+      run: npx prettier --write {staged_files}
+      stage_fixed: true
+    strict_gate:
+      run: npm run check:precommit
