@@ -53,7 +53,6 @@ export default function CategoryFormPage() {
   const categoryName = form.watch('nameVi') || form.watch('nameEn') || t('category')
   useDocumentTitle(isNew ? t('createCategory') : categoryName, 'Admin - ƯƠM. Archive')
 
-  // Load category data if editing
   useEffect(() => {
     if (!isNew && params.id) {
       loadCategory(params.id as string)
@@ -136,7 +135,6 @@ export default function CategoryFormPage() {
     try {
       setIsSaving(true)
 
-      // Upload image if new file selected
       let imageUrl = data.image
       if (imageFile) {
         const uploadResult = await api.uploadImage(imageFile, 'categories')

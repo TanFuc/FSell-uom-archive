@@ -24,7 +24,6 @@ export function ProductCard({ product, locale, priority }: ProductCardProps) {
   const hoverImage = product.hoverImage
   const [shouldLoadHoverImage, setShouldLoadHoverImage] = useState(false)
 
-  // Get price display with sale logic
   const priceDisplay = getDisplayPrice(product, locale, exchangeRate?.rate)
 
   return (

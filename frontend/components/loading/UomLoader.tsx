@@ -30,10 +30,8 @@ export function UomLoader({ isLoading, showLoadingBar = true }: UomLoaderProps) 
     setMounted(true)
   }, [])
 
-  // Prevent SSR hydration mismatch
   if (!mounted) return null
 
-  // Don't render if not loading
   if (!isLoading) return null
 
   return (

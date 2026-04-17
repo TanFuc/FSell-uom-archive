@@ -12,18 +12,13 @@ import { SettingsModule } from './settings/settings.module'
 import { UploadModule } from './upload/upload.module'
 import { UsersModule } from './users/users.module'
 
-// Orders and Notifications modules removed
-// Customers now contact via social media using the Inquiry feature
-
 @Module({
   imports: [
-    // Configuration
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
     }),
 
-    // Rate limiting
     ThrottlerModule.forRoot([
       {
         ttl: 60000, // 1 minute
@@ -31,16 +26,12 @@ import { UsersModule } from './users/users.module'
       },
     ]),
 
-    // Database
     PrismaModule,
 
-    // Cache
     RedisModule,
 
-    // Monitoring
     MonitoringModule,
 
-    // Feature modules
     AuthModule,
     ProductsModule,
     CategoriesModule,

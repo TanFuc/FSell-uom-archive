@@ -22,8 +22,6 @@ export default function EditBannerPage() {
         setBanner(data)
       } catch (error) {
         console.error('Failed to fetch banner:', error)
-        // Redirect to list if not found
-        // router.push('/admin/banners')
       } finally {
         setIsLoading(false)
       }

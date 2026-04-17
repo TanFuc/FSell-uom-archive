@@ -33,7 +33,6 @@ class ApiClient {
       timeout: 30000,
     })
 
-    // Request interceptor - Add auth token
     this.client.interceptors.request.use(
       (config) => {
         if (typeof window !== 'undefined') {
@@ -50,15 +49,12 @@ class ApiClient {
       (error) => Promise.reject(error),
     )
 
-    // Response interceptor - Handle token refresh
     this.client.interceptors.response.use(
       (response) => response,
       async (error: AxiosError<any>) => {
         const originalRequest: any = error.config
 
-        // Handle 401 Unauthorized
         if (error.response?.status === 401 && !originalRequest._retry) {
-          // If the error comes from login endpoint, do not attempt to refresh
           if (originalRequest.url?.includes('/auth/login')) {
             return Promise.reject(error)
           }
@@ -79,20 +75,16 @@ class ApiClient {
               },
             )
 
-            // Update tokens
             localStorage.setItem('accessToken', data.data.accessToken)
             localStorage.setItem('refreshToken', data.data.refreshToken)
 
-            // Retry original request with new token
             originalRequest.headers.Authorization = `Bearer ${data.data.accessToken}`
             return this.client(originalRequest)
           } catch (refreshError: any) {
-            // Determine redirect path based on current location
             if (typeof window !== 'undefined') {
               const isAdminPage = window.location.pathname.includes('/admin')
               const locale = localStorage.getItem('locale') || 'vi'
 
-              // Clear all auth data but preserve locale
               const savedLocale = localStorage.getItem('locale')
               localStorage.clear()
               if (savedLocale) {
@@ -101,10 +93,8 @@ class ApiClient {
 
               const loginPath = isAdminPage ? `/${locale}/admin/login` : `/${locale}/login`
 
-              // Show error message
               console.error('Session expired. Please login again.')
 
-              // Redirect to appropriate login page
               window.location.href = loginPath
             }
 
@@ -112,9 +102,7 @@ class ApiClient {
           }
         }
 
-        // Handle 404 Not Found
         if (error.response?.status === 404) {
-          // Silent catch to prevent console spam
         }
 
         return Promise.reject(error)
@@ -149,11 +137,9 @@ class ApiClient {
     }
 
     const response = await this.client.request(config)
-    // Handle both wrapped ({data: ...}) and unwrapped responses
+
     return response.data?.data !== undefined ? response.data.data : response.data
   }
-
-  // ==================== PUBLIC ENDPOINTS ====================
 
   async getProducts(params?: {
     page?: number
@@ -193,8 +179,6 @@ class ApiClient {
     return this.request<AllSettings>('/settings')
   }
 
-  // ==================== AUTH ENDPOINTS ====================
-
   async login(
     email: string,
     password: string,
@@ -233,7 +217,6 @@ class ApiClient {
     })
   }
 
-  // ==================== BANNERS ENDPOINTS ====================
   async getBanners(activeOnly = true): Promise<Banner[]> {
     return this.request<Banner[]>('/banners', {
       headers: {
@@ -241,7 +224,6 @@ class ApiClient {
       },
       method: 'GET',
     }).then((data) => {
-      // Handle filtering on client side if needed, or rely on backend
       if (activeOnly) return data.filter((b: Banner) => b.isActive)
       return data
     })
@@ -270,8 +252,6 @@ class ApiClient {
       method: 'DELETE',
     })
   }
-
-  // ==================== ADMIN PRODUCT ENDPOINTS ====================
 
   async getAdminProducts(params?: {
     page?: number
@@ -348,8 +328,6 @@ class ApiClient {
     })
   }
 
-  // ==================== ADMIN SETTINGS ENDPOINTS ====================
-
   async updateTheme(data: Partial<ThemeSettings>): Promise<ThemeSettings> {
     return this.request<ThemeSettings>('/settings/theme', {
       method: 'PUT',
@@ -394,8 +372,6 @@ class ApiClient {
       body: JSON.stringify(data),
     })
   }
-
-  // ==================== ADMIN USER ENDPOINTS ====================
 
   async getUsers(params?: {
     page?: number
@@ -447,8 +423,6 @@ class ApiClient {
     })
   }
 
-  // ==================== UPLOAD ENDPOINT ====================
-
   async uploadImage(
     file: File,
     folder: string = 'products',
@@ -477,8 +451,6 @@ class ApiClient {
     const result = await response.json()
     return result.data || result
   }
-
-  // ==================== CATEGORY ENDPOINTS ====================
 
   async getCategories(params?: {
     includeDeleted?: boolean

@@ -41,7 +41,7 @@ export async function generateMetadata({
     },
     alternates: {
       canonical: `/${locale}/about`,
-      languages: { vi: '/vi/about', en: '/en/about' },
+      languages: { vi: '/vi/about', en: '/en/about', 'x-default': '/vi/about' },
     },
   }
 }

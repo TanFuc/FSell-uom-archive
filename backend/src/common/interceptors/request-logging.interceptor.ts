@@ -3,6 +3,7 @@ import { Request, Response } from 'express'
 import { Observable } from 'rxjs'
 import { tap } from 'rxjs/operators'
 import { MonitoringService } from '../../monitoring/monitoring.service'
+import { isProbePath } from '../security/probe-paths'
 
 type RequestUser = {
   sub?: string
@@ -11,9 +12,6 @@ type RequestUser = {
 
 type RequestWithUser = Request & {
   user?: RequestUser
-  route?: {
-    path?: string
-  }
 }
 
 type ErrorWithStatus = {
@@ -38,14 +36,18 @@ export class RequestLoggingInterceptor implements NestInterceptor {
     const ip = request?.ip ?? request?.socket?.remoteAddress ?? '-'
     const userAgent = request?.headers?.['user-agent'] ?? '-'
     const userId = request?.user?.sub ?? request?.user?.id ?? '-'
-    const route = this.monitoringService?.normalizeRoute(
-      request?.route?.path ?? request?.path ?? url.split('?')[0] ?? 'unknown',
-    )
+    const normalizedPath = request?.path ?? url.split('?')[0] ?? 'unknown'
+    const route = this.monitoringService?.normalizeRoute(normalizedPath)
     const metricRoute = route ?? 'unknown'
+    const scanProbeRequest = isProbePath(url)
 
     this.monitoringService?.incrementInFlight(method, metricRoute)
 
-    this.logger.log(`[REQ] ${method} ${url} ip=${ip} user=${userId}`)
+    if (scanProbeRequest) {
+      this.logger.debug(`[REQ] ${method} ${url} ip=${ip} user=${userId}`)
+    } else {
+      this.logger.log(`[REQ] ${method} ${url} ip=${ip} user=${userId}`)
+    }
 
     return next.handle().pipe(
       tap({
@@ -54,9 +56,15 @@ export class RequestLoggingInterceptor implements NestInterceptor {
           const statusCode = response?.statusCode ?? 200
           this.monitoringService?.observeRequest(method, metricRoute, statusCode, duration / 1000)
           this.monitoringService?.decrementInFlight(method, metricRoute)
-          this.logger.log(
-            `[RES] ${method} ${url} status=${statusCode} duration=${duration}ms ua="${userAgent}"`,
-          )
+          if (scanProbeRequest && [403, 404, 429].includes(statusCode)) {
+            this.logger.debug(
+              `[RES] ${method} ${url} status=${statusCode} duration=${duration}ms ua="${userAgent}"`,
+            )
+          } else {
+            this.logger.log(
+              `[RES] ${method} ${url} status=${statusCode} duration=${duration}ms ua="${userAgent}"`,
+            )
+          }
         },
         error: (error: unknown) => {
           const requestError = error as ErrorWithStatus
@@ -65,9 +73,15 @@ export class RequestLoggingInterceptor implements NestInterceptor {
           const message = requestError.message ?? 'Unknown error'
           this.monitoringService?.observeRequest(method, metricRoute, statusCode, duration / 1000)
           this.monitoringService?.decrementInFlight(method, metricRoute)
-          this.logger.error(
-            `[ERR] ${method} ${url} status=${statusCode} duration=${duration}ms message="${message}"`,
-          )
+          if (scanProbeRequest && [403, 404, 429].includes(statusCode)) {
+            this.logger.debug(
+              `[ERR] ${method} ${url} status=${statusCode} duration=${duration}ms message="${message}"`,
+            )
+          } else {
+            this.logger.error(
+              `[ERR] ${method} ${url} status=${statusCode} duration=${duration}ms message="${message}"`,
+            )
+          }
         },
       }),
     )

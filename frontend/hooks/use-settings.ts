@@ -5,10 +5,6 @@ import { toast } from 'sonner'
 import { apiClient } from '@/lib/api-client'
 import type { ThemeSettings, SocialLinks, SiteContent, BrandingSettings } from '@/lib/types'
 
-// ==================== BRANDING LOCALSTORAGE CACHE ====================
-// Cho phép LoadingScreen đọc giá trị đồng bộ ngay khi mount,
-// không cần chờ API fetch xong (tránh race condition).
-
 const BRANDING_CACHE_KEY = 'uom_branding_cache'
 
 function getBrandingFromStorage(): BrandingSettings | undefined {
@@ -28,7 +24,6 @@ function saveBrandingToStorage(data: BrandingSettings): void {
   } catch {}
 }
 
-// Query keys
 export const settingsKeys = {
   all: ['settings'] as const,
   theme: () => [...settingsKeys.all, 'theme'] as const,
@@ -38,7 +33,11 @@ export const settingsKeys = {
   branding: () => [...settingsKeys.all, 'branding'] as const,
 }
 
-// Get all settings
+type SiteContentQueryOptions = {
+  staleTime?: number
+  refetchOnMount?: boolean | 'always'
+}
+
 export function useSettings() {
   return useQuery({
     queryKey: settingsKeys.all,
@@ -47,7 +46,6 @@ export function useSettings() {
   })
 }
 
-// Get theme settings
 export function useTheme() {
   return useQuery({
     queryKey: settingsKeys.theme(),
@@ -56,7 +54,6 @@ export function useTheme() {
   })
 }
 
-// Get social links
 export function useSocialLinks() {
   return useQuery({
     queryKey: settingsKeys.social(),
@@ -65,7 +62,6 @@ export function useSocialLinks() {
   })
 }
 
-// Get exchange rate
 export function useExchangeRate() {
   return useQuery({
     queryKey: settingsKeys.exchange(),
@@ -74,16 +70,15 @@ export function useExchangeRate() {
   })
 }
 
-// Get site content
-export function useSiteContent() {
+export function useSiteContent(options?: SiteContentQueryOptions) {
   return useQuery({
     queryKey: settingsKeys.content(),
     queryFn: () => apiClient.getSiteContent(),
-    staleTime: 10 * 60 * 1000,
+    staleTime: options?.staleTime ?? 10 * 60 * 1000,
+    refetchOnMount: options?.refetchOnMount,
   })
 }
 
-// Update theme (Admin only)
 export function useUpdateTheme() {
   const queryClient = useQueryClient()
 
@@ -100,7 +95,6 @@ export function useUpdateTheme() {
   })
 }
 
-// Update social links (Admin only)
 export function useUpdateSocialLinks() {
   const queryClient = useQueryClient()
 
@@ -117,7 +111,6 @@ export function useUpdateSocialLinks() {
   })
 }
 
-// Update exchange rate (Admin only)
 export function useUpdateExchangeRate() {
   const queryClient = useQueryClient()
 
@@ -134,7 +127,6 @@ export function useUpdateExchangeRate() {
   })
 }
 
-// Update site content (Admin only)
 export function useUpdateSiteContent() {
   const queryClient = useQueryClient()
 
@@ -151,9 +143,6 @@ export function useUpdateSiteContent() {
   })
 }
 
-// Get branding settings
-// Dùng placeholderData từ localStorage để render ngay lập tức (sync),
-// queryFn fetch API nền và lưu lại localStorage khi xong.
 export function useBranding() {
   return useQuery({
     queryKey: settingsKeys.branding(),
@@ -164,19 +153,17 @@ export function useBranding() {
     },
     staleTime: 10 * 60 * 1000,
     refetchOnMount: false,
-    // Hiện giá trị localStorage ngay, không chờ fetch
+
     placeholderData: getBrandingFromStorage,
   })
 }
 
-// Update branding (Admin/Manager only)
 export function useUpdateBranding() {
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: (data: Partial<BrandingSettings>) => apiClient.updateBranding(data),
     onSuccess: (updatedBranding) => {
-      // Lưu ngay vào localStorage để lần sau LoadingScreen đọc được giá trị mới
       saveBrandingToStorage(updatedBranding)
       queryClient.invalidateQueries({ queryKey: settingsKeys.branding() })
       queryClient.invalidateQueries({ queryKey: settingsKeys.content() })

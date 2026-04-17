@@ -13,11 +13,18 @@ import {
   UploadedFile,
 } from '@nestjs/common'
 import { FileInterceptor } from '@nestjs/platform-express'
+import { Request as ExpressRequest } from 'express'
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
 import { UploadService } from '../upload/upload.service'
 import { CategoriesService } from './categories.service'
 import { CreateCategoryDto } from './dto/create-category.dto'
 import { UpdateCategoryDto } from './dto/update-category.dto'
+
+type RequestWithUser = ExpressRequest & {
+  user?: {
+    userId?: string
+  }
+}
 
 @Controller('categories')
 export class CategoriesController {
@@ -35,7 +42,7 @@ export class CategoriesController {
 
   @Post()
   @UseGuards(JwtAuthGuard)
-  create(@Body() createCategoryDto: CreateCategoryDto, @Request() req: any) {
+  create(@Body() createCategoryDto: CreateCategoryDto, @Request() req: RequestWithUser) {
     return this.categoriesService.create(createCategoryDto, req.user?.userId)
   }
 
@@ -62,20 +69,20 @@ export class CategoriesController {
   update(
     @Param('id') id: string,
     @Body() updateCategoryDto: UpdateCategoryDto,
-    @Request() req: any,
+    @Request() req: RequestWithUser,
   ) {
     return this.categoriesService.update(id, updateCategoryDto, req.user?.userId)
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
-  remove(@Param('id') id: string, @Request() req: any) {
+  remove(@Param('id') id: string, @Request() req: RequestWithUser) {
     return this.categoriesService.remove(id, req.user?.userId)
   }
 
   @Post(':id/restore')
   @UseGuards(JwtAuthGuard)
-  restore(@Param('id') id: string, @Request() req: any) {
+  restore(@Param('id') id: string, @Request() req: RequestWithUser) {
     return this.categoriesService.restore(id, req.user?.userId)
   }
 

@@ -150,7 +150,9 @@ export default async function RootLayout({ children, params: { locale } }: RootL
         <DisableRightClick />
         <NextIntlClientProvider messages={messages}>
           <QueryProvider>
-            <ConditionalLayout initialLoadingText={initialLoadingText}>{children}</ConditionalLayout>
+            <ConditionalLayout initialLoadingText={initialLoadingText}>
+              {children}
+            </ConditionalLayout>
             <Toaster />
             <SonnerToaster />
           </QueryProvider>

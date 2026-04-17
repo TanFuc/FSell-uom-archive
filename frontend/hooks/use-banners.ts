@@ -3,7 +3,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api-client'
 
-// Query keys for cache management
 export const bannerKeys = {
   all: ['banners'] as const,
   lists: () => [...bannerKeys.all, 'list'] as const,
@@ -12,7 +11,6 @@ export const bannerKeys = {
   detail: (id: string) => [...bannerKeys.details(), id] as const,
 }
 
-// Public: Get active banners
 export function useBanners(activeOnly = true) {
   return useQuery({
     queryKey: bannerKeys.list(activeOnly),
@@ -21,7 +19,6 @@ export function useBanners(activeOnly = true) {
   })
 }
 
-// Public: Get single banner by ID
 export function useBanner(id: string) {
   return useQuery({
     queryKey: bannerKeys.detail(id),
@@ -31,7 +28,6 @@ export function useBanner(id: string) {
   })
 }
 
-// Mutations
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 export function useCreateBanner() {

@@ -139,7 +139,6 @@ function parseVariantSummary(raw: string | undefined, locale: 'vi' | 'en'): Vari
   }
 }
 
-// Reusable Hook for Drag Scroll
 function useDragScroll() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -245,12 +244,10 @@ export default function ProductClient({ params }: ProductPageProps) {
     sortOrder: 'desc',
   })
 
-  // Hook for Related Products
   const relatedDrag = useDragScroll()
 
-  // Hook for Image Carousel (Mouse Drag)
   const imageDrag = useDragScroll()
-  // Custom Cursor Logic
+
   const cursorX = useMotionValue(0)
   const cursorY = useMotionValue(0)
   const springConfig = { damping: 25, stiffness: 700 }

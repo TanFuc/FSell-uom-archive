@@ -20,7 +20,6 @@ import type {
   Banner,
 } from './types'
 
-// Auth types
 interface LoginDto {
   email: string
   password: string
@@ -53,7 +52,6 @@ class ApiClient {
       timeout: 30000,
     })
 
-    // Request interceptor
     this.client.interceptors.request.use(
       (config) => {
         if (typeof window !== 'undefined') {
@@ -69,7 +67,6 @@ class ApiClient {
       (error) => Promise.reject(error),
     )
 
-    // Response interceptor
     this.client.interceptors.response.use(
       (response) => response.data.data || response.data,
       async (error: AxiosError<any>) => {
@@ -107,7 +104,6 @@ class ApiClient {
     )
   }
 
-  // ==================== AUTH ====================
   async register(data: RegisterDto): Promise<AuthResponse> {
     const response = await this.client.post<any, AuthResponse>('/auth/register', data)
     if (typeof window !== 'undefined') {
@@ -141,7 +137,6 @@ class ApiClient {
     return this.client.get('/auth/profile')
   }
 
-  // ==================== PRODUCTS (PUBLIC) ====================
   async getProducts(params?: QueryProductsDto): Promise<PaginatedResponse<Product>> {
     return this.client.get('/products', { params })
   }
@@ -150,7 +145,6 @@ class ApiClient {
     return this.client.get(`/products/${slug}`)
   }
 
-  // ==================== PRODUCTS (ADMIN) ====================
   async getAdminProducts(params?: QueryProductsDto): Promise<PaginatedResponse<Product>> {
     return this.client.get('/products/admin/list', { params })
   }
@@ -195,7 +189,6 @@ class ApiClient {
     return this.client.post('/products/bulk/restore', { ids })
   }
 
-  // ==================== SETTINGS ====================
   async getAllSettings(): Promise<AllSettings> {
     return this.client.get('/settings')
   }
@@ -244,7 +237,6 @@ class ApiClient {
     return this.client.put('/settings/branding', data)
   }
 
-  // ==================== USERS (ADMIN) ====================
   async getUsers(params?: QueryUsersDto): Promise<PaginatedResponse<User>> {
     return this.client.get('/users', { params })
   }
@@ -269,7 +261,6 @@ class ApiClient {
     return this.client.post(`/users/${id}/restore`)
   }
 
-  // ==================== BANNERS (PUBLIC & ADMIN) ====================
   async getBanners(activeOnly = true): Promise<Banner[]> {
     return this.client.get('/banners', { params: { activeOnly: activeOnly.toString() } })
   }
@@ -290,7 +281,6 @@ class ApiClient {
     return this.client.delete(`/banners/${id}`)
   }
 
-  // ==================== UPLOAD (ADMIN) ====================
   async uploadImage(file: File): Promise<{ url: string }> {
     const formData = new FormData()
     formData.append('file', file)

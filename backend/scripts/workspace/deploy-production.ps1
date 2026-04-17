@@ -6,7 +6,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-$repoRoot = Split-Path -Parent $PSScriptRoot
+$repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..\..\..') | Select-Object -ExpandProperty Path
 $composeFile = Join-Path $repoRoot 'docker-compose.prod.yml'
 $envFile = Join-Path $repoRoot '.env.prod'
 

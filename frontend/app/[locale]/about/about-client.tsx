@@ -9,13 +9,11 @@ export default function AboutClient() {
   const locale = useLocale() as 'vi' | 'en'
   const { data: content } = useSiteContent()
 
-  // Helper to get content or fallback
   const getVal = (key: string, fallback: string = '') => {
     if (!content) return fallback
     return content[`${key}.${locale}`] || content[`${key}.en`] || content[`${key}.vi`] || fallback
   }
 
-  // Story Image
   const storyImage = content?.['about.storyImage']
 
   return (

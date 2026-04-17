@@ -1,6 +1,10 @@
 import { type MetadataRoute } from 'next'
+import { getStorySlug, parseStories, STORIES_CONTENT_KEY } from '@/lib/stories'
 
-const BASE_URL = (process.env.NEXT_PUBLIC_APP_URL || 'https://www.uomarchive.com').replace(/\/$/, '')
+const BASE_URL = (process.env.NEXT_PUBLIC_APP_URL || 'https://www.uomarchive.com').replace(
+  /\/$/,
+  '',
+)
 const LOCALES = ['vi', 'en'] as const
 const PAGE_SIZE = 200
 const API_CANDIDATES = [
@@ -33,6 +37,8 @@ type ProductsResponse = {
     totalPages?: number
   }
 }
+
+type SiteContentResponse = Record<string, unknown>
 
 function unwrapProductsResponse(payload: unknown): ProductsResponse {
   if (!payload || typeof payload !== 'object') {
@@ -150,6 +156,48 @@ async function fetchAllProducts(): Promise<Product[]> {
   return []
 }
 
+async function fetchSiteContentFromApi(apiUrl: string): Promise<SiteContentResponse | null> {
+  const res = await fetch(`${apiUrl}/settings/site-content`, {
+    next: { revalidate: 3600 },
+  })
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch site content from ${apiUrl}`)
+  }
+
+  const payload = (await res.json()) as unknown
+  if (!payload || typeof payload !== 'object') {
+    return null
+  }
+
+  const root = payload as { data?: unknown }
+  if (root.data && typeof root.data === 'object' && !Array.isArray(root.data)) {
+    return root.data as SiteContentResponse
+  }
+
+  return payload as SiteContentResponse
+}
+
+async function fetchStoriesForSitemap() {
+  for (const candidate of API_CANDIDATES) {
+    const apiUrl = normalizeApiUrl(candidate)
+
+    try {
+      const siteContent = await fetchSiteContentFromApi(apiUrl)
+      const stories = parseStories(siteContent?.[STORIES_CONTENT_KEY]).filter(
+        (story) => story.isVisible !== false,
+      )
+      if (stories.length > 0) {
+        return stories
+      }
+    } catch {
+      continue
+    }
+  }
+
+  return []
+}
+
 function safeDate(value: string | null, fallback: Date): Date {
   if (!value) {
     return fallback
@@ -164,7 +212,7 @@ function safeDate(value: string | null, fallback: Date): Date {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const products = await fetchAllProducts()
+  const [products, stories] = await Promise.all([fetchAllProducts(), fetchStoriesForSitemap()])
   const now = new Date()
 
   const getAlternates = (path: string) => ({
@@ -197,6 +245,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.6,
       alternates: getAlternates('/about'),
     },
+    {
+      url: `${BASE_URL}/${locale}/journal`,
+      lastModified: now,
+      changeFrequency: 'weekly',
+      priority: 0.7,
+      alternates: getAlternates('/journal'),
+    },
   ])
 
   const productPages: MetadataRoute.Sitemap = LOCALES.flatMap((locale) =>
@@ -210,5 +265,43 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })),
   )
 
-  return [...staticPages, ...productPages]
+  const storyPages: MetadataRoute.Sitemap = stories.flatMap((story) => {
+    const viSlug = encodeURIComponent(getStorySlug(story, 'vi'))
+    const enSlug = encodeURIComponent(getStorySlug(story, 'en'))
+    const lastModified = safeDate(story.publishedAt ?? null, now)
+    const image = story.imageUrl ? [toAbsoluteUrl(story.imageUrl)] : undefined
+
+    return [
+      {
+        url: `${BASE_URL}/vi/journal/${viSlug}`,
+        lastModified,
+        changeFrequency: 'weekly' as const,
+        priority: 0.75,
+        alternates: {
+          languages: {
+            vi: `${BASE_URL}/vi/journal/${viSlug}`,
+            en: `${BASE_URL}/en/journal/${enSlug}`,
+            'x-default': `${BASE_URL}/vi/journal/${viSlug}`,
+          },
+        },
+        images: image,
+      },
+      {
+        url: `${BASE_URL}/en/journal/${enSlug}`,
+        lastModified,
+        changeFrequency: 'weekly' as const,
+        priority: 0.75,
+        alternates: {
+          languages: {
+            vi: `${BASE_URL}/vi/journal/${viSlug}`,
+            en: `${BASE_URL}/en/journal/${enSlug}`,
+            'x-default': `${BASE_URL}/vi/journal/${viSlug}`,
+          },
+        },
+        images: image,
+      },
+    ]
+  })
+
+  return [...staticPages, ...productPages, ...storyPages]
 }

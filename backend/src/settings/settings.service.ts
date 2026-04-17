@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common'
+import { Prisma } from '@prisma/client'
 import { PrismaService } from '../prisma/prisma.service'
 import { RedisService } from '../redis/redis.service'
 import {
@@ -10,6 +11,24 @@ import {
 
 const CACHE_TTL = 3600 // 1 hour in seconds
 
+type SocialLinks = {
+  facebookPageUrl: string
+  instagramUsername: string
+}
+
+type BrandingSettings = {
+  brandNameVi: string
+  brandNameEn: string
+  brandTaglineVi: string
+  brandTaglineEn: string
+  siteTitleVi: string
+  siteTitleEn: string
+  siteDescriptionVi: string
+  siteDescriptionEn: string
+  logoUrl: string
+  loadingText: string
+}
+
 @Injectable()
 export class SettingsService {
   private readonly logger = new Logger(SettingsService.name)
@@ -19,21 +38,25 @@ export class SettingsService {
     private redis: RedisService,
   ) {}
 
-  // ==================== THEME ====================
+  private parseCachedJson<T>(cached: string): T | null {
+    try {
+      return JSON.parse(cached) as T
+    } catch {
+      return null
+    }
+  }
 
   async getTheme() {
-    // Try cache first
     const cached = await this.redis.get('theme_settings')
     if (cached) {
-      return JSON.parse(cached)
+      const parsed = this.parseCachedJson<unknown>(cached)
+      if (parsed) return parsed
     }
 
-    // Fetch from DB
     let theme = await this.prisma.themeSettings.findUnique({
       where: { id: 'singleton' },
     })
 
-    // Create default if not exists
     if (!theme) {
       theme = await this.prisma.themeSettings.create({
         data: {
@@ -45,7 +68,6 @@ export class SettingsService {
       })
     }
 
-    // Cache for 1 hour
     await this.redis.set('theme_settings', JSON.stringify(theme), CACHE_TTL)
 
     return theme
@@ -58,24 +80,21 @@ export class SettingsService {
       create: { id: 'singleton', ...dto, updatedBy: userId },
     })
 
-    // Invalidate cache
     await this.redis.del('theme_settings')
 
     this.logger.log('Theme settings updated')
     return theme
   }
 
-  // ==================== SITE CONTENT ====================
-
   async getSiteContent() {
     const cached = await this.redis.get('site_content')
     if (cached) {
-      return JSON.parse(cached)
+      const parsed = this.parseCachedJson<Record<string, string>>(cached)
+      if (parsed) return parsed
     }
 
     const content = await this.prisma.siteContent.findMany()
 
-    // Convert to key-value object
     const contentMap = content.reduce(
       (acc, item) => {
         acc[item.key] = item.value
@@ -84,7 +103,6 @@ export class SettingsService {
       {} as Record<string, string>,
     )
 
-    // Set defaults if empty
     if (Object.keys(contentMap).length === 0) {
       const defaults: Record<string, string> = {
         'menu.shop.vi': 'SẢN PHẨM',
@@ -129,12 +147,11 @@ export class SettingsService {
     return { success: true }
   }
 
-  // ==================== SOCIAL LINKS (Using SocialSettings model) ====================
-
-  async getSocialLinks() {
+  async getSocialLinks(): Promise<SocialLinks> {
     const cached = await this.redis.get('social_links')
     if (cached) {
-      return JSON.parse(cached)
+      const parsed = this.parseCachedJson<SocialLinks>(cached)
+      if (parsed) return parsed
     }
 
     const settings = await this.prisma.socialSettings.findUnique({
@@ -142,8 +159,8 @@ export class SettingsService {
     })
 
     const socialLinks = {
-      facebookPageUrl: settings?.facebookPageUrl || 'https://m.me/uomarchive',
-      instagramUsername: settings?.instagramUsername || 'uomarchive',
+      facebookPageUrl: settings?.facebookPageUrl ?? 'https://m.me/uomarchive',
+      instagramUsername: settings?.instagramUsername ?? 'uomarchive',
     }
 
     await this.redis.set('social_links', JSON.stringify(socialLinks), CACHE_TTL)
@@ -156,13 +173,12 @@ export class SettingsService {
       update: { ...dto, updatedBy: userId },
       create: {
         id: 'singleton',
-        facebookPageUrl: dto.facebookPageUrl || '',
-        instagramUsername: dto.instagramUsername || '',
+        facebookPageUrl: dto.facebookPageUrl ?? '',
+        instagramUsername: dto.instagramUsername ?? '',
         updatedBy: userId,
       },
     })
 
-    // Clear cache
     await this.redis.del('social_links')
 
     this.logger.log('Social links updated')
@@ -172,13 +188,10 @@ export class SettingsService {
     }
   }
 
-  // ==================== INQUIRY LINK GENERATION ====================
-
   async generateFacebookInquiryLink(message: string): Promise<string> {
     const socialLinks = await this.getSocialLinks()
-    const baseUrl = socialLinks.facebookPageUrl || 'https://m.me/uomarchive'
+    const baseUrl = socialLinks.facebookPageUrl ?? 'https://m.me/uomarchive'
 
-    // Encode message for URL
     const encodedMessage = encodeURIComponent(message)
 
     return `${baseUrl}?text=${encodedMessage}`
@@ -186,15 +199,12 @@ export class SettingsService {
 
   async generateInstagramInquiryLink(message: string): Promise<string> {
     const socialLinks = await this.getSocialLinks()
-    const username = socialLinks.instagramUsername || 'uomarchive'
+    const username = socialLinks.instagramUsername ?? 'uomarchive'
 
-    // Instagram deep link format
     const encodedMessage = encodeURIComponent(message)
 
     return `https://ig.me/m/${username}?text=${encodedMessage}`
   }
-
-  // ==================== EXCHANGE RATE ====================
 
   async getExchangeRate(): Promise<{ rate: number }> {
     const cached = await this.redis.get('exchange_rate')
@@ -246,7 +256,11 @@ export class SettingsService {
     return { rate, updatedProducts }
   }
 
-  private async recalculateUsdPricesTx(tx: any, rate: number, userId?: string) {
+  private async recalculateUsdPricesTx(
+    tx: Prisma.TransactionClient,
+    rate: number,
+    userId?: string,
+  ) {
     const products = await tx.product.findMany({
       where: { hardDeletedAt: null },
       select: {
@@ -289,8 +303,6 @@ export class SettingsService {
     }
   }
 
-  // ==================== ALL PUBLIC SETTINGS ====================
-
   async getAllPublicSettings() {
     const [theme, siteContent, socialLinks, exchangeRate] = await Promise.all([
       this.getTheme(),
@@ -307,12 +319,11 @@ export class SettingsService {
     }
   }
 
-  // ==================== BRANDING ====================
-
-  async getBranding() {
+  async getBranding(): Promise<BrandingSettings> {
     const cached = await this.redis.get('branding_settings')
     if (cached) {
-      return JSON.parse(cached)
+      const parsed = this.parseCachedJson<BrandingSettings>(cached)
+      if (parsed) return parsed
     }
 
     const content = await this.prisma.siteContent.findMany({
@@ -343,18 +354,18 @@ export class SettingsService {
     )
 
     const branding = {
-      brandNameVi: map['brand.name.vi'] || 'ƯƠM. Archive',
-      brandNameEn: map['brand.name.en'] || 'ƯƠM. Archive',
-      brandTaglineVi: map['brand.tagline.vi'] || '',
-      brandTaglineEn: map['brand.tagline.en'] || '',
-      siteTitleVi: map['site.title.vi'] || 'ƯƠM. Archive - Gốm sứ thủ công Việt Nam',
-      siteTitleEn: map['site.title.en'] || 'ƯƠM. Archive - Handcrafted Ceramics from Vietnam',
+      brandNameVi: map['brand.name.vi'] ?? 'ƯƠM. Archive',
+      brandNameEn: map['brand.name.en'] ?? 'ƯƠM. Archive',
+      brandTaglineVi: map['brand.tagline.vi'] ?? '',
+      brandTaglineEn: map['brand.tagline.en'] ?? '',
+      siteTitleVi: map['site.title.vi'] ?? 'ƯƠM. Archive - Gốm sứ thủ công Việt Nam',
+      siteTitleEn: map['site.title.en'] ?? 'ƯƠM. Archive - Handcrafted Ceramics from Vietnam',
       siteDescriptionVi:
-        map['site.description.vi'] || 'Gốm sứ thủ công được tuyển chọn kỹ lưỡng từ Việt Nam.',
+        map['site.description.vi'] ?? 'Gốm sứ thủ công được tuyển chọn kỹ lưỡng từ Việt Nam.',
       siteDescriptionEn:
-        map['site.description.en'] || 'Discover timeless Vietnamese ceramics curated with care.',
-      logoUrl: map['site.logoUrl'] || '',
-      loadingText: map['site.loadingText'] || 'ƯƠM.',
+        map['site.description.en'] ?? 'Discover timeless Vietnamese ceramics curated with care.',
+      logoUrl: map['site.logoUrl'] ?? '',
+      loadingText: map['site.loadingText'] ?? 'ƯƠM.',
     }
 
     await this.redis.set('branding_settings', JSON.stringify(branding), CACHE_TTL)
@@ -387,7 +398,6 @@ export class SettingsService {
 
     await this.prisma.$transaction(updates)
 
-    // Invalidate both branding and site_content caches
     await this.redis.del('branding_settings')
     await this.redis.del('site_content')
 

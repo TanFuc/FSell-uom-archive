@@ -45,7 +45,10 @@ const accountSchema = z
       .or(z.literal('')),
   })
   .superRefine((data, ctx) => {
-    if ((data.newPassword || data.confirmNewPassword) && data.newPassword !== data.confirmNewPassword) {
+    if (
+      (data.newPassword || data.confirmNewPassword) &&
+      data.newPassword !== data.confirmNewPassword
+    ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['confirmNewPassword'],
@@ -96,7 +99,6 @@ export default function DashboardPage() {
     },
   })
 
-  // Update document title
   useDocumentTitle(t('dashboard'), 'Admin - ƯƠM. Archive')
 
   useEffect(() => {

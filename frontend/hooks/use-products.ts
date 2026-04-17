@@ -11,7 +11,6 @@ import type {
   BulkUpdateDto,
 } from '@/lib/types'
 
-// Query keys for cache management
 export const productKeys = {
   all: ['products'] as const,
   lists: () => [...productKeys.all, 'list'] as const,
@@ -21,12 +20,10 @@ export const productKeys = {
   detailById: (id: string) => [...productKeys.details(), 'id', id] as const,
 }
 
-// Public: Get products list (or Admin list if includeDeleted is true)
 export function useProducts(params?: QueryProductsDto, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: productKeys.list(params || {}),
     queryFn: () => {
-      // If we want to see deleted items, we must use the admin endpoint
       if (params?.includeDeleted) {
         return apiClient.getAdminProducts(params)
       }
@@ -37,7 +34,6 @@ export function useProducts(params?: QueryProductsDto, options?: { enabled?: boo
   })
 }
 
-// Public: Get single product by slug
 export function useProduct(slug: string) {
   return useQuery({
     queryKey: productKeys.detail(slug),
@@ -47,7 +43,6 @@ export function useProduct(slug: string) {
   })
 }
 
-// Admin: Get single product by ID
 export function useProductById(id: string) {
   return useQuery({
     queryKey: productKeys.detailById(id),
@@ -57,7 +52,6 @@ export function useProductById(id: string) {
   })
 }
 
-// Admin: Create product
 export function useCreateProduct() {
   const queryClient = useQueryClient()
 
@@ -73,7 +67,6 @@ export function useCreateProduct() {
   })
 }
 
-// Admin: Update product
 export function useUpdateProduct() {
   const queryClient = useQueryClient()
 
@@ -91,7 +84,6 @@ export function useUpdateProduct() {
   })
 }
 
-// Admin: Soft delete product
 export function useSoftDeleteProduct() {
   const queryClient = useQueryClient()
 
@@ -107,7 +99,6 @@ export function useSoftDeleteProduct() {
   })
 }
 
-// Admin: Hard delete product
 export function useHardDeleteProduct() {
   const queryClient = useQueryClient()
 
@@ -123,7 +114,6 @@ export function useHardDeleteProduct() {
   })
 }
 
-// Admin: Restore product
 export function useRestoreProduct() {
   const queryClient = useQueryClient()
 
@@ -139,7 +129,6 @@ export function useRestoreProduct() {
   })
 }
 
-// Admin: Duplicate product
 export function useDuplicateProduct() {
   const queryClient = useQueryClient()
 
@@ -155,7 +144,6 @@ export function useDuplicateProduct() {
   })
 }
 
-// Admin: Bulk soft delete
 export function useBulkSoftDelete() {
   const queryClient = useQueryClient()
 
@@ -171,13 +159,11 @@ export function useBulkSoftDelete() {
   })
 }
 
-// Admin: Bulk hard delete (not implemented in API, loop individual deletes)
 export function useBulkHardDelete() {
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: async (data: BulkDeleteDto) => {
-      // Loop through each ID and hard delete individually
       await Promise.all(data.ids.map((id) => apiClient.hardDeleteProduct(id)))
       return { deletedCount: data.ids.length }
     },
@@ -191,7 +177,6 @@ export function useBulkHardDelete() {
   })
 }
 
-// Admin: Bulk restore
 export function useBulkRestore() {
   const queryClient = useQueryClient()
 
@@ -207,7 +192,6 @@ export function useBulkRestore() {
   })
 }
 
-// Admin: Bulk update
 export function useBulkUpdate() {
   const queryClient = useQueryClient()
 

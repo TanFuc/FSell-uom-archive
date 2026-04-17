@@ -176,7 +176,7 @@ export default function SettingsPage() {
                   )}
                 />
 
-                <Button type="submit" disabled={isSavingSocial}>
+                <Button type="submit" disabled={isSavingSocial} className="w-full sm:w-auto">
                   {isSavingSocial ? t('loading') : t('save')}
                 </Button>
               </form>
@@ -197,7 +197,7 @@ export default function SettingsPage() {
                   control={rateForm.control}
                   name="rate"
                   render={({ field }) => (
-                    <FormItem className="max-w-xs">
+                    <FormItem className="w-full sm:max-w-xs">
                       <FormLabel>{t('usdToVnd')}</FormLabel>
                       <FormControl>
                         <Input {...field} type="number" />
@@ -210,17 +210,20 @@ export default function SettingsPage() {
                   )}
                 />
 
-                <Button type="submit" disabled={isSavingRate}>
-                  {isSavingRate ? t('loading') : t('save')}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={isRecalculatingUsd}
-                  onClick={onRecalculateUsd}
-                >
-                  {isRecalculatingUsd ? t('loading') : t('recalculateUsdPrices')}
-                </Button>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Button type="submit" disabled={isSavingRate} className="w-full sm:w-auto">
+                    {isSavingRate ? t('loading') : t('save')}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={isRecalculatingUsd}
+                    onClick={onRecalculateUsd}
+                    className="w-full sm:w-auto"
+                  >
+                    {isRecalculatingUsd ? t('loading') : t('recalculateUsdPrices')}
+                  </Button>
+                </div>
               </form>
             </Form>
           </CardContent>

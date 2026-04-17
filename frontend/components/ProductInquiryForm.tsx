@@ -55,7 +55,6 @@ export function ProductInquiryForm({ product, locale }: ProductInquiryFormProps)
     },
   })
 
-  // Reset form when opened with new product or closed
   React.useEffect(() => {
     if (open && !isSuccess) {
       form.setValue(
@@ -68,8 +67,6 @@ export function ProductInquiryForm({ product, locale }: ProductInquiryFormProps)
   }, [open, productName, locale, form, isSuccess])
 
   function onSubmit(_values: z.infer<typeof formSchema>) {
-    // Here you would typically send the data to your backend
-    // Simulate API call
     setTimeout(() => {
       setIsSuccess(true)
       form.reset()
@@ -79,7 +76,6 @@ export function ProductInquiryForm({ product, locale }: ProductInquiryFormProps)
   const handleOpenChange = (newOpen: boolean) => {
     setOpen(newOpen)
     if (!newOpen) {
-      // Reset success state after closing
       setTimeout(() => setIsSuccess(false), 300)
     }
   }

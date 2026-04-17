@@ -22,7 +22,7 @@ for arg in "$@"; do
 done
 
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
-REPO_ROOT="$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)"
+REPO_ROOT="$(CDPATH= cd -- "$SCRIPT_DIR/../../.." && pwd)"
 COMPOSE_FILE="$REPO_ROOT/docker-compose.prod.yml"
 ENV_FILE="$REPO_ROOT/.env.prod"
 COMPOSE_ARGS="--env-file $ENV_FILE -f $COMPOSE_FILE"

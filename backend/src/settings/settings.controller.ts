@@ -17,16 +17,12 @@ import { SettingsService } from './settings.service'
 export class SettingsController {
   constructor(private settingsService: SettingsService) {}
 
-  // ==================== ALL PUBLIC SETTINGS ====================
-
   @Get()
   @ApiOperation({ summary: 'Get all public settings (theme, content, social, exchange rate)' })
   @ApiResponse({ status: 200, description: 'All public settings' })
   async getAllSettings() {
     return this.settingsService.getAllPublicSettings()
   }
-
-  // ==================== THEME ====================
 
   @Get('theme')
   @ApiOperation({ summary: 'Get current theme settings (public)' })
@@ -45,8 +41,6 @@ export class SettingsController {
     return this.settingsService.updateTheme(dto, user.sub)
   }
 
-  // ==================== SITE CONTENT ====================
-
   @Get('site-content')
   @ApiOperation({ summary: 'Get site content (menu, footer, etc.) (public)' })
   @ApiResponse({ status: 200, description: 'Site content' })
@@ -64,8 +58,6 @@ export class SettingsController {
     return this.settingsService.updateSiteContent(dto, user.sub)
   }
 
-  // ==================== SOCIAL LINKS ====================
-
   @Get('social-links')
   @ApiOperation({ summary: 'Get social media links for inquiry feature (public)' })
   @ApiResponse({ status: 200, description: 'Social links (Facebook, Instagram)' })
@@ -82,8 +74,6 @@ export class SettingsController {
   async updateSocialLinks(@Body() dto: UpdateSocialLinksDto, @CurrentUser() user: JwtPayload) {
     return this.settingsService.updateSocialLinks(dto, user.sub)
   }
-
-  // ==================== EXCHANGE RATE ====================
 
   @Get('exchange-rate')
   @ApiOperation({ summary: 'Get current VND/USD exchange rate (public)' })
@@ -113,8 +103,6 @@ export class SettingsController {
   async recalculateUsdPrices(@CurrentUser() user: JwtPayload) {
     return this.settingsService.recalculateUsdPrices(user.sub)
   }
-
-  // ==================== BRANDING ====================
 
   @Get('branding')
   @ApiOperation({

@@ -6,5 +6,5 @@ export const revalidate = 0
 
 export default async function Loading() {
   const branding = await fetchBrandingNoStore()
-  return <LoadingScreen text={branding?.loadingText} />
+  return <LoadingScreen text={branding?.loadingText} fullscreen />
 }

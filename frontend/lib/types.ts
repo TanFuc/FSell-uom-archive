@@ -1,5 +1,3 @@
-// ==================== ENTITIES ====================
-
 export interface Category {
   id: string
   slug: string
@@ -172,7 +170,6 @@ export interface UpdateProductDto {
   categoryId?: string | null
 }
 
-// Category DTOs
 export interface CreateCategoryDto {
   slug: string
   nameVi: string
@@ -227,7 +224,6 @@ export interface BulkUpdateDto {
   inquiryEnabled?: boolean
 }
 
-// User DTOs
 export interface CreateUserDto {
   email: string
   password: string
@@ -259,10 +255,6 @@ export interface QueryUsersDto {
   includeDeleted?: boolean
 }
 
-// ==================== RESPONSES ====================
-
-// ==================== RESPONSES ====================
-
 export interface PaginatedResponse<T> {
   data: T[]
   meta: {
@@ -281,7 +273,6 @@ export interface ApiError {
 
 export type Locale = 'vi' | 'en'
 
-// Override AllSettings to match backend response for public settings
 export interface AllSettings {
   theme: ThemeSettings
   siteContent: SiteContent

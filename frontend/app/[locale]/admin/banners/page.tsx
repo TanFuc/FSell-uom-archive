@@ -29,8 +29,6 @@ import { api } from '@/lib/api'
 import { type Banner } from '@/lib/types'
 import { optimizeProductImage } from '@/lib/utils'
 
-// ... (keep other imports)
-
 export default function BannersPage() {
   const router = useRouter()
   const locale = useLocale()
@@ -47,11 +45,10 @@ export default function BannersPage() {
   const updateBanner = useUpdateBanner()
   const deleteBanner = useDeleteBanner()
 
-  // We want to see all banners, including inactive ones
   const fetchBanners = async () => {
     try {
       setIsLoading(true)
-      // Pass false to get all banners (active and inactive)
+
       const data = await api.getBanners(false)
       setBanners(data)
     } catch (error) {
@@ -69,12 +66,6 @@ export default function BannersPage() {
   useEffect(() => {
     fetchBanners()
   }, [])
-
-  // Since we are using manual fetch in useEffect for this admin page (to bypass the useBanners hook which might be tailored for public view or we just want simpler logic here),
-  // we need to manually refresh the list after mutations, OR ideally convert this page to use useQuery too.
-  // For now, to minimize changes, we'll keep fetchBanners but call it after mutation success.
-  // Actually, useDeleteBanner invalidates cache, but fetchBanners calls API directly!
-  // It's better to refetch explicitly.
 
   const handleDelete = async () => {
     if (!deleteDialog.banner) return

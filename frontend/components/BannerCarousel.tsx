@@ -20,7 +20,6 @@ export function BannerCarousel({ banners, locale, autoPlayInterval = 5000 }: Ban
   const shouldPreventClick = useRef(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  // Block horizontal wheel/trackpad swipe from triggering browser back/forward navigation
   useEffect(() => {
     const el = containerRef.current
     if (!el) return
@@ -33,10 +32,8 @@ export function BannerCarousel({ banners, locale, autoPlayInterval = 5000 }: Ban
     return () => el.removeEventListener('wheel', onWheel)
   }, [])
 
-  // Sort banners by order
   const sortedBanners = [...banners].sort((a, b) => a.order - b.order)
 
-  // Auto-play functionality
   useEffect(() => {
     if (!isAutoPlaying || sortedBanners.length <= 1) return
 
@@ -47,15 +44,13 @@ export function BannerCarousel({ banners, locale, autoPlayInterval = 5000 }: Ban
     return () => clearInterval(interval)
   }, [isAutoPlaying, sortedBanners.length, autoPlayInterval])
 
-  // Navigate to specific banner
   const goToSlide = useCallback((index: number) => {
     setCurrentIndex(index)
     setIsAutoPlaying(false)
-    // Resume auto-play after 10 seconds
+
     setTimeout(() => setIsAutoPlaying(true), 10000)
   }, [])
 
-  // Navigate to next/previous
   const goToNext = useCallback(() => {
     setCurrentIndex((prev) => (prev + 1) % sortedBanners.length)
     setIsAutoPlaying(false)
@@ -68,7 +63,6 @@ export function BannerCarousel({ banners, locale, autoPlayInterval = 5000 }: Ban
     setTimeout(() => setIsAutoPlaying(true), 10000)
   }, [sortedBanners.length])
 
-  // Touch/Swipe handlers for mobile
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchStart(e.targetTouches[0].clientX)
     shouldPreventClick.current = false
@@ -92,7 +86,6 @@ export function BannerCarousel({ banners, locale, autoPlayInterval = 5000 }: Ban
       goToPrevious()
       shouldPreventClick.current = true
     } else {
-      // Small movement, treat as click could happen
       shouldPreventClick.current = false
     }
 

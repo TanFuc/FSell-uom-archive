@@ -11,7 +11,7 @@ import { LoadingScreen } from '@/components/ui/loading-screen'
 import { useBanners } from '@/hooks/use-banners'
 import { useProducts } from '@/hooks/use-products'
 import { useSiteContent } from '@/hooks/use-settings'
-import { parseStories, STORIES_CONTENT_KEY } from '@/lib/stories'
+import { getStorySlug, parseStories, STORIES_CONTENT_KEY } from '@/lib/stories'
 import { cn } from '@/lib/utils'
 
 const HOME_FIRST_FULLSCREEN_LOADING_DONE_KEY = 'uom_home_first_fullscreen_loading_done'
@@ -28,6 +28,11 @@ function usePremiumSmoothScroll() {
   const lastX = useRef(0)
   const lastTime = useRef(0)
   const dragDistance = useRef(0)
+  const touchStartX = useRef(0)
+  const touchPrevX = useRef(0)
+  const touchPrevTime = useRef(0)
+  const isPointerDown = useRef(false)
+  const hasMovedWhilePointerDown = useRef(false)
 
   const step = useCallback(() => {
     if (!scrollRef.current) return
@@ -48,8 +53,10 @@ function usePremiumSmoothScroll() {
   }, [])
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (!scrollRef.current) return
-    setIsDragging(true)
+    if (!scrollRef.current || e.button !== 0) return
+    isPointerDown.current = true
+    hasMovedWhilePointerDown.current = false
+    setIsDragging(false)
     startX.current = e.pageX - scrollRef.current.offsetLeft
     scrollLeft.current = scrollRef.current.scrollLeft
     dragDistance.current = 0
@@ -61,28 +68,88 @@ function usePremiumSmoothScroll() {
     lastTime.current = Date.now()
   }, [])
 
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent) => {
-      if (!isDragging || !scrollRef.current) return
-      e.preventDefault()
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!isPointerDown.current || !scrollRef.current) return
+    e.preventDefault()
 
-      const x = e.pageX - scrollRef.current.offsetLeft
-      const walk = (x - startX.current) * 1.6
+    const x = e.pageX - scrollRef.current.offsetLeft
+    const walk = (x - startX.current) * 1.6
+    const prevScroll = scrollRef.current.scrollLeft
+    scrollRef.current.scrollLeft = scrollLeft.current - walk
+
+    dragDistance.current += Math.abs(scrollRef.current.scrollLeft - prevScroll)
+    if (!hasMovedWhilePointerDown.current && dragDistance.current > 3) {
+      hasMovedWhilePointerDown.current = true
+      setIsDragging(true)
+    }
+
+    const now = Date.now()
+    const dt = now - lastTime.current
+    const dx = e.pageX - lastX.current
+    if (dt > 0) {
+      const newVelocity = (-dx / dt) * 18
+      velocity.current = velocity.current * 0.2 + newVelocity * 0.8
+    }
+
+    lastX.current = e.pageX
+    lastTime.current = now
+
+    const maxScroll = scrollRef.current.scrollWidth - scrollRef.current.clientWidth
+    if (maxScroll > 0) {
+      setProgress(scrollRef.current.scrollLeft / maxScroll)
+    }
+  }, [])
+
+  const handleMouseUp = useCallback(() => {
+    if (!isPointerDown.current && !isDragging) return
+    isPointerDown.current = false
+    setIsDragging(false)
+    if (hasMovedWhilePointerDown.current && Math.abs(velocity.current) > 1) {
+      animationFrame.current = requestAnimationFrame(step)
+    }
+    hasMovedWhilePointerDown.current = false
+  }, [step])
+
+  const handleCaptureClick = useCallback((e: React.MouseEvent) => {
+    if (dragDistance.current > 15) {
+      e.preventDefault()
+      e.stopPropagation()
+    }
+  }, [])
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (!scrollRef.current || e.touches.length !== 1) return
+    const touchX = e.touches[0].clientX
+    setIsDragging(true)
+    touchStartX.current = touchX
+    touchPrevX.current = touchX
+    touchPrevTime.current = Date.now()
+    scrollLeft.current = scrollRef.current.scrollLeft
+    dragDistance.current = 0
+    velocity.current = 0
+    if (animationFrame.current) cancelAnimationFrame(animationFrame.current)
+  }, [])
+
+  const handleTouchMove = useCallback(
+    (e: React.TouchEvent) => {
+      if (!isDragging || !scrollRef.current || e.touches.length !== 1) return
+
+      const touchX = e.touches[0].clientX
+      const walk = (touchX - touchStartX.current) * 1.45
       const prevScroll = scrollRef.current.scrollLeft
       scrollRef.current.scrollLeft = scrollLeft.current - walk
-
       dragDistance.current += Math.abs(scrollRef.current.scrollLeft - prevScroll)
 
       const now = Date.now()
-      const dt = now - lastTime.current
-      const dx = e.pageX - lastX.current
+      const dt = now - touchPrevTime.current
+      const dx = touchX - touchPrevX.current
       if (dt > 0) {
-        const newVelocity = (-dx / dt) * 18
-        velocity.current = velocity.current * 0.2 + newVelocity * 0.8
+        const newVelocity = (-dx / dt) * 16
+        velocity.current = velocity.current * 0.25 + newVelocity * 0.75
       }
 
-      lastX.current = e.pageX
-      lastTime.current = now
+      touchPrevX.current = touchX
+      touchPrevTime.current = now
 
       const maxScroll = scrollRef.current.scrollWidth - scrollRef.current.clientWidth
       if (maxScroll > 0) {
@@ -92,19 +159,27 @@ function usePremiumSmoothScroll() {
     [isDragging],
   )
 
-  const handleMouseUp = useCallback(() => {
+  const handleTouchEnd = useCallback(() => {
     setIsDragging(false)
     if (Math.abs(velocity.current) > 1) {
       animationFrame.current = requestAnimationFrame(step)
     }
   }, [step])
 
-  const handleCaptureClick = useCallback((e: React.MouseEvent) => {
-    if (dragDistance.current > 15) {
-      e.preventDefault()
-      e.stopPropagation()
-    }
+  const handleDragStart = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
   }, [])
+
+  useEffect(() => {
+    const onWindowMouseUp = () => {
+      handleMouseUp()
+    }
+
+    window.addEventListener('mouseup', onWindowMouseUp)
+    return () => {
+      window.removeEventListener('mouseup', onWindowMouseUp)
+    }
+  }, [handleMouseUp])
 
   useEffect(() => {
     return () => {
@@ -118,7 +193,11 @@ function usePremiumSmoothScroll() {
     onMouseMove: handleMouseMove,
     onMouseUp: handleMouseUp,
     onMouseLeave: handleMouseUp,
+    onDragStart: handleDragStart,
     onClickCapture: handleCaptureClick,
+    onTouchStart: handleTouchStart,
+    onTouchMove: handleTouchMove,
+    onTouchEnd: handleTouchEnd,
     isDragging,
     progress,
   }
@@ -136,8 +215,13 @@ export default function HomeClient() {
     sortOrder: 'desc',
   })
 
-  const { data: siteContent, isLoading: isLoadingStories } = useSiteContent()
-  const stories = parseStories(siteContent?.[STORIES_CONTENT_KEY])
+  const { data: siteContent, isLoading: isLoadingStories } = useSiteContent({
+    staleTime: 0,
+    refetchOnMount: 'always',
+  })
+  const stories = parseStories(siteContent?.[STORIES_CONTENT_KEY]).filter(
+    (story) => story.isVisible !== false,
+  )
 
   const latestDrag = usePremiumSmoothScroll()
   const featuredDrag = usePremiumSmoothScroll()
@@ -226,7 +310,11 @@ export default function HomeClient() {
               onMouseMove={latestDrag.onMouseMove}
               onMouseUp={latestDrag.onMouseUp}
               onMouseLeave={latestDrag.onMouseLeave}
+              onDragStart={latestDrag.onDragStart}
               onClickCapture={latestDrag.onClickCapture}
+              onTouchStart={latestDrag.onTouchStart}
+              onTouchMove={latestDrag.onTouchMove}
+              onTouchEnd={latestDrag.onTouchEnd}
               className={cn(
                 'hide-scrollbar flex select-none gap-6 overflow-x-auto px-6 pb-12 transition-transform duration-500 ease-out lg:px-12',
                 latestDrag.isDragging ? 'scale-[0.995] cursor-grabbing' : 'cursor-grab',
@@ -255,16 +343,16 @@ export default function HomeClient() {
       <section className="w-full border-t border-foreground/[0.03] bg-white py-24">
         <div className="mb-16 flex items-end justify-between px-6 pb-8 lg:px-12">
           <div className="space-y-3">
-            <h2 className="text-[8px] font-bold uppercase tracking-[0.4em] text-foreground/40">
+            <h2 className="text-[9px] font-bold uppercase tracking-[0.35em] text-foreground/40 md:text-[10px]">
               JOURNAL
             </h2>
-            <p className="font-sans text-lg font-bold uppercase tracking-[0.1em]">
+            <p className="font-sans text-base font-bold uppercase tracking-[0.1em] md:text-lg">
               {locale === 'vi' ? 'Nhật ký & Câu chuyện' : 'Stories & Journal'}
             </p>
           </div>
           <Link
             href={`/${locale}/journal`}
-            className="group flex items-center gap-2 text-[8px] font-bold uppercase tracking-[0.2em] transition-colors hover:opacity-60"
+            className="group flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.18em] transition-colors hover:opacity-60 md:text-[10px]"
           >
             <span>{t('showMore')}</span>
             <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
@@ -296,9 +384,13 @@ export default function HomeClient() {
               onMouseMove={featuredDrag.onMouseMove}
               onMouseUp={featuredDrag.onMouseUp}
               onMouseLeave={featuredDrag.onMouseLeave}
+              onDragStart={featuredDrag.onDragStart}
               onClickCapture={featuredDrag.onClickCapture}
+              onTouchStart={featuredDrag.onTouchStart}
+              onTouchMove={featuredDrag.onTouchMove}
+              onTouchEnd={featuredDrag.onTouchEnd}
               className={cn(
-                'hide-scrollbar flex select-none gap-6 overflow-x-auto px-6 pb-12 transition-transform duration-500 ease-out lg:px-12',
+                'hide-scrollbar flex touch-pan-x select-none gap-6 overflow-x-auto px-6 pb-12 transition-transform duration-500 ease-out lg:px-12',
                 featuredDrag.isDragging ? 'scale-[0.995] cursor-grabbing' : 'cursor-grab',
               )}
             >
@@ -312,8 +404,11 @@ export default function HomeClient() {
                     transition={{ delay: idx * 0.05, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                     className="w-[calc(100vw-64px)] shrink-0 md:w-[45vw] lg:w-[calc(50vw-48px)]"
                   >
-                    <Link href={`/${locale}/journal`} className="block">
-                      <article className="group overflow-hidden rounded-2xl border border-foreground/10 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg">
+                    <Link
+                      href={`/${locale}/journal/${encodeURIComponent(getStorySlug(story, locale))}`}
+                      className="block"
+                    >
+                      <article className="group overflow-hidden rounded-xl border border-foreground/10 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg">
                         <div className="relative aspect-[4/5] overflow-hidden">
                           <Image
                             src={story.imageUrl}
@@ -324,16 +419,16 @@ export default function HomeClient() {
                           />
                           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-transparent" />
                           {story.publishedAt && (
-                            <p className="absolute left-4 top-4 rounded-full bg-white/85 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground/70 backdrop-blur-sm">
+                            <p className="absolute left-4 top-4 rounded-full bg-white/85 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.16em] text-foreground/70 backdrop-blur-sm md:text-[10px]">
                               {story.publishedAt}
                             </p>
                           )}
                         </div>
-                        <div className="space-y-2 p-5">
-                          <h3 className="font-playfair text-xl leading-tight text-foreground transition-colors group-hover:text-foreground/85">
+                        <div className="space-y-2 p-4 md:p-5">
+                          <h3 className="line-clamp-2 min-h-[2.4rem] font-sans text-sm font-semibold uppercase leading-tight tracking-[0.08em] text-foreground transition-colors group-hover:text-foreground/85 md:min-h-[2.8rem] md:text-base">
                             {locale === 'vi' ? story.titleVi : story.titleEn}
                           </h3>
-                          <p className="line-clamp-3 text-sm leading-relaxed text-foreground/70">
+                          <p className="line-clamp-3 text-[10px] leading-relaxed tracking-[0.04em] text-foreground/65 md:text-xs">
                             {locale === 'vi' ? story.summaryVi : story.summaryEn}
                           </p>
                         </div>

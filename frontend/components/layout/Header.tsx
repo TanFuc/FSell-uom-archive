@@ -6,43 +6,101 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
-import { useState, useEffect, useLayoutEffect, memo } from 'react'
+import { useState, useEffect, useLayoutEffect, memo, useMemo, useRef } from 'react'
 import { useCategories } from '@/hooks/use-categories'
 import { useProducts } from '@/hooks/use-products'
-import { useBranding, useExchangeRate, useSocialLinks } from '@/hooks/use-settings'
+import { useBranding, useExchangeRate, useSiteContent, useSocialLinks } from '@/hooks/use-settings'
 import { getDisplayPrice } from '@/lib/currency'
+import {
+  parseTrendingTerms,
+  SEARCH_TRENDING_EN_KEY,
+  SEARCH_TRENDING_VI_KEY,
+} from '@/lib/search-trending'
 import { cn, optimizeProductImage } from '@/lib/utils'
 
-// Optimized Result Item
-const SearchResultItem = memo(({ product, locale, exchangeRate, onClick }: any) => (
-  <div className="group flex flex-col items-center space-y-3 text-center">
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function HighlightedText({ text, query }: { text: string; query: string }) {
+  const normalizedQuery = query.trim()
+  if (!normalizedQuery || normalizedQuery.length < 2) {
+    return <>{text}</>
+  }
+
+  const escaped = escapeRegExp(normalizedQuery)
+  const pattern = new RegExp(`(${escaped})`, 'ig')
+  const parts = text.split(pattern)
+
+  return (
+    <>
+      {parts.map((part, index) => {
+        const isMatch = part.toLowerCase() === normalizedQuery.toLowerCase()
+        if (!isMatch) {
+          return <span key={`${part}-${index}`}>{part}</span>
+        }
+
+        return (
+          <mark
+            key={`${part}-${index}`}
+            className="rounded-[4px] bg-[#ece7dc] px-1 py-[1px] text-foreground"
+          >
+            {part}
+          </mark>
+        )
+      })}
+    </>
+  )
+}
+
+const SearchResultItem = memo(
+  ({ product, locale, exchangeRate, onClick, query, isActive = false }: any) => (
     <Link
       href={`/${locale}/shop/${product.slug}`}
       onClick={onClick}
       prefetch={false}
-      className="relative block aspect-square w-24 overflow-hidden rounded-full border border-foreground/[0.03] bg-muted/5 md:w-28"
-    >
-      {product.images?.[0] && (
-        <Image
-          src={optimizeProductImage(product.images[0], { width: 320, height: 320 })}
-          alt=""
-          fill
-          sizes="(max-width: 768px) 96px, 112px"
-          className="object-cover"
-        />
+      className={cn(
+        'group block rounded-2xl border border-foreground/[0.08] bg-[linear-gradient(160deg,#ffffff_0%,#faf8f2_100%)] p-3 text-center shadow-[0_8px_20px_rgba(0,0,0,0.05)] transition-all duration-300 hover:-translate-y-1 hover:border-foreground/20 hover:shadow-[0_18px_34px_rgba(0,0,0,0.15)]',
+        isActive &&
+          'border-foreground/45 bg-[linear-gradient(160deg,#fffdfa_0%,#f4ecdd_100%)] shadow-[0_0_0_2px_rgba(66,56,42,0.16),0_16px_34px_rgba(0,0,0,0.15)]',
       )}
+    >
+      <div className="relative mx-auto mb-3 aspect-square w-20 overflow-hidden rounded-full border border-foreground/[0.08] bg-muted/5 md:w-24">
+        {product.images?.[0] && (
+          <Image
+            src={optimizeProductImage(product.images[0], { width: 320, height: 320 })}
+            alt=""
+            fill
+            sizes="(max-width: 768px) 80px, 96px"
+            className="object-cover transition-transform duration-500 group-hover:scale-110"
+          />
+        )}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/15 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+      </div>
+      <div className="space-y-1">
+        <p className="line-clamp-2 min-h-[2.15rem] text-[9px] font-bold uppercase leading-tight tracking-[0.13em] text-foreground/90">
+          <HighlightedText text={locale === 'vi' ? product.nameVi : product.nameEn} query={query} />
+        </p>
+        <p className="text-[8px] font-semibold uppercase tracking-[0.16em] text-foreground/45">
+          {getDisplayPrice(product, locale, exchangeRate).currentPrice}
+        </p>
+      </div>
     </Link>
-    <div className="max-w-[100px] space-y-0.5">
-      <p className="line-clamp-1 text-[8px] font-bold uppercase tracking-widest">
-        {locale === 'vi' ? product.nameVi : product.nameEn}
-      </p>
-      <p className="text-[7.5px] font-medium uppercase text-foreground/30">
-        {getDisplayPrice(product, locale, exchangeRate).currentPrice}
-      </p>
-    </div>
-  </div>
-))
+  ),
+)
 SearchResultItem.displayName = 'SearchResultItem'
+
+function SearchSkeletonItem() {
+  return (
+    <div className="rounded-2xl border border-foreground/[0.08] bg-white/90 p-3 shadow-[0_8px_20px_rgba(0,0,0,0.05)]">
+      <div className="mx-auto mb-3 h-20 w-20 animate-pulse rounded-full bg-gradient-to-r from-[#ece8df] via-[#f5f2eb] to-[#ece8df] bg-[length:220%_100%] md:h-24 md:w-24" />
+      <div className="space-y-2">
+        <div className="h-2 animate-pulse rounded bg-gradient-to-r from-[#ece8df] via-[#f5f2eb] to-[#ece8df] bg-[length:220%_100%]" />
+        <div className="mx-auto h-2 w-2/3 animate-pulse rounded bg-gradient-to-r from-[#ece8df] via-[#f5f2eb] to-[#ece8df] bg-[length:220%_100%]" />
+      </div>
+    </div>
+  )
+}
 
 export function Header() {
   const pathname = usePathname()
@@ -52,6 +110,7 @@ export function Header() {
   const { data: branding } = useBranding()
   const { data: exchangeRate } = useExchangeRate()
   const { data: socialLinks } = useSocialLinks()
+  const { data: siteContent } = useSiteContent()
 
   const [showSearch, setShowSearch] = useState(false)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
@@ -59,6 +118,9 @@ export function Header() {
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const [isPanelReady, setIsPanelReady] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
+  const [activeSearchIndex, setActiveSearchIndex] = useState(-1)
+  const [recentSearches, setRecentSearches] = useState<string[]>([])
+  const activeCardRefs = useRef<Array<HTMLDivElement | null>>([])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -69,6 +131,29 @@ export function Header() {
   }, [])
 
   const BRANDING_CACHE_KEY = 'uom_branding_cache'
+  const RECENT_SEARCHES_KEY = `uom_recent_searches_${locale}`
+
+  const normalizeSearchTerm = (value: string) => value.trim().replace(/\s+/g, ' ')
+
+  const addRecentSearch = (value: string) => {
+    const normalized = normalizeSearchTerm(value)
+    if (normalized.length < 2 || typeof window === 'undefined') {
+      return
+    }
+
+    setRecentSearches((prev) => {
+      const next = [
+        normalized,
+        ...prev.filter((item) => item.toLowerCase() !== normalized.toLowerCase()),
+      ].slice(0, 8)
+
+      try {
+        window.localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(next))
+      } catch {}
+
+      return next
+    })
+  }
 
   const getCachedBranding = () => {
     if (typeof window === 'undefined') return undefined
@@ -97,7 +182,8 @@ export function Header() {
     locale === 'vi'
       ? branding?.brandNameVi || cachedBranding?.brandNameVi || 'ƯƠM. Archive'
       : branding?.brandNameEn || cachedBranding?.brandNameEn || 'Uom Archive'
-  const globalLoadingText = branding?.loadingText?.trim() || cachedBranding?.loadingText?.trim() || ''
+  const globalLoadingText =
+    branding?.loadingText?.trim() || cachedBranding?.loadingText?.trim() || ''
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -105,6 +191,32 @@ export function Header() {
     }, 250)
     return () => clearTimeout(timer)
   }, [searchQuery])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    try {
+      const raw = window.localStorage.getItem(RECENT_SEARCHES_KEY)
+      if (!raw) {
+        setRecentSearches([])
+        return
+      }
+
+      const parsed = JSON.parse(raw)
+      if (Array.isArray(parsed)) {
+        const normalized = parsed
+          .map((item) => (typeof item === 'string' ? normalizeSearchTerm(item) : ''))
+          .filter((item) => item.length >= 2)
+          .slice(0, 8)
+        setRecentSearches(normalized)
+        return
+      }
+    } catch {}
+
+    setRecentSearches([])
+  }, [RECENT_SEARCHES_KEY])
 
   const { data: categories } = useCategories(
     { includeInactive: false },
@@ -178,6 +290,35 @@ export function Header() {
         ? searchedSuggestions
         : defaultSuggestions
       : defaultSuggestions
+  const hasQuery = debouncedQuery.trim().length >= 2
+  const isQueryEmpty = debouncedQuery.trim().length === 0
+  const isSearchLoading = hasQuery && isSearching
+  const resultBatchKey = useMemo(() => {
+    const ids = displaySuggestions.map((product) => product.id).join('-')
+    return `${debouncedQuery.trim().toLowerCase()}|${ids}`
+  }, [debouncedQuery, displaySuggestions])
+
+  const trendingSearches = useMemo(
+    () =>
+      parseTrendingTerms(
+        siteContent?.[locale === 'vi' ? SEARCH_TRENDING_VI_KEY : SEARCH_TRENDING_EN_KEY],
+        locale,
+      ),
+    [locale, siteContent],
+  )
+
+  useEffect(() => {
+    setActiveSearchIndex(-1)
+  }, [debouncedQuery, showSearch])
+
+  useEffect(() => {
+    if (activeSearchIndex < 0 || !showSearch) {
+      return
+    }
+
+    const node = activeCardRefs.current[activeSearchIndex]
+    node?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' })
+  }, [activeSearchIndex, resultBatchKey, showSearch])
 
   const navigation = [
     { name: t('shop'), href: `/${locale}/shop` },
@@ -188,18 +329,85 @@ export function Header() {
   const switchLocale = locale === 'vi' ? 'en' : 'vi'
   const newPath = pathname.replace(`/${locale}`, `/${switchLocale}`)
 
+  const closeSearchPanel = () => {
+    setIsPanelReady(false)
+    setShowSearch(false)
+    if (typeof document !== 'undefined') {
+      const active = document.activeElement as HTMLElement | null
+      active?.blur()
+    }
+  }
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     if (searchQuery.trim()) {
+      addRecentSearch(searchQuery)
       router.push(`/${locale}/shop?search=${encodeURIComponent(searchQuery.trim())}`)
-      setShowSearch(false)
+      closeSearchPanel()
       setSearchQuery('')
     }
   }
 
-  const cubicBezier = [0.22, 1, 0.36, 1]
+  const navigateToSuggestion = (index: number) => {
+    const target = displaySuggestions[index]
+    if (!target) return
+    addRecentSearch(searchQuery || debouncedQuery)
+    router.push(`/${locale}/shop/${target.slug}`)
+    closeSearchPanel()
+    setSearchQuery('')
+  }
 
-  const isHeaderOpaque = showSearch || showMobileMenu
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Escape') {
+      e.preventDefault()
+      closeSearchPanel()
+      return
+    }
+
+    if (!displaySuggestions.length) {
+      return
+    }
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setActiveSearchIndex((prev) => (prev + 1) % displaySuggestions.length)
+      return
+    }
+
+    if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setActiveSearchIndex((prev) => (prev <= 0 ? displaySuggestions.length - 1 : prev - 1))
+      return
+    }
+
+    if (e.key === 'Enter' && activeSearchIndex >= 0) {
+      e.preventDefault()
+      navigateToSuggestion(activeSearchIndex)
+    }
+  }
+
+  const cubicBezier = [0.22, 1, 0.36, 1]
+  const listStagger = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.06,
+        delayChildren: 0.04,
+      },
+    },
+  }
+  const itemRise = {
+    hidden: { opacity: 0, y: 10 },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.28, ease: cubicBezier },
+    },
+  }
+
+  const isHeaderOpaque = showMobileMenu
+  const panelOffsetClass = isScrolled ? 'top-16 lg:top-20' : 'top-20 lg:top-28'
 
   return (
     <header
@@ -221,7 +429,7 @@ export function Header() {
             <button
               onClick={() => {
                 setShowMobileMenu(!showMobileMenu)
-                setShowSearch(false)
+                closeSearchPanel()
               }}
               className="group flex items-center gap-2 py-2 outline-none"
             >
@@ -309,7 +517,7 @@ export function Header() {
 
             <button
               onClick={() => {
-                setShowSearch(!showSearch)
+                showSearch ? closeSearchPanel() : setShowSearch(true)
                 setShowMobileMenu(false)
               }}
               className="flex items-center gap-2 py-1 outline-none"
@@ -337,39 +545,76 @@ export function Header() {
       {/* SEARCH PANEL */}
       <AnimatePresence>
         {showSearch && (
-          <div className="fixed inset-0 z-50">
+          <div className="fixed inset-0 z-40">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="absolute inset-0 bg-black/30"
-              onClick={() => setShowSearch(false)}
+              transition={{ duration: 0.25 }}
+              className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(0,0,0,0.46)_0%,rgba(0,0,0,0.62)_100%)] backdrop-blur-[3px]"
+              onClick={closeSearchPanel}
             />
             <motion.div
-              initial={{ y: '-100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '-100%' }}
+              initial={{ y: '-10%', opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: '-10%', opacity: 0 }}
               onAnimationComplete={() => setIsPanelReady(true)}
-              transition={{ duration: 0.5, ease: cubicBezier }}
-              className="absolute left-0 right-0 top-0 bg-[#fbfbfb] pt-16 shadow-2xl will-change-transform lg:pt-20"
+              transition={{ duration: 0.35, ease: cubicBezier }}
+              className={cn(
+                'absolute inset-x-0 bottom-0 overflow-y-auto px-3 pb-4 will-change-transform md:px-6 md:pb-6',
+                panelOffsetClass,
+              )}
             >
-              <div className="mx-auto min-h-[300px] w-full max-w-[1100px] px-6 py-8 lg:px-12 lg:py-12">
+              <div className="relative mx-auto w-full max-w-[1160px] overflow-hidden rounded-2xl border border-black/10 bg-[#fcfcfa] shadow-[0_24px_70px_rgba(0,0,0,0.3)]">
+                <div className="pointer-events-none absolute -right-16 -top-20 h-52 w-52 rounded-full bg-[#d7cab3]/45 blur-3xl" />
+                <div className="pointer-events-none absolute -left-12 bottom-0 h-40 w-40 rounded-full bg-[#e7dfcf]/55 blur-3xl" />
                 <motion.div
                   animate={isPanelReady ? { opacity: 1, y: 0 } : { opacity: 0, y: 5 }}
                   transition={{ duration: 0.3 }}
+                  className="relative min-h-[300px] px-5 py-6 md:px-8 md:py-8 lg:px-10 lg:py-9"
                 >
-                  <form onSubmit={handleSearch} className="relative mb-10">
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder={locale === 'vi' ? 'Tìm kiếm...' : 'Search...'}
-                      className="w-full border-b border-foreground/10 bg-transparent py-3 font-sans text-xl font-bold uppercase tracking-tight focus:border-primary/30 focus:outline-none lg:text-2xl"
-                      autoFocus
-                    />
+                  <form
+                    onSubmit={handleSearch}
+                    className="relative mb-8 rounded-xl border border-foreground/10 bg-white px-4 py-3 shadow-sm transition-all duration-300 focus-within:border-foreground/30 focus-within:shadow-[0_10px_26px_rgba(0,0,0,0.08)] md:px-5"
+                  >
+                    <div className="mb-2 flex items-center justify-between">
+                      <p className="text-[9px] font-bold uppercase tracking-[0.3em] text-foreground/35">
+                        {locale === 'vi' ? 'Tìm Kiếm Nhanh' : 'Quick Search'}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-[9px] uppercase tracking-[0.22em] text-foreground/30">
+                          {hasQuery
+                            ? `${displaySuggestions.length} ${locale === 'vi' ? 'gợi ý' : 'suggestions'}`
+                            : 'ENTER'}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={closeSearchPanel}
+                          className="inline-flex items-center gap-1 rounded-full border border-foreground/15 px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.16em] text-foreground/55 transition-all hover:border-foreground/35 hover:text-foreground"
+                        >
+                          <X className="h-3 w-3" />
+                          {t('close')}
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Search className="h-4 w-4 shrink-0 text-foreground/35" />
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onKeyDown={handleInputKeyDown}
+                        placeholder={
+                          locale === 'vi'
+                            ? 'Nhập tên sản phẩm, chất liệu...'
+                            : 'Type product name, material...'
+                        }
+                        className="w-full bg-transparent py-1.5 font-sans text-base font-semibold tracking-[0.01em] text-foreground placeholder:text-foreground/35 focus:outline-none md:text-lg"
+                        autoFocus
+                      />
+                    </div>
                     {isSearching && searchQuery && globalLoadingText && (
-                      <div className="absolute right-0 top-1/2 -translate-y-1/2">
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2">
                         <span className="animate-pulse text-[10px] font-bold uppercase tracking-[0.25em] text-foreground/40">
                           {globalLoadingText}
                         </span>
@@ -377,39 +622,170 @@ export function Header() {
                     )}
                   </form>
 
-                  <div className="grid grid-cols-1 gap-12 md:grid-cols-4">
+                  <div className="grid grid-cols-1 gap-10 md:grid-cols-4">
                     <div className="md:col-span-3">
-                      <h4 className="mb-6 text-[8px] font-bold uppercase tracking-[0.4em] text-foreground/30">
-                        SUGGESTED
-                      </h4>
-                      <div className="grid grid-cols-2 justify-items-center gap-4 sm:grid-cols-4 md:gap-8">
-                        {displaySuggestions.map((product) => (
-                          <SearchResultItem
-                            key={product.id}
-                            product={product}
-                            locale={locale}
-                            exchangeRate={exchangeRate?.rate}
-                            onClick={() => setShowSearch(false)}
-                          />
-                        ))}
+                      {isQueryEmpty && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="mb-6 rounded-xl border border-foreground/10 bg-[linear-gradient(120deg,rgba(255,255,255,0.95)_0%,rgba(244,237,224,0.95)_100%)] p-4 shadow-sm"
+                        >
+                          <p className="mb-3 text-[9px] font-bold uppercase tracking-[0.28em] text-foreground/40">
+                            {locale === 'vi' ? 'Trending Searches' : 'Trending Searches'}
+                          </p>
+                          <div className="flex flex-wrap gap-2.5">
+                            {trendingSearches.map((term) => (
+                              <button
+                                key={term}
+                                type="button"
+                                onClick={() => setSearchQuery(term)}
+                                className="rounded-full border border-foreground/15 bg-white/80 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground/70 transition-all hover:-translate-y-0.5 hover:border-foreground/35 hover:text-foreground"
+                              >
+                                {term}
+                              </button>
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+
+                      {isQueryEmpty && recentSearches.length > 0 && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.04 }}
+                          className="mb-6 rounded-xl border border-foreground/10 bg-white/90 p-4 shadow-sm"
+                        >
+                          <div className="mb-3 flex items-center justify-between gap-2">
+                            <p className="text-[9px] font-bold uppercase tracking-[0.28em] text-foreground/40">
+                              {locale === 'vi' ? 'Recent Searches' : 'Recent Searches'}
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setRecentSearches([])
+                                if (typeof window !== 'undefined') {
+                                  try {
+                                    window.localStorage.removeItem(RECENT_SEARCHES_KEY)
+                                  } catch {}
+                                }
+                              }}
+                              className="border-foreground/12 rounded-full border px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-foreground/45 transition-colors hover:border-foreground/30 hover:text-foreground"
+                            >
+                              {locale === 'vi' ? 'Xóa' : 'Clear'}
+                            </button>
+                          </div>
+                          <div className="flex flex-wrap gap-2.5">
+                            {recentSearches.map((term) => (
+                              <button
+                                key={`recent-${term}`}
+                                type="button"
+                                onClick={() => setSearchQuery(term)}
+                                className="rounded-full border border-foreground/15 bg-[#f9f6ef] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground/70 transition-all hover:-translate-y-0.5 hover:border-foreground/35 hover:text-foreground"
+                              >
+                                {term}
+                              </button>
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+
+                      <div className="mb-5 flex items-center justify-between gap-3">
+                        <h4 className="text-[9px] font-bold uppercase tracking-[0.34em] text-foreground/35">
+                          SUGGESTED
+                        </h4>
+                        {hasQuery && (
+                          <span className="rounded-full border border-foreground/15 bg-white/80 px-3 py-1 text-[9px] font-semibold uppercase tracking-[0.2em] text-foreground/40">
+                            {locale === 'vi' ? 'Theo từ khóa' : 'Query matched'}
+                          </span>
+                        )}
                       </div>
+
+                      <AnimatePresence mode="wait" initial={false}>
+                        {isSearchLoading ? (
+                          <motion.div
+                            key={`skeleton-${debouncedQuery}`}
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -8 }}
+                            transition={{ duration: 0.22 }}
+                            className="grid grid-cols-2 gap-3 sm:grid-cols-4 md:gap-4"
+                          >
+                            {Array.from({ length: 4 }).map((_, idx) => (
+                              <SearchSkeletonItem key={`sk-${idx}`} />
+                            ))}
+                          </motion.div>
+                        ) : displaySuggestions.length > 0 ? (
+                          <motion.div
+                            key={`results-${resultBatchKey}`}
+                            variants={listStagger}
+                            initial="hidden"
+                            animate={isPanelReady ? 'show' : 'hidden'}
+                            exit={{ opacity: 0, y: -8 }}
+                            className="grid grid-cols-2 gap-3 sm:grid-cols-4 md:gap-4"
+                          >
+                            {displaySuggestions.map((product, index) => (
+                              <motion.div
+                                key={`${product.id}-${resultBatchKey}`}
+                                variants={itemRise}
+                                initial={{ opacity: 0, y: 8, filter: 'blur(8px)' }}
+                                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                                exit={{ opacity: 0, y: -6, filter: 'blur(8px)' }}
+                                transition={{ duration: 0.26, ease: cubicBezier }}
+                                ref={(node) => {
+                                  activeCardRefs.current[index] = node
+                                }}
+                              >
+                                <SearchResultItem
+                                  product={product}
+                                  locale={locale}
+                                  exchangeRate={exchangeRate?.rate}
+                                  onClick={() => {
+                                    addRecentSearch(searchQuery || debouncedQuery)
+                                    closeSearchPanel()
+                                  }}
+                                  query={debouncedQuery}
+                                  isActive={activeSearchIndex === index}
+                                />
+                              </motion.div>
+                            ))}
+                          </motion.div>
+                        ) : (
+                          <motion.p
+                            key={`empty-${debouncedQuery}`}
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -8 }}
+                            className="rounded-lg border border-dashed border-foreground/15 bg-white/70 px-4 py-4 text-xs uppercase tracking-[0.16em] text-foreground/45"
+                          >
+                            {locale === 'vi'
+                              ? 'Chưa có gợi ý phù hợp.'
+                              : 'No matching suggestions yet.'}
+                          </motion.p>
+                        )}
+                      </AnimatePresence>
                     </div>
-                    <div className="space-y-6">
-                      <h4 className="mb-6 text-[8px] font-bold uppercase tracking-[0.4em] text-foreground/30">
+                    <div className="space-y-5">
+                      <h4 className="mb-5 text-[9px] font-bold uppercase tracking-[0.34em] text-foreground/35">
                         CATEGORIES
                       </h4>
-                      <nav className="flex flex-col gap-3">
+                      <motion.nav
+                        variants={listStagger}
+                        initial="hidden"
+                        animate={isPanelReady ? 'show' : 'hidden'}
+                        className="flex flex-wrap gap-2 md:flex-col md:gap-2.5"
+                      >
                         {categories?.map((cat) => (
-                          <Link
-                            key={cat.id}
-                            href={`/${locale}/shop?categoryId=${cat.id}`}
-                            onClick={() => setShowSearch(false)}
-                            className="text-[10px] font-bold uppercase tracking-widest transition-all hover:pl-2"
-                          >
-                            {locale === 'vi' ? cat.nameVi : cat.nameEn}
-                          </Link>
+                          <motion.div key={cat.id} variants={itemRise}>
+                            <Link
+                              href={`/${locale}/shop?categoryId=${cat.id}`}
+                              onClick={closeSearchPanel}
+                              className="border-foreground/12 block rounded-full border bg-white px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] transition-all hover:border-foreground/35 hover:bg-foreground hover:text-white md:w-fit"
+                            >
+                              {locale === 'vi' ? cat.nameVi : cat.nameEn}
+                            </Link>
+                          </motion.div>
                         ))}
-                      </nav>
+                      </motion.nav>
                     </div>
                   </div>
                 </motion.div>

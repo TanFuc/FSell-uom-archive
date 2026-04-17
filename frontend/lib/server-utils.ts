@@ -1,4 +1,3 @@
-// frontend/lib/server-utils.ts
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
 const BRANDING_FETCH_TIMEOUT_MS = 5000
 
@@ -29,7 +28,9 @@ function normalizeBrandingPayload(payload: unknown): BrandingData | null {
   return root as BrandingData
 }
 
-async function fetchBrandingInternal(cacheMode: RequestCache | 'revalidate'): Promise<BrandingData | null> {
+async function fetchBrandingInternal(
+  cacheMode: RequestCache | 'revalidate',
+): Promise<BrandingData | null> {
   try {
     const isRevalidateMode = cacheMode === 'revalidate'
     const res = await fetch(`${API_URL}/settings/branding`, {

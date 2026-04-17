@@ -42,7 +42,7 @@ export async function generateMetadata({
     },
     alternates: {
       canonical: `/${locale}/shop`,
-      languages: { vi: '/vi/shop', en: '/en/shop' },
+      languages: { vi: '/vi/shop', en: '/en/shop', 'x-default': '/vi/shop' },
     },
   }
 }

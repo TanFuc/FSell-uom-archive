@@ -25,7 +25,6 @@ export default function ShopClient() {
     searchParams.get('categoryId') || undefined,
   )
 
-  // Update URL search param
   const updateURL = useCallback(
     (val: string) => {
       const params = new URLSearchParams(searchParams.toString())
@@ -39,7 +38,6 @@ export default function ShopClient() {
     [pathname, router, searchParams],
   )
 
-  // Sync state with URL
   useEffect(() => {
     const catId = searchParams.get('categoryId')
     const searchVal = searchParams.get('search')

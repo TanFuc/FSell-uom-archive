@@ -6,11 +6,9 @@ import FilePondPluginImagePreview from 'filepond-plugin-image-preview'
 import React, { useState } from 'react'
 import { FilePond, registerPlugin } from 'react-filepond'
 
-// Import FilePond styles
 import 'filepond/dist/filepond.min.css'
 import 'filepond-plugin-image-preview/dist/filepond-plugin-image-preview.min.css'
 
-// Register plugins
 registerPlugin(
   FilePondPluginImagePreview,
   FilePondPluginFileValidateType,
@@ -132,7 +130,6 @@ export function MultipleFileUpload({
                 setUploadedUrls(newUrls)
                 setUploadedPublicIds(newPublicIds)
 
-                // Call success callback with all uploaded files
                 onUploadSuccess?.(newUrls, newPublicIds)
               }
               return data.data?.publicId || response

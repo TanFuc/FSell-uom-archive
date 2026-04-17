@@ -107,16 +107,13 @@ export function optimizeProductImage(imageUrl: string, options: OptimizeImageOpt
     format = 'auto',
   } = options
 
-  // If not a Cloudinary URL, return the original with getImageUrl
   if (!imageUrl.includes('cloudinary.com')) {
     return getImageUrl(imageUrl)
   }
 
-  // Parse Cloudinary URL
   const uploadIndex = imageUrl.indexOf('/upload/')
   if (uploadIndex === -1) return imageUrl
 
-  // Build transformation string
   const transformations = [
     `w_${width}`,
     `h_${height}`,
@@ -127,7 +124,6 @@ export function optimizeProductImage(imageUrl: string, options: OptimizeImageOpt
     `f_${format}`,
   ].join(',')
 
-  // Insert transformations after /upload/
   const beforeUpload = imageUrl.substring(0, uploadIndex + 8)
   const afterUpload = imageUrl.substring(uploadIndex + 8)
 

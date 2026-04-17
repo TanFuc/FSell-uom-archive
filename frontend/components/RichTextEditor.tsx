@@ -56,7 +56,6 @@ export function RichTextEditor({
   const [isMaximized, setIsMaximized] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Prevent scroll on body when maximized
   useEffect(() => {
     if (isMaximized) {
       document.body.style.overflow = 'hidden'
@@ -102,7 +101,17 @@ export function RichTextEditor({
     },
   })
 
-  // ... (handleImageUpload, handleFileSelect, setLink consts remain the same)
+  useEffect(() => {
+    if (!editor) return
+
+    const incoming = content || ''
+    const current = editor.getHTML()
+
+    if (incoming !== current) {
+      editor.commands.setContent(incoming, { emitUpdate: false })
+    }
+  }, [content, editor])
+
   const handleImageUpload = useCallback(
     async (file: File) => {
       if (!editor) return

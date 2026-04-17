@@ -87,6 +87,14 @@
     "loading": "Đang tải...",
     "allCategories": "Tất cả danh mục"
   },
+  "journal": {
+    "heroTitle": "Những Câu Chuyện ƯƠM.",
+    "heroDescription": "Nơi chúng tôi chia sẻ các câu chuyện thủ công, hành trình sáng tạo và những khoảnh khắc phía sau mỗi bộ sưu tập.",
+    "empty": "Nội dung stories đang được cập nhật. Quay lại sau nhé.",
+    "backToJournal": "Quay lại Journal",
+    "relatedStories": "Stories bạn có thể quan tâm",
+    "viewAllStories": "Xem tất cả stories"
+  },
   "footer": {
     "copyright": "© 2026 ƯƠM. Archive. Tất cả quyền được bảo lưu.",
     "followUs": "Theo dõi chúng tôi"
@@ -388,11 +396,19 @@
       "addStory": "Thêm câu chuyện",
       "editStory": "Chỉnh sửa câu chuyện",
       "updateStory": "Cập nhật câu chuyện",
-      "formHint": "Nhập nội dung song ngữ và ảnh cho từng thẻ câu chuyện.",
+      "formHint": "Nhập tiêu đề, tóm tắt, nội dung chi tiết rich-text song ngữ và ảnh cho mỗi story.",
+      "slug": "Slug story (tuỳ chọn)",
+      "slugVi": "Slug tiếng Việt (tuỳ chọn)",
+      "slugEn": "Slug tiếng Anh (tuỳ chọn)",
+      "slugAutoHint": "Slug được tự động tạo theo tiêu đề và không thể chỉnh sửa thủ công.",
       "titleVi": "Tiêu đề (Tiếng Việt)",
       "titleEn": "Tiêu đề (Tiếng Anh)",
       "summaryVi": "Tóm tắt (Tiếng Việt)",
       "summaryEn": "Tóm tắt (Tiếng Anh)",
+      "contentVi": "Nội dung chi tiết (Tiếng Việt)",
+      "contentEn": "Nội dung chi tiết (Tiếng Anh)",
+      "contentPlaceholderVi": "Nhập đầy đủ nội dung story bằng tiếng Việt...",
+      "contentPlaceholderEn": "Nhập đầy đủ nội dung story bằng tiếng Anh...",
       "imageUrl": "Đường dẫn ảnh",
       "uploadImage": "Tải ảnh lên",
       "imageUploaded": "Đã tải ảnh lên",
@@ -402,7 +418,23 @@
       "saved": "Đã lưu stories",
       "loadError": "Không thể tải stories",
       "saveError": "Không thể lưu stories",
-      "requiredFields": "Vui lòng nhập đủ các trường bắt buộc"
+      "requiredFields": "Vui lòng nhập đủ các trường bắt buộc (bao gồm nội dung chi tiết)"
+    },
+    "trending": {
+      "navLabel": "Trending Search",
+      "title": "Trending Searches",
+      "description": "Quản lý từ khóa hiển thị khi ô tìm kiếm đang trống.",
+      "viTitle": "Từ khóa Tiếng Việt",
+      "enTitle": "Từ khóa Tiếng Anh",
+      "viPlaceholder": "Thêm từ khóa trending tiếng Việt...",
+      "enPlaceholder": "Thêm từ khóa trending tiếng Anh...",
+      "preview": "Xem trước chip",
+      "empty": "Chưa có từ khóa.",
+      "saved": "Đã lưu trending searches",
+      "loadError": "Không thể tải trending searches",
+      "saveError": "Không thể lưu trending searches",
+      "limitHint": "Tối đa 12 từ khóa cho mỗi ngôn ngữ.",
+      "helper": "Các từ khóa này hiển thị trong panel search khi ô tìm kiếm đang trống."
     }
   },
   "validation": {

@@ -33,7 +33,6 @@ export class AuthService {
   ) {}
 
   async register(dto: RegisterDto): Promise<Tokens> {
-    // Check if user exists
     const existingUser = await this.prisma.user.findUnique({
       where: { email: dto.email },
     })
@@ -42,10 +41,8 @@ export class AuthService {
       throw new ConflictException('Email đã được đăng ký')
     }
 
-    // Hash password
     const passwordHash = await bcrypt.hash(dto.password, 10)
 
-    // Create user
     const user = await this.prisma.user.create({
       data: {
         email: dto.email,
@@ -54,14 +51,12 @@ export class AuthService {
       },
     })
 
-    // Generate tokens
     const tokens = await this.generateTokens({
       sub: user.id,
       email: user.email,
       role: user.role,
     })
 
-    // Store refresh token
     await this.updateRefreshToken(user.id, tokens.refreshToken)
 
     this.logger.log(`User registered: ${user.email}`)
@@ -71,7 +66,6 @@ export class AuthService {
   async login(
     dto: LoginDto,
   ): Promise<Tokens & { user: { id: string; email: string; fullName: string; role: string } }> {
-    // Find user
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
     })
@@ -80,21 +74,18 @@ export class AuthService {
       throw new UnauthorizedException('Email hoặc mật khẩu không chính xác')
     }
 
-    // Verify password
     const passwordValid = await bcrypt.compare(dto.password, user.passwordHash)
 
     if (!passwordValid) {
       throw new UnauthorizedException('Email hoặc mật khẩu không chính xác')
     }
 
-    // Generate tokens
     const tokens = await this.generateTokens({
       sub: user.id,
       email: user.email,
       role: user.role,
     })
 
-    // Store refresh token
     await this.updateRefreshToken(user.id, tokens.refreshToken)
 
     this.logger.log(`User logged in: ${user.email}`)
@@ -119,14 +110,12 @@ export class AuthService {
       throw new UnauthorizedException('Refresh token không hợp lệ')
     }
 
-    // Generate new tokens
     const tokens = await this.generateTokens({
       sub: user.id,
       email: user.email,
       role: user.role,
     })
 
-    // Store new refresh token
     await this.updateRefreshToken(user.id, tokens.refreshToken)
 
     this.logger.log(`Tokens refreshed for: ${user.email}`)
@@ -225,8 +214,8 @@ export class AuthService {
   private async generateTokens(payload: TokenPayload): Promise<Tokens> {
     const accessSecret = this.configService.get<string>('JWT_ACCESS_SECRET')
     const refreshSecret = this.configService.get<string>('JWT_REFRESH_SECRET')
-    const accessExpiration = this.configService.get<string>('JWT_ACCESS_EXPIRATION') || '15m'
-    const refreshExpiration = this.configService.get<string>('JWT_REFRESH_EXPIRATION') || '7d'
+    const accessExpiration = this.configService.get<string>('JWT_ACCESS_EXPIRATION') ?? '15m'
+    const refreshExpiration = this.configService.get<string>('JWT_REFRESH_EXPIRATION') ?? '7d'
 
     if (!accessSecret || !refreshSecret) {
       throw new Error('JWT secrets are not configured')

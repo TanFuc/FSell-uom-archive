@@ -34,9 +34,7 @@ function syncLoadingTextToCache(initialLoadingText?: string) {
         loadingText: normalized,
       }),
     )
-  } catch {
-    // no-op
-  }
+  } catch {}
 }
 
 export function SplashScreen({ initialLoadingText }: { initialLoadingText?: string }) {
@@ -77,7 +75,9 @@ export function SplashScreen({ initialLoadingText }: { initialLoadingText?: stri
         {normalizedDisplayText && (
           <h1
             className="animate-pulse break-words font-playfair text-[clamp(2rem,12vw,5rem)] font-bold leading-[0.95] tracking-[0.08em] text-foreground [overflow-wrap:anywhere] md:tracking-[0.12em]"
-            style={{ animation: 'fadeIn 180ms ease-out, pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}
+            style={{
+              animation: 'fadeIn 180ms ease-out, pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            }}
             suppressHydrationWarning
           >
             {normalizedDisplayText}

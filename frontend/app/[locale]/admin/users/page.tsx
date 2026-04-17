@@ -319,8 +319,8 @@ export default function UsersPage() {
         </div>
       </div>
 
-      <div className="border">
-        <Table>
+      <div className="rounded-lg border bg-background">
+        <Table className="min-w-[720px]">
           <TableHeader>
             <TableRow>
               <TableHead>{t('name')}</TableHead>
@@ -356,7 +356,7 @@ export default function UsersPage() {
                       {user.fullName}
                     </div>
                   </TableCell>
-                  <TableCell>{user.email}</TableCell>
+                  <TableCell className="break-all text-sm">{user.email}</TableCell>
                   <TableCell>
                     <Badge variant={user.role === 'ADMIN' ? 'default' : 'secondary'}>
                       {user.role}
@@ -497,11 +497,18 @@ export default function UsersPage() {
                 )}
               />
 
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+              <DialogFooter className="gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setDialogOpen(false)}
+                  className="w-full sm:w-auto"
+                >
                   {t('cancel')}
                 </Button>
-                <Button type="submit">{t('save')}</Button>
+                <Button type="submit" className="w-full sm:w-auto">
+                  {t('save')}
+                </Button>
               </DialogFooter>
             </form>
           </Form>
@@ -520,11 +527,15 @@ export default function UsersPage() {
               Are you sure you want to delete "{deleteDialog.user?.fullName}"?
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteDialog({ open: false, user: null })}>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setDeleteDialog({ open: false, user: null })}
+              className="w-full sm:w-auto"
+            >
               {t('cancel')}
             </Button>
-            <Button variant="destructive" onClick={handleDelete}>
+            <Button variant="destructive" onClick={handleDelete} className="w-full sm:w-auto">
               {t('delete')}
             </Button>
           </DialogFooter>

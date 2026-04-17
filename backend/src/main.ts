@@ -5,12 +5,19 @@ import { NestFactory } from '@nestjs/core'
 import { NestExpressApplication } from '@nestjs/platform-express'
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger'
 import * as express from 'express'
+import { NextFunction, Request, Response } from 'express'
 import helmet from 'helmet'
 import { AppModule } from './app.module'
 import { AllExceptionsFilter } from './common/filters/http-exception.filter'
 import { RequestLoggingInterceptor } from './common/interceptors/request-logging.interceptor'
 import { TransformInterceptor } from './common/interceptors/transform.interceptor'
 import { loginPayloadNormalizerMiddleware } from './common/middleware/login-payload-normalizer.middleware'
+import {
+  extractRequestPath,
+  isHardBlockedProbePath,
+  isProbePath,
+  isProbeRateLimited,
+} from './common/security/probe-paths'
 import { MonitoringService } from './monitoring/monitoring.service'
 
 async function bootstrap() {
@@ -26,17 +33,41 @@ async function bootstrap() {
     .map((url) => url.trim())
     .filter(Boolean)
 
-  // Security
   app.use(
     helmet({
       crossOriginResourcePolicy: { policy: 'cross-origin' },
     }),
   )
 
-  // CORS
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    const requestPath = extractRequestPath(req)
+
+    if (isHardBlockedProbePath(requestPath)) {
+      return res.status(403).json({
+        statusCode: 403,
+        message: 'Forbidden',
+      })
+    }
+
+    if (isProbePath(requestPath)) {
+      if (isProbeRateLimited(req)) {
+        return res.status(429).json({
+          statusCode: 429,
+          message: 'Too many requests',
+        })
+      }
+
+      return res.status(404).json({
+        statusCode: 404,
+        message: 'Not Found',
+      })
+    }
+
+    return next()
+  })
+
   app.enableCors({
     origin: (origin, callback) => {
-      // Non-browser clients (no origin) are allowed.
       if (!origin) return callback(null, true)
 
       if (nodeEnv !== 'production') {
@@ -60,7 +91,6 @@ async function bootstrap() {
     ],
   })
 
-  // Global pipes
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -72,29 +102,23 @@ async function bootstrap() {
     }),
   )
 
-  // Global filters
   app.useGlobalFilters(new AllExceptionsFilter())
 
-  // Global interceptors
   const monitoringService = app.get(MonitoringService)
   app.useGlobalInterceptors(
     new RequestLoggingInterceptor(monitoringService),
     new TransformInterceptor(),
   )
 
-  // API prefix
   app.setGlobalPrefix('api')
 
-  // Accept non-JSON clients for login and normalize payload to { email, password }.
   app.use('/api/auth/login', express.text({ type: '*/*', limit: '1mb' }))
   app.use('/api/auth/login', loginPayloadNormalizerMiddleware)
 
-  // Static files (uploads)
   app.useStaticAssets(join(__dirname, '..', 'uploads'), {
     prefix: '/uploads/',
   })
 
-  // Swagger documentation (only in development)
   if (nodeEnv === 'development') {
     const config = new DocumentBuilder()
       .setTitle('ƯƠM. Archive API')

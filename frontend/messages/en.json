@@ -87,6 +87,14 @@
     "loading": "Loading...",
     "allCategories": "All Categories"
   },
+  "journal": {
+    "heroTitle": "Stories from UOM.",
+    "heroDescription": "A place where we share handcrafted stories, creative journeys, and behind-the-scenes moments from each collection.",
+    "empty": "Stories are being updated. Please check back soon.",
+    "backToJournal": "Back to Journal",
+    "relatedStories": "More Stories You May Like",
+    "viewAllStories": "View all stories"
+  },
   "footer": {
     "copyright": "© 2026 Uom Archive. All rights reserved.",
     "followUs": "Follow us"
@@ -391,11 +399,19 @@
       "addStory": "Add Story",
       "editStory": "Edit Story",
       "updateStory": "Update Story",
-      "formHint": "Fill in bilingual content and image for each story card.",
+      "formHint": "Fill in bilingual title, summary, full rich content, and image for each story.",
+      "slug": "Story slug (optional)",
+      "slugVi": "Vietnamese slug (optional)",
+      "slugEn": "English slug (optional)",
+      "slugAutoHint": "Slugs are auto-generated from title fields and cannot be edited manually.",
       "titleVi": "Title (Vietnamese)",
       "titleEn": "Title (English)",
       "summaryVi": "Summary (Vietnamese)",
       "summaryEn": "Summary (English)",
+      "contentVi": "Detailed content (Vietnamese)",
+      "contentEn": "Detailed content (English)",
+      "contentPlaceholderVi": "Write the full story in Vietnamese...",
+      "contentPlaceholderEn": "Write the full story in English...",
       "imageUrl": "Image URL",
       "uploadImage": "Upload Image",
       "imageUploaded": "Image uploaded",
@@ -405,7 +421,23 @@
       "saved": "Stories saved",
       "loadError": "Failed to load stories",
       "saveError": "Failed to save stories",
-      "requiredFields": "Please fill all required fields"
+      "requiredFields": "Please fill all required fields (including detailed content)"
+    },
+    "trending": {
+      "navLabel": "Trending Search",
+      "title": "Trending Searches",
+      "description": "Manage empty-state search keywords displayed in the search panel.",
+      "viTitle": "Vietnamese Keywords",
+      "enTitle": "English Keywords",
+      "viPlaceholder": "Add Vietnamese trending keyword...",
+      "enPlaceholder": "Add English trending keyword...",
+      "preview": "Preview Chips",
+      "empty": "No keywords yet.",
+      "saved": "Trending searches saved",
+      "loadError": "Failed to load trending searches",
+      "saveError": "Failed to save trending searches",
+      "limitHint": "Maximum 12 keywords per language.",
+      "helper": "These keywords are shown in the search panel when query is empty."
     }
   },
   "validation": {

@@ -14,7 +14,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     const hasUpstashConfig = Boolean(upstashUrl && upstashToken)
     const url = hasUpstashConfig
       ? (upstashUrl as string)
-      : this.configService.get<string>('REDIS_URL') || 'redis://localhost:6379'
+      : (this.configService.get<string>('REDIS_URL') ?? 'redis://localhost:6379')
     const password = hasUpstashConfig
       ? (upstashToken as string)
       : this.configService.get<string>('REDIS_PASSWORD')
@@ -23,7 +23,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
 
     this.client = createClient({
       url,
-      password: password || undefined,
+      password: password ?? undefined,
       socket: hasUpstashConfig
         ? {
             tls: true,
@@ -83,7 +83,6 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     return this.client.ping()
   }
 
-  // Pattern-based key deletion
   async delPattern(pattern: string): Promise<number> {
     const keys = await this.keys(pattern)
     if (keys.length === 0) return 0
@@ -92,7 +91,6 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     return keys.length
   }
 
-  // Multi-key operations
   async mget(keys: string[]): Promise<(string | null)[]> {
     return this.client.mGet(keys)
   }

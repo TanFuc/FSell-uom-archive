@@ -1,11 +1,15 @@
 ﻿import { type Metadata } from 'next'
+import { notFound } from 'next/navigation'
 import Script from 'next/script'
 import { getLocale } from 'next-intl/server'
 import ProductClient from './product-client'
 import { fetchBranding } from '@/lib/server-utils'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
-const BASE_URL = (process.env.NEXT_PUBLIC_APP_URL || 'https://www.uomarchive.com').replace(/\/$/, '')
+const BASE_URL = (process.env.NEXT_PUBLIC_APP_URL || 'https://www.uomarchive.com').replace(
+  /\/$/,
+  '',
+)
 
 type ProductDetail = {
   slug: string
@@ -31,6 +35,11 @@ type ProductDetail = {
 type ProductResponse = {
   data?: ProductDetail
 }
+
+type FetchProductResult =
+  | { status: 'ok'; product: ProductDetail }
+  | { status: 'not-found' }
+  | { status: 'error' }
 
 function stripHtml(value: string | undefined): string {
   return (value ?? '').replace(/<[^>]*>/g, '').trim()
@@ -64,14 +73,27 @@ function unwrapProductResponse(payload: unknown): ProductDetail | null {
   return null
 }
 
-async function fetchProduct(slug: string): Promise<ProductDetail | null> {
+async function fetchProduct(slug: string): Promise<FetchProductResult> {
   try {
     const res = await fetch(`${API_URL}/products/${slug}`, { next: { revalidate: 300 } })
-    if (!res.ok) return null
+    if (res.status === 404) {
+      return { status: 'not-found' }
+    }
+
+    if (!res.ok) {
+      return { status: 'error' }
+    }
+
     const payload = (await res.json()) as unknown
-    return unwrapProductResponse(payload)
+    const product = unwrapProductResponse(payload)
+
+    if (!product) {
+      return { status: 'error' }
+    }
+
+    return { status: 'ok', product }
   } catch {
-    return null
+    return { status: 'error' }
   }
 }
 
@@ -90,9 +112,9 @@ function getBrandName(
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const locale = await getLocale()
-  const [product, branding] = await Promise.all([fetchProduct(params.slug), fetchBranding()])
+  const [result, branding] = await Promise.all([fetchProduct(params.slug), fetchBranding()])
 
-  if (!product) {
+  if (result.status === 'not-found') {
     return {
       title: 'Product Not Found',
       robots: {
@@ -102,8 +124,31 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     }
   }
 
+  if (result.status === 'error') {
+    return {
+      title: locale === 'vi' ? 'Sản phẩm' : 'Product',
+      description:
+        locale === 'vi'
+          ? 'Khám phá sản phẩm thủ công từ ƯƠM. Archive.'
+          : 'Discover handcrafted products from UOM. Archive.',
+      alternates: {
+        canonical: `/${locale}/shop/${params.slug}`,
+        languages: {
+          vi: `/vi/shop/${params.slug}`,
+          en: `/en/shop/${params.slug}`,
+          'x-default': `/vi/shop/${params.slug}`,
+        },
+      },
+      robots: {
+        index: true,
+        follow: true,
+      },
+    }
+  }
+
   const isVi = locale === 'vi'
   const brandName = getBrandName(locale, branding)
+  const product = result.product
   const name = isVi ? product.nameVi : product.nameEn
   const rawDescription =
     (isVi
@@ -142,18 +187,23 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ProductPage({ params }: Props) {
   const locale = await getLocale()
-  const [product, branding] = await Promise.all([fetchProduct(params.slug), fetchBranding()])
+  const [result, branding] = await Promise.all([fetchProduct(params.slug), fetchBranding()])
+
+  if (result.status === 'not-found') {
+    notFound()
+  }
+
+  const product = result.status === 'ok' ? result.product : null
   const brandName = getBrandName(locale, branding)
   const isVi = locale === 'vi'
   const name = product ? (isVi ? product.nameVi : product.nameEn) : ''
-  const description =
-    product
-      ? stripHtml(
-          isVi
-            ? product.shortDescriptionVi || product.descriptionVi || ''
-            : product.shortDescriptionEn || product.descriptionEn || '',
-        ).slice(0, 300)
-      : ''
+  const description = product
+    ? stripHtml(
+        isVi
+          ? product.shortDescriptionVi || product.descriptionVi || ''
+          : product.shortDescriptionEn || product.descriptionEn || '',
+      ).slice(0, 300)
+    : ''
   const productUrl = `${BASE_URL}/${locale}/shop/${params.slug}`
   const images = (product?.images ?? []).map((value) => toAbsoluteUrl(value))
   const categoryName = isVi ? product?.category?.nameVi : product?.category?.nameEn

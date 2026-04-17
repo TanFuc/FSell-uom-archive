@@ -56,11 +56,11 @@ export default function ProductsPage() {
   const t = useTranslations('admin')
   const { toast } = useToast()
 
-  // Update document title
   useDocumentTitle(t('products'), 'Admin - ƯƠM. Archive')
 
   const [products, setProducts] = useState<Product[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const [search, setSearch] = useState('')
   const [selectedProducts, setSelectedProducts] = useState<string[]>([])
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; product: Product | null }>({
@@ -68,45 +68,62 @@ export default function ProductsPage() {
     product: null,
   })
 
-  const fetchProducts = useCallback(async () => {
-    try {
-      setIsLoading(true)
-      const response = await api.getAdminProducts({
-        search: search || undefined,
-        includeDeleted: false, // Don't show deleted products
-        limit: 100,
-      })
-      setProducts(response.data.filter((p: Product) => !p.deletedAt)) // Extra filter
-    } catch (error) {
-      console.error('Failed to fetch products:', error)
-      toast({
-        title: t('error'),
-        description: t('failedToUpdate'),
-        variant: 'destructive',
-      })
-    } finally {
-      setIsLoading(false)
-    }
-  }, [search, t, toast])
+  const fetchProducts = useCallback(
+    async (options?: { withLoading?: boolean }) => {
+      const withLoading = options?.withLoading ?? false
+
+      try {
+        if (withLoading) {
+          setIsLoading(true)
+        } else {
+          setIsRefreshing(true)
+        }
+
+        const response = await api.getAdminProducts({
+          search: search || undefined,
+          includeDeleted: false, // Don't show deleted products
+          limit: 100,
+        })
+        setProducts(response.data.filter((p: Product) => !p.deletedAt)) // Extra filter
+      } catch (error) {
+        console.error('Failed to fetch products:', error)
+        toast({
+          title: t('error'),
+          description: t('failedToUpdate'),
+          variant: 'destructive',
+        })
+      } finally {
+        if (withLoading) {
+          setIsLoading(false)
+        }
+        setIsRefreshing(false)
+      }
+    },
+    [search, t, toast],
+  )
 
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
-      fetchProducts()
+      fetchProducts({ withLoading: false })
     }, 300)
     return () => clearTimeout(delayDebounce)
-  }, [search])
+  }, [search, fetchProducts])
 
   useEffect(() => {
-    fetchProducts()
-  }, [])
+    fetchProducts({ withLoading: true })
+  }, [fetchProducts])
 
   const handleDelete = async () => {
     if (!deleteDialog.product) return
 
+    const productToDelete = deleteDialog.product
+
     try {
-      await api.deleteProduct(deleteDialog.product.id)
+      await api.deleteProduct(productToDelete.id)
+      setProducts((prev) => prev.filter((item) => item.id !== productToDelete.id))
+      setSelectedProducts((prev) => prev.filter((id) => id !== productToDelete.id))
       toast({ title: t('success'), description: 'Đã chuyển vào thùng rác' })
-      fetchProducts()
+      fetchProducts({ withLoading: false })
     } catch (error) {
       toast({ title: t('error'), description: t('failedToDelete'), variant: 'destructive' })
     } finally {
@@ -118,84 +135,124 @@ export default function ProductsPage() {
     try {
       await api.duplicateProduct(product.id)
       toast({ title: t('success'), description: t('productDuplicated') })
-      fetchProducts()
+      fetchProducts({ withLoading: false })
     } catch (error) {
       toast({ title: t('error'), description: t('failedToUpdate'), variant: 'destructive' })
     }
   }
 
-  // Quick toggle for active status
   const handleToggleActive = async (product: Product, e: React.MouseEvent) => {
     e.stopPropagation()
+    const nextValue = !product.isActive
+
+    setProducts((prev) =>
+      prev.map((item) => (item.id === product.id ? { ...item, isActive: nextValue } : item)),
+    )
+
     try {
-      await api.updateProduct(product.id, { isActive: !product.isActive })
+      await api.updateProduct(product.id, { isActive: nextValue })
       toast({
         title: t('success'),
-        description: product.isActive ? 'Đã tắt sản phẩm' : 'Đã bật sản phẩm',
+        description: nextValue ? 'Đã bật sản phẩm' : 'Đã tắt sản phẩm',
       })
-      fetchProducts()
     } catch (error) {
+      setProducts((prev) =>
+        prev.map((item) =>
+          item.id === product.id ? { ...item, isActive: product.isActive } : item,
+        ),
+      )
       toast({ title: t('error'), description: t('failedToUpdate'), variant: 'destructive' })
+      return
     }
+
+    fetchProducts({ withLoading: false })
   }
 
-  // Quick toggle for featured status
   const handleToggleFeatured = async (product: Product, e: React.MouseEvent) => {
     e.stopPropagation()
+    const nextValue = !product.isFeatured
+
+    setProducts((prev) =>
+      prev.map((item) => (item.id === product.id ? { ...item, isFeatured: nextValue } : item)),
+    )
+
     try {
-      await api.updateProduct(product.id, { isFeatured: !product.isFeatured })
+      await api.updateProduct(product.id, { isFeatured: nextValue })
       toast({
         title: t('success'),
-        description: product.isFeatured ? 'Đã bỏ khỏi nổi bật' : 'Đã đặt nổi bật',
+        description: nextValue ? 'Đã đặt nổi bật' : 'Đã bỏ khỏi nổi bật',
       })
-      fetchProducts()
     } catch (error) {
+      setProducts((prev) =>
+        prev.map((item) =>
+          item.id === product.id ? { ...item, isFeatured: product.isFeatured } : item,
+        ),
+      )
       toast({ title: t('error'), description: t('failedToUpdate'), variant: 'destructive' })
+      return
     }
+
+    fetchProducts({ withLoading: false })
   }
 
-  // Bulk actions
   const handleBulkDelete = async () => {
+    const idsToDelete = [...selectedProducts]
+
     try {
-      await Promise.all(selectedProducts.map((id) => api.deleteProduct(id)))
+      await Promise.all(idsToDelete.map((id) => api.deleteProduct(id)))
+      setProducts((prev) => prev.filter((item) => !idsToDelete.includes(item.id)))
       toast({
         title: t('success'),
-        description: `Đã chuyển ${selectedProducts.length} sản phẩm vào thùng rác`,
+        description: `Đã chuyển ${idsToDelete.length} sản phẩm vào thùng rác`,
       })
       setSelectedProducts([])
-      fetchProducts()
+      fetchProducts({ withLoading: false })
     } catch (error) {
       toast({ title: t('error'), description: t('failedToDelete'), variant: 'destructive' })
     }
   }
 
   const handleBulkToggleActive = async (active: boolean) => {
+    const idsToUpdate = [...selectedProducts]
+
+    setProducts((prev) =>
+      prev.map((item) => (idsToUpdate.includes(item.id) ? { ...item, isActive: active } : item)),
+    )
+
     try {
-      await Promise.all(selectedProducts.map((id) => api.updateProduct(id, { isActive: active })))
+      await Promise.all(idsToUpdate.map((id) => api.updateProduct(id, { isActive: active })))
       toast({
         title: t('success'),
-        description: `Đã ${active ? 'bật' : 'tắt'} ${selectedProducts.length} sản phẩm`,
+        description: `Đã ${active ? 'bật' : 'tắt'} ${idsToUpdate.length} sản phẩm`,
       })
       setSelectedProducts([])
-      fetchProducts()
+      fetchProducts({ withLoading: false })
     } catch (error) {
       toast({ title: t('error'), description: t('failedToUpdate'), variant: 'destructive' })
+      fetchProducts({ withLoading: false })
     }
   }
 
   const handleBulkToggleFeatured = async (featured: boolean) => {
+    const idsToUpdate = [...selectedProducts]
+
+    setProducts((prev) =>
+      prev.map((item) =>
+        idsToUpdate.includes(item.id) ? { ...item, isFeatured: featured } : item,
+      ),
+    )
+
     try {
-      await Promise.all(
-        selectedProducts.map((id) => api.updateProduct(id, { isFeatured: featured })),
-      )
+      await Promise.all(idsToUpdate.map((id) => api.updateProduct(id, { isFeatured: featured })))
       toast({
         title: t('success'),
-        description: `Đã ${featured ? 'đặt nổi bật' : 'bỏ nổi bật'} ${selectedProducts.length} sản phẩm`,
+        description: `Đã ${featured ? 'đặt nổi bật' : 'bỏ nổi bật'} ${idsToUpdate.length} sản phẩm`,
       })
       setSelectedProducts([])
-      fetchProducts()
+      fetchProducts({ withLoading: false })
     } catch (error) {
       toast({ title: t('error'), description: t('failedToUpdate'), variant: 'destructive' })
+      fetchProducts({ withLoading: false })
     }
   }
 
@@ -228,7 +285,10 @@ export default function ProductsPage() {
               {t('trash')}
             </Button>
           </Link>
-          <Button onClick={() => router.push(`/${locale}/admin/products/new`)} className="w-full sm:w-auto">
+          <Button
+            onClick={() => router.push(`/${locale}/admin/products/new`)}
+            className="w-full sm:w-auto"
+          >
             <Plus className="mr-2 h-4 w-4" />
             {t('create')}
           </Button>
@@ -246,6 +306,7 @@ export default function ProductsPage() {
             className="pl-9"
           />
         </div>
+        {isRefreshing && <span className="text-xs text-muted-foreground">{t('loading')}...</span>}
       </div>
 
       {/* Bulk Actions */}
@@ -259,7 +320,7 @@ export default function ProductsPage() {
               <Button
                 variant="outline"
                 size="sm"
-                className="snap-start shrink-0"
+                className="shrink-0 snap-start"
                 onClick={() => setSelectedProducts([])}
               >
                 {t('clear')}
@@ -267,7 +328,7 @@ export default function ProductsPage() {
               <Button
                 variant="outline"
                 size="sm"
-                className="snap-start shrink-0"
+                className="shrink-0 snap-start"
                 onClick={() => handleBulkToggleActive(true)}
               >
                 <Power className="mr-2 h-4 w-4" />
@@ -276,7 +337,7 @@ export default function ProductsPage() {
               <Button
                 variant="outline"
                 size="sm"
-                className="snap-start shrink-0"
+                className="shrink-0 snap-start"
                 onClick={() => handleBulkToggleActive(false)}
               >
                 <PowerOff className="mr-2 h-4 w-4" />
@@ -285,7 +346,7 @@ export default function ProductsPage() {
               <Button
                 variant="outline"
                 size="sm"
-                className="snap-start shrink-0"
+                className="shrink-0 snap-start"
                 onClick={() => handleBulkToggleFeatured(true)}
               >
                 <Star className="mr-2 h-4 w-4" />
@@ -294,7 +355,7 @@ export default function ProductsPage() {
               <Button
                 variant="outline"
                 size="sm"
-                className="snap-start shrink-0"
+                className="shrink-0 snap-start"
                 onClick={() => handleBulkToggleFeatured(false)}
               >
                 <StarOff className="mr-2 h-4 w-4" />
@@ -303,7 +364,7 @@ export default function ProductsPage() {
               <Button
                 variant="destructive"
                 size="sm"
-                className="snap-start shrink-0"
+                className="shrink-0 snap-start"
                 onClick={handleBulkDelete}
               >
                 <Trash2 className="mr-2 h-4 w-4" />
@@ -319,8 +380,8 @@ export default function ProductsPage() {
       )}
 
       {/* Table */}
-      <div className="overflow-hidden rounded-lg border">
-        <Table>
+      <div className="rounded-lg border bg-background">
+        <Table className="min-w-[1120px]">
           <TableHeader>
             <TableRow className="bg-muted/50">
               <TableHead className="w-12">
@@ -418,22 +479,26 @@ export default function ProductsPage() {
                     </span>
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()} className="text-center">
-                    <a
-                      href={`/${locale}/shop/${product.slug}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-md border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                      title="Xem sản phẩm ngoài trang public"
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                    </a>
+                    {product.isActive ? (
+                      <a
+                        href={`/${locale}/shop/${product.slug}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-md border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                        title="Xem sản phẩm ngoài trang public"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </a>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">-</span>
+                    )}
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()} className="text-center">
                     <Button
                       variant={product.isActive ? 'default' : 'outline'}
                       size="sm"
                       onClick={(e) => handleToggleActive(product, e)}
-                      className={product.isActive ? 'bg-green-600 hover:bg-green-700' : ''}
+                      className={`whitespace-nowrap ${product.isActive ? 'bg-green-600 hover:bg-green-700' : ''}`}
                     >
                       {product.isActive ? (
                         <>
@@ -453,7 +518,7 @@ export default function ProductsPage() {
                       variant={product.isFeatured ? 'default' : 'outline'}
                       size="sm"
                       onClick={(e) => handleToggleFeatured(product, e)}
-                      className={product.isFeatured ? 'bg-yellow-600 hover:bg-yellow-700' : ''}
+                      className={`whitespace-nowrap ${product.isFeatured ? 'bg-yellow-600 hover:bg-yellow-700' : ''}`}
                     >
                       {product.isFeatured ? (
                         <>

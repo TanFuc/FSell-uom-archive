@@ -20,16 +20,16 @@ export class UploadService {
     private configService: ConfigService,
     private cloudinaryService: CloudinaryService,
   ) {
-    this.uploadProvider = (this.configService.get<string>('UPLOAD_PROVIDER') ||
+    this.uploadProvider = (this.configService.get<string>('UPLOAD_PROVIDER') ??
       'cloudinary') as UploadProvider
-    this.r2Bucket = this.configService.get<string>('R2_BUCKET') || ''
-    this.r2PublicUrl = (this.configService.get<string>('R2_PUBLIC_URL') || '').replace(/\/$/, '')
+    this.r2Bucket = this.configService.get<string>('R2_BUCKET') ?? ''
+    this.r2PublicUrl = (this.configService.get<string>('R2_PUBLIC_URL') ?? '').replace(/\/$/, '')
     this.r2PublicBaseUrl = this.normalizeR2PublicBaseUrl(this.r2PublicUrl, this.r2Bucket)
 
     if (this.uploadProvider === 'r2') {
-      const endpoint = this.configService.get<string>('R2_ENDPOINT') || ''
-      const accessKeyId = this.configService.get<string>('R2_KEY') || ''
-      const secretAccessKey = this.configService.get<string>('R2_SECRET') || ''
+      const endpoint = this.configService.get<string>('R2_ENDPOINT') ?? ''
+      const accessKeyId = this.configService.get<string>('R2_KEY') ?? ''
+      const secretAccessKey = this.configService.get<string>('R2_SECRET') ?? ''
 
       this.s3Client = new S3Client({
         region: 'auto',
@@ -51,7 +51,6 @@ export class UploadService {
       throw new BadRequestException('Không có file được cung cấp')
     }
 
-    // Validate file type
     const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
     if (!allowedMimeTypes.includes(file.mimetype)) {
       throw new BadRequestException(
@@ -59,14 +58,12 @@ export class UploadService {
       )
     }
 
-    // Validate file size (max 10MB)
     const maxSize = 10 * 1024 * 1024 // 10MB
     if (file.size > maxSize) {
       throw new BadRequestException('Kích thước file vượt quá giới hạn 10MB')
     }
 
     try {
-      // Resize + optimize + sharpen for crisp but lightweight delivery.
       const optimizedBuffer = await sharp(file.buffer)
         .rotate()
         .resize(1600, 1600, {
@@ -117,7 +114,7 @@ export class UploadService {
       throw new BadRequestException('Thiếu R2_PUBLIC_URL trong biến môi trường')
     }
 
-    const safeFolder = (folder || 'products').replace(/^\/+|\/+$/g, '')
+    const safeFolder = (folder ?? 'products').replace(/^\/+|\/+$/g, '')
     const key = `${safeFolder}/${Date.now()}-${randomUUID()}.webp`
 
     const command = new PutObjectCommand({
@@ -146,7 +143,6 @@ export class UploadService {
       const path = parsed.pathname.replace(/\/$/, '')
       const bucketPath = `/${bucket}`
 
-      // If R2 public URL was configured as .../bucket, trim bucket to avoid duplicated paths.
       if (bucket && path === bucketPath) {
         return parsed.origin
       }
@@ -218,23 +214,18 @@ export class UploadService {
         return { success: true }
       }
 
-      // Extract publicId from URL if full URL is provided
       let publicId = publicIdOrUrl
 
       if (publicIdOrUrl.includes('cloudinary.com')) {
-        // Extract public_id from Cloudinary URL
-        // URL format: https://res.cloudinary.com/{cloud_name}/image/upload/v{version}/{public_id}.{format}
         const urlParts = publicIdOrUrl.split('/')
         const uploadIndex = urlParts.findIndex((part) => part === 'upload')
 
         if (uploadIndex !== -1 && urlParts.length > uploadIndex + 1) {
-          // Skip version (v123456) if exists
           const afterUpload = urlParts.slice(uploadIndex + 1)
           const pathWithoutVersion = afterUpload[0].startsWith('v')
             ? afterUpload.slice(1)
             : afterUpload
 
-          // Join remaining parts and remove file extension
           publicId = pathWithoutVersion.join('/').replace(/\.[^/.]+$/, '')
         }
       }

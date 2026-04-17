@@ -43,14 +43,12 @@ export default function TrashPage() {
     product: Product | null
   }>({ open: false, product: null })
 
-  // Fetch deleted products only
   const { data, isLoading, refetch } = useProducts({
     page: 1,
     limit: 100,
     includeDeleted: true,
   })
 
-  // Filter only deleted products
   const deletedProducts = data?.data.filter((p) => p.deletedAt) || []
 
   const toggleSelect = (id: string) => {

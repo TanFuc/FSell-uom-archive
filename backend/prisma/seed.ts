@@ -4,7 +4,6 @@ import * as bcrypt from 'bcrypt'
 const prisma = new PrismaClient()
 
 async function main() {
-  // Create admin user
   const passwordHash = await bcrypt.hash('admin123', 10)
 
   const admin = await prisma.user.upsert({
@@ -18,7 +17,7 @@ async function main() {
       isActive: true,
     },
   })
-  // Create manager user for testing
+
   const managerPasswordHash = await bcrypt.hash('manager123', 10)
 
   await prisma.user.upsert({
@@ -33,7 +32,7 @@ async function main() {
       createdBy: admin.id,
     },
   })
-  // Create default theme settings
+
   await prisma.themeSettings.upsert({
     where: { id: 'singleton' },
     update: {},
@@ -44,7 +43,7 @@ async function main() {
       accentColor: '#8C7E6A',
     },
   })
-  // Create social settings for inquiry feature
+
   await prisma.socialSettings.upsert({
     where: { id: 'singleton' },
     update: {},
@@ -54,7 +53,199 @@ async function main() {
       instagramUsername: 'uomarchive',
     },
   })
-  // Create default site content
+
+  const seededStories = [
+    {
+      id: 'story-nhung-ban-tay-giu-lua',
+      slug: 'nhung-ban-tay-giu-lua-lang-gom',
+      slugVi: 'nhung-ban-tay-giu-lua-lang-gom',
+      slugEn: 'hands-that-keep-the-kiln-burning',
+      titleVi: 'Những Bàn Tay Giữ Lửa Làng Gốm',
+      titleEn: 'Hands That Keep the Kiln Burning',
+      summaryVi:
+        'Một buổi sáng ở xưởng, nơi nhịp xoay bàn gốm, mùi đất ẩm và hơi lửa tạo nên bản hòa âm của sự kiên nhẫn.',
+      summaryEn:
+        'A morning in the workshop where wheel rhythm, wet clay scent, and kiln heat compose a quiet symphony of patience.',
+      contentVi: `
+        <h2>Bắt đầu từ một nhúm đất</h2>
+        <p>Mỗi chiếc bình bắt đầu bằng một nhúm đất nhỏ, được nhào kỹ cho đến khi bề mặt mịn như lụa. Người thợ không vội. Họ lắng nghe độ ẩm, độ đàn hồi, và cả "tính khí" riêng của từng mẻ đất.</p>
+        <p>Ở ƯƠM., chúng tôi luôn tin rằng vẻ đẹp bền vững không đến từ sự hoàn hảo tuyệt đối, mà đến từ sự chân thật trong từng dấu vân tay còn lại sau quá trình tạo tác.</p>
+        <h3>Giữ lửa cho chất lượng</h3>
+        <p>Công đoạn nung kéo dài nhiều giờ, đòi hỏi kiểm soát nhiệt độ chính xác. Một thay đổi nhỏ trong ngọn lửa có thể tạo nên lớp men chuyển sắc hoàn toàn khác biệt.</p>
+        <blockquote>"Mỗi mẻ nung là một lần học lại cách khiêm tốn trước chất liệu."</blockquote>
+        <p>Khi lấy sản phẩm ra khỏi lò, chúng tôi kiểm tra thủ công từng chi tiết: chân đế, độ phẳng miệng bình, và sắc men dưới ánh sáng tự nhiên.</p>
+      `,
+      contentEn: `
+        <h2>It starts with a handful of clay</h2>
+        <p>Every vase begins with a small handful of clay, kneaded until the surface feels silky. The artisan never rushes. They read moisture, elasticity, and the unique "temperament" of each clay batch.</p>
+        <p>At UOM., we believe timeless beauty does not come from absolute perfection, but from honesty in every fingerprint left by the making process.</p>
+        <h3>Keeping the fire for quality</h3>
+        <p>Firing takes hours and demands precise temperature control. A subtle shift in flame can produce a completely different glaze transition.</p>
+        <blockquote>"Each firing teaches us humility in front of material."</blockquote>
+        <p>When pieces leave the kiln, we inspect each one by hand: the base, rim balance, and glaze tone under natural light.</p>
+      `,
+      imageUrl:
+        'https://images.unsplash.com/photo-1601055903647-ddf1ee9701b1?q=80&w=1800&auto=format&fit=crop',
+      publishedAt: '2026-03-12',
+    },
+    {
+      id: 'story-mau-men-va-anh-sang',
+      slug: 'mau-men-va-anh-sang-trong-nha',
+      slugVi: 'mau-men-va-anh-sang-trong-nha',
+      slugEn: 'glaze-tones-in-natural-light',
+      titleVi: 'Màu Men và Ánh Sáng Trong Nhà',
+      titleEn: 'Glaze Tones in Natural Light',
+      summaryVi:
+        'Cùng một chiếc cốc, màu men có thể thay đổi tinh tế theo nắng sớm, chiều muộn hay ánh đèn vàng trong phòng khách.',
+      summaryEn:
+        'The same cup can reveal different glaze moods across morning sun, late afternoon shadows, and warm indoor lighting.',
+      contentVi: `
+        <h2>Vì sao men gốm "đổi sắc"?</h2>
+        <p>Men gốm phản ứng rất nhạy với nguồn sáng. Dưới ánh nắng tán xạ, các lớp men mờ cho cảm giác dịu và sâu. Trong ánh đèn vàng, sắc men lại trở nên ấm và gần gũi hơn.</p>
+        <p>Đó là lý do chúng tôi chụp sản phẩm ở nhiều điều kiện ánh sáng khác nhau để bạn hình dung chân thực nhất trước khi chọn mua.</p>
+        <h3>Gợi ý phối trong không gian sống</h3>
+        <ul>
+          <li><strong>Góc bếp sáng:</strong> ưu tiên men ngà, be, kem để tăng cảm giác sạch và nhẹ.</li>
+          <li><strong>Phòng khách tông ấm:</strong> chọn men nâu đất hoặc xanh rêu để tạo điểm nhấn tự nhiên.</li>
+          <li><strong>Bàn trà tối giản:</strong> phối 2-3 tông men gần nhau để tổng thể hài hòa.</li>
+        </ul>
+        <p>Một món đồ gốm đẹp không chỉ nằm ở hình dáng, mà còn ở cách nó "sống" cùng ánh sáng trong ngôi nhà của bạn.</p>
+      `,
+      contentEn: `
+        <h2>Why does glaze seem to shift in color?</h2>
+        <p>Ceramic glaze is highly sensitive to light sources. Under diffused daylight, matte layers appear calm and deep. Under warm lamps, tones become softer and more intimate.</p>
+        <p>That is why we photograph each piece in multiple lighting conditions, so you can choose with confidence.</p>
+        <h3>Styling suggestions for your home</h3>
+        <ul>
+          <li><strong>Bright kitchen corners:</strong> ivory, beige, and cream glazes keep the atmosphere airy.</li>
+          <li><strong>Warm living rooms:</strong> earthy brown or moss green glazes create natural focal points.</li>
+          <li><strong>Minimal tea table:</strong> combine 2-3 close glaze tones for visual harmony.</li>
+        </ul>
+        <p>A beautiful ceramic object is not only about form, but about how it lives with the light in your home.</p>
+      `,
+      imageUrl:
+        'https://images.unsplash.com/photo-1513694203232-719a280e022f?q=80&w=1800&auto=format&fit=crop',
+      publishedAt: '2026-03-20',
+    },
+    {
+      id: 'story-nghi-thuc-ban-tra-toi-gian',
+      slug: 'nghi-thuc-ban-tra-toi-gian',
+      slugVi: 'nghi-thuc-ban-tra-toi-gian',
+      slugEn: 'minimal-tea-ritual-at-home',
+      titleVi: 'Nghi Thức Bàn Trà Tối Giản',
+      titleEn: 'A Minimal Tea Ritual at Home',
+      summaryVi:
+        'Không cần quá nhiều vật dụng, chỉ vài món gốm đúng tinh thần là đủ để biến mỗi buổi trà thành một khoảng thở nhẹ nhàng.',
+      summaryEn:
+        'You do not need many objects, only a few thoughtful ceramic pieces to turn daily tea into a calm ritual.',
+      contentVi: `
+        <h2>Ít hơn, nhưng tinh hơn</h2>
+        <p>Một bàn trà tối giản thường chỉ cần 4 yếu tố: ấm, 2-3 chén, khay và một bình hoa nhỏ. Khoảng trống giữa các món đồ cũng quan trọng như chính chúng.</p>
+        <p>Khi mọi thứ được đặt đúng chỗ, nhịp sống chậm lại. Việc rót trà trở thành một chuyển động có ý thức, không còn là thao tác vội vàng.</p>
+        <h3>3 nguyên tắc nhỏ để bắt đầu</h3>
+        <ol>
+          <li>Giữ bảng màu trung tính để mắt được nghỉ.</li>
+          <li>Dùng chất liệu tự nhiên như gốm mộc, gỗ, vải thô.</li>
+          <li>Luôn để lại một khoảng trống trên khay trà.</li>
+        </ol>
+        <p>Ở cuối ngày, một tách trà trong chiếc chén vừa tay có thể là cách đơn giản nhất để trở về với sự bình an.</p>
+      `,
+      contentEn: `
+        <h2>Less, but more intentional</h2>
+        <p>A minimal tea setup only needs four elements: a teapot, 2-3 cups, a tray, and a small flower vase. The empty space between objects matters as much as the objects themselves.</p>
+        <p>When every piece is placed with intention, time slows down. Pouring tea becomes mindful movement rather than a rushed routine.</p>
+        <h3>Three simple rules to begin</h3>
+        <ol>
+          <li>Keep a neutral palette so the eyes can rest.</li>
+          <li>Use natural materials such as raw ceramic, wood, and linen.</li>
+          <li>Always leave breathing space on your tea tray.</li>
+        </ol>
+        <p>At the end of the day, a cup of tea in a well-balanced handmade cup can be the simplest way back to calm.</p>
+      `,
+      imageUrl:
+        'https://images.unsplash.com/photo-1515823064-d6e0c04616a7?q=80&w=1800&auto=format&fit=crop',
+      publishedAt: '2026-03-28',
+    },
+    {
+      id: 'story-sac-do-thu-cong-va-khong-gian-song',
+      slug: 'sac-do-thu-cong-va-khong-gian-song',
+      slugVi: 'sap-do-thu-cong-trong-khong-gian-song',
+      slugEn: 'styling-handmade-pieces-in-living-spaces',
+      titleVi: 'Sắp Đồ Thủ Công Trong Không Gian Sống',
+      titleEn: 'Styling Handmade Pieces in Living Spaces',
+      summaryVi:
+        'Một vài nguyên tắc nhỏ về tỷ lệ, chất liệu và khoảng thở giúp đồ gốm thủ công nổi bật tự nhiên mà không làm không gian bị nặng.',
+      summaryEn:
+        'A few simple principles of scale, material, and breathing space can make handmade ceramics stand out naturally without overwhelming a room.',
+      contentVi: `
+        <h2>Đặt đúng chỗ quan trọng hơn đặt thật nhiều</h2>
+        <p>Khi sắp đồ thủ công, điều đầu tiên cần chú ý là tỷ lệ giữa vật thể và mặt phẳng trưng bày. Một chiếc bình cao sẽ đẹp hơn khi đi cùng một món thấp, thay vì đứng giữa quá nhiều đồ ngang tầm.</p>
+        <p>Hãy để mắt người có đường dẫn: từ món chính, sang món phụ, rồi dừng ở một khoảng trống. Khoảng trống đó giúp tổng thể "thở" và khiến món đồ chính nổi bật hơn.</p>
+        <h3>Công thức phối nhanh 60-30-10</h3>
+        <ul>
+          <li><strong>60%</strong> tông nền trung tính: kem, be, nâu nhạt.</li>
+          <li><strong>30%</strong> vật liệu tự nhiên: gỗ, linen, mây.</li>
+          <li><strong>10%</strong> điểm nhấn men đậm: rêu, nâu đất, xanh xám.</li>
+        </ul>
+        <p>Chỉ cần giữ công thức này, bạn đã có một góc trưng bày tinh tế và đồng nhất với tinh thần tối giản.</p>
+      `,
+      contentEn: `
+        <h2>Placement matters more than quantity</h2>
+        <p>When styling handmade pieces, start with scale. A tall vase often looks better paired with one lower object, rather than surrounded by many items of similar height.</p>
+        <p>Create a visual path for the eye: from a primary object to a secondary one, then to a deliberate empty zone. That empty zone gives the arrangement room to breathe.</p>
+        <h3>The quick 60-30-10 styling rule</h3>
+        <ul>
+          <li><strong>60%</strong> neutral base tones: cream, beige, soft brown.</li>
+          <li><strong>30%</strong> natural materials: wood, linen, rattan.</li>
+          <li><strong>10%</strong> richer glaze accents: moss, earthy brown, slate blue.</li>
+        </ul>
+        <p>With this balance, your display stays elegant, cohesive, and true to a minimal handmade aesthetic.</p>
+      `,
+      imageUrl:
+        'https://images.unsplash.com/photo-1549187774-b4e9b0445b41?q=80&w=1800&auto=format&fit=crop',
+      publishedAt: '2026-04-02',
+    },
+    {
+      id: 'story-tu-xuong-gom-den-ban-an',
+      slug: 'tu-xuong-gom-den-ban-an',
+      slugVi: 'tu-xuong-gom-den-ban-an',
+      slugEn: 'from-workshop-to-table',
+      titleVi: 'Từ Xưởng Gốm Đến Bàn Ăn',
+      titleEn: 'From Workshop to Table',
+      summaryVi:
+        'Hành trình của một bộ chén đĩa đi qua tạo hình, nung men, kiểm tra thủ công và đóng gói trước khi xuất hiện trong bữa cơm gia đình.',
+      summaryEn:
+        'The journey of a dinnerware set through shaping, firing, hand inspection, and packing before arriving at your daily table.',
+      contentVi: `
+        <h2>Mỗi bộ chén là một chuỗi công đoạn tỉ mỉ</h2>
+        <p>Sau khi tạo hình, sản phẩm được hong khô tự nhiên để tránh nứt vỡ trong lò. Tiếp đó là lần nung đầu để cố định kết cấu trước khi phủ men.</p>
+        <p>Lớp men không chỉ để đẹp. Nó quyết định cảm giác khi cầm, độ an toàn khi sử dụng hằng ngày và cách bề mặt phản chiếu ánh sáng trên bàn ăn.</p>
+        <h3>Kiểm tra chất lượng trước khi đóng gói</h3>
+        <ol>
+          <li>Độ phẳng của chân đế để không kênh trên mặt bàn.</li>
+          <li>Độ đều của lớp men ở vành tiếp xúc thực phẩm.</li>
+          <li>Âm thanh khi gõ nhẹ để nhận biết kết cấu nung đạt chuẩn.</li>
+        </ol>
+        <p>Chúng tôi muốn mỗi món đồ không chỉ đẹp trong ảnh, mà còn thực sự tiện và bền trong đời sống hằng ngày.</p>
+      `,
+      contentEn: `
+        <h2>Every set is the result of careful stages</h2>
+        <p>After shaping, pieces are naturally dried to reduce cracking risks in the kiln. A first firing stabilizes the body before glazing begins.</p>
+        <p>Glaze is not only visual. It defines tactile feel, daily usability, and the way surfaces catch light at the table.</p>
+        <h3>Quality checks before packing</h3>
+        <ol>
+          <li>Base flatness, so pieces sit stable on the table.</li>
+          <li>Consistent glaze around food-contact edges.</li>
+          <li>Ring sound test to confirm proper firing structure.</li>
+        </ol>
+        <p>Our goal is simple: each piece should feel as good in real life as it looks in photos.</p>
+      `,
+      imageUrl:
+        'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?q=80&w=1800&auto=format&fit=crop',
+      publishedAt: '2026-04-04',
+    },
+  ]
+
   const defaultContent = [
     { key: 'menu.shop.vi', value: 'SẢN PHẨM' },
     { key: 'menu.shop.en', value: 'SHOP' },
@@ -82,6 +273,30 @@ async function main() {
       value:
         'https://images.unsplash.com/photo-1610701596007-11502861dcfa?q=80&w=2070&auto=format&fit=crop',
     },
+    {
+      key: 'journal.stories',
+      value: JSON.stringify(seededStories),
+    },
+    {
+      key: 'search.trending.vi',
+      value: JSON.stringify([
+        'binh gom',
+        'chen tra',
+        'men ran',
+        'bo suu tap moi',
+        'lo hoa toi gian',
+      ]),
+    },
+    {
+      key: 'search.trending.en',
+      value: JSON.stringify([
+        'ceramic vase',
+        'tea cup',
+        'crackle glaze',
+        'new collection',
+        'minimal decor',
+      ]),
+    },
   ]
 
   for (const item of defaultContent) {
@@ -91,13 +306,13 @@ async function main() {
       create: item,
     })
   }
-  // Create exchange rate
+
   await prisma.siteSettings.upsert({
     where: { key: 'exchange_rate' },
     update: {},
     create: { key: 'exchange_rate', value: '25000' },
   })
-  // Create branding settings
+
   const brandingDefaults = [
     { key: 'site.title.vi', value: 'ƯƠM. Archive - Gốm sứ thủ công Việt Nam' },
     { key: 'site.title.en', value: 'ƯƠM. Archive - Handcrafted Ceramics from Vietnam' },
@@ -117,7 +332,7 @@ async function main() {
       create: item,
     })
   }
-  // Create sample products with inquiry messages and VERIFIED REAL aesthetic images
+
   const sampleProducts = [
     {
       slug: 'binh-gom-trang-lieng',
@@ -287,7 +502,6 @@ async function main() {
     productsMap[p.slug] = p
   }
 
-  // Link related products (Example: Lieng Vase relates to Abstract Vase)
   if (productsMap['binh-gom-trang-lieng'] && productsMap['binh-hoa-abstract']) {
     await prisma.product.update({
       where: { id: productsMap['binh-gom-trang-lieng'].id },
@@ -298,7 +512,7 @@ async function main() {
       },
     })
   }
-  // Create Banners
+
   const banners = [
     {
       titleVi: 'Vẻ đẹp trong sự tĩnh lặng',
@@ -330,11 +544,9 @@ async function main() {
     },
   ]
 
-  // Use any cast if Banner type is not yet generated in client
   const prismaAny = prisma as any
 
   for (const banner of banners) {
-    // Check if banner exists by image url to avoid dups in this simple seed
     const existing = await prismaAny.banner.findFirst({
       where: { imageUrl: banner.imageUrl },
     })
