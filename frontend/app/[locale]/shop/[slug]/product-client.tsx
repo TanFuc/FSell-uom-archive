@@ -440,7 +440,7 @@ export default function ProductClient({ params }: ProductPageProps) {
                 {/* Details Section */}
                 <div className="space-y-4">
                   <h4 className="text-[10px] font-bold uppercase tracking-widest text-foreground">
-                    DETAILS
+                    {t('details')}
                   </h4>
 
                   {shortDescription ? (
@@ -450,17 +450,22 @@ export default function ProductClient({ params }: ProductPageProps) {
                   ) : null}
 
                   {variants.groups.length > 0 && (
-                    <div className="space-y-4 rounded-sm border border-foreground/10 p-4">
+                    <div className="space-y-3 rounded-sm border border-foreground/10 bg-foreground/[0.02] p-4">
                       {variants.groups.map((group) => (
-                        <div key={group.label} className="space-y-2">
-                          <p className="text-[9px] font-bold uppercase tracking-[0.3em] text-foreground/50">
-                            {`${group.label} (${group.values.length})`}
-                          </p>
+                        <div key={group.label} className="space-y-2 border-b border-foreground/10 pb-3 last:border-b-0 last:pb-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-[9px] font-bold uppercase tracking-[0.24em] text-foreground/70">
+                              {group.label}
+                            </p>
+                            <span className="rounded-full border border-foreground/20 px-2 py-0.5 text-[8px] font-semibold tracking-[0.2em] text-foreground/50">
+                              {group.values.length}
+                            </span>
+                          </div>
                           <div className="flex flex-wrap gap-2">
                             {group.values.map((item) => (
                               <span
                                 key={`${group.label}-${item}`}
-                                className="rounded-full border border-foreground/15 px-3 py-1 text-[10px] uppercase tracking-wide"
+                                className="rounded-full border border-foreground/15 bg-white px-3 py-1 text-[10px] font-medium uppercase tracking-wide text-foreground/90"
                               >
                                 {item}
                               </span>
@@ -473,26 +478,29 @@ export default function ProductClient({ params }: ProductPageProps) {
 
                   {/* Technical Specs List */}
                   <div className="flex flex-col gap-1 text-[10px] font-normal leading-relaxed text-foreground">
-                    {product.dimensions && <p>Height: {product.dimensions}</p>}
-                    {product.material && <p>Material: {product.material}</p>}
+                    {product.dimensions && (
+                      <p>
+                        {t('dimensions')}: {product.dimensions}
+                      </p>
+                    )}
+                    {product.material && (
+                      <p>
+                        {t('material')}: {product.material}
+                      </p>
+                    )}
                   </div>
 
                   {/* HTML Description */}
                   <div
-                    className="prose prose-sm max-w-none text-[10px] font-normal leading-relaxed text-foreground"
+                    className="prose prose-sm max-w-none text-foreground [&_a]:underline [&_a]:underline-offset-2 [&_blockquote]:border-l [&_blockquote]:border-foreground/30 [&_blockquote]:pl-4 [&_h1]:text-lg [&_h1]:font-bold [&_h2]:text-base [&_h2]:font-bold [&_h3]:text-sm [&_h3]:font-semibold [&_img]:my-4 [&_img]:h-auto [&_img]:max-w-full [&_img]:rounded-lg [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:leading-relaxed [&_ul]:list-disc [&_ul]:pl-5"
                     dangerouslySetInnerHTML={{ __html: description || '' }}
                   />
-
-                  {/* Caring & Warranty Link (Placeholder flavor) */}
-                  <p className="mt-2 cursor-pointer text-[10px] text-foreground/70 hover:underline">
-                    (Caring & Warranty)
-                  </p>
                 </div>
 
                 {/* Inquiry Buttons */}
                 <div className="space-y-8 pt-8">
                   <h4 className="text-[9px] font-bold uppercase tracking-[0.3em] text-foreground/30">
-                    Order Inquiry
+                    {t('orderInquiry')}
                   </h4>
                   <div className="flex flex-col gap-3">
                     {socialLinks?.instagramUsername && (

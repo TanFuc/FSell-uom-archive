@@ -22,6 +22,17 @@ function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
+function normalizeSearchText(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D')
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, ' ')
+}
+
 function HighlightedText({ text, query }: { text: string; query: string }) {
   const normalizedQuery = query.trim()
   if (!normalizedQuery || normalizedQuery.length < 2) {
@@ -267,7 +278,7 @@ export function Header() {
   const { data: latestSuggestions } = useProducts(
     {
       page: 1,
-      limit: 8,
+      limit: 40,
       isActive: true,
       sortBy: 'updatedAt',
       sortOrder: 'desc',
@@ -279,24 +290,69 @@ export function Header() {
 
   const featuredList = featuredSuggestions?.data ?? []
   const latestList = latestSuggestions?.data ?? []
+  const normalizedDebouncedQuery = useMemo(
+    () => normalizeSearchText(debouncedQuery),
+    [debouncedQuery],
+  )
+
+  const searchCandidatePool = useMemo(() => {
+    const merged = [
+      ...(suggestedProducts?.data ?? []),
+      ...featuredList,
+      ...latestList,
+    ]
+
+    return merged.filter(
+      (item, index) => merged.findIndex((candidate) => candidate.id === item.id) === index,
+    )
+  }, [featuredList, latestList, suggestedProducts?.data])
+
+  const hasQuery = normalizedDebouncedQuery.length >= 2
+  const isQueryEmpty = normalizedDebouncedQuery.length === 0
+
+  const foundSuggestions = useMemo(() => {
+    if (!hasQuery) {
+      return []
+    }
+
+    const tokens = normalizedDebouncedQuery.split(' ').filter(Boolean)
+    if (tokens.length === 0) {
+      return []
+    }
+
+    return searchCandidatePool
+      .filter((product) => {
+        const searchableContent = normalizeSearchText(
+          [
+            product.nameVi,
+            product.nameEn,
+            product.slug,
+            product.shortDescriptionVi,
+            product.shortDescriptionEn,
+            product.material,
+          ]
+            .filter(Boolean)
+            .join(' '),
+        )
+
+        return tokens.every((token) => searchableContent.includes(token))
+      })
+      .slice(0, 8)
+  }, [hasQuery, normalizedDebouncedQuery, searchCandidatePool])
+
   const defaultSuggestions = [
     ...featuredList,
     ...latestList.filter((item) => !featuredList.some((featured) => featured.id === item.id)),
   ].slice(0, 4)
-  const searchedSuggestions = (suggestedProducts?.data ?? []).slice(0, 4)
-  const displaySuggestions =
-    debouncedQuery.trim().length >= 2
-      ? searchedSuggestions.length > 0
-        ? searchedSuggestions
-        : defaultSuggestions
-      : defaultSuggestions
-  const hasQuery = debouncedQuery.trim().length >= 2
-  const isQueryEmpty = debouncedQuery.trim().length === 0
+  const suggestedSuggestions = hasQuery
+    ? defaultSuggestions.filter((item) => !foundSuggestions.some((found) => found.id === item.id))
+    : defaultSuggestions
+  const keyboardSuggestions = hasQuery ? foundSuggestions : suggestedSuggestions
   const isSearchLoading = hasQuery && isSearching
   const resultBatchKey = useMemo(() => {
-    const ids = displaySuggestions.map((product) => product.id).join('-')
-    return `${debouncedQuery.trim().toLowerCase()}|${ids}`
-  }, [debouncedQuery, displaySuggestions])
+    const ids = keyboardSuggestions.map((product) => product.id).join('-')
+    return `${normalizedDebouncedQuery}|${ids}`
+  }, [keyboardSuggestions, normalizedDebouncedQuery])
 
   const trendingSearches = useMemo(
     () =>
@@ -349,7 +405,7 @@ export function Header() {
   }
 
   const navigateToSuggestion = (index: number) => {
-    const target = displaySuggestions[index]
+    const target = keyboardSuggestions[index]
     if (!target) return
     addRecentSearch(searchQuery || debouncedQuery)
     router.push(`/${locale}/shop/${target.slug}`)
@@ -364,19 +420,19 @@ export function Header() {
       return
     }
 
-    if (!displaySuggestions.length) {
+    if (!keyboardSuggestions.length) {
       return
     }
 
     if (e.key === 'ArrowDown') {
       e.preventDefault()
-      setActiveSearchIndex((prev) => (prev + 1) % displaySuggestions.length)
+      setActiveSearchIndex((prev) => (prev + 1) % keyboardSuggestions.length)
       return
     }
 
     if (e.key === 'ArrowUp') {
       e.preventDefault()
-      setActiveSearchIndex((prev) => (prev <= 0 ? displaySuggestions.length - 1 : prev - 1))
+      setActiveSearchIndex((prev) => (prev <= 0 ? keyboardSuggestions.length - 1 : prev - 1))
       return
     }
 
@@ -584,7 +640,7 @@ export function Header() {
                       <div className="flex items-center gap-2">
                         <p className="text-[9px] uppercase tracking-[0.22em] text-foreground/30">
                           {hasQuery
-                            ? `${displaySuggestions.length} ${locale === 'vi' ? 'gợi ý' : 'suggestions'}`
+                            ? `${foundSuggestions.length} ${locale === 'vi' ? 'kết quả' : 'results'}`
                             : 'ENTER'}
                         </p>
                         <button
@@ -689,80 +745,129 @@ export function Header() {
                         </motion.div>
                       )}
 
-                      <div className="mb-5 flex items-center justify-between gap-3">
+                      {hasQuery && (
+                        <>
+                          <div className="mb-5 flex items-center justify-between gap-3">
+                            <h4 className="text-[9px] font-bold uppercase tracking-[0.34em] text-foreground/35">
+                              {locale === 'vi' ? 'KẾT QUẢ TÌM ĐƯỢC' : 'FOUND RESULTS'}
+                            </h4>
+                            <span className="rounded-full border border-foreground/15 bg-white/80 px-3 py-1 text-[9px] font-semibold uppercase tracking-[0.2em] text-foreground/40">
+                              {foundSuggestions.length}
+                            </span>
+                          </div>
+
+                          <AnimatePresence mode="wait" initial={false}>
+                            {isSearchLoading ? (
+                              <motion.div
+                                key={`skeleton-${debouncedQuery}`}
+                                initial={{ opacity: 0, y: 8 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -8 }}
+                                transition={{ duration: 0.22 }}
+                                className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4 md:gap-4"
+                              >
+                                {Array.from({ length: 4 }).map((_, idx) => (
+                                  <SearchSkeletonItem key={`sk-${idx}`} />
+                                ))}
+                              </motion.div>
+                            ) : foundSuggestions.length > 0 ? (
+                              <motion.div
+                                key={`results-${resultBatchKey}`}
+                                variants={listStagger}
+                                initial="hidden"
+                                animate={isPanelReady ? 'show' : 'hidden'}
+                                exit={{ opacity: 0, y: -8 }}
+                                className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4 md:gap-4"
+                              >
+                                {foundSuggestions.map((product, index) => (
+                                  <motion.div
+                                    key={`${product.id}-${resultBatchKey}`}
+                                    variants={itemRise}
+                                    initial={{ opacity: 0, y: 8, filter: 'blur(8px)' }}
+                                    animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                                    exit={{ opacity: 0, y: -6, filter: 'blur(8px)' }}
+                                    transition={{ duration: 0.26, ease: cubicBezier }}
+                                    ref={(node) => {
+                                      activeCardRefs.current[index] = node
+                                    }}
+                                  >
+                                    <SearchResultItem
+                                      product={product}
+                                      locale={locale}
+                                      exchangeRate={exchangeRate?.rate}
+                                      onClick={() => {
+                                        addRecentSearch(searchQuery || debouncedQuery)
+                                        closeSearchPanel()
+                                      }}
+                                      query={debouncedQuery}
+                                      isActive={activeSearchIndex === index}
+                                    />
+                                  </motion.div>
+                                ))}
+                              </motion.div>
+                            ) : (
+                              <motion.p
+                                key={`empty-${debouncedQuery}`}
+                                initial={{ opacity: 0, y: 8 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -8 }}
+                                className="mb-8 rounded-lg border border-dashed border-foreground/15 bg-white/70 px-4 py-4 text-xs uppercase tracking-[0.16em] text-foreground/45"
+                              >
+                                {locale === 'vi'
+                                  ? 'Không tìm thấy kết quả phù hợp.'
+                                  : 'No matching results found.'}
+                              </motion.p>
+                            )}
+                          </AnimatePresence>
+                        </>
+                      )}
+
+                      <div className="mb-5 flex items-center justify-between gap-3 border-t border-foreground/10 pt-5">
                         <h4 className="text-[9px] font-bold uppercase tracking-[0.34em] text-foreground/35">
-                          SUGGESTED
+                          {locale === 'vi' ? 'GỢI Ý' : 'SUGGESTED'}
                         </h4>
                         {hasQuery && (
                           <span className="rounded-full border border-foreground/15 bg-white/80 px-3 py-1 text-[9px] font-semibold uppercase tracking-[0.2em] text-foreground/40">
-                            {locale === 'vi' ? 'Theo từ khóa' : 'Query matched'}
+                            {locale === 'vi' ? 'Đề xuất thêm' : 'More to explore'}
                           </span>
                         )}
                       </div>
 
-                      <AnimatePresence mode="wait" initial={false}>
-                        {isSearchLoading ? (
-                          <motion.div
-                            key={`skeleton-${debouncedQuery}`}
-                            initial={{ opacity: 0, y: 8 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -8 }}
-                            transition={{ duration: 0.22 }}
-                            className="grid grid-cols-2 gap-3 sm:grid-cols-4 md:gap-4"
-                          >
-                            {Array.from({ length: 4 }).map((_, idx) => (
-                              <SearchSkeletonItem key={`sk-${idx}`} />
-                            ))}
-                          </motion.div>
-                        ) : displaySuggestions.length > 0 ? (
-                          <motion.div
-                            key={`results-${resultBatchKey}`}
-                            variants={listStagger}
-                            initial="hidden"
-                            animate={isPanelReady ? 'show' : 'hidden'}
-                            exit={{ opacity: 0, y: -8 }}
-                            className="grid grid-cols-2 gap-3 sm:grid-cols-4 md:gap-4"
-                          >
-                            {displaySuggestions.map((product, index) => (
-                              <motion.div
-                                key={`${product.id}-${resultBatchKey}`}
-                                variants={itemRise}
-                                initial={{ opacity: 0, y: 8, filter: 'blur(8px)' }}
-                                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                                exit={{ opacity: 0, y: -6, filter: 'blur(8px)' }}
-                                transition={{ duration: 0.26, ease: cubicBezier }}
-                                ref={(node) => {
-                                  activeCardRefs.current[index] = node
+                      {suggestedSuggestions.length > 0 ? (
+                        <motion.div
+                          key={`suggested-${resultBatchKey}`}
+                          variants={listStagger}
+                          initial="hidden"
+                          animate={isPanelReady ? 'show' : 'hidden'}
+                          className="grid grid-cols-2 gap-3 sm:grid-cols-4 md:gap-4"
+                        >
+                          {suggestedSuggestions.map((product) => (
+                            <motion.div
+                              key={`suggested-${product.id}-${resultBatchKey}`}
+                              variants={itemRise}
+                              initial={{ opacity: 0, y: 8, filter: 'blur(8px)' }}
+                              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                              transition={{ duration: 0.26, ease: cubicBezier }}
+                            >
+                              <SearchResultItem
+                                product={product}
+                                locale={locale}
+                                exchangeRate={exchangeRate?.rate}
+                                onClick={() => {
+                                  addRecentSearch(searchQuery || debouncedQuery)
+                                  closeSearchPanel()
                                 }}
-                              >
-                                <SearchResultItem
-                                  product={product}
-                                  locale={locale}
-                                  exchangeRate={exchangeRate?.rate}
-                                  onClick={() => {
-                                    addRecentSearch(searchQuery || debouncedQuery)
-                                    closeSearchPanel()
-                                  }}
-                                  query={debouncedQuery}
-                                  isActive={activeSearchIndex === index}
-                                />
-                              </motion.div>
-                            ))}
-                          </motion.div>
-                        ) : (
-                          <motion.p
-                            key={`empty-${debouncedQuery}`}
-                            initial={{ opacity: 0, y: 8 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -8 }}
-                            className="rounded-lg border border-dashed border-foreground/15 bg-white/70 px-4 py-4 text-xs uppercase tracking-[0.16em] text-foreground/45"
-                          >
-                            {locale === 'vi'
-                              ? 'Chưa có gợi ý phù hợp.'
-                              : 'No matching suggestions yet.'}
-                          </motion.p>
-                        )}
-                      </AnimatePresence>
+                                query={debouncedQuery}
+                                isActive={false}
+                              />
+                            </motion.div>
+                          ))}
+                        </motion.div>
+                      ) : (
+                        <p className="rounded-lg border border-dashed border-foreground/15 bg-white/70 px-4 py-4 text-xs uppercase tracking-[0.16em] text-foreground/45">
+                          {locale === 'vi' ? 'Chưa có gợi ý phù hợp.' : 'No suggestions yet.'}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-5">
                       <h4 className="mb-5 text-[9px] font-bold uppercase tracking-[0.34em] text-foreground/35">
