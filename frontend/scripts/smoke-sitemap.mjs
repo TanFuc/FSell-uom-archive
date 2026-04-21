@@ -52,14 +52,21 @@ async function run() {
   for (const loc of sitemapLocs) {
     const parsed = new URL(loc)
     const baseParsed = new URL(baseUrl)
+    const isLocalBase = ['localhost', '127.0.0.1', '::1'].includes(baseParsed.hostname)
+    const targetLoc =
+      parsed.host === baseParsed.host || !isLocalBase
+        ? loc
+        : `${baseParsed.protocol}//${baseParsed.host}${parsed.pathname}${parsed.search}`
 
-    assert(
-      parsed.host === baseParsed.host,
-      `Unexpected sitemap host ${parsed.host} (expected ${baseParsed.host})`,
-    )
+    if (!isLocalBase) {
+      assert(
+        parsed.host === baseParsed.host,
+        `Unexpected sitemap host ${parsed.host} (expected ${baseParsed.host})`,
+      )
+    }
 
-    const sitemapXml = await fetchXml(loc)
-    assert(sitemapXml.includes('<urlset'), `Child sitemap is not a urlset: ${loc}`)
+    const sitemapXml = await fetchXml(targetLoc)
+    assert(sitemapXml.includes('<urlset'), `Child sitemap is not a urlset: ${targetLoc}`)
 
     const urlLocs = extractLocValues(sitemapXml)
     for (const urlLoc of urlLocs) {

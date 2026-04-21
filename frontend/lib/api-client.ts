@@ -19,6 +19,7 @@ import type {
   BulkUpdateDto,
   Banner,
 } from './types'
+import { pingProductSeo, pingSitewideSeo } from './seo-ping'
 
 interface LoginDto {
   email: string
@@ -154,39 +155,73 @@ class ApiClient {
   }
 
   async createProduct(data: CreateProductDto): Promise<Product> {
-    return this.client.post('/products', data)
+    const product = await this.client.post<any, Product>('/products', data)
+    if (product?.slug) {
+      void pingProductSeo(product.slug)
+    } else {
+      void pingSitewideSeo()
+    }
+    return product
   }
 
   async updateProduct(id: string, data: UpdateProductDto): Promise<Product> {
-    return this.client.put(`/products/${id}`, data)
+    const product = await this.client.put<any, Product>(`/products/${id}`, data)
+    if (product?.slug) {
+      void pingProductSeo(product.slug)
+    } else {
+      void pingSitewideSeo()
+    }
+    return product
   }
 
   async softDeleteProduct(id: string): Promise<void> {
-    return this.client.delete(`/products/${id}`)
+    const result = await this.client.delete<any, void>(`/products/${id}`)
+    void pingSitewideSeo()
+    return result
   }
 
   async hardDeleteProduct(id: string): Promise<void> {
-    return this.client.delete(`/products/${id}/permanent`)
+    const result = await this.client.delete<any, void>(`/products/${id}/permanent`)
+    void pingSitewideSeo()
+    return result
   }
 
   async restoreProduct(id: string): Promise<Product> {
-    return this.client.post(`/products/${id}/restore`)
+    const product = await this.client.post<any, Product>(`/products/${id}/restore`)
+    if (product?.slug) {
+      void pingProductSeo(product.slug)
+    } else {
+      void pingSitewideSeo()
+    }
+    return product
   }
 
   async duplicateProduct(id: string): Promise<Product> {
-    return this.client.post(`/products/${id}/duplicate`)
+    const product = await this.client.post<any, Product>(`/products/${id}/duplicate`)
+    if (product?.slug) {
+      void pingProductSeo(product.slug)
+    } else {
+      void pingSitewideSeo()
+    }
+    return product
   }
 
   async bulkDeleteProducts(data: BulkDeleteDto): Promise<{ deletedCount: number }> {
-    return this.client.post('/products/bulk/delete', data)
+    const result = await this.client.post<any, { deletedCount: number }>('/products/bulk/delete', data)
+    void pingSitewideSeo()
+    return result
   }
 
   async bulkUpdateProducts(data: BulkUpdateDto): Promise<{ updatedCount: number }> {
-    return this.client.patch('/products/bulk/update', data)
+    const result = await this.client.patch<any, { updatedCount: number }>('/products/bulk/update', data)
+    void pingSitewideSeo()
+    return result
   }
 
   async bulkRestoreProducts(ids: string[]): Promise<{ restoredCount: number }> {
-    return this.client.post('/products/bulk/restore', { ids })
+    const result = await this.client.post<any, { restoredCount: number }>('/products/bulk/restore', { ids })
+    void pingSitewideSeo()
+    return result
   }
 
   async getAllSettings(): Promise<AllSettings> {
@@ -198,7 +233,9 @@ class ApiClient {
   }
 
   async updateTheme(data: Partial<ThemeSettings>): Promise<ThemeSettings> {
-    return this.client.put('/settings/theme', data)
+    const theme = await this.client.put<any, ThemeSettings>('/settings/theme', data)
+    void pingSitewideSeo()
+    return theme
   }
 
   async getSiteContent(): Promise<SiteContent> {
@@ -206,7 +243,9 @@ class ApiClient {
   }
 
   async updateSiteContent(data: Partial<SiteContent>): Promise<SiteContent> {
-    return this.client.put('/settings/site-content', data)
+    const siteContent = await this.client.put<any, SiteContent>('/settings/site-content', data)
+    void pingSitewideSeo()
+    return siteContent
   }
 
   async getSocialLinks(): Promise<SocialLinks> {
@@ -214,7 +253,9 @@ class ApiClient {
   }
 
   async updateSocialLinks(data: Partial<SocialLinks>): Promise<SocialLinks> {
-    return this.client.put('/settings/social-links', data)
+    const socialLinks = await this.client.put<any, SocialLinks>('/settings/social-links', data)
+    void pingSitewideSeo()
+    return socialLinks
   }
 
   async getExchangeRate(): Promise<ExchangeRate> {
@@ -222,7 +263,9 @@ class ApiClient {
   }
 
   async updateExchangeRate(rate: number): Promise<ExchangeRate> {
-    return this.client.put('/settings/exchange-rate', { rate })
+    const exchangeRate = await this.client.put<any, ExchangeRate>('/settings/exchange-rate', { rate })
+    void pingSitewideSeo()
+    return exchangeRate
   }
 
   async recalculateUsdPrices(): Promise<ExchangeRate> {
@@ -234,7 +277,9 @@ class ApiClient {
   }
 
   async updateBranding(data: Partial<BrandingSettings>): Promise<BrandingSettings> {
-    return this.client.put('/settings/branding', data)
+    const branding = await this.client.put<any, BrandingSettings>('/settings/branding', data)
+    void pingSitewideSeo()
+    return branding
   }
 
   async getUsers(params?: QueryUsersDto): Promise<PaginatedResponse<User>> {
@@ -270,15 +315,21 @@ class ApiClient {
   }
 
   async createBanner(data: any): Promise<Banner> {
-    return this.client.post('/banners', data)
+    const banner = await this.client.post<any, Banner>('/banners', data)
+    void pingSitewideSeo()
+    return banner
   }
 
   async updateBanner(id: string, data: any): Promise<Banner> {
-    return this.client.patch(`/banners/${id}`, data)
+    const banner = await this.client.patch<any, Banner>(`/banners/${id}`, data)
+    void pingSitewideSeo()
+    return banner
   }
 
   async deleteBanner(id: string): Promise<void> {
-    return this.client.delete(`/banners/${id}`)
+    const result = await this.client.delete<any, void>(`/banners/${id}`)
+    void pingSitewideSeo()
+    return result
   }
 
   async uploadImage(file: File): Promise<{ url: string }> {

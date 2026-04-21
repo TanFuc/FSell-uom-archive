@@ -1,3 +1,10 @@
+import { revalidatePath, revalidateTag } from 'next/cache'
+import {
+  SITEMAP_PRODUCTS_TAG,
+  SITEMAP_STATIC_TAG,
+  SITEMAP_STORIES_TAG,
+} from '@/lib/sitemap-data'
+
 type PingRequestBody = {
   urls?: string[]
 }
@@ -8,6 +15,9 @@ type PingResult = {
   status?: number
   error?: string
 }
+
+const DEFAULT_REVALIDATE_TAGS = [SITEMAP_PRODUCTS_TAG, SITEMAP_STORIES_TAG, SITEMAP_STATIC_TAG]
+const DEFAULT_REVALIDATE_PATHS = ['/sitemap.xml', '/sitemaps/static.xml']
 
 function normalizeBaseUrl(): string {
   return (process.env.NEXT_PUBLIC_APP_URL || 'https://www.uomarchive.com').replace(/\/$/, '')
@@ -97,6 +107,38 @@ async function pingBingSitemap(baseUrl: string): Promise<PingResult> {
   }
 }
 
+async function emitMonitorLog(payload: Record<string, unknown>): Promise<void> {
+  const monitorWebhook = process.env.SEO_PING_MONITOR_WEBHOOK_URL?.trim()
+  if (!monitorWebhook) {
+    return
+  }
+
+  try {
+    await fetch(monitorWebhook, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
+      body: JSON.stringify(payload),
+    })
+  } catch {
+    // no-op: monitoring should not break ping endpoint.
+  }
+}
+
+function revalidateSitemapCaches(): { tags: string[]; paths: string[] } {
+  for (const tag of DEFAULT_REVALIDATE_TAGS) {
+    revalidateTag(tag)
+  }
+
+  for (const path of DEFAULT_REVALIDATE_PATHS) {
+    revalidatePath(path)
+  }
+
+  return {
+    tags: DEFAULT_REVALIDATE_TAGS,
+    paths: DEFAULT_REVALIDATE_PATHS,
+  }
+}
+
 export async function POST(request: Request): Promise<Response> {
   let payload: PingRequestBody
 
@@ -113,10 +155,26 @@ export async function POST(request: Request): Promise<Response> {
 
   const baseUrl = normalizeBaseUrl()
   const results = await Promise.all([pingIndexNow(baseUrl, urls), pingBingSitemap(baseUrl)])
+  const failedResults = results.filter((result) => !result.ok)
+  const revalidated = revalidateSitemapCaches()
+
+  if (failedResults.length > 0) {
+    const failureLog = {
+      event: 'seo_ping_failure',
+      level: 'error',
+      submittedUrls: urls.length,
+      failedProviders: failedResults,
+      at: new Date().toISOString(),
+    }
+
+    console.error('[seo:ping] failure', JSON.stringify(failureLog))
+    await emitMonitorLog(failureLog)
+  }
 
   return Response.json({
     success: results.some((result) => result.ok),
     submittedUrls: urls.length,
     results,
+    revalidated,
   })
 }

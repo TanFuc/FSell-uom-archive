@@ -3,7 +3,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { apiClient } from '@/lib/api-client'
-import { pingProductSeo } from '@/lib/seo-ping'
 import type {
   CreateProductDto,
   UpdateProductDto,
@@ -58,12 +57,9 @@ export function useCreateProduct() {
 
   return useMutation({
     mutationFn: (data: CreateProductDto) => apiClient.createProduct(data),
-    onSuccess: (product) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: productKeys.all })
       toast.success('Product created successfully')
-      if (product?.slug) {
-        void pingProductSeo(product.slug)
-      }
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to create product')
@@ -77,13 +73,10 @@ export function useUpdateProduct() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateProductDto }) =>
       apiClient.updateProduct(id, data),
-    onSuccess: (product, variables) => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: productKeys.all })
       queryClient.invalidateQueries({ queryKey: productKeys.detailById(variables.id) })
       toast.success('Product updated successfully')
-      if (product?.slug) {
-        void pingProductSeo(product.slug)
-      }
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to update product')

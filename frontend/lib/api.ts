@@ -15,6 +15,7 @@ import type {
   Banner,
   UpdateMyProfileDto,
 } from './types'
+import { pingProductSeo, pingSitewideSeo } from './seo-ping'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
 
@@ -234,23 +235,29 @@ class ApiClient {
   }
 
   async createBanner(data: any): Promise<Banner> {
-    return this.request<Banner>('/banners', {
+    const banner = await this.request<Banner>('/banners', {
       method: 'POST',
       body: JSON.stringify(data),
     })
+    void pingSitewideSeo()
+    return banner
   }
 
   async updateBanner(id: string, data: any): Promise<Banner> {
-    return this.request<Banner>(`/banners/${id}`, {
+    const banner = await this.request<Banner>(`/banners/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(data),
     })
+    void pingSitewideSeo()
+    return banner
   }
 
   async deleteBanner(id: string): Promise<void> {
-    return this.request<void>(`/banners/${id}`, {
+    const result = await this.request<void>(`/banners/${id}`, {
       method: 'DELETE',
     })
+    void pingSitewideSeo()
+    return result
   }
 
   async getAdminProducts(params?: {
@@ -291,69 +298,105 @@ class ApiClient {
   }
 
   async createProduct(data: Partial<Product>): Promise<Product> {
-    return this.request<Product>('/products', {
+    const product = await this.request<Product>('/products', {
       method: 'POST',
       body: JSON.stringify(data),
     })
+    if (product?.slug) {
+      void pingProductSeo(product.slug)
+    } else {
+      void pingSitewideSeo()
+    }
+    return product
   }
 
   async updateProduct(id: string, data: Partial<Product>): Promise<Product> {
-    return this.request<Product>(`/products/${id}`, {
+    const product = await this.request<Product>(`/products/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     })
+    if (product?.slug) {
+      void pingProductSeo(product.slug)
+    } else {
+      void pingSitewideSeo()
+    }
+    return product
   }
 
   async deleteProduct(id: string): Promise<{ message: string }> {
-    return this.request<{ message: string }>(`/products/${id}`, {
+    const result = await this.request<{ message: string }>(`/products/${id}`, {
       method: 'DELETE',
     })
+    void pingSitewideSeo()
+    return result
   }
 
   async restoreProduct(id: string): Promise<Product> {
-    return this.request<Product>(`/products/${id}/restore`, {
+    const product = await this.request<Product>(`/products/${id}/restore`, {
       method: 'POST',
     })
+    if (product?.slug) {
+      void pingProductSeo(product.slug)
+    } else {
+      void pingSitewideSeo()
+    }
+    return product
   }
 
   async duplicateProduct(id: string): Promise<Product> {
-    return this.request<Product>(`/products/${id}/duplicate`, {
+    const product = await this.request<Product>(`/products/${id}/duplicate`, {
       method: 'POST',
     })
+    if (product?.slug) {
+      void pingProductSeo(product.slug)
+    } else {
+      void pingSitewideSeo()
+    }
+    return product
   }
 
   async hardDeleteProduct(id: string): Promise<{ message: string }> {
-    return this.request<{ message: string }>(`/products/${id}/permanent`, {
+    const result = await this.request<{ message: string }>(`/products/${id}/permanent`, {
       method: 'DELETE',
     })
+    void pingSitewideSeo()
+    return result
   }
 
   async updateTheme(data: Partial<ThemeSettings>): Promise<ThemeSettings> {
-    return this.request<ThemeSettings>('/settings/theme', {
+    const theme = await this.request<ThemeSettings>('/settings/theme', {
       method: 'PUT',
       body: JSON.stringify(data),
     })
+    void pingSitewideSeo()
+    return theme
   }
 
   async updateSocialLinks(data: Partial<SocialLinks>): Promise<SocialLinks> {
-    return this.request<SocialLinks>('/settings/social-links', {
+    const socialLinks = await this.request<SocialLinks>('/settings/social-links', {
       method: 'PUT',
       body: JSON.stringify(data),
     })
+    void pingSitewideSeo()
+    return socialLinks
   }
 
   async updateSiteContent(data: SiteContent): Promise<{ success: boolean }> {
-    return this.request<{ success: boolean }>('/settings/site-content', {
+    const result = await this.request<{ success: boolean }>('/settings/site-content', {
       method: 'PUT',
       body: JSON.stringify(data),
     })
+    void pingSitewideSeo()
+    return result
   }
 
   async updateExchangeRate(rate: number): Promise<ExchangeRate> {
-    return this.request<ExchangeRate>('/settings/exchange-rate', {
+    const exchangeRate = await this.request<ExchangeRate>('/settings/exchange-rate', {
       method: 'PUT',
       body: JSON.stringify({ rate }),
     })
+    void pingSitewideSeo()
+    return exchangeRate
   }
 
   async recalculateUsdPrices(): Promise<ExchangeRate> {
@@ -367,10 +410,12 @@ class ApiClient {
   }
 
   async updateBranding(data: Partial<BrandingSettings>): Promise<BrandingSettings> {
-    return this.request<BrandingSettings>('/settings/branding', {
+    const branding = await this.request<BrandingSettings>('/settings/branding', {
       method: 'PUT',
       body: JSON.stringify(data),
     })
+    void pingSitewideSeo()
+    return branding
   }
 
   async getUsers(params?: {
@@ -475,35 +520,45 @@ class ApiClient {
   }
 
   async createCategory(data: CreateCategoryDto): Promise<Category> {
-    return this.request<Category>('/categories', {
+    const category = await this.request<Category>('/categories', {
       method: 'POST',
       body: JSON.stringify(data),
     })
+    void pingSitewideSeo()
+    return category
   }
 
   async updateCategory(id: string, data: UpdateCategoryDto): Promise<Category> {
-    return this.request<Category>(`/categories/${id}`, {
+    const category = await this.request<Category>(`/categories/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(data),
     })
+    void pingSitewideSeo()
+    return category
   }
 
   async deleteCategory(id: string): Promise<{ message: string }> {
-    return this.request<{ message: string }>(`/categories/${id}`, {
+    const result = await this.request<{ message: string }>(`/categories/${id}`, {
       method: 'DELETE',
     })
+    void pingSitewideSeo()
+    return result
   }
 
   async restoreCategory(id: string): Promise<Category> {
-    return this.request<Category>(`/categories/${id}/restore`, {
+    const category = await this.request<Category>(`/categories/${id}/restore`, {
       method: 'POST',
     })
+    void pingSitewideSeo()
+    return category
   }
 
   async permanentDeleteCategory(id: string): Promise<{ message: string }> {
-    return this.request<{ message: string }>(`/categories/${id}/permanent`, {
+    const result = await this.request<{ message: string }>(`/categories/${id}/permanent`, {
       method: 'DELETE',
     })
+    void pingSitewideSeo()
+    return result
   }
 }
 

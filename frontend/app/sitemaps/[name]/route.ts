@@ -54,24 +54,35 @@ export async function GET(_request: Request, { params }: Params): Promise<Respon
     return new Response('Not found', { status: 404 })
   }
 
-  const [products, stories] = await Promise.all([fetchAllProducts(), fetchStories()])
+  try {
+    const [products, stories] = await Promise.all([fetchAllProducts(), fetchStories()])
 
-  let entries: SitemapUrlEntry[] = []
+    let entries: SitemapUrlEntry[] = []
 
-  if (parsed.kind === 'static') {
-    entries = buildStaticEntries(products, stories)
-  } else if (parsed.kind === 'products') {
-    const chunks = chunkEntries(buildProductEntries(products), SITEMAP_CHUNK_SIZE)
-    entries = getChunkOrEmpty(chunks, parsed.chunkIndex)
-  } else {
-    const chunks = chunkEntries(buildStoryEntries(stories), SITEMAP_CHUNK_SIZE)
-    entries = getChunkOrEmpty(chunks, parsed.chunkIndex)
+    if (parsed.kind === 'static') {
+      entries = buildStaticEntries(products, stories)
+    } else if (parsed.kind === 'products') {
+      const chunks = chunkEntries(buildProductEntries(products), SITEMAP_CHUNK_SIZE)
+      entries = getChunkOrEmpty(chunks, parsed.chunkIndex)
+    } else {
+      const chunks = chunkEntries(buildStoryEntries(stories), SITEMAP_CHUNK_SIZE)
+      entries = getChunkOrEmpty(chunks, parsed.chunkIndex)
+    }
+
+    return new Response(buildSitemapXml(entries), {
+      headers: {
+        'Content-Type': 'application/xml; charset=utf-8',
+        'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=120',
+      },
+    })
+  } catch {
+    return new Response(buildSitemapXml([]), {
+      status: 503,
+      headers: {
+        'Content-Type': 'application/xml; charset=utf-8',
+        'Cache-Control': 'no-store',
+        'Retry-After': '120',
+      },
+    })
   }
-
-  return new Response(buildSitemapXml(entries), {
-    headers: {
-      'Content-Type': 'application/xml; charset=utf-8',
-      'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=86400',
-    },
-  })
 }

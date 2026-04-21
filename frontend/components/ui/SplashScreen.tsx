@@ -41,9 +41,8 @@ export function SplashScreen({ initialLoadingText }: { initialLoadingText?: stri
   const { data: branding } = useBranding()
   const [show, setShow] = useState(true)
 
-  const [cachedLoadingText, setCachedLoadingText] = useState<string | undefined>(() =>
-    getCachedLoadingText(),
-  )
+  // Keep the initial client render deterministic with server output to avoid hydration mismatch.
+  const [cachedLoadingText, setCachedLoadingText] = useState<string | undefined>(undefined)
 
   useEffect(() => {
     syncLoadingTextToCache(initialLoadingText)
