@@ -38,7 +38,7 @@ interface AuthResponse {
   user: User
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888/api'
 
 class ApiClient {
   private client: AxiosInstance

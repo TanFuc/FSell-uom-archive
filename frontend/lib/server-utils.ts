@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888/api'
 const BRANDING_FETCH_TIMEOUT_MS = 5000
 
 export interface BrandingData {

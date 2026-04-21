@@ -4,6 +4,41 @@ const DEFAULT_BASE_URL = 'https://www.uomarchive.com'
 const DEFAULT_TIMEOUT_MS = 15000
 const DEFAULT_RETRIES = 3
 
+async function fetchText(url, timeoutMs = DEFAULT_TIMEOUT_MS, retries = DEFAULT_RETRIES) {
+  let lastError = null
+
+  for (let attempt = 1; attempt <= retries; attempt += 1) {
+    const controller = new AbortController()
+    const timer = setTimeout(() => {
+      controller.abort()
+    }, timeoutMs)
+
+    try {
+      const response = await fetch(url, {
+        signal: controller.signal,
+        headers: {
+          Accept: 'text/plain,text/html,application/xml,text/xml;q=0.9,*/*;q=0.8',
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error(`Request failed: ${url} (${response.status})`)
+      }
+
+      return await response.text()
+    } catch (error) {
+      lastError = error
+      if (attempt < retries) {
+        await new Promise((resolve) => setTimeout(resolve, 400 * attempt))
+      }
+    } finally {
+      clearTimeout(timer)
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error(String(lastError))
+}
+
 function decodeXml(value) {
   return value
     .replace(/&amp;/g, '&')
@@ -113,6 +148,8 @@ async function run() {
   let productEnCount = 0
   let journalViCount = 0
   let journalEnCount = 0
+  let firstProductViUrl = ''
+  let firstProductEnUrl = ''
 
   for (const loc of productSitemaps) {
     const targetUrl = toTargetUrl(loc, baseUrl)
@@ -121,6 +158,14 @@ async function run() {
     productUrlCount += countUrlEntries(xml)
     productViCount += locs.filter((url) => /\/vi\/shop\//i.test(url)).length
     productEnCount += locs.filter((url) => /\/en\/shop\//i.test(url)).length
+
+    if (!firstProductViUrl) {
+      firstProductViUrl = locs.find((url) => /\/vi\/shop\//i.test(url)) || ''
+    }
+
+    if (!firstProductEnUrl) {
+      firstProductEnUrl = locs.find((url) => /\/en\/shop\//i.test(url)) || ''
+    }
   }
 
   for (const loc of journalSitemaps) {
@@ -132,11 +177,38 @@ async function run() {
     journalEnCount += locs.filter((url) => /\/en\/journal\//i.test(url)).length
   }
 
+  const robotsUrl = `${baseUrl}/robots.txt`
+  const robotsTxt = await fetchText(robotsUrl)
+  const robotsHasUserAgent = /User-agent\s*:/i.test(robotsTxt)
+
+  let productViPageReachable = false
+  let productEnPageReachable = false
+
+  if (firstProductViUrl) {
+    await fetchText(firstProductViUrl)
+    productViPageReachable = true
+  }
+
+  if (firstProductEnUrl) {
+    await fetchText(firstProductEnUrl)
+    productEnPageReachable = true
+  }
+
   const checks = [
     {
       name: 'Sitemap index reachable',
       ok: true,
       details: `${indexUrl}`,
+    },
+    {
+      name: 'Robots.txt reachable',
+      ok: true,
+      details: `${robotsUrl}`,
+    },
+    {
+      name: 'Robots.txt has crawler directives',
+      ok: robotsHasUserAgent,
+      details: `contains User-agent=${robotsHasUserAgent}`,
     },
     {
       name: 'Products child sitemap exists',
@@ -162,6 +234,16 @@ async function run() {
       name: 'Product locale parity (vi=en)',
       ok: productViCount === productEnCount,
       details: `vi=${productViCount}, en=${productEnCount}`,
+    },
+    {
+      name: 'Sample product page (vi) reachable',
+      ok: minProductUrls === 0 || productViPageReachable,
+      details: firstProductViUrl || 'no vi product URL discovered',
+    },
+    {
+      name: 'Sample product page (en) reachable',
+      ok: minProductUrls === 0 || productEnPageReachable,
+      details: firstProductEnUrl || 'no en product URL discovered',
     },
     {
       name: 'Journal detail URL count threshold',

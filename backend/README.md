@@ -64,7 +64,7 @@ The API will be available at `http://localhost:3001`
 
 ## API Documentation
 
-Swagger UI: `http://localhost:3001/api/docs`
+Swagger UI: `http://localhost:8888/api/docs`
 
 ## Default Admin Credentials
 

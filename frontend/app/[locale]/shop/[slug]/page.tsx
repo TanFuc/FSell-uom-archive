@@ -5,7 +5,7 @@ import { getLocale } from 'next-intl/server'
 import ProductClient from './product-client'
 import { fetchBranding } from '@/lib/server-utils'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888/api'
 const BASE_URL = (process.env.NEXT_PUBLIC_APP_URL || 'https://www.uomarchive.com').replace(
   /\/$/,
   '',

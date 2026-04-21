@@ -3,7 +3,7 @@ const createNextIntlPlugin = require('next-intl/plugin')
 const withNextIntl = createNextIntlPlugin()
 
 /** @type {import('next').NextConfig} */
-const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888/api'
 const apiUrlObj = new URL(apiUrl)
 const apiProtocol = apiUrlObj.protocol.replace(':', '')
 const apiPort = apiUrlObj.port

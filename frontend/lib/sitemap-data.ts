@@ -18,7 +18,7 @@ const API_CANDIDATES = [
   process.env.NEXT_PUBLIC_API_URL,
   'https://www.uomarchive.com/api',
   'https://uomarchive.com/api',
-  'http://localhost:3001/api',
+  'http://localhost:8888/api',
 ].filter((value): value is string => Boolean(value))
 
 const API_URLS = Array.from(new Set(API_CANDIDATES.map((value) => value.replace(/\/$/, ''))))
