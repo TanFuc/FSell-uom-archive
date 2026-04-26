@@ -16,6 +16,7 @@ import {
   SEARCH_TRENDING_EN_KEY,
   SEARCH_TRENDING_VI_KEY,
 } from '@/lib/search-trending'
+import { type Product } from '@/lib/types'
 import { cn, optimizeProductImage } from '@/lib/utils'
 
 function escapeRegExp(value: string): string {
@@ -191,8 +192,8 @@ export function Header() {
 
   const brandText =
     locale === 'vi'
-      ? branding?.brandNameVi || cachedBranding?.brandNameVi || 'ƯƠM. Archive'
-      : branding?.brandNameEn || cachedBranding?.brandNameEn || 'Uom Archive'
+      ? branding?.brandNameVi || cachedBranding?.brandNameVi || 'ƯƠM.'
+      : branding?.brandNameEn || cachedBranding?.brandNameEn || 'Uom'
   const globalLoadingText =
     branding?.loadingText?.trim() || cachedBranding?.loadingText?.trim() || ''
 
@@ -261,7 +262,7 @@ export function Header() {
     },
   )
 
-  const { data: featuredSuggestions } = useProducts(
+  const { data: featuredSuggestions, isLoading: isFeaturedLoading } = useProducts(
     {
       page: 1,
       limit: 4,
@@ -275,7 +276,7 @@ export function Header() {
     },
   )
 
-  const { data: latestSuggestions } = useProducts(
+  const { data: latestSuggestions, isLoading: isLatestLoading } = useProducts(
     {
       page: 1,
       limit: 40,
@@ -296,11 +297,7 @@ export function Header() {
   )
 
   const searchCandidatePool = useMemo(() => {
-    const merged = [
-      ...(suggestedProducts?.data ?? []),
-      ...featuredList,
-      ...latestList,
-    ]
+    const merged = [...(suggestedProducts?.data ?? []), ...featuredList, ...latestList]
 
     return merged.filter(
       (item, index) => merged.findIndex((candidate) => candidate.id === item.id) === index,
@@ -342,10 +339,14 @@ export function Header() {
 
   const defaultSuggestions = [
     ...featuredList,
-    ...latestList.filter((item) => !featuredList.some((featured) => featured.id === item.id)),
+    ...latestList.filter(
+      (item: Product) => !featuredList.some((featured: Product) => featured.id === item.id),
+    ),
   ].slice(0, 4)
   const suggestedSuggestions = hasQuery
-    ? defaultSuggestions.filter((item) => !foundSuggestions.some((found) => found.id === item.id))
+    ? defaultSuggestions.filter(
+        (item: Product) => !foundSuggestions.some((found: Product) => found.id === item.id),
+      )
     : defaultSuggestions
   const keyboardSuggestions = hasQuery ? foundSuggestions : suggestedSuggestions
   const isSearchLoading = hasQuery && isSearching
@@ -487,6 +488,7 @@ export function Header() {
                 setShowMobileMenu(!showMobileMenu)
                 closeSearchPanel()
               }}
+              aria-label={showMobileMenu ? t('closeMenu') : t('openMenu')}
               className="group flex items-center gap-2 py-2 outline-none"
             >
               <div className="flex items-center justify-center">
@@ -555,6 +557,7 @@ export function Header() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="transition-opacity hover:opacity-50"
+                  aria-label="Instagram"
                 >
                   <Instagram className="h-5 w-5" />
                 </a>
@@ -565,6 +568,7 @@ export function Header() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="transition-opacity hover:opacity-50"
+                  aria-label="Facebook"
                 >
                   <Facebook className="h-5 w-5" />
                 </a>
@@ -577,6 +581,7 @@ export function Header() {
                 setShowMobileMenu(false)
               }}
               className="flex items-center gap-2 py-1 outline-none"
+              aria-label={showSearch ? t('closeSearch') : t('openSearch')}
             >
               {showSearch ? (
                 <X className="h-5 w-5 lg:h-6 lg:w-6" />
@@ -591,6 +596,7 @@ export function Header() {
             <Link
               href={newPath}
               className="flex h-full items-center text-xs font-bold uppercase leading-none tracking-widest lg:text-sm"
+              aria-label={locale === 'vi' ? 'Switch to English' : 'Chuyển sang Tiếng Việt'}
             >
               {switchLocale}
             </Link>
@@ -667,6 +673,7 @@ export function Header() {
                         }
                         className="w-full bg-transparent py-1.5 font-sans text-base font-semibold tracking-[0.01em] text-foreground placeholder:text-foreground/35 focus:outline-none md:text-lg"
                         autoFocus
+                        aria-label={locale === 'vi' ? 'Nhập nội dung tìm kiếm' : 'Search query'}
                       />
                     </div>
                     {isSearching && searchQuery && globalLoadingText && (
@@ -833,36 +840,52 @@ export function Header() {
                         )}
                       </div>
 
-                      {suggestedSuggestions.length > 0 ? (
-                        <motion.div
-                          key={`suggested-${resultBatchKey}`}
-                          variants={listStagger}
-                          initial="hidden"
-                          animate={isPanelReady ? 'show' : 'hidden'}
-                          className="grid grid-cols-2 gap-3 sm:grid-cols-4 md:gap-4"
-                        >
-                          {suggestedSuggestions.map((product) => (
+                      {suggestedSuggestions.length > 0 || isLatestLoading || isFeaturedLoading ? (
+                        <AnimatePresence mode="wait">
+                          {isLatestLoading || isFeaturedLoading ? (
                             <motion.div
-                              key={`suggested-${product.id}-${resultBatchKey}`}
-                              variants={itemRise}
-                              initial={{ opacity: 0, y: 8, filter: 'blur(8px)' }}
-                              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                              transition={{ duration: 0.26, ease: cubicBezier }}
+                              key="suggested-skeleton"
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              className="grid grid-cols-2 gap-3 sm:grid-cols-4 md:gap-4"
                             >
-                              <SearchResultItem
-                                product={product}
-                                locale={locale}
-                                exchangeRate={exchangeRate?.rate}
-                                onClick={() => {
-                                  addRecentSearch(searchQuery || debouncedQuery)
-                                  closeSearchPanel()
-                                }}
-                                query={debouncedQuery}
-                                isActive={false}
-                              />
+                              {Array.from({ length: 4 }).map((_, idx) => (
+                                <SearchSkeletonItem key={`suggested-sk-${idx}`} />
+                              ))}
                             </motion.div>
-                          ))}
-                        </motion.div>
+                          ) : (
+                            <motion.div
+                              key={`suggested-${resultBatchKey}`}
+                              variants={listStagger}
+                              initial="hidden"
+                              animate="show"
+                              className="grid grid-cols-2 gap-3 sm:grid-cols-4 md:gap-4"
+                            >
+                              {suggestedSuggestions.map((product) => (
+                                <motion.div
+                                  key={`suggested-${product.id}-${resultBatchKey}`}
+                                  variants={itemRise}
+                                  initial={{ opacity: 0, y: 8, filter: 'blur(8px)' }}
+                                  animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                                  transition={{ duration: 0.26, ease: cubicBezier }}
+                                >
+                                  <SearchResultItem
+                                    product={product}
+                                    locale={locale}
+                                    exchangeRate={exchangeRate?.rate}
+                                    onClick={() => {
+                                      addRecentSearch(searchQuery || debouncedQuery)
+                                      closeSearchPanel()
+                                    }}
+                                    query={debouncedQuery}
+                                    isActive={false}
+                                  />
+                                </motion.div>
+                              ))}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       ) : (
                         <p className="rounded-lg border border-dashed border-foreground/15 bg-white/70 px-4 py-4 text-xs uppercase tracking-[0.16em] text-foreground/45">
                           {locale === 'vi' ? 'Chưa có gợi ý phù hợp.' : 'No suggestions yet.'}
@@ -947,6 +970,7 @@ export function Header() {
                         href={`https://instagram.com/${socialLinks.instagramUsername}`}
                         target="_blank"
                         rel="noopener noreferrer"
+                        aria-label="Instagram"
                       >
                         <Instagram className="h-5 w-5 transition-colors hover:text-foreground" />
                       </a>
@@ -956,6 +980,7 @@ export function Header() {
                         href={socialLinks.facebookPageUrl}
                         target="_blank"
                         rel="noopener noreferrer"
+                        aria-label="Facebook"
                       >
                         <Facebook className="h-5 w-5 transition-colors hover:text-foreground" />
                       </a>

@@ -33,7 +33,7 @@ function hasMeaningfulText(element: HTMLElement): boolean {
 
 function isSmallStandaloneImageBlock(element: Element): element is HTMLElement {
   if (!(element instanceof HTMLElement)) return false
-  const frames = element.querySelectorAll(':scope .journal-image-frame')
+  const frames = Array.from(element.querySelectorAll(':scope .journal-image-frame')) as HTMLElement[]
   if (frames.length !== 1) return false
 
   const frame = frames[0] as HTMLElement
@@ -44,7 +44,7 @@ function isSmallStandaloneImageBlock(element: Element): element is HTMLElement {
 }
 
 function unwrapSmallRows(container: HTMLElement) {
-  const rows = Array.from(container.querySelectorAll('.journal-small-image-row'))
+  const rows = Array.from(container.querySelectorAll('.journal-small-image-row')) as HTMLElement[]
   rows.forEach((row) => {
     const parent = row.parentElement
     if (!parent) return
@@ -102,7 +102,7 @@ function makeImageResizable(
   image: HTMLImageElement,
   onFirstHover?: (frame: HTMLElement) => void,
 ) {
-  let frame = image.parentElement as HTMLElement | null
+  let frame = image.parentElement
 
   if (!frame || !frame.classList.contains('journal-image-frame')) {
     frame = document.createElement('span')
@@ -126,11 +126,12 @@ function makeImageResizable(
 
   let handle = frame.querySelector('.journal-image-handle') as HTMLButtonElement | null
   if (!handle) {
-    handle = document.createElement('button')
-    handle.type = 'button'
-    handle.className = 'journal-image-handle'
-    handle.setAttribute('aria-label', 'Resize image')
-    frame.appendChild(handle)
+    const btn = document.createElement('button')
+    btn.type = 'button'
+    btn.className = 'journal-image-handle'
+    btn.setAttribute('aria-label', 'Resize image')
+    frame.appendChild(btn)
+    handle = btn
   }
 
   const startResize = (event: PointerEvent) => {
@@ -140,13 +141,13 @@ function makeImageResizable(
     event.stopPropagation()
 
     const startX = event.clientX
-    const startWidth = getFrameWidth(frame as HTMLElement)
+    const startWidth = getFrameWidth(frame)
     const maxWidth = Math.max(container.clientWidth, 220)
 
     const onMove = (moveEvent: PointerEvent) => {
       const nextWidth = Math.max(180, Math.min(startWidth + (moveEvent.clientX - startX), maxWidth))
-      ;(frame as HTMLElement).style.width = `${nextWidth}px`
-      updateSmallFrameState(container, frame as HTMLElement)
+      frame.style.width = `${nextWidth}px`
+      updateSmallFrameState(container, frame)
       regroupSmallRows(container)
     }
 
@@ -163,7 +164,7 @@ function makeImageResizable(
   image.onpointerdown = startResize
 
   const onImageLoaded = () => {
-    updateSmallFrameState(container, frame as HTMLElement)
+    updateSmallFrameState(container, frame)
     regroupSmallRows(container)
   }
 
@@ -176,7 +177,7 @@ function makeImageResizable(
     frame.addEventListener(
       'pointerenter',
       () => {
-        onFirstHover(frame as HTMLElement)
+        onFirstHover(frame)
       },
       { once: true },
     )
@@ -218,7 +219,7 @@ export function JournalRichContent({ content, className }: JournalRichContentPro
       }, 1900)
     }
 
-    const images = Array.from(container.querySelectorAll('img'))
+    const images = Array.from(container.querySelectorAll('img')) as HTMLImageElement[]
     images.forEach((node) => {
       if (node instanceof HTMLImageElement) {
         makeImageResizable(container, node, showTooltipOnce)

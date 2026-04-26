@@ -24,7 +24,7 @@ const montserrat = Montserrat({
   subsets: ['latin', 'vietnamese'],
   variable: '--font-montserrat',
   display: 'swap',
-  weight: ['300', '400', '500', '600'],
+  weight: ['300', '400', '500', '600', '700'],
 })
 
 const playfair = Playfair_Display({
@@ -89,18 +89,32 @@ export async function generateMetadata({
     },
     description,
     keywords: [
-      'gốm sứ',
-      'ceramics',
-      'đồ gốm thủ công',
-      'Vietnamese ceramics',
-      'handcrafted ceramics',
+      'gốm sứ thủ công',
+      'vietnamese ceramics',
+      'đồ trang trí gốm',
+      'lifestyle vietnam',
+      'handmade pottery',
+      'nghệ thuật gốm',
+      'ceramic archive',
       'ƯƠM. Archive',
-      'gốm Việt Nam',
-      'ceramic art',
+      'decor gốm sứ',
+      'quà tặng gốm sứ',
+      'craftsmanship vietnam',
     ],
     authors: [{ name: brandName }],
     creator: brandName,
     publisher: brandName,
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-video-preview': -1,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      },
+    },
     openGraph: {
       type: 'website',
       locale: locale === 'vi' ? 'vi_VN' : 'en_US',
@@ -125,6 +139,14 @@ export async function generateMetadata({
       apple: [{ url: tabIconUrl, sizes: '180x180', type: 'image/png' }],
     },
     manifest: '/manifest.webmanifest',
+    alternates: {
+      canonical: `${baseUrl}/${locale}`,
+      languages: {
+        vi: `${baseUrl}/vi`,
+        en: `${baseUrl}/en`,
+        'x-default': `${baseUrl}/vi`,
+      },
+    },
   }
 }
 

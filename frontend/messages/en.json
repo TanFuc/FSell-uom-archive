@@ -5,7 +5,11 @@
     "journal": "JOURNAL",
     "search": "SEARCH",
     "close": "CLOSE",
-    "suggestedCategories": "Suggested Categories"
+    "suggestedCategories": "Suggested Categories",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "openSearch": "Open search",
+    "closeSearch": "Close search"
   },
   "Footer": {
     "description": "Curating exquisite handcrafted items, carefully selected",

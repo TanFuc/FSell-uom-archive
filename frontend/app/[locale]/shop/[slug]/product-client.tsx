@@ -12,6 +12,7 @@ import { LoadingScreen } from '@/components/ui/loading-screen'
 import { useProduct, useProducts } from '@/hooks/use-products'
 import { useExchangeRate, useSocialLinks } from '@/hooks/use-settings'
 import { getDisplayPrice } from '@/lib/currency'
+import { type Product } from '@/lib/types'
 import { optimizeProductImage, cn } from '@/lib/utils'
 
 interface ProductPageProps {
@@ -306,6 +307,7 @@ export default function ProductClient({ params }: ProductPageProps) {
         href={`/${locale}/shop`}
         className="group fixed left-0 top-0 z-50 hidden h-full w-24 cursor-pointer items-center justify-center transition-all hover:bg-gradient-to-r hover:from-black/5 lg:flex"
         title={t('back')}
+        aria-label={t('back')}
       >
         <div className="flex h-12 w-12 translate-x-[-16px] transform items-center justify-center rounded-full bg-white opacity-0 shadow-lg transition-all duration-300 group-hover:translate-x-[12px] group-hover:opacity-100">
           <ArrowLeft className="h-5 w-5 text-foreground" />
@@ -339,6 +341,7 @@ export default function ProductClient({ params }: ProductPageProps) {
           <Link
             href={`/${locale}/shop`}
             className="mb-6 inline-flex items-center pt-8 transition-all hover:translate-x-[-4px] lg:hidden"
+            aria-label={t('back')}
           >
             <ArrowLeft className="h-4 w-4" />
           </Link>
@@ -399,7 +402,7 @@ export default function ProductClient({ params }: ProductPageProps) {
                       >
                         <Image
                           src={optimizeProductImage(image, { width: 1200, height: 1600 })}
-                          alt={`${name} - ${index + 1}`}
+                          alt={`${name} - Ceramic Archive Piece ${index + 1} - ƯƠM. Archive`}
                           fill
                           sizes="(max-width: 768px) 100vw, 60vw"
                           className="object-cover object-center md:h-full md:w-full"
@@ -422,15 +425,15 @@ export default function ProductClient({ params }: ProductPageProps) {
               <div className="space-y-4 pb-12 pt-10 md:sticky md:top-32 md:space-y-12 md:pb-24 md:pt-0">
                 {/* Info Header */}
                 <div className="mb-8 space-y-2">
-                  <h1 className="font-sans text-[10px] font-bold uppercase leading-tight tracking-[0.2em] text-foreground">
+                  <h1 className="font-sans text-[13px] font-bold leading-tight tracking-[0.1em] text-foreground">
                     {name}
                   </h1>
                   <div className="flex items-center gap-4">
-                    <p className="font-sans text-[10px] font-medium tracking-wide text-foreground">
+                    <p className="font-sans text-[11px] font-semibold tracking-[0.05em] text-foreground">
                       {priceDisplay.currentPrice}
                     </p>
                     {priceDisplay.hasDiscount && priceDisplay.originalPrice && (
-                      <p className="text-[10px] font-light text-foreground/30 line-through">
+                      <p className="text-[11px] font-light text-foreground/30 line-through">
                         {priceDisplay.originalPrice}
                       </p>
                     )}
@@ -439,60 +442,29 @@ export default function ProductClient({ params }: ProductPageProps) {
 
                 {/* Details Section */}
                 <div className="space-y-4">
-                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-foreground">
+                  <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-foreground">
                     {t('details')}
                   </h4>
 
                   {shortDescription ? (
-                    <p className="text-[10px] font-normal leading-relaxed text-foreground/80">
+                    <p className="text-[11px] font-normal leading-relaxed tracking-[0.05em] text-foreground/80">
                       {shortDescription}
                     </p>
                   ) : null}
 
-                  {variants.groups.length > 0 && (
-                    <div className="space-y-3 rounded-sm border border-foreground/10 bg-foreground/[0.02] p-4">
-                      {variants.groups.map((group) => (
-                        <div key={group.label} className="space-y-2 border-b border-foreground/10 pb-3 last:border-b-0 last:pb-0">
-                          <div className="flex items-center justify-between gap-2">
-                            <p className="text-[9px] font-bold uppercase tracking-[0.24em] text-foreground/70">
-                              {group.label}
-                            </p>
-                            <span className="rounded-full border border-foreground/20 px-2 py-0.5 text-[8px] font-semibold tracking-[0.2em] text-foreground/50">
-                              {group.values.length}
-                            </span>
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            {group.values.map((item) => (
-                              <span
-                                key={`${group.label}-${item}`}
-                                className="rounded-full border border-foreground/15 bg-white px-3 py-1 text-[10px] font-medium uppercase tracking-wide text-foreground/90"
-                              >
-                                {item}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Technical Specs List */}
-                  <div className="flex flex-col gap-1 text-[10px] font-normal leading-relaxed text-foreground">
-                    {product.dimensions && (
-                      <p>
-                        {t('dimensions')}: {product.dimensions}
+                  {/* Combined Description & Technical Specs */}
+                  <div className="flex flex-col gap-1 text-[11px] font-normal leading-relaxed tracking-[0.05em] text-foreground">
+                    {variants.groups.map((group) => (
+                      <p key={group.label}>
+                        <span className="font-bold uppercase">{group.label}: </span>
+                        <span className="text-foreground/80">{group.values.join(', ')}</span>
                       </p>
-                    )}
-                    {product.material && (
-                      <p>
-                        {t('material')}: {product.material}
-                      </p>
-                    )}
+                    ))}
                   </div>
 
                   {/* HTML Description */}
                   <div
-                    className="prose prose-sm max-w-none text-foreground [&_a]:underline [&_a]:underline-offset-2 [&_blockquote]:border-l [&_blockquote]:border-foreground/30 [&_blockquote]:pl-4 [&_h1]:text-lg [&_h1]:font-bold [&_h2]:text-base [&_h2]:font-bold [&_h3]:text-sm [&_h3]:font-semibold [&_img]:my-4 [&_img]:h-auto [&_img]:max-w-full [&_img]:rounded-lg [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:leading-relaxed [&_ul]:list-disc [&_ul]:pl-5"
+                    className="prose prose-sm max-w-none font-sans text-[11px] font-medium tracking-[0.05em] text-foreground [&_a]:underline [&_a]:underline-offset-2 [&_blockquote]:border-l [&_blockquote]:border-foreground/30 [&_blockquote]:pl-4 [&_h1]:text-lg [&_h1]:font-bold [&_h2]:text-base [&_h2]:font-bold [&_h3]:text-sm [&_h3]:font-semibold [&_img]:my-4 [&_img]:h-auto [&_img]:max-w-full [&_img]:rounded-lg [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:leading-relaxed [&_ul]:list-disc [&_ul]:pl-5"
                     dangerouslySetInnerHTML={{ __html: description || '' }}
                   />
                 </div>
@@ -509,6 +481,7 @@ export default function ProductClient({ params }: ProductPageProps) {
                         target="_blank"
                         rel="noopener noreferrer"
                         className="group flex items-center justify-between border border-foreground/10 px-6 py-4 transition-all duration-300 hover:bg-foreground hover:text-white"
+                        aria-label="Instagram Inquiry"
                       >
                         <span className="text-[10px] font-bold uppercase tracking-[0.3em]">
                           Instagram
@@ -522,6 +495,7 @@ export default function ProductClient({ params }: ProductPageProps) {
                         target="_blank"
                         rel="noopener noreferrer"
                         className="group flex items-center justify-between border border-foreground/10 px-6 py-4 transition-all duration-300 hover:bg-foreground hover:text-white"
+                        aria-label="Facebook Inquiry"
                       >
                         <span className="text-[10px] font-bold uppercase tracking-[0.3em]">
                           Facebook
@@ -572,8 +546,8 @@ export default function ProductClient({ params }: ProductPageProps) {
           >
             <AnimatePresence mode="popLayout">
               {relatedProducts?.data
-                ?.filter((p) => p.id !== product.id)
-                .map((item, idx) => (
+                ?.filter((p: Product) => p.id !== product.id)
+                .map((item: Product, idx: number) => (
                   <motion.div
                     key={item.id}
                     initial={{ opacity: 0, y: 20 }}

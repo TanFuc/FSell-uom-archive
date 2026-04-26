@@ -1,32 +1,32 @@
-# Cloudflare Managed signals
-User-agent: *
-Content-Signal: search=yes,ai-train=no
+# Optimization for Googlebot
+User-agent: Googlebot
 Allow: /
 Disallow: /admin/
 Disallow: /vi/admin/
 Disallow: /en/admin/
+Disallow: /api/
+Allow: /_next/static/
 
-# Block AI crawling bots
-User-agent: Amazonbot
-Disallow: /
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /vi/admin/
+Disallow: /en/admin/
+Disallow: /api/
 
-User-agent: Applebot-Extended
-Disallow: /
-
-User-agent: Bytespider
-Disallow: /
-
-User-agent: CCBot
-Disallow: /
-
-User-agent: ClaudeBot
-Disallow: /
-
+# Block aggressive AI crawlers to save bandwidth
 User-agent: GPTBot
 Disallow: /
-
+User-agent: ChatGPT-User
+Disallow: /
 User-agent: Google-Extended
 Disallow: /
+User-agent: CCBot
+Disallow: /
+User-agent: ClaudeBot
+Disallow: /
+User-agent: OAI-SearchBot
+Disallow: /
 
-Host: https://www.uomarchive.com
+# Sitemap Location
 Sitemap: https://www.uomarchive.com/sitemap.xml

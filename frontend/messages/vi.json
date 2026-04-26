@@ -5,7 +5,11 @@
     "journal": "TẠP CHÍ",
     "search": "TÌM KIẾM",
     "close": "ĐÓNG",
-    "suggestedCategories": "Gợi ý danh mục"
+    "suggestedCategories": "Gợi ý danh mục",
+    "openMenu": "Mở menu",
+    "closeMenu": "Đóng menu",
+    "openSearch": "Mở tìm kiếm",
+    "closeSearch": "Đóng tìm kiếm"
   },
   "Footer": {
     "description": "Lưu trữ những món đồ thủ công tinh tế, được chọn lọc kỹ lưỡng",

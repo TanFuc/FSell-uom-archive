@@ -1,8 +1,8 @@
 'use client'
 
 import { motion, AnimatePresence } from 'framer-motion'
-import Link from 'next/link'
 import Image from 'next/image'
+import Link from 'next/link'
 import { useLocale, useTranslations } from 'next-intl'
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { BannerCarousel } from '@/components/BannerCarousel'
@@ -11,8 +11,9 @@ import { LoadingScreen } from '@/components/ui/loading-screen'
 import { useBanners } from '@/hooks/use-banners'
 import { useProducts } from '@/hooks/use-products'
 import { useSiteContent } from '@/hooks/use-settings'
-import { getStorySlug, parseStories, STORIES_CONTENT_KEY } from '@/lib/stories'
-import { cn } from '@/lib/utils'
+import { getStorySlug, parseStories, STORIES_CONTENT_KEY, type StoryItem } from '@/lib/stories'
+import { type Product } from '@/lib/types'
+import { cn, optimizeProductImage } from '@/lib/utils'
 
 const HOME_FIRST_FULLSCREEN_LOADING_DONE_KEY = 'uom_home_first_fullscreen_loading_done'
 
@@ -203,21 +204,31 @@ function usePremiumSmoothScroll() {
   }
 }
 
-export default function HomeClient() {
+export default function HomeClient({
+  initialProducts,
+  initialSiteContent,
+}: {
+  initialProducts?: any
+  initialSiteContent?: any
+}) {
   const t = useTranslations('Home')
   const locale = useLocale() as 'vi' | 'en'
 
-  const { data: latestProducts, isLoading: isLoadingLatest } = useProducts({
-    page: 1,
-    limit: 8,
-    isActive: true,
-    sortBy: 'createdAt',
-    sortOrder: 'desc',
-  })
+  const { data: latestProducts, isLoading: isLoadingLatest } = useProducts(
+    {
+      page: 1,
+      limit: 8,
+      isActive: true,
+      sortBy: 'createdAt',
+      sortOrder: 'desc',
+    },
+    { initialData: initialProducts },
+  )
 
   const { data: siteContent, isLoading: isLoadingStories } = useSiteContent({
     staleTime: 0,
     refetchOnMount: 'always',
+    initialData: initialSiteContent,
   })
   const stories = parseStories(siteContent?.[STORIES_CONTENT_KEY]).filter(
     (story) => story.isVisible !== false,
@@ -321,7 +332,7 @@ export default function HomeClient() {
               )}
             >
               <AnimatePresence mode="popLayout">
-                {latestProducts?.data.map((product, idx) => (
+                {latestProducts?.data.map((product: Product, idx: number) => (
                   <motion.div
                     key={product.id}
                     initial={{ opacity: 0, y: 20 }}
@@ -366,7 +377,14 @@ export default function HomeClient() {
                 key={i}
                 className="w-[calc(100vw-64px)] shrink-0 space-y-6 md:w-[45vw] lg:w-[calc(50vw-48px)]"
               >
-                <div className="aspect-[4/5] animate-pulse bg-muted/30" />
+                <div className="overflow-hidden rounded-xl border border-foreground/5">
+                  <div className="aspect-[4/5] animate-pulse bg-muted/20" />
+                  <div className="space-y-3 p-4 md:p-5">
+                    <div className="h-4 w-3/4 animate-pulse rounded bg-muted/20" />
+                    <div className="h-3 w-full animate-pulse rounded bg-muted/10" />
+                    <div className="h-3 w-2/3 animate-pulse rounded bg-muted/10" />
+                  </div>
+                </div>
               </div>
             ))}
           </div>
@@ -395,7 +413,7 @@ export default function HomeClient() {
               )}
             >
               <AnimatePresence mode="popLayout">
-                {stories.map((story, idx) => (
+                {stories.map((story: StoryItem, idx: number) => (
                   <motion.div
                     key={story.id}
                     initial={{ opacity: 0, y: 20 }}
@@ -411,11 +429,15 @@ export default function HomeClient() {
                       <article className="group overflow-hidden rounded-xl border border-foreground/10 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg">
                         <div className="relative aspect-[4/5] overflow-hidden">
                           <Image
-                            src={story.imageUrl}
+                            src={optimizeProductImage(story.imageUrl, {
+                              width: 1200,
+                              height: 1500,
+                            })}
                             alt={locale === 'vi' ? story.titleVi : story.titleEn}
                             fill
+                            sizes="(max-width: 768px) 100vw, 50vw"
                             className="object-cover transition duration-700 group-hover:scale-105"
-                            unoptimized
+                            priority={idx < 2}
                           />
                           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-transparent" />
                           {story.publishedAt && (

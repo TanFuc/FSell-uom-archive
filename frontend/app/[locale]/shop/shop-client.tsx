@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { Search, X } from 'lucide-react'
@@ -9,6 +9,7 @@ import { ProductCard } from '@/components/ProductCard'
 import { useCategories } from '@/hooks/use-categories'
 import { useDocumentTitle } from '@/hooks/use-document-title'
 import { useProducts } from '@/hooks/use-products'
+import { type Product, type Category } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
 export default function ShopClient() {
@@ -103,6 +104,7 @@ export default function ShopClient() {
                 updateURL(val)
               }}
               className="w-full border-b border-foreground/10 bg-transparent py-5 pl-10 pr-10 text-xl font-bold uppercase tracking-tight text-foreground transition-all placeholder:text-foreground/10 focus:border-foreground/30 focus:outline-none"
+              aria-label={t('searchPlaceholder')}
             />
             {search && (
               <button
@@ -138,7 +140,7 @@ export default function ShopClient() {
             >
               {t('allCategories')}
             </button>
-            {categories.map((category) => (
+            {categories.map((category: Category) => (
               <button
                 key={category.id}
                 onClick={() => {
@@ -176,7 +178,7 @@ export default function ShopClient() {
             <>
               <AnimatePresence mode="popLayout">
                 <div className="grid grid-cols-2 gap-8 lg:grid-cols-4 lg:gap-12">
-                  {data.data.map((product, idx) => (
+                  {data.data.map((product: Product, idx: number) => (
                     <motion.div
                       key={product.id}
                       initial={{ opacity: 0, y: 20 }}

@@ -117,6 +117,7 @@ export function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-[10px] font-medium uppercase tracking-[0.15em] transition-all hover:opacity-60"
+                  aria-label="Instagram"
                 >
                   Instagram
                 </a>
@@ -127,6 +128,7 @@ export function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-[10px] font-medium uppercase tracking-[0.15em] transition-all hover:opacity-60"
+                  aria-label="Facebook"
                 >
                   Facebook
                 </a>
