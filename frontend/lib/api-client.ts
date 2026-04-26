@@ -1,4 +1,5 @@
 import axios, { type AxiosInstance, type AxiosError } from 'axios'
+import { pingProductSeo, pingSitewideSeo } from './seo-ping'
 import type {
   Product,
   CreateProductDto,
@@ -19,7 +20,6 @@ import type {
   BulkUpdateDto,
   Banner,
 } from './types'
-import { pingProductSeo, pingSitewideSeo } from './seo-ping'
 
 interface LoginDto {
   email: string
@@ -207,19 +207,28 @@ class ApiClient {
   }
 
   async bulkDeleteProducts(data: BulkDeleteDto): Promise<{ deletedCount: number }> {
-    const result = await this.client.post<any, { deletedCount: number }>('/products/bulk/delete', data)
+    const result = await this.client.post<any, { deletedCount: number }>(
+      '/products/bulk/delete',
+      data,
+    )
     void pingSitewideSeo()
     return result
   }
 
   async bulkUpdateProducts(data: BulkUpdateDto): Promise<{ updatedCount: number }> {
-    const result = await this.client.patch<any, { updatedCount: number }>('/products/bulk/update', data)
+    const result = await this.client.patch<any, { updatedCount: number }>(
+      '/products/bulk/update',
+      data,
+    )
     void pingSitewideSeo()
     return result
   }
 
   async bulkRestoreProducts(ids: string[]): Promise<{ restoredCount: number }> {
-    const result = await this.client.post<any, { restoredCount: number }>('/products/bulk/restore', { ids })
+    const result = await this.client.post<any, { restoredCount: number }>(
+      '/products/bulk/restore',
+      { ids },
+    )
     void pingSitewideSeo()
     return result
   }
@@ -263,7 +272,9 @@ class ApiClient {
   }
 
   async updateExchangeRate(rate: number): Promise<ExchangeRate> {
-    const exchangeRate = await this.client.put<any, ExchangeRate>('/settings/exchange-rate', { rate })
+    const exchangeRate = await this.client.put<any, ExchangeRate>('/settings/exchange-rate', {
+      rate,
+    })
     void pingSitewideSeo()
     return exchangeRate
   }

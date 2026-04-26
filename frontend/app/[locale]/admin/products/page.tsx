@@ -12,6 +12,8 @@ import {
   PowerOff,
   Trash,
   ExternalLink,
+  Zap,
+  RefreshCw,
 } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -41,7 +43,7 @@ import { useDocumentTitle } from '@/hooks/use-document-title'
 import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api'
 import { type Product } from '@/lib/types'
-import { formatPriceVND, getImageUrl, optimizeProductImage } from '@/lib/utils'
+import { formatPriceVND, getImageUrl, optimizeProductImage, cn } from '@/lib/utils'
 
 function formatUsdValue(value?: number | null): string {
   if (value === null || value === undefined || Number.isNaN(value)) {
@@ -61,6 +63,7 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [isPinging, setIsPinging] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [selectedProducts, setSelectedProducts] = useState<string[]>([])
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; product: Product | null }>({
@@ -270,6 +273,38 @@ export default function ProductsPage() {
     )
   }
 
+  const handlePingGoogle = async (product: Product, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setIsPinging(product.id)
+
+    try {
+      const response = await fetch('/api/revalidate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          path: `/${locale}/shop/${product.slug}`,
+        }),
+      })
+
+      if (response.ok) {
+        toast({
+          title: 'SEO Refresh Thành công',
+          description: 'Đã xóa cache & gửi yêu cầu cập nhật tới Googlebot',
+        })
+      } else {
+        throw new Error('Failed to revalidate')
+      }
+    } catch (error) {
+      toast({
+        title: 'Lỗi SEO Refresh',
+        description: 'Không thể làm mới chỉ mục ngay lúc này',
+        variant: 'destructive',
+      })
+    } finally {
+      setIsPinging(null)
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -399,6 +434,7 @@ export default function ProductsPage() {
               <TableHead className="w-24 text-center">Link</TableHead>
               <TableHead className="w-32 text-center">{t('activeStatus')}</TableHead>
               <TableHead className="w-32 text-center">{t('featuredStatus')}</TableHead>
+              <TableHead className="w-20 text-center">SEO</TableHead>
               <TableHead className="w-32">{t('actions')}</TableHead>
             </TableRow>
           </TableHeader>
@@ -530,6 +566,25 @@ export default function ProductsPage() {
                           <StarOff className="mr-1 h-4 w-4" />
                           Thường
                         </>
+                      )}
+                    </Button>
+                  </TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()} className="text-center">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={(e) => handlePingGoogle(product, e)}
+                      disabled={isPinging === product.id}
+                      className={cn(
+                        'h-8 w-8',
+                        isPinging === product.id ? 'animate-spin' : 'hover:text-amber-600',
+                      )}
+                      title="Làm mới chỉ mục SEO (Ping Google)"
+                    >
+                      {isPinging === product.id ? (
+                        <RefreshCw className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Zap className="h-4 w-4" />
                       )}
                     </Button>
                   </TableCell>

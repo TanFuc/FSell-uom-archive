@@ -10,7 +10,17 @@ const intlMiddleware = createMiddleware({
 })
 
 export default function middleware(request: NextRequest) {
-  const pathname = request.nextUrl.pathname
+  const host = request.headers.get('host')
+  const { pathname, search } = request.nextUrl
+
+  // 1. Force WWW redirection for SEO consistency
+  if (host && host === 'uomarchive.com') {
+    return NextResponse.redirect(`https://www.uomarchive.com${pathname}${search}`, 301)
+  }
+
+  if (pathname.includes('sitemap') || pathname.endsWith('.xml')) {
+    return NextResponse.next()
+  }
 
   const isAdminRoute = pathname.match(/^\/[a-z]{2}\/admin(?!\/login)/)
   const isLoginPage = pathname.match(/^\/[a-z]{2}\/admin\/login/)
@@ -26,7 +36,17 @@ export default function middleware(request: NextRequest) {
     }
   }
 
-  return intlMiddleware(request)
+  const response = intlMiddleware(request)
+
+  // Force public caching for non-admin localized pages.
+  // Using shorter max-age during SEO recovery to ensure Google sees fresh ALT tags.
+  if (response instanceof Response && response.status === 200 && !isAdminRoute) {
+    response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600')
+    response.headers.set('CDN-Cache-Control', 'public, s-maxage=300')
+    response.headers.set('X-Robots-Tag', 'index, follow')
+  }
+
+  return response
 }
 
 export const config = {

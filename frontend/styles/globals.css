@@ -56,11 +56,11 @@
 
   /* Consistent typography */
   body {
-    @apply bg-background font-sans uppercase text-foreground;
+    @apply bg-background font-sans text-foreground;
     font-size: 14px;
     font-weight: 500;
     line-height: 1.4;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.05em;
   }
 
   /* Links */

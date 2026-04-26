@@ -73,8 +73,8 @@ const productSchema = z.object({
   salePriceVND: z.coerce.number().min(0).optional().nullable(),
   salePriceUSD: z.coerce.number().min(0).optional().nullable(),
   categoryId: z.string().optional().nullable(),
-  material: z.string().min(1, 'Material is required'),
-  dimensions: z.string().min(1, 'Dimensions required'),
+  material: z.string().optional(),
+  dimensions: z.string().optional(),
   stock: z.coerce.number().int().min(0, 'Stock must be non-negative'),
   isActive: z.boolean().default(true),
   isFeatured: z.boolean().default(false),
@@ -887,36 +887,6 @@ export default function ProductFormPage() {
                         </div>
                       </CardContent>
                     </Card>
-
-                    {/* Material and Dimensions */}
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <FormField
-                        control={form.control}
-                        name="material"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{t('material')}</FormLabel>
-                            <FormControl>
-                              <Input {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="dimensions"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{t('dimensions')}</FormLabel>
-                            <FormControl>
-                              <Input {...field} placeholder="15cm x 20cm" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
 
                     <Card className="bg-muted/30">
                       <CardHeader className="pb-3">

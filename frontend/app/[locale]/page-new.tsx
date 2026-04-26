@@ -40,7 +40,7 @@ export default function HomePage() {
             </div>
 
             <div className="grid-products-simple">
-              {productsData.data.map((product) => (
+              {productsData.data.map((product: any) => (
                 <Link
                   key={product.id}
                   href={`/${locale}/shop/${product.slug}`}

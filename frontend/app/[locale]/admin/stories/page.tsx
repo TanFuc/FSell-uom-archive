@@ -1,7 +1,7 @@
 'use client'
 
-import Image from 'next/image'
 import { CheckCircle2, ExternalLink } from 'lucide-react'
+import Image from 'next/image'
 import { useLocale, useTranslations } from 'next-intl'
 import { useEffect, useMemo, useState } from 'react'
 import { RichTextEditor } from '@/components/RichTextEditor'

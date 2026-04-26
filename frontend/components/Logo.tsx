@@ -43,7 +43,7 @@ export default function Logo({
     return (
       <Image
         src={logoSrc}
-        alt={locale === 'vi' ? 'ƯƠM. Archive' : 'Uom Archive'}
+        alt={locale === 'vi' ? 'ƯƠM.' : 'Uom'}
         width={width}
         height={height}
         unoptimized={isSvgLogo}

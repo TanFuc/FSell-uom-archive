@@ -49,7 +49,7 @@ export default function TrashPage() {
     includeDeleted: true,
   })
 
-  const deletedProducts = data?.data.filter((p) => p.deletedAt) || []
+  const deletedProducts: Product[] = (data?.data || []).filter((p: Product) => p.deletedAt)
 
   const toggleSelect = (id: string) => {
     setSelectedProducts((prev) =>
@@ -61,7 +61,7 @@ export default function TrashPage() {
     if (selectedProducts.length === deletedProducts.length) {
       setSelectedProducts([])
     } else {
-      setSelectedProducts(deletedProducts.map((p) => p.id))
+      setSelectedProducts(deletedProducts.map((p: Product) => p.id))
     }
   }
 

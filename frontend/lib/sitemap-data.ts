@@ -5,7 +5,7 @@ export const BASE_URL = (process.env.NEXT_PUBLIC_APP_URL || 'https://www.uomarch
   '',
 )
 export const LOCALES = ['vi', 'en'] as const
-export const SITEMAP_REVALIDATE = 30
+export const SITEMAP_REVALIDATE = 0 // Disable cache for sitemap to prevent stale data conflicts
 export const SITEMAP_CHUNK_SIZE = 1000
 export const SITEMAP_PRODUCTS_TAG = 'sitemap-products'
 export const SITEMAP_STORIES_TAG = 'sitemap-stories'
@@ -23,10 +23,16 @@ const API_CANDIDATES = [
 
 const API_URLS = Array.from(new Set(API_CANDIDATES.map((value) => value.replace(/\/$/, ''))))
 
-type Product = {
+export type Product = {
+  id: string
   slug: string
+  nameVi?: string
+  nameEn?: string
+  shortDescriptionVi?: string
+  shortDescriptionEn?: string
   updatedAt: string | null
   images: string[]
+  priceVND: number
 }
 
 type ProductsResponse = {
@@ -57,7 +63,8 @@ export type SitemapUrlEntry = {
 
 async function fetchWithTimeout(input: string, init?: RequestInit): Promise<Response> {
   const controller = new AbortController()
-  const timeout = Number.isFinite(FETCH_TIMEOUT_MS) && FETCH_TIMEOUT_MS > 0 ? FETCH_TIMEOUT_MS : 8000
+  const timeout =
+    Number.isFinite(FETCH_TIMEOUT_MS) && FETCH_TIMEOUT_MS > 0 ? FETCH_TIMEOUT_MS : 8000
   const timer = setTimeout(() => {
     controller.abort()
   }, timeout)
@@ -111,14 +118,30 @@ function toAbsoluteUrl(value: string): string {
   }
 
   if (/^https?:\/\//i.test(value)) {
+    // If it's already an absolute URL, we should still ensure it doesn't have spaces
+    if (value.includes(' ')) {
+      try {
+        const url = new URL(value)
+        return url.toString()
+      } catch {
+        return value.replace(/ /g, '%20')
+      }
+    }
     return value
   }
 
   const normalizedPath = value.startsWith('/') ? value : `/${value}`
-  return `${BASE_URL}${normalizedPath}`
+  // Encode segments to handle spaces in filenames
+  const encodedPath = normalizedPath
+    .split('/')
+    .map((segment) => safeEncodePathSegment(segment))
+    .join('/')
+    .replace(/\/+/g, '/') // Ensure no double slashes
+
+  return `${BASE_URL}${encodedPath}`
 }
 
-function parseProduct(product: NonNullable<ProductsResponse['data']>[number]): Product | null {
+function parseProduct(product: any): Product | null {
   if (!product?.slug) {
     return null
   }
@@ -128,9 +151,15 @@ function parseProduct(product: NonNullable<ProductsResponse['data']>[number]): P
     .map((value) => toAbsoluteUrl(value))
 
   return {
+    id: product.id || product._id || product.slug,
     slug: product.slug,
+    nameVi: product.nameVi,
+    nameEn: product.nameEn,
+    shortDescriptionVi: product.shortDescriptionVi,
+    shortDescriptionEn: product.shortDescriptionEn,
     updatedAt: product.updatedAt ?? null,
     images,
+    priceVND: product.priceVND || 0,
   }
 }
 
@@ -169,8 +198,7 @@ function dedupeProducts(products: Product[]): Product[] {
     const winner = incomingUpdated >= existingUpdated ? product : existing
 
     bySlug.set(product.slug, {
-      slug: winner.slug,
-      updatedAt: winner.updatedAt ?? existing.updatedAt,
+      ...winner,
       images: Array.from(new Set([...existing.images, ...product.images])),
     })
   }
@@ -188,7 +216,7 @@ async function fetchAllProductsFromApi(apiUrl: string): Promise<Product[]> {
       `${apiUrl}/products?page=${page}&limit=${PAGE_SIZE}&isActive=true`,
       {
         next: {
-          revalidate: SITEMAP_REVALIDATE,
+          revalidate: 0,
           tags: [SITEMAP_PRODUCTS_TAG, SITEMAP_STATIC_TAG],
         },
       },
@@ -249,7 +277,7 @@ export async function fetchAllProducts(): Promise<Product[]> {
 async function fetchSiteContentFromApi(apiUrl: string): Promise<SiteContentResponse | null> {
   const res = await fetchWithTimeout(`${apiUrl}/settings/site-content`, {
     next: {
-      revalidate: SITEMAP_REVALIDATE,
+      revalidate: 0,
       tags: [SITEMAP_STORIES_TAG, SITEMAP_STATIC_TAG],
     },
   })
@@ -278,7 +306,10 @@ function stripLoneSurrogates(value: string): string {
   )
 }
 
-function safeEncodePathSegment(value: string): string {
+export function safeEncodePathSegment(value: string): string {
+  if (!value) {
+    return ''
+  }
   try {
     return encodeURIComponent(value)
   } catch {
@@ -309,7 +340,10 @@ export async function fetchStories(): Promise<StoryItem[]> {
   }
 
   if (!hasSuccessfulSource) {
-    throw new Error('[sitemap] failed to fetch stories from all configured API sources')
+    // Return empty array instead of throwing — the unified sitemap.xml uses Promise.allSettled
+    // and degrades gracefully. Throwing here would crash static page lastmod calculations too.
+    console.warn('[sitemap] all story API sources failed — returning empty story list')
+    return []
   }
 
   return bestStories
@@ -338,7 +372,10 @@ function getLocaleAlternates(path: string): Record<string, string> {
 
 export function buildStaticEntries(products: Product[], stories: StoryItem[]): SitemapUrlEntry[] {
   const now = new Date()
-  const latestProductDate = getLatestDate(products.map((item) => item.updatedAt), now)
+  const latestProductDate = getLatestDate(
+    products.map((item) => item.updatedAt),
+    now,
+  )
   const latestStoryDate = getLatestDate(
     stories.map((item) => item.updatedAt ?? item.publishedAt),
     now,
@@ -348,17 +385,17 @@ export function buildStaticEntries(products: Product[], stories: StoryItem[]): S
 
   return [
     {
-      loc: BASE_URL,
+      loc: `${BASE_URL}/`,
       lastmod: latestContentDate.toISOString(),
-      changefreq: 'daily',
-      priority: 1,
+      changefreq: 'daily' as const,
+      priority: 1.0,
     },
     ...LOCALES.flatMap((locale) => [
       {
         loc: `${BASE_URL}/${locale}`,
         lastmod: latestContentDate.toISOString(),
         changefreq: 'daily' as const,
-        priority: 1,
+        priority: 1.0,
         alternates: getLocaleAlternates(''),
       },
       {
@@ -370,7 +407,9 @@ export function buildStaticEntries(products: Product[], stories: StoryItem[]): S
       },
       {
         loc: `${BASE_URL}/${locale}/about`,
-        lastmod: latestContentDate.toISOString(),
+        // About page rarely changes; don't fake it with latest product date.
+        // 2026-04-20 is a safe conservative recent modification.
+        lastmod: '2026-04-20T00:00:00.000Z',
         changefreq: 'monthly' as const,
         priority: 0.6,
         alternates: getLocaleAlternates('/about'),
@@ -378,8 +417,8 @@ export function buildStaticEntries(products: Product[], stories: StoryItem[]): S
       {
         loc: `${BASE_URL}/${locale}/journal`,
         lastmod: latestStoryDate.toISOString(),
-        changefreq: 'daily' as const,
-        priority: 0.75,
+        changefreq: 'weekly' as const,
+        priority: 0.7,
         alternates: getLocaleAlternates('/journal'),
       },
     ]),
@@ -468,47 +507,45 @@ function escapeXml(value: string): string {
 export function buildSitemapXml(entries: SitemapUrlEntry[]): string {
   const body = entries
     .map((entry) => {
-      const alternates = entry.alternates
-        ? Object.entries(entry.alternates)
-            .map(
-              ([lang, href]) =>
-                `    <xhtml:link rel="alternate" hreflang="${escapeXml(lang)}" href="${escapeXml(href)}" />`,
-            )
-            .join('\n')
-        : ''
+      const alternates = (entry.alternates ? Object.entries(entry.alternates) : [])
+        .map(
+          ([lang, href]) =>
+            `\n    <xhtml:link rel="alternate" hreflang="${escapeXml(lang)}" href="${escapeXml(href)}"/>`,
+        )
+        .join('')
 
       const images = (entry.images ?? [])
         .map(
           (image) =>
-            `    <image:image>\n      <image:loc>${escapeXml(image)}</image:loc>\n    </image:image>`,
+            `\n    <image:image>\n      <image:loc>${escapeXml(image)}</image:loc>\n    </image:image>`,
         )
-        .join('\n')
+        .join('')
 
       const inner = [
-        `    <loc>${escapeXml(entry.loc)}</loc>`,
-        `    <lastmod>${escapeXml(entry.lastmod)}</lastmod>`,
-        `    <changefreq>${entry.changefreq}</changefreq>`,
-        `    <priority>${entry.priority.toFixed(1)}</priority>`,
+        `\n    <loc>${escapeXml(entry.loc)}</loc>`,
+        `\n    <lastmod>${escapeXml(entry.lastmod)}</lastmod>`,
+        `\n    <changefreq>${entry.changefreq}</changefreq>`,
+        `\n    <priority>${entry.priority.toFixed(1)}</priority>`,
         alternates,
         images,
       ]
-        .filter((value) => value.length > 0)
-        .join('\n')
+        .filter((value) => value.trim().length > 0)
+        .join('')
 
-      return `  <url>\n${inner}\n  </url>`
+      return `\n  <url>${inner}\n  </url>`
     })
-    .join('\n')
+    .join('')
 
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${body}\n</urlset>`
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1" xmlns:xhtml="http://www.w3.org/1999/xhtml">${body}\n</urlset>`
 }
 
 export function buildSitemapIndexXml(items: Array<{ loc: string; lastmod: string }>): string {
   const body = items
     .map(
       (item) =>
-        `  <sitemap>\n    <loc>${escapeXml(item.loc)}</loc>\n    <lastmod>${escapeXml(item.lastmod)}</lastmod>\n  </sitemap>`,
+        `\n  <sitemap>\n    <loc>${escapeXml(item.loc)}</loc>\n    <lastmod>${escapeXml(item.lastmod)}</lastmod>\n  </sitemap>`,
     )
-    .join('\n')
+    .join('')
 
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</sitemapindex>`
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${body}\n</sitemapindex>`
 }

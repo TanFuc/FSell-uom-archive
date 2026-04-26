@@ -1,9 +1,5 @@
 import { revalidatePath, revalidateTag } from 'next/cache'
-import {
-  SITEMAP_PRODUCTS_TAG,
-  SITEMAP_STATIC_TAG,
-  SITEMAP_STORIES_TAG,
-} from '@/lib/sitemap-data'
+import { SITEMAP_PRODUCTS_TAG, SITEMAP_STATIC_TAG, SITEMAP_STORIES_TAG } from '@/lib/sitemap-data'
 
 type PingRequestBody = {
   urls?: string[]

@@ -1,56 +1,70 @@
+import { NextResponse } from 'next/server'
 import {
   BASE_URL,
   buildProductEntries,
-  buildSitemapIndexXml,
+  buildStaticEntries,
   buildStoryEntries,
-  chunkEntries,
+  buildSitemapXml,
   fetchAllProducts,
   fetchStories,
-  SITEMAP_CHUNK_SIZE,
   SITEMAP_REVALIDATE,
+  type SitemapUrlEntry,
 } from '@/lib/sitemap-data'
 
 export const revalidate = SITEMAP_REVALIDATE
 
 export async function GET(): Promise<Response> {
-  const nowIso = new Date().toISOString()
+  // Fetch all data sources in parallel.
+  // Stories failures are NON-FATAL — we degrade gracefully to an empty story list
+  // rather than serving a broken/empty sitemap that deindexes pages.
+  const [productsResult, storiesResult] = await Promise.allSettled([
+    fetchAllProducts(),
+    fetchStories(),
+  ])
 
-  try {
-    const [products, stories] = await Promise.all([fetchAllProducts(), fetchStories()])
+  const products = productsResult.status === 'fulfilled' ? productsResult.value : []
+  const stories = storiesResult.status === 'fulfilled' ? storiesResult.value : []
 
-    const productChunkCount = Math.max(
-      1,
-      chunkEntries(buildProductEntries(products), SITEMAP_CHUNK_SIZE).length,
-    )
-    const storyChunkCount = Math.max(1, chunkEntries(buildStoryEntries(stories), SITEMAP_CHUNK_SIZE).length)
-
-    const items: Array<{ loc: string; lastmod: string }> = [
-      { loc: `${BASE_URL}/sitemaps/static.xml`, lastmod: nowIso },
-      ...Array.from({ length: productChunkCount }, (_, index) => ({
-        loc: `${BASE_URL}/sitemaps/products-${index + 1}.xml`,
-        lastmod: nowIso,
-      })),
-      ...Array.from({ length: storyChunkCount }, (_, index) => ({
-        loc: `${BASE_URL}/sitemaps/journal-${index + 1}.xml`,
-        lastmod: nowIso,
-      })),
-    ]
-
-    return new Response(buildSitemapIndexXml(items), {
-      headers: {
-        'Content-Type': 'application/xml; charset=utf-8',
-        'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=120',
-      },
-    })
-  } catch {
-    const fallback = buildSitemapIndexXml([{ loc: `${BASE_URL}/sitemaps/static.xml`, lastmod: nowIso }])
-    return new Response(fallback, {
-      status: 503,
-      headers: {
-        'Content-Type': 'application/xml; charset=utf-8',
-        'Cache-Control': 'no-store',
-        'Retry-After': '120',
-      },
-    })
+  if (productsResult.status === 'rejected') {
+    console.error('[sitemap] fetchAllProducts failed:', productsResult.reason)
   }
+  if (storiesResult.status === 'rejected') {
+    console.warn(
+      '[sitemap] fetchStories failed (non-fatal, stories omitted):',
+      storiesResult.reason,
+    )
+  }
+
+  // Merge all URL entries: static pages → product pages → journal pages
+  const allEntries: SitemapUrlEntry[] = [
+    ...buildStaticEntries(products, stories),
+    ...buildProductEntries(products),
+    ...buildStoryEntries(stories),
+  ]
+
+  // Deduplicate by canonical loc (keeps first occurrence = highest priority entries first)
+  const seen = new Set<string>()
+  const deduped = allEntries.filter((entry) => {
+    const key = entry.loc.toLowerCase().replace(/\/$/, '') // normalize trailing slash
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+
+  // Enforce canonical: all URLs must be https://www. — drop anything that isn't
+  const canonical = deduped.filter(
+    (entry) => entry.loc.startsWith(`${BASE_URL}/`) || entry.loc === BASE_URL,
+  )
+
+  console.info(`[sitemap] generated unified sitemap.xml: ${canonical.length} URLs`)
+
+  return new NextResponse(buildSitemapXml(canonical), {
+    headers: {
+      'Content-Type': 'application/xml; charset=UTF-8',
+      'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+      'CDN-Cache-Control': 'no-store',
+      Vary: 'Accept-Encoding',
+      'X-Content-Type-Options': 'nosniff',
+    },
+  })
 }

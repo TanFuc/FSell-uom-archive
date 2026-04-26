@@ -1,9 +1,10 @@
-﻿import { type Metadata } from 'next'
+import { type Metadata } from 'next'
 import Script from 'next/script'
-import ShopClient from './shop-client'
 import { fetchBranding } from '@/lib/server-utils'
+import ShopClient from './shop-client'
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://www.uomarchive.com'
+export const revalidate = 3600
 
 export async function generateMetadata({
   params,

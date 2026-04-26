@@ -36,6 +36,7 @@ export const settingsKeys = {
 type SiteContentQueryOptions = {
   staleTime?: number
   refetchOnMount?: boolean | 'always'
+  initialData?: any
 }
 
 export function useSettings() {
@@ -76,6 +77,7 @@ export function useSiteContent(options?: SiteContentQueryOptions) {
     queryFn: () => apiClient.getSiteContent(),
     staleTime: options?.staleTime ?? 10 * 60 * 1000,
     refetchOnMount: options?.refetchOnMount,
+    initialData: options?.initialData,
   })
 }
 

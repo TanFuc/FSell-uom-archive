@@ -2,7 +2,15 @@ type SeoPingPayload = {
   urls: string[]
 }
 
-const DEFAULT_SITEWIDE_PATHS = ['/', '/vi', '/en', '/vi/shop', '/en/shop', '/vi/journal', '/en/journal']
+const DEFAULT_SITEWIDE_PATHS = [
+  '/',
+  '/vi',
+  '/en',
+  '/vi/shop',
+  '/en/shop',
+  '/vi/journal',
+  '/en/journal',
+]
 
 function getBaseUrl(): string {
   return (process.env.NEXT_PUBLIC_APP_URL || 'https://www.uomarchive.com').replace(/\/$/, '')
@@ -24,9 +32,7 @@ async function postSeoPing(payload: SeoPingPayload): Promise<void> {
       headers: { 'Content-Type': 'application/json; charset=utf-8' },
       body: JSON.stringify(payload),
     })
-  } catch {
-
-  }
+  } catch {}
 }
 
 function toAbsoluteUrls(paths: string[]): string[] {

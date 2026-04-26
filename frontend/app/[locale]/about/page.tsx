@@ -1,7 +1,7 @@
 import { type Metadata } from 'next'
 import Script from 'next/script'
-import AboutClient from './about-client'
 import { fetchBranding } from '@/lib/server-utils'
+import AboutClient from './about-client'
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://www.uomarchive.com'
 

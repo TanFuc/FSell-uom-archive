@@ -1,8 +1,9 @@
 import { type Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
-import { getTranslations } from 'next-intl/server'
 import { notFound, permanentRedirect } from 'next/navigation'
+import Script from 'next/script'
+import { getTranslations } from 'next-intl/server'
 import { JournalRichContent } from '@/components/journal/JournalRichContent'
 import {
   getStoryBySlug,
@@ -151,8 +152,67 @@ export default async function StoryDetailPage({ params }: StoryDetailProps) {
   const content = params.locale === 'vi' ? story.contentVi : story.contentEn
   const relatedStories = stories.filter((item) => item.id !== story.id).slice(0, 4)
 
+  const viSlug = encodeURIComponent(getStorySlug(story, 'vi'))
+  const enSlug = encodeURIComponent(getStorySlug(story, 'en'))
+  const canonicalPath = params.locale === 'vi' ? `/vi/journal/${viSlug}` : `/en/journal/${enSlug}`
+
+  const articleJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'NewsArticle',
+    headline: title,
+    description: summary,
+    image: [story.imageUrl],
+    datePublished: story.publishedAt
+      ? new Date(story.publishedAt).toISOString()
+      : new Date().toISOString(),
+    author: [
+      {
+        '@type': 'Organization',
+        name: 'ƯƠM. Archive',
+        url: BASE_URL,
+      },
+    ],
+  }
+
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: `${BASE_URL}/${params.locale}`,
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Journal',
+        item: `${BASE_URL}/${params.locale}/journal`,
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: title,
+        item: `${BASE_URL}${canonicalPath}`,
+      },
+    ],
+  }
+
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,#efe5d6_0%,#f7f4ef_40%,#f9f7f3_100%)] pt-20">
+      <Script
+        id="article-jsonld"
+        strategy="afterInteractive"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+      />
+      <Script
+        id="breadcrumb-jsonld"
+        strategy="afterInteractive"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
       <article className="mx-auto w-full max-w-5xl px-6 py-12 lg:px-10">
         <Link
           href={`/${params.locale}/journal#stories`}
@@ -181,7 +241,13 @@ export default async function StoryDetailPage({ params }: StoryDetailProps) {
         </div>
 
         <div className="relative mt-10 aspect-[16/10] overflow-hidden rounded-3xl border border-black/10 bg-white shadow-lg">
-          <Image src={story.imageUrl} alt={title} fill className="object-cover" unoptimized />
+          <Image
+            src={story.imageUrl}
+            alt={`${title} - Câu chuyện từ ƯƠM. Archive - Handcrafted Journal`}
+            fill
+            className="object-cover"
+            unoptimized
+          />
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
         </div>
 

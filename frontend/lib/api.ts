@@ -1,4 +1,5 @@
 import axios, { type AxiosInstance, type AxiosError } from 'axios'
+import { pingProductSeo, pingSitewideSeo } from './seo-ping'
 import type {
   Product,
   Category,
@@ -15,7 +16,6 @@ import type {
   Banner,
   UpdateMyProfileDto,
 } from './types'
-import { pingProductSeo, pingSitewideSeo } from './seo-ping'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888/api'
 

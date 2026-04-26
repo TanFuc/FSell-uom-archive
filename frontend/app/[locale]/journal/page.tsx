@@ -9,6 +9,7 @@ const BASE_URL = (process.env.NEXT_PUBLIC_APP_URL || 'https://www.uomarchive.com
   /\/$/,
   '',
 )
+export const revalidate = 3600
 
 type SiteContentResponse = Record<string, unknown>
 

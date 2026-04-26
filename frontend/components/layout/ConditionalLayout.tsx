@@ -1,9 +1,9 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
+import { SplashScreen } from '@/components/ui/SplashScreen'
 import { Footer } from './Footer'
 import { Header } from './Header'
-import { SplashScreen } from '@/components/ui/SplashScreen'
 
 interface ConditionalLayoutProps {
   children: React.ReactNode

@@ -39,31 +39,46 @@ function syncLoadingTextToCache(initialLoadingText?: string) {
 
 export function SplashScreen({ initialLoadingText }: { initialLoadingText?: string }) {
   const { data: branding } = useBranding()
+  const [mounted, setMounted] = useState(false)
   const [show, setShow] = useState(true)
-
-  // Keep the initial client render deterministic with server output to avoid hydration mismatch.
   const [cachedLoadingText, setCachedLoadingText] = useState<string | undefined>(undefined)
 
   useEffect(() => {
+    setMounted(true)
     syncLoadingTextToCache(initialLoadingText)
     setCachedLoadingText(getCachedLoadingText())
   }, [initialLoadingText])
 
   useEffect(() => {
+    if (!mounted) return
+
+    const isBot = /googlebot|bingbot|yandexbot|baiduspider|slurp|duckduckbot/i.test(
+      navigator.userAgent,
+    )
+
+    if (isBot) {
+      setShow(false)
+      return
+    }
+
     const timer = setTimeout(() => {
       setShow(false)
     }, 2000)
 
     return () => clearTimeout(timer)
-  }, [])
+  }, [mounted])
 
   useEffect(() => {
-    setCachedLoadingText(getCachedLoadingText())
-  }, [branding?.loadingText])
+    if (mounted) {
+      setCachedLoadingText(getCachedLoadingText())
+    }
+  }, [branding?.loadingText, mounted])
+
+  if (!mounted) return null
 
   const displayText =
     initialLoadingText || branding?.loadingText || cachedLoadingText || DEFAULT_LOADING_TEXT
-  const normalizedDisplayText = displayText.trim()
+  const normalizedDisplayText = (displayText || '').trim()
 
   return (
     <div

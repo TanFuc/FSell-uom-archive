@@ -20,7 +20,10 @@ export const productKeys = {
   detailById: (id: string) => [...productKeys.details(), 'id', id] as const,
 }
 
-export function useProducts(params?: QueryProductsDto, options?: { enabled?: boolean }) {
+export function useProducts(
+  params?: QueryProductsDto,
+  options?: { enabled?: boolean; initialData?: any },
+) {
   return useQuery({
     queryKey: productKeys.list(params || {}),
     queryFn: () => {
@@ -30,6 +33,7 @@ export function useProducts(params?: QueryProductsDto, options?: { enabled?: boo
       return apiClient.getProducts(params)
     },
     enabled: options?.enabled ?? true,
+    initialData: options?.initialData,
     staleTime: 5 * 60 * 1000, // 5 minutes
   })
 }

@@ -3,9 +3,9 @@
 import { Loader2 } from 'lucide-react'
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import BannerForm from '../_components/banner-form'
 import { api } from '@/lib/api'
 import { type Banner } from '@/lib/types'
+import BannerForm from '../_components/banner-form'
 
 export default function EditBannerPage() {
   const params = useParams()
