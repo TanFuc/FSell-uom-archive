@@ -7,10 +7,9 @@ import { Header } from './Header'
 
 interface ConditionalLayoutProps {
   children: React.ReactNode
-  initialLoadingText?: string
 }
 
-export function ConditionalLayout({ children, initialLoadingText }: ConditionalLayoutProps) {
+export function ConditionalLayout({ children }: ConditionalLayoutProps) {
   const pathname = usePathname()
 
   const isAdminPage = pathname.includes('/admin')
@@ -21,7 +20,7 @@ export function ConditionalLayout({ children, initialLoadingText }: ConditionalL
 
   return (
     <>
-      <SplashScreen initialLoadingText={initialLoadingText} />
+      <SplashScreen />
       <Header />
       <main className="flex-1">{children}</main>
       <Footer />

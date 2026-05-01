@@ -5,6 +5,7 @@ import { useEffect, useRef } from 'react'
 interface JournalRichContentProps {
   content: string
   className?: string
+  fallbackAlt?: string
 }
 
 const JOURNAL_RESIZE_TOOLTIP_SEEN_KEY = 'journal_resize_tooltip_seen'
@@ -184,7 +185,11 @@ function makeImageResizable(
   }
 }
 
-export function JournalRichContent({ content, className }: JournalRichContentProps) {
+export function JournalRichContent({
+  content,
+  className,
+  fallbackAlt,
+}: JournalRichContentProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const hasShownTooltipRef = useRef(true)
 
@@ -220,8 +225,11 @@ export function JournalRichContent({ content, className }: JournalRichContentPro
     }
 
     const images = Array.from(container.querySelectorAll('img')) as HTMLImageElement[]
-    images.forEach((node) => {
+    images.forEach((node, index) => {
       if (node instanceof HTMLImageElement) {
+        if (fallbackAlt && (!node.alt || node.alt.trim().length === 0)) {
+          node.alt = `${fallbackAlt} - Image ${index + 1}`
+        }
         makeImageResizable(container, node, showTooltipOnce)
       }
     })
@@ -236,7 +244,7 @@ export function JournalRichContent({ content, className }: JournalRichContentPro
     return () => {
       window.removeEventListener('resize', onResize)
     }
-  }, [content])
+  }, [content, fallbackAlt])
 
   return (
     <div ref={containerRef} className={className} dangerouslySetInnerHTML={{ __html: content }} />

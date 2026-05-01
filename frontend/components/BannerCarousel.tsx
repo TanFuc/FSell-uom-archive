@@ -1,6 +1,5 @@
 'use client'
 
-import Image from 'next/image'
 import Link from 'next/link'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import type { Banner as BannerType } from '@/lib/types'
@@ -110,14 +109,23 @@ export function BannerCarousel({ banners, locale, autoPlayInterval = 5000 }: Ban
     <>
       {/* Background Image - Hero Style */}
       <div className="relative aspect-[4/5] w-full md:aspect-[21/9] lg:aspect-[3/1]">
-        <Image
-          src={optimizeProductImage(currentBanner.imageUrl)}
-          alt={title || 'Banner'}
-          fill
-          className="object-cover transition-transform duration-300"
-          priority
-          draggable={false}
-        />
+        <picture className="absolute inset-0 block h-full w-full">
+          {currentBanner.mobileImageUrl && (
+            <source
+              media="(max-width: 767px)"
+              srcSet={optimizeProductImage(currentBanner.mobileImageUrl)}
+            />
+          )}
+          <img
+            src={optimizeProductImage(currentBanner.imageUrl)}
+            alt={title || 'Banner'}
+            className="h-full w-full object-cover transition-transform duration-300"
+            loading="eager"
+            fetchPriority="high"
+            decoding="async"
+            draggable={false}
+          />
+        </picture>
 
         {/* Subtle overlay for text readability */}
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/5 to-black/30" />

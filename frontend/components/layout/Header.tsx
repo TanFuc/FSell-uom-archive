@@ -66,8 +66,11 @@ function HighlightedText({ text, query }: { text: string; query: string }) {
 }
 
 const SearchResultItem = memo(
-  ({ product, locale, exchangeRate, onClick, query, isActive = false }: any) => (
-    <Link
+  ({ product, locale, exchangeRate, onClick, query, isActive = false }: any) => {
+    const productName = locale === 'vi' ? product.nameVi : product.nameEn
+
+    return (
+      <Link
       href={`/${locale}/shop/${product.slug}`}
       onClick={onClick}
       prefetch={false}
@@ -81,7 +84,11 @@ const SearchResultItem = memo(
         {product.images?.[0] && (
           <Image
             src={optimizeProductImage(product.images[0], { width: 320, height: 320 })}
-            alt=""
+            alt={
+              locale === 'vi'
+                ? `${productName} - Gợi ý tìm kiếm ƯƠM. Archive`
+                : `${productName} - Search suggestion by ƯƠM.`
+            }
             fill
             sizes="(max-width: 768px) 80px, 96px"
             className="object-cover transition-transform duration-500 group-hover:scale-110"
@@ -98,7 +105,8 @@ const SearchResultItem = memo(
         </p>
       </div>
     </Link>
-  ),
+    )
+  },
 )
 SearchResultItem.displayName = 'SearchResultItem'
 
@@ -193,7 +201,7 @@ export function Header() {
   const brandText =
     locale === 'vi'
       ? branding?.brandNameVi || cachedBranding?.brandNameVi || 'ƯƠM.'
-      : branding?.brandNameEn || cachedBranding?.brandNameEn || 'Uom'
+      : branding?.brandNameEn || cachedBranding?.brandNameEn || 'ƯƠM.'
   const globalLoadingText =
     branding?.loadingText?.trim() || cachedBranding?.loadingText?.trim() || ''
 
@@ -534,7 +542,7 @@ export function Header() {
             <Link
               href={`/${locale}`}
               className={cn(
-                'font-playfair font-black tracking-tighter transition-all duration-500',
+                'font-playfair font-bold tracking-tighter transition-all duration-500',
                 'text-2xl lg:text-4xl',
                 isScrolled
                   ? 'pointer-events-none -translate-y-8 scale-90 opacity-0 blur-sm'

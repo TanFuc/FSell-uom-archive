@@ -11,10 +11,15 @@ export const bannerKeys = {
   detail: (id: string) => [...bannerKeys.details(), id] as const,
 }
 
-export function useBanners(activeOnly = true) {
+type BannerQueryOptions = {
+  initialData?: any
+}
+
+export function useBanners(activeOnly = true, options?: BannerQueryOptions) {
   return useQuery({
     queryKey: bannerKeys.list(activeOnly),
     queryFn: () => apiClient.getBanners(activeOnly),
+    initialData: options?.initialData,
     staleTime: 10 * 60 * 1000, // 10 minutes - banners don't change often
   })
 }

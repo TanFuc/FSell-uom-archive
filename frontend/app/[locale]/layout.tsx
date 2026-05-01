@@ -9,6 +9,7 @@ import { ConditionalLayout } from '@/components/layout/ConditionalLayout'
 import { QueryProvider } from '@/components/providers/QueryProvider'
 import { Toaster } from '@/components/ui/toaster'
 import { locales } from '@/i18n'
+import { getCanonicalBaseUrl } from '@/lib/seo'
 import { fetchBranding } from '@/lib/server-utils'
 import '@/styles/globals.css'
 import '@/styles/loading-animations.css'
@@ -44,34 +45,23 @@ export function generateStaticParams() {
   return locales.map((locale) => ({ locale }))
 }
 
-function getSafeBaseUrl(): string {
-  const fallback = 'https://www.uomarchive.com'
-  const raw = process.env.NEXT_PUBLIC_APP_URL?.trim() || fallback
-
-  try {
-    return new URL(raw).toString().replace(/\/$/, '')
-  } catch {
-    return fallback
-  }
-}
-
 export async function generateMetadata({
   params: { locale },
 }: {
   params: { locale: string }
 }): Promise<Metadata> {
   const branding = await fetchBranding()
-  const baseUrl = getSafeBaseUrl()
+  const baseUrl = getCanonicalBaseUrl()
 
   const defaultTitle =
     locale === 'vi'
-      ? (branding?.siteTitleVi ?? 'ƯƠM. Archive - Gốm sứ thủ công Việt Nam')
-      : (branding?.siteTitleEn ?? 'ƯƠM. Archive - Handcrafted Ceramics from Vietnam')
+      ? (branding?.siteTitleVi ?? 'ƯƠM. - Gốm sứ thủ công Việt Nam')
+      : (branding?.siteTitleEn ?? 'ƯƠM. - Handcrafted Ceramics from Vietnam')
 
   const brandName =
     locale === 'vi'
-      ? (branding?.brandNameVi ?? 'ƯƠM. Archive')
-      : (branding?.brandNameEn ?? 'ƯƠM. Archive')
+      ? (branding?.brandNameVi ?? 'ƯƠM.')
+      : (branding?.brandNameEn ?? 'ƯƠM.')
 
   const description =
     locale === 'vi'
@@ -96,7 +86,7 @@ export async function generateMetadata({
       'handmade pottery',
       'nghệ thuật gốm',
       'ceramic archive',
-      'ƯƠM. Archive',
+      'ƯƠM.',
       'decor gốm sứ',
       'quà tặng gốm sứ',
       'craftsmanship vietnam',
@@ -161,8 +151,7 @@ export default async function RootLayout({ children, params: { locale } }: RootL
   }
 
   unstable_setRequestLocale(locale)
-  const [messages, branding] = await Promise.all([getMessages(), fetchBranding()])
-  const initialLoadingText = branding?.loadingText?.trim() || undefined
+  const messages = await getMessages()
 
   return (
     <html lang={locale} suppressHydrationWarning>
@@ -172,9 +161,7 @@ export default async function RootLayout({ children, params: { locale } }: RootL
         <DisableRightClick />
         <NextIntlClientProvider messages={messages}>
           <QueryProvider>
-            <ConditionalLayout initialLoadingText={initialLoadingText}>
-              {children}
-            </ConditionalLayout>
+            <ConditionalLayout>{children}</ConditionalLayout>
             <Toaster />
             <SonnerToaster />
           </QueryProvider>

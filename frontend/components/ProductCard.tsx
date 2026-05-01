@@ -23,6 +23,10 @@ export function ProductCard({ product, locale, priority }: ProductCardProps) {
   const mainImage = hasImages ? product.images[0] : null
   const hoverImage = product.hoverImage
   const [shouldLoadHoverImage, setShouldLoadHoverImage] = useState(false)
+  const anchorLabel =
+    locale === 'vi'
+      ? `San pham gom su thu cong: ${name}`
+      : `Handcrafted ceramic product: ${name}`
 
   const priceDisplay = getDisplayPrice(product, locale, exchangeRate?.rate)
 
@@ -35,6 +39,7 @@ export function ProductCard({ product, locale, priority }: ProductCardProps) {
       onMouseEnter={() => setShouldLoadHoverImage(true)}
       onTouchStart={() => setShouldLoadHoverImage(true)}
     >
+      <span className="sr-only">{anchorLabel}</span>
       <div
         className="relative mb-4 w-full overflow-hidden rounded-sm bg-muted/20"
         style={{ aspectRatio: '4 / 5' }}

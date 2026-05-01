@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react'
 import { useBranding } from '@/hooks/use-settings'
 
 const BRANDING_CACHE_KEY = 'uom_branding_cache'
-const DEFAULT_LOADING_TEXT = ''
+const DEFAULT_LOADING_TEXT = 'ƯƠM.'
+const DISPLAY_DURATION_MS = 1500
 
 function getCachedLoadingText() {
   if (typeof window === 'undefined') return undefined
@@ -41,6 +42,7 @@ export function SplashScreen({ initialLoadingText }: { initialLoadingText?: stri
   const { data: branding } = useBranding()
   const [mounted, setMounted] = useState(false)
   const [show, setShow] = useState(true)
+  const [fontReady, setFontReady] = useState(false)
   const [cachedLoadingText, setCachedLoadingText] = useState<string | undefined>(undefined)
 
   useEffect(() => {
@@ -63,10 +65,48 @@ export function SplashScreen({ initialLoadingText }: { initialLoadingText?: stri
 
     const timer = setTimeout(() => {
       setShow(false)
-    }, 2000)
+    }, DISPLAY_DURATION_MS)
 
     return () => clearTimeout(timer)
   }, [mounted])
+
+  // Prevent brief flash of fallback (thin) font by waiting for Playfair to load
+  useEffect(() => {
+    if (typeof document === 'undefined') {
+      setFontReady(true)
+      return
+    }
+
+    const fontName = 'Playfair Display'
+    let cancelled = false
+
+    // If Font Loading API is available, try to load the font, otherwise proceed.
+    if (document.fonts && typeof document.fonts.load === 'function') {
+      // Use a short timeout to avoid blocking too long on slow networks.
+      const timeout = window.setTimeout(() => {
+        if (!cancelled) setFontReady(true)
+      }, 700)
+
+      document.fonts
+        .load(`1em "${fontName}"`)
+        .then(() => {
+          if (!cancelled) {
+            setFontReady(true)
+            clearTimeout(timeout)
+          }
+        })
+        .catch(() => {
+          if (!cancelled) setFontReady(true)
+        })
+
+      return () => {
+        cancelled = true
+      }
+    }
+
+    // Fallback: assume font is ready
+    setFontReady(true)
+  }, [])
 
   useEffect(() => {
     if (mounted) {
@@ -74,23 +114,22 @@ export function SplashScreen({ initialLoadingText }: { initialLoadingText?: stri
     }
   }, [branding?.loadingText, mounted])
 
-  if (!mounted) return null
-
   const displayText =
     initialLoadingText || branding?.loadingText || cachedLoadingText || DEFAULT_LOADING_TEXT
   const normalizedDisplayText = (displayText || '').trim()
 
   return (
     <div
-      className={`fixed inset-0 z-[100] flex items-center justify-center bg-background transition-opacity duration-500 ${show ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
+      className={`fixed inset-0 z-[100] flex items-center justify-center bg-background transition-opacity duration-300 ${show ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
       aria-hidden={!show}
     >
       <div className="relative mx-auto w-full max-w-[90vw] px-4 text-center">
-        {normalizedDisplayText && (
+        {normalizedDisplayText && fontReady && (
           <h1
             className="animate-pulse break-words font-playfair text-[clamp(2rem,12vw,5rem)] font-bold leading-[0.95] tracking-[0.08em] text-foreground [overflow-wrap:anywhere] md:tracking-[0.12em]"
             style={{
-              animation: 'fadeIn 180ms ease-out, pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+              animation:
+                'fadeIn 220ms ease-out, pulse 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
             }}
             suppressHydrationWarning
           >

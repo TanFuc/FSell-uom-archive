@@ -51,7 +51,7 @@ export function Footer() {
   const brandName =
     locale === 'vi'
       ? branding?.brandNameVi || cachedBranding?.brandNameVi || 'ƯƠM. Archive'
-      : branding?.brandNameEn || cachedBranding?.brandNameEn || 'Uom Archive'
+      : branding?.brandNameEn || cachedBranding?.brandNameEn || 'ƯƠM.'
 
   const brandTagline =
     locale === 'vi'
@@ -94,13 +94,13 @@ export function Footer() {
                 href={`/${locale}/about`}
                 className="text-[10px] font-medium uppercase tracking-[0.15em] transition-all hover:opacity-60"
               >
-                ABOUT US
+                {t('about')}
               </Link>
               <Link
                 href={`/${locale}/journal`}
                 className="text-[10px] font-medium uppercase tracking-[0.15em] transition-all hover:opacity-60"
               >
-                JOURNAL
+                {t('journal')}
               </Link>
             </nav>
           </div>
