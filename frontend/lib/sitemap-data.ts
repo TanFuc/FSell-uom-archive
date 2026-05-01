@@ -1,9 +1,7 @@
 import { getStorySlug, parseStories, STORIES_CONTENT_KEY, type StoryItem } from '@/lib/stories'
+import { getCanonicalBaseUrl } from '@/lib/seo'
 
-export const BASE_URL = (process.env.NEXT_PUBLIC_APP_URL || 'https://www.uomarchive.com').replace(
-  /\/$/,
-  '',
-)
+export const BASE_URL = getCanonicalBaseUrl()
 export const LOCALES = ['vi', 'en'] as const
 export const SITEMAP_REVALIDATE = 0 // Disable cache for sitemap to prevent stale data conflicts
 export const SITEMAP_CHUNK_SIZE = 1000
@@ -536,7 +534,7 @@ export function buildSitemapXml(entries: SitemapUrlEntry[]): string {
     })
     .join('')
 
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1" xmlns:xhtml="http://www.w3.org/1999/xhtml">${body}\n</urlset>`
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<?xml-stylesheet type="text/xsl" href="/sitemap.xsl"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1" xmlns:xhtml="http://www.w3.org/1999/xhtml">${body}\n</urlset>`
 }
 
 export function buildSitemapIndexXml(items: Array<{ loc: string; lastmod: string }>): string {

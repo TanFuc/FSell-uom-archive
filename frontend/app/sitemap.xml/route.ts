@@ -1,4 +1,3 @@
-import { NextResponse } from 'next/server'
 import {
   BASE_URL,
   buildProductEntries,
@@ -58,9 +57,10 @@ export async function GET(): Promise<Response> {
 
   console.info(`[sitemap] generated unified sitemap.xml: ${canonical.length} URLs`)
 
-  return new NextResponse(buildSitemapXml(canonical), {
+  return new Response(buildSitemapXml(canonical), {
     headers: {
-      'Content-Type': 'application/xml; charset=UTF-8',
+      'Content-Type': 'application/xml',
+      'Content-Disposition': 'inline; filename="sitemap.xml"',
       'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
       'CDN-Cache-Control': 'no-store',
       Vary: 'Accept-Encoding',

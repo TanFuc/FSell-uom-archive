@@ -1,4 +1,5 @@
 import { revalidatePath, revalidateTag } from 'next/cache'
+import { getCanonicalBaseUrl } from '@/lib/seo'
 import { SITEMAP_PRODUCTS_TAG, SITEMAP_STATIC_TAG, SITEMAP_STORIES_TAG } from '@/lib/sitemap-data'
 
 type PingRequestBody = {
@@ -16,7 +17,7 @@ const DEFAULT_REVALIDATE_TAGS = [SITEMAP_PRODUCTS_TAG, SITEMAP_STORIES_TAG, SITE
 const DEFAULT_REVALIDATE_PATHS = ['/sitemap.xml', '/sitemaps/static.xml']
 
 function normalizeBaseUrl(): string {
-  return (process.env.NEXT_PUBLIC_APP_URL || 'https://www.uomarchive.com').replace(/\/$/, '')
+  return getCanonicalBaseUrl()
 }
 
 function isValidAbsoluteUrl(value: string): boolean {

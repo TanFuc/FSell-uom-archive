@@ -1,14 +1,12 @@
 import { type MetadataRoute } from 'next'
+import { getCanonicalBaseUrl } from '@/lib/seo'
 
-const BASE_URL = (process.env.NEXT_PUBLIC_APP_URL || 'https://www.uomarchive.com').replace(
-  /\/$/,
-  '',
-)
+const BASE_URL = getCanonicalBaseUrl()
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'UOM. Archive',
-    short_name: 'UOM.',
+    name: 'ƯƠM.',
+    short_name: 'ƯƠM.',
     description: 'Vietnamese handcrafted ceramics curated with care.',
     start_url: '/',
     display: 'standalone',
