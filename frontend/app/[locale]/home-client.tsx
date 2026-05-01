@@ -7,15 +7,12 @@ import { useLocale, useTranslations } from 'next-intl'
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { BannerCarousel } from '@/components/BannerCarousel'
 import { ProductCard } from '@/components/ProductCard'
-import { LoadingScreen } from '@/components/ui/loading-screen'
 import { useBanners } from '@/hooks/use-banners'
 import { useProducts } from '@/hooks/use-products'
 import { useSiteContent } from '@/hooks/use-settings'
 import { getStorySlug, parseStories, STORIES_CONTENT_KEY, type StoryItem } from '@/lib/stories'
-import { type Product } from '@/lib/types'
+import { type Banner, type Product } from '@/lib/types'
 import { cn, optimizeProductImage } from '@/lib/utils'
-
-const HOME_FIRST_FULLSCREEN_LOADING_DONE_KEY = 'uom_home_first_fullscreen_loading_done'
 
 function usePremiumSmoothScroll() {
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -207,12 +204,16 @@ function usePremiumSmoothScroll() {
 export default function HomeClient({
   initialProducts,
   initialSiteContent,
+  initialBanners,
 }: {
   initialProducts?: any
   initialSiteContent?: any
+  initialBanners?: Banner[]
 }) {
   const t = useTranslations('Home')
+  const tNav = useTranslations('Navigation')
   const locale = useLocale() as 'vi' | 'en'
+  const storyCta = locale === 'vi' ? 'Doc story' : 'Read story'
 
   const { data: latestProducts, isLoading: isLoadingLatest } = useProducts(
     {
@@ -237,34 +238,9 @@ export default function HomeClient({
   const latestDrag = usePremiumSmoothScroll()
   const featuredDrag = usePremiumSmoothScroll()
 
-  const { data: banners, isLoading: isLoadingBanners } = useBanners(true)
-  const [hasCompletedFirstLoad, setHasCompletedFirstLoad] = useState(false)
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-
-    const hasShown = sessionStorage.getItem(HOME_FIRST_FULLSCREEN_LOADING_DONE_KEY) === '1'
-    if (hasShown) {
-      setHasCompletedFirstLoad(true)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (!isLoadingBanners && !isLoadingLatest && !isLoadingStories) {
-      setHasCompletedFirstLoad(true)
-
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem(HOME_FIRST_FULLSCREEN_LOADING_DONE_KEY, '1')
-      }
-    }
-  }, [isLoadingBanners, isLoadingLatest, isLoadingStories])
-
-  const shouldShowFullscreenLoading =
-    !hasCompletedFirstLoad && (isLoadingBanners || isLoadingLatest || isLoadingStories)
-
-  if (shouldShowFullscreenLoading) {
-    return <LoadingScreen fullscreen />
-  }
+  const { data: banners, isLoading: isLoadingBanners } = useBanners(true, {
+    initialData: initialBanners,
+  })
 
   return (
     <div className="overflow-hidden pt-0">
@@ -298,6 +274,7 @@ export default function HomeClient({
             className="group flex items-center gap-2 text-[8px] font-bold uppercase tracking-[0.2em] transition-colors hover:opacity-60"
           >
             <span>{t('showMore')}</span>
+            <span className="sr-only">{tNav('shop')}</span>
             <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
           </Link>
         </motion.div>
@@ -366,6 +343,7 @@ export default function HomeClient({
             className="group flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.18em] transition-colors hover:opacity-60 md:text-[10px]"
           >
             <span>{t('showMore')}</span>
+            <span className="sr-only">{tNav('journal')}</span>
             <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
           </Link>
         </div>
@@ -453,6 +431,9 @@ export default function HomeClient({
                           <p className="line-clamp-3 text-[10px] leading-relaxed tracking-[0.04em] text-foreground/65 md:text-xs">
                             {locale === 'vi' ? story.summaryVi : story.summaryEn}
                           </p>
+                          <span className="text-[9px] font-semibold uppercase tracking-[0.28em] text-foreground/55">
+                            {storyCta}
+                          </span>
                         </div>
                       </article>
                     </Link>

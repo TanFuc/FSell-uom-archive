@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { Search, X } from 'lucide-react'
+import Link from 'next/link'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 import { useState, useEffect, useCallback } from 'react'
@@ -16,6 +17,7 @@ export default function ShopClient() {
   const locale = useLocale() as 'vi' | 'en'
   const t = useTranslations('shop')
   const tCommon = useTranslations('common')
+  const tNav = useTranslations('Navigation')
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
@@ -37,6 +39,20 @@ export default function ShopClient() {
       router.replace(`${pathname}?${params.toString()}`, { scroll: false })
     },
     [pathname, router, searchParams],
+  )
+
+  const buildCategoryHref = useCallback(
+    (nextCategoryId?: string) => {
+      const params = new URLSearchParams(searchParams.toString())
+      if (nextCategoryId) {
+        params.set('categoryId', nextCategoryId)
+      } else {
+        params.delete('categoryId')
+      }
+      const query = params.toString()
+      return query ? `${pathname}?${query}` : pathname
+    },
+    [pathname, searchParams],
   )
 
   useEffect(() => {
@@ -87,6 +103,20 @@ export default function ShopClient() {
           >
             {t('subtitle')}
           </motion.p>
+          <div className="flex flex-wrap justify-center gap-3 text-[9px] font-semibold uppercase tracking-[0.28em] text-foreground/55">
+            <Link
+              href={`/${locale}/about`}
+              className="rounded-full border border-foreground/15 px-4 py-2 transition-all hover:border-foreground/40 hover:text-foreground"
+            >
+              {tNav('about')}
+            </Link>
+            <Link
+              href={`/${locale}/journal`}
+              className="rounded-full border border-foreground/15 px-4 py-2 transition-all hover:border-foreground/40 hover:text-foreground"
+            >
+              {tNav('journal')}
+            </Link>
+          </div>
         </div>
 
         {/* Search Bar - Underline Style */}
@@ -123,13 +153,11 @@ export default function ShopClient() {
         {/* Category Tabs - Minimalist */}
         {categories.length > 0 && (
           <div className="mb-20 flex flex-wrap justify-center gap-4">
-            <button
+            <Link
+              href={buildCategoryHref()}
               onClick={() => {
                 setCategoryId(undefined)
                 setPage(1)
-                const params = new URLSearchParams(searchParams.toString())
-                params.delete('categoryId')
-                router.replace(`${pathname}?${params.toString()}`, { scroll: false })
               }}
               className={cn(
                 'rounded-full border px-6 py-2 text-[10px] font-bold uppercase tracking-[0.3em] transition-all duration-300',
@@ -139,16 +167,14 @@ export default function ShopClient() {
               )}
             >
               {t('allCategories')}
-            </button>
+            </Link>
             {categories.map((category: Category) => (
-              <button
+              <Link
                 key={category.id}
+                href={buildCategoryHref(category.id)}
                 onClick={() => {
                   setCategoryId(category.id)
                   setPage(1)
-                  const params = new URLSearchParams(searchParams.toString())
-                  params.set('categoryId', category.id)
-                  router.replace(`${pathname}?${params.toString()}`, { scroll: false })
                 }}
                 className={cn(
                   'rounded-full border px-6 py-2 text-[10px] font-bold uppercase tracking-[0.3em] transition-all duration-300',
@@ -158,7 +184,7 @@ export default function ShopClient() {
                 )}
               >
                 {locale === 'vi' ? category.nameVi : category.nameEn}
-              </button>
+              </Link>
             ))}
           </div>
         )}

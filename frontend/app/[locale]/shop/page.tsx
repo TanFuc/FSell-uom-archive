@@ -1,9 +1,11 @@
 import { type Metadata } from 'next'
+import { Suspense } from 'react'
 import Script from 'next/script'
+import { getCanonicalBaseUrl } from '@/lib/seo'
 import { fetchBranding } from '@/lib/server-utils'
 import ShopClient from './shop-client'
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://www.uomarchive.com'
+const BASE_URL = getCanonicalBaseUrl()
 export const revalidate = 3600
 
 export async function generateMetadata({
@@ -16,8 +18,8 @@ export async function generateMetadata({
 
   const isVi = locale === 'vi'
   const brandName = isVi
-    ? (branding?.brandNameVi ?? 'ƯƠM. Archive')
-    : (branding?.brandNameEn ?? 'ƯƠM. Archive')
+    ? (branding?.brandNameVi ?? 'ƯƠM.')
+    : (branding?.brandNameEn ?? 'ƯƠM.')
 
   const title = isVi ? 'Tất cả sản phẩm' : 'Shop'
   const description = isVi
@@ -53,8 +55,8 @@ export default async function ShopPage({ params }: { params: { locale: string } 
   const branding = await fetchBranding()
   const brandName =
     locale === 'vi'
-      ? (branding?.brandNameVi ?? 'ƯƠM. Archive')
-      : (branding?.brandNameEn ?? 'ƯƠM. Archive')
+      ? (branding?.brandNameVi ?? 'ƯƠM.')
+      : (branding?.brandNameEn ?? 'ƯƠM.')
   const description =
     locale === 'vi'
       ? 'Khám phá bộ sưu tập gốm sứ thủ công được tuyển chọn từ các nghệ nhân Việt Nam.'
@@ -101,7 +103,9 @@ export default async function ShopPage({ params }: { params: { locale: string } 
           }),
         }}
       />
-      <ShopClient />
+      <Suspense fallback={null}>
+        <ShopClient />
+      </Suspense>
     </>
   )
 }

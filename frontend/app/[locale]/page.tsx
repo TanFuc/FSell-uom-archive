@@ -1,50 +1,60 @@
 import { type Metadata } from 'next'
 import Link from 'next/link'
 import Script from 'next/script'
+import { getCanonicalBaseUrl } from '@/lib/seo'
 import { fetchBranding } from '@/lib/server-utils'
 import { type Product } from '@/lib/sitemap-data'
 import { getStorySlug, parseStories, STORIES_CONTENT_KEY } from '@/lib/stories'
+import { type Banner } from '@/lib/types'
 import HomeClient from './home-client'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888/api'
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://www.uomarchive.com'
 export const revalidate = 0 // Force fresh data during SEO recovery
 
 async function fetchHomeSsrData() {
-  try {
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 10000) // Tăng lên 10 giây để chắc chắn có dữ liệu cho Google
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 10000) // Keep SSR responsive on slow origins
 
+  try {
     const fetchOptions = {
       next: { revalidate: 0 },
       signal: controller.signal,
     }
 
-    const [productsRes, contentRes] = await Promise.all([
+    const [productsRes, contentRes, bannersRes] = await Promise.allSettled([
       fetch(`${API_URL}/products?page=1&limit=8&isActive=true`, fetchOptions),
       fetch(`${API_URL}/settings/site-content`, fetchOptions),
+      fetch(`${API_URL}/banners?activeOnly=true`, fetchOptions),
     ])
 
-    clearTimeout(timeoutId)
-
-    const productsData = productsRes.ok ? await productsRes.json() : null
-    const contentData = contentRes.ok ? await contentRes.json() : null
+    const productsData =
+      productsRes.status === 'fulfilled' && productsRes.value.ok ? await productsRes.value.json() : null
+    const contentData =
+      contentRes.status === 'fulfilled' && contentRes.value.ok ? await contentRes.value.json() : null
+    const bannersData =
+      bannersRes.status === 'fulfilled' && bannersRes.value.ok ? await bannersRes.value.json() : null
 
     // Helper to unwrap nested data if needed
     const products = (productsData?.data?.data || productsData?.data || []) as Product[]
+    const banners = (bannersData?.data || bannersData || []) as Banner[]
     const stories = parseStories(
       contentData?.data?.[STORIES_CONTENT_KEY] || contentData?.[STORIES_CONTENT_KEY],
     ).filter((s) => s.isVisible !== false)
 
-    console.info(`[SEO] SSR Data fetched: ${products.length} products, ${stories.length} stories`)
+    console.info(
+      `[SEO] SSR Data fetched: ${products.length} products, ${stories.length} stories, ${banners.length} banners`,
+    )
     return {
       products: { data: products.slice(0, 8), meta: { totalItems: products.length } },
       siteContent: contentData?.data || contentData || {},
+      banners: banners.slice(0, 10),
       stories: stories.slice(0, 4),
     }
   } catch (error) {
     console.error('[SEO] SSR fetch failed or timed out:', error)
-    return { products: { data: [], meta: {} }, siteContent: {}, stories: [] }
+    return { products: { data: [], meta: {} }, siteContent: {}, banners: [], stories: [] }
+  } finally {
+    clearTimeout(timeoutId)
   }
 }
 
@@ -54,16 +64,17 @@ export async function generateMetadata({
   params: { locale: string }
 }): Promise<Metadata> {
   const locale = params.locale
+  const baseUrl = getCanonicalBaseUrl()
   const branding = await fetchBranding()
 
   const isVi = locale === 'vi'
   const siteTitle = isVi
-    ? (branding?.siteTitleVi ?? 'ƯƠM. Archive - Gốm sứ thủ công Việt Nam')
-    : (branding?.siteTitleEn ?? 'ƯƠM. Archive - Handcrafted Ceramics from Vietnam')
+    ? (branding?.siteTitleVi ?? 'ƯƠM. - Gốm sứ thủ công Việt Nam')
+    : (branding?.siteTitleEn ?? 'ƯƠM. - Handcrafted Ceramics from Vietnam')
   const description = isVi
     ? (branding?.siteDescriptionVi ?? 'Gốm sứ thủ công được tuyển chọn kỹ lưỡng từ Việt Nam.')
     : (branding?.siteDescriptionEn ?? 'Discover timeless Vietnamese ceramics curated with care.')
-  const logo = branding?.logoUrl || `${BASE_URL}/assets/logo.png`
+  const logo = branding?.logoUrl || `${baseUrl}/assets/logo.png`
 
   return {
     title: { absolute: siteTitle },
@@ -71,7 +82,7 @@ export async function generateMetadata({
     openGraph: {
       title: siteTitle,
       description,
-      url: `${BASE_URL}/${locale}`,
+      url: `${baseUrl}/${locale}`,
       type: 'website',
       images: [{ url: logo, width: 1200, height: 630, alt: siteTitle }],
     },
@@ -90,17 +101,27 @@ export async function generateMetadata({
 
 export default async function HomePage({ params }: { params: { locale: string } }) {
   const locale = params.locale
+  const baseUrl = getCanonicalBaseUrl()
   const brandingPromise = fetchBranding()
   const ssrDataPromise = fetchHomeSsrData()
 
   const [branding, ssrData] = await Promise.all([brandingPromise, ssrDataPromise])
 
-  const logo = branding?.logoUrl || `${BASE_URL}/assets/logo.png`
-  const name = branding?.brandNameVi || 'ƯƠM. Archive'
-  const description =
-    branding?.siteDescriptionVi || 'Gốm sứ thủ công Việt Nam — Vietnamese Handcrafted Ceramics'
-
   const isVi = locale === 'vi'
+  const brandName = isVi
+    ? branding?.brandNameVi || 'ƯƠM.'
+    : branding?.brandNameEn || 'ƯƠM.'
+  const alternateBrandName = isVi
+    ? branding?.brandNameEn || 'ƯƠM.'
+    : branding?.brandNameVi || 'ƯƠM.'
+  const siteTitle = isVi
+    ? branding?.siteTitleVi || 'ƯƠM. - Gốm sứ thủ công Việt Nam'
+    : branding?.siteTitleEn || 'ƯƠM. - Handcrafted Ceramics from Vietnam'
+  const description = isVi
+    ? branding?.siteDescriptionVi || 'Gốm sứ thủ công Việt Nam — Vietnamese Handcrafted Ceramics'
+    : branding?.siteDescriptionEn || 'Vietnamese handcrafted ceramics and artisan stories.'
+  const logo = branding?.logoUrl || `${baseUrl}/assets/logo.png`
+  const socialProfiles = ['https://instagram.com/uomarchive', 'https://facebook.com/uomarchive']
 
   return (
     <>
@@ -112,10 +133,11 @@ export default async function HomePage({ params }: { params: { locale: string } 
           __html: JSON.stringify({
             '@context': 'https://schema.org',
             '@type': 'Organization',
-            name: name,
-            url: 'https://www.uomarchive.com',
+            name: brandName,
+            alternateName: alternateBrandName,
+            url: baseUrl,
             logo: logo,
-            sameAs: [],
+            sameAs: socialProfiles,
             description: description,
           }),
         }}
@@ -128,11 +150,12 @@ export default async function HomePage({ params }: { params: { locale: string } 
           __html: JSON.stringify({
             '@context': 'https://schema.org',
             '@type': 'WebSite',
-            name,
-            url: `${BASE_URL}/${locale}`,
+            name: brandName,
+            alternateName: [alternateBrandName, siteTitle],
+            url: `${baseUrl}/${locale}`,
             potentialAction: {
               '@type': 'SearchAction',
-              target: `${BASE_URL}/${locale}/shop?search={search_term_string}`,
+              target: `${baseUrl}/${locale}/shop?search={search_term_string}`,
               'query-input': 'required name=search_term_string',
             },
           }),
@@ -142,7 +165,7 @@ export default async function HomePage({ params }: { params: { locale: string } 
       {/* SEO Server-Side Content Summary - Hidden from users, visible to bots */}
       <section className="sr-only" suppressHydrationWarning>
         <h1 suppressHydrationWarning>
-          {isVi ? branding?.siteTitleVi || name : branding?.siteTitleEn || name}
+          {isVi ? branding?.siteTitleVi || brandName : branding?.siteTitleEn || brandName}
         </h1>
         <p suppressHydrationWarning>
           {isVi ? branding?.siteDescriptionVi : branding?.siteDescriptionEn}
@@ -183,7 +206,11 @@ export default async function HomePage({ params }: { params: { locale: string } 
         )}
       </section>
 
-      <HomeClient initialProducts={ssrData.products} initialSiteContent={ssrData.siteContent} />
+      <HomeClient
+        initialProducts={ssrData.products}
+        initialSiteContent={ssrData.siteContent}
+        initialBanners={ssrData.banners}
+      />
     </>
   )
 }

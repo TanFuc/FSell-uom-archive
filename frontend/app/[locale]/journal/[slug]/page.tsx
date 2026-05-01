@@ -5,6 +5,8 @@ import { notFound, permanentRedirect } from 'next/navigation'
 import Script from 'next/script'
 import { getTranslations } from 'next-intl/server'
 import { JournalRichContent } from '@/components/journal/JournalRichContent'
+import { getCanonicalBaseUrl } from '@/lib/seo'
+import { fetchBranding } from '@/lib/server-utils'
 import {
   getStoryBySlug,
   getStorySlug,
@@ -15,10 +17,7 @@ import {
 } from '@/lib/stories'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888/api'
-const BASE_URL = (process.env.NEXT_PUBLIC_APP_URL || 'https://www.uomarchive.com').replace(
-  /\/$/,
-  '',
-)
+const BASE_URL = getCanonicalBaseUrl()
 
 type SiteContentResponse = Record<string, unknown>
 
@@ -62,15 +61,19 @@ interface StoryDetailProps {
 }
 
 export async function generateMetadata({ params }: StoryDetailProps): Promise<Metadata> {
-  const siteContent = await fetchSiteContent()
+  const [siteContent, branding] = await Promise.all([fetchSiteContent(), fetchBranding()])
+  const brandName =
+    params.locale === 'vi'
+      ? (branding?.brandNameVi ?? 'ƯƠM.')
+      : (branding?.brandNameEn ?? 'ƯƠM.')
 
   if (siteContent.status === 'error') {
     return {
       title: params.locale === 'vi' ? 'Bai viet' : 'Story',
       description:
         params.locale === 'vi'
-          ? 'Doc cac cau chuyen thu cong tu UOM. Archive.'
-          : 'Read handcrafted stories from UOM. Archive.',
+          ? `Doc cac cau chuyen thu cong tu ${brandName}.`
+          : `Read handcrafted stories from ${brandName}.`,
       robots: { index: true, follow: true },
       alternates: {
         canonical: `/${params.locale}/journal/${params.slug}`,
@@ -102,6 +105,7 @@ export async function generateMetadata({ params }: StoryDetailProps): Promise<Me
   const viSlug = encodeURIComponent(getStorySlug(story, 'vi'))
   const enSlug = encodeURIComponent(getStorySlug(story, 'en'))
   const canonicalPath = params.locale === 'vi' ? `/vi/journal/${viSlug}` : `/en/journal/${enSlug}`
+  const storyImage = story.imageUrl
 
   return {
     title,
@@ -119,16 +123,29 @@ export async function generateMetadata({ params }: StoryDetailProps): Promise<Me
       title,
       description,
       url: `${BASE_URL}${canonicalPath}`,
-      images: story.imageUrl
-        ? [{ url: story.imageUrl, width: 1200, height: 800, alt: title }]
+      images: storyImage
+        ? [{ url: storyImage, width: 1200, height: 800, alt: title }]
         : undefined,
+      publishedTime: story.publishedAt
+        ? new Date(story.publishedAt).toISOString()
+        : undefined,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: storyImage ? [storyImage] : undefined,
     },
   }
 }
 
 export default async function StoryDetailPage({ params }: StoryDetailProps) {
   const t = await getTranslations({ locale: params.locale, namespace: 'journal' })
-  const siteContent = await fetchSiteContent()
+  const [siteContent, branding] = await Promise.all([fetchSiteContent(), fetchBranding()])
+  const brandName =
+    params.locale === 'vi'
+      ? (branding?.brandNameVi ?? 'ƯƠM.')
+      : (branding?.brandNameEn ?? 'ƯƠM.')
   const stories = parseStories(
     siteContent.status === 'ok' ? siteContent.data[STORIES_CONTENT_KEY] : undefined,
   ).filter((item) => item.isVisible !== false)
@@ -151,6 +168,7 @@ export default async function StoryDetailPage({ params }: StoryDetailProps) {
   const summary = params.locale === 'vi' ? story.summaryVi : story.summaryEn
   const content = params.locale === 'vi' ? story.contentVi : story.contentEn
   const relatedStories = stories.filter((item) => item.id !== story.id).slice(0, 4)
+  const shopCta = params.locale === 'vi' ? 'Xem shop' : 'Visit the shop'
 
   const viSlug = encodeURIComponent(getStorySlug(story, 'vi'))
   const enSlug = encodeURIComponent(getStorySlug(story, 'en'))
@@ -168,7 +186,7 @@ export default async function StoryDetailPage({ params }: StoryDetailProps) {
     author: [
       {
         '@type': 'Organization',
-        name: 'ƯƠM. Archive',
+        name: brandName,
         url: BASE_URL,
       },
     ],
@@ -253,8 +271,18 @@ export default async function StoryDetailPage({ params }: StoryDetailProps) {
 
         <JournalRichContent
           content={content}
+          fallbackAlt={`${title} - ƯƠM. Archive Journal`}
           className="prose prose-neutral prose-headings:font-playfair prose-headings:text-foreground prose-p:text-foreground/85 prose-li:text-foreground/85 mt-10 max-w-none rounded-3xl border border-black/10 bg-white/85 p-6 leading-relaxed shadow-sm backdrop-blur-sm md:p-10"
         />
+
+        <div className="mt-10 flex justify-center">
+          <Link
+            href={`/${params.locale}/shop`}
+            className="text-[10px] font-bold uppercase tracking-[0.3em] text-foreground underline decoration-foreground/15 underline-offset-8 transition hover:opacity-70"
+          >
+            {shopCta}
+          </Link>
+        </div>
 
         {relatedStories.length > 0 && (
           <section className="mt-16 border-t border-black/10 pt-12">

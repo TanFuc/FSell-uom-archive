@@ -2,14 +2,12 @@
 import { notFound } from 'next/navigation'
 import Script from 'next/script'
 import { getLocale } from 'next-intl/server'
+import { getCanonicalBaseUrl } from '@/lib/seo'
 import { fetchBranding } from '@/lib/server-utils'
 import ProductClient from './product-client'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888/api'
-const BASE_URL = (process.env.NEXT_PUBLIC_APP_URL || 'https://www.uomarchive.com').replace(
-  /\/$/,
-  '',
-)
+const BASE_URL = getCanonicalBaseUrl()
 
 type ProductDetail = {
   slug: string
@@ -106,8 +104,8 @@ function getBrandName(
   branding: { brandNameVi?: string | null; brandNameEn?: string | null } | null,
 ) {
   return locale === 'vi'
-    ? (branding?.brandNameVi ?? 'ƯƠM. Archive')
-    : (branding?.brandNameEn ?? 'ƯƠM. Archive')
+    ? (branding?.brandNameVi ?? 'ƯƠM.')
+    : (branding?.brandNameEn ?? 'ƯƠM.')
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -129,8 +127,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: locale === 'vi' ? 'Sản phẩm' : 'Product',
       description:
         locale === 'vi'
-          ? 'Khám phá sản phẩm thủ công từ ƯƠM. Archive.'
-          : 'Discover handcrafted products from UOM. Archive.',
+          ? 'Khám phá sản phẩm thủ công từ ƯƠM.'
+          : 'Discover handcrafted products from ƯƠM.',
       alternates: {
         canonical: `/${locale}/shop/${params.slug}`,
         languages: {
@@ -207,6 +205,43 @@ export default async function ProductPage({ params }: Props) {
   const productUrl = `${BASE_URL}/${locale}/shop/${params.slug}`
   const images = (product?.images ?? []).map((value) => toAbsoluteUrl(value))
   const categoryName = isVi ? product?.category?.nameVi : product?.category?.nameEn
+  const faqItems = product
+    ? isVi
+      ? [
+          {
+            question: `${name} phù hợp với không gian nào?`,
+            answer:
+              'Sản phẩm phù hợp với không gian sống tối giản hoặc góc trưng bày thủ công, tôn bật chất liệu gốm.',
+          },
+          {
+            question: 'Cách bảo quản gốm sứ thủ công?',
+            answer:
+              'Hạn chế va đập mạnh, vệ sinh nhẹ nhàng bằng khăn mềm và tránh thay đổi nhiệt độ đột ngột.',
+          },
+          {
+            question: 'Làm sao để đặt hàng hoặc tư vấn?',
+            answer:
+              'Bạn có thể nhắn qua Instagram/Facebook hoặc gửi yêu cầu tư vấn ngay trên trang sản phẩm.',
+          },
+        ]
+      : [
+          {
+            question: `Where does ${name} fit best?`,
+            answer:
+              'It complements minimal interiors or curated display corners, highlighting handcrafted ceramic textures.',
+          },
+          {
+            question: 'How should I care for handcrafted ceramics?',
+            answer:
+              'Avoid heavy impact, clean gently with a soft cloth, and keep away from sudden temperature changes.',
+          },
+          {
+            question: 'How can I inquire or place an order?',
+            answer:
+              'Message us via Instagram/Facebook or send an inquiry directly on the product page.',
+          },
+        ]
+    : []
 
   const jsonLd = product
     ? {
@@ -230,6 +265,11 @@ export default async function ProductPage({ params }: Props) {
             (product.stock ?? 0) > 0
               ? 'https://schema.org/InStock'
               : 'https://schema.org/OutOfStock',
+          seller: {
+            '@type': 'Organization',
+            name: brandName,
+            url: BASE_URL,
+          },
         },
         brand: {
           '@type': 'Brand',
@@ -278,13 +318,13 @@ export default async function ProductPage({ params }: Props) {
                   '@type': 'ListItem',
                   position: 1,
                   name: 'Home',
-                  item: `https://www.uomarchive.com/${locale}`,
+                  item: `${BASE_URL}/${locale}`,
                 },
                 {
                   '@type': 'ListItem',
                   position: 2,
                   name: 'Shop',
-                  item: `https://www.uomarchive.com/${locale}/shop`,
+                  item: `${BASE_URL}/${locale}/shop`,
                 },
                 {
                   '@type': 'ListItem',
@@ -293,6 +333,27 @@ export default async function ProductPage({ params }: Props) {
                   item: productUrl,
                 },
               ],
+            }),
+          }}
+        />
+      )}
+      {product && faqItems.length > 0 && (
+        <Script
+          id="product-faq-jsonld"
+          strategy="beforeInteractive"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'FAQPage',
+              mainEntity: faqItems.map((item) => ({
+                '@type': 'Question',
+                name: item.question,
+                acceptedAnswer: {
+                  '@type': 'Answer',
+                  text: item.answer,
+                },
+              })),
             }),
           }}
         />

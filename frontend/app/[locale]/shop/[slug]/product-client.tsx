@@ -297,6 +297,45 @@ export default function ProductClient({ params }: ProductPageProps) {
   const variants = parseVariantSummary(shortDescriptionRaw, locale)
   const shortDescription = variants.cleanText
   const priceDisplay = getDisplayPrice(product, locale, exchangeRate?.rate)
+  const journalCta = locale === 'vi' ? 'Xem Journal' : 'Read the journal'
+  const shopCta = locale === 'vi' ? 'Xem shop' : 'Visit the shop'
+  const faqTitle = locale === 'vi' ? 'Câu hỏi thường gặp' : 'Frequently asked questions'
+  const faqItems =
+    locale === 'vi'
+      ? [
+          {
+            question: `${name} phù hợp với không gian nào?`,
+            answer:
+              'Sản phẩm phù hợp với không gian sống tối giản hoặc góc trưng bày thủ công, tôn bật chất liệu gốm.',
+          },
+          {
+            question: 'Cách bảo quản gốm sứ thủ công?',
+            answer:
+              'Hạn chế va đập mạnh, vệ sinh nhẹ nhàng bằng khăn mềm và tránh thay đổi nhiệt độ đột ngột.',
+          },
+          {
+            question: 'Làm sao để đặt hàng hoặc tư vấn?',
+            answer:
+              'Bạn có thể nhắn qua Instagram/Facebook hoặc gửi yêu cầu tư vấn ngay trên trang sản phẩm.',
+          },
+        ]
+      : [
+          {
+            question: `Where does ${name} fit best?`,
+            answer:
+              'It complements minimal interiors or curated display corners, highlighting handcrafted ceramic textures.',
+          },
+          {
+            question: 'How should I care for handcrafted ceramics?',
+            answer:
+              'Avoid heavy impact, clean gently with a soft cloth, and keep away from sudden temperature changes.',
+          },
+          {
+            question: 'How can I inquire or place an order?',
+            answer:
+              'Message us via Instagram/Facebook or send an inquiry directly on the product page.',
+          },
+        ]
   return (
     <div className="w-full">
       {/* Header padding for fixed header */}
@@ -467,6 +506,21 @@ export default function ProductClient({ params }: ProductPageProps) {
                     className="prose prose-sm max-w-none font-sans text-[11px] font-medium tracking-[0.05em] text-foreground [&_a]:underline [&_a]:underline-offset-2 [&_blockquote]:border-l [&_blockquote]:border-foreground/30 [&_blockquote]:pl-4 [&_h1]:text-lg [&_h1]:font-bold [&_h2]:text-base [&_h2]:font-bold [&_h3]:text-sm [&_h3]:font-semibold [&_img]:my-4 [&_img]:h-auto [&_img]:max-w-full [&_img]:rounded-lg [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:leading-relaxed [&_ul]:list-disc [&_ul]:pl-5"
                     dangerouslySetInnerHTML={{ __html: description || '' }}
                   />
+
+                  <div className="flex flex-wrap gap-4 pt-4">
+                    <Link
+                      href={`/${locale}/journal`}
+                      className="text-[9px] font-bold uppercase tracking-[0.3em] text-foreground underline decoration-foreground/15 underline-offset-8 transition hover:opacity-70"
+                    >
+                      {journalCta}
+                    </Link>
+                    <Link
+                      href={`/${locale}/shop`}
+                      className="text-[9px] font-bold uppercase tracking-[0.3em] text-foreground underline decoration-foreground/15 underline-offset-8 transition hover:opacity-70"
+                    >
+                      {shopCta}
+                    </Link>
+                  </div>
                 </div>
 
                 {/* Inquiry Buttons */}
@@ -560,6 +614,24 @@ export default function ProductClient({ params }: ProductPageProps) {
                   </motion.div>
                 ))}
             </AnimatePresence>
+          </div>
+        </div>
+      </section>
+
+      <section className="w-full bg-white px-6 pb-24 lg:px-12">
+        <div className="mx-auto max-w-4xl rounded-3xl border border-foreground/10 bg-foreground/[0.02] p-8 shadow-sm">
+          <h2 className="text-center text-[10px] font-bold uppercase tracking-[0.35em] text-foreground/70">
+            {faqTitle}
+          </h2>
+          <div className="mt-8 grid gap-6 md:grid-cols-2">
+            {faqItems.map((item) => (
+              <div key={item.question} className="space-y-3">
+                <h3 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-foreground">
+                  {item.question}
+                </h3>
+                <p className="text-[11px] leading-relaxed text-foreground/70">{item.answer}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
