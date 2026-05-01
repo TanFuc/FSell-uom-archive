@@ -253,10 +253,10 @@ async function main() {
     { key: 'menu.inquiry.en', value: 'INQUIRE' },
     { key: 'menu.shipping.vi', value: 'VẬN CHUYỂN & ĐỔI TRẢ' },
     { key: 'menu.shipping.en', value: 'SHIPPING & RETURNS' },
-    { key: 'brand.name.vi', value: 'ƯƠM. Archive' },
-    { key: 'brand.name.en', value: 'ƯƠM. Archive' },
-    { key: 'footer.text.vi', value: '© 2026 ƯƠM. Archive. Tất cả quyền được bảo lưu.' },
-    { key: 'footer.text.en', value: '© 2026 ƯƠM. Archive. All rights reserved.' },
+    { key: 'brand.name.vi', value: 'ƯƠM.' },
+    { key: 'brand.name.en', value: 'ƯƠM.' },
+    { key: 'footer.text.vi', value: '© 2026 ƯƠM. Tất cả quyền được bảo lưu.' },
+    { key: 'footer.text.en', value: '© 2026 ƯƠM. All rights reserved.' },
     { key: 'hero.title.vi', value: 'Vẻ đẹp trong sự tĩnh lặng' },
     { key: 'hero.title.en', value: 'Beauty in Stillness' },
     { key: 'hero.subtitle.vi', value: 'Gốm sứ thủ công từ Việt Nam' },
@@ -314,8 +314,8 @@ async function main() {
   })
 
   const brandingDefaults = [
-    { key: 'site.title.vi', value: 'ƯƠM. Archive - Gốm sứ thủ công Việt Nam' },
-    { key: 'site.title.en', value: 'ƯƠM. Archive - Handcrafted Ceramics from Vietnam' },
+    { key: 'site.title.vi', value: 'ƯƠM. - Gốm sứ thủ công Việt Nam' },
+    { key: 'site.title.en', value: 'ƯƠM. - Handcrafted Ceramics from Vietnam' },
     { key: 'site.description.vi', value: 'Gốm sứ thủ công được tuyển chọn kỹ lưỡng từ Việt Nam.' },
     {
       key: 'site.description.en',
@@ -328,176 +328,346 @@ async function main() {
   for (const item of brandingDefaults) {
     await prisma.siteContent.upsert({
       where: { key: item.key },
-      update: {},
+      update: { value: item.value },
       create: item,
     })
+  }
+
+  const categorySeeds = [
+    {
+      slug: 'binh-hoa-loc',
+      nameVi: 'Bình hoa & Lọ',
+      nameEn: 'Vases & Jars',
+      descriptionVi: 'Bình gốm thủ công dành cho trang trí không gian sống và cắm hoa.',
+      descriptionEn: 'Handcrafted ceramic vases for floral styling and interior display.',
+      image:
+        'https://images.unsplash.com/photo-1610701596007-11502861dcfa?q=80&w=1200&auto=format&fit=crop&sat=-100',
+      order: 1,
+      isActive: true,
+    },
+    {
+      slug: 'bo-ban-an',
+      nameVi: 'Bộ bàn ăn',
+      nameEn: 'Dinnerware Sets',
+      descriptionVi: 'Bộ chén đĩa và phụ kiện bàn ăn mang tinh thần thủ công tối giản.',
+      descriptionEn: 'Dinnerware collections crafted for everyday rituals and minimal tables.',
+      image:
+        'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?q=80&w=1200&auto=format&fit=crop&sat=-100',
+      order: 2,
+      isActive: true,
+    },
+    {
+      slug: 'chen-coc-tra',
+      nameVi: 'Chén & Cốc trà',
+      nameEn: 'Tea Cups',
+      descriptionVi: 'Chén cốc gốm cầm tay vừa vặn, men mộc, phù hợp dùng hằng ngày.',
+      descriptionEn: 'Tactile handcrafted cups made for daily tea rituals.',
+      image:
+        'https://images.unsplash.com/photo-1515823064-d6e0c04616a7?q=80&w=1200&auto=format&fit=crop&sat=-100',
+      order: 3,
+      isActive: true,
+    },
+    {
+      slug: 'dia-khay',
+      nameVi: 'Đĩa & Khay',
+      nameEn: 'Plates & Trays',
+      descriptionVi: 'Đĩa gốm men rạn và khay phục vụ có độ hoàn thiện cao.',
+      descriptionEn: 'Glazed ceramic plates and trays with balanced handcrafted finishes.',
+      image:
+        'https://images.unsplash.com/photo-1610701596061-2ecf227e85b2?q=80&w=1200&auto=format&fit=crop&sat=-100',
+      order: 4,
+      isActive: true,
+    },
+  ]
+
+  const categoriesMap: Record<string, { id: string }> = {}
+
+  for (const category of categorySeeds) {
+    const saved = await prisma.category.upsert({
+      where: { slug: category.slug },
+      update: {
+        nameVi: category.nameVi,
+        nameEn: category.nameEn,
+        descriptionVi: category.descriptionVi,
+        descriptionEn: category.descriptionEn,
+        image: category.image,
+        order: category.order,
+        isActive: category.isActive,
+        updatedBy: admin.id,
+      },
+      create: {
+        ...category,
+        createdBy: admin.id,
+        updatedBy: admin.id,
+      },
+    })
+
+    categoriesMap[saved.slug] = { id: saved.id }
+  }
+
+  // Clear existing products to ensure clean SEO data
+  await prisma.product.deleteMany()
+
+  const monochromeImages = {
+    vases: [
+      'https://images.unsplash.com/photo-1610701596007-11502861dcfa?q=80&w=1600&auto=format&fit=crop&sat=-100',
+      'https://images.unsplash.com/photo-1549187774-b4e9b0445b41?q=80&w=1600&auto=format&fit=crop&sat=-100',
+      'https://images.unsplash.com/photo-1513694203232-719a280e022f?q=80&w=1600&auto=format&fit=crop&sat=-100',
+    ],
+    dinnerware: [
+      'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?q=80&w=1600&auto=format&fit=crop&sat=-100',
+      'https://images.unsplash.com/photo-1610701596061-2ecf227e85b2?q=80&w=1600&auto=format&fit=crop&sat=-100',
+      'https://images.unsplash.com/photo-1610701596007-11502861dcfa?q=80&w=1600&auto=format&fit=crop&sat=-100',
+    ],
+    tea: [
+      'https://images.unsplash.com/photo-1515823064-d6e0c04616a7?q=80&w=1600&auto=format&fit=crop&sat=-100',
+      'https://images.unsplash.com/photo-1513694203232-719a280e022f?q=80&w=1600&auto=format&fit=crop&sat=-100',
+      'https://images.unsplash.com/photo-1515823064-d6e0c04616a7?q=80&w=1600&auto=format&fit=crop&sat=-100',
+    ],
+    trays: [
+      'https://images.unsplash.com/photo-1610701596061-2ecf227e85b2?q=80&w=1600&auto=format&fit=crop&sat=-100',
+      'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?q=80&w=1600&auto=format&fit=crop&sat=-100',
+    ],
   }
 
   const sampleProducts = [
     {
       slug: 'binh-gom-trang-lieng',
-      nameVi: 'Bình Gốm Liêng',
-      nameEn: 'Lieng Ceramic Vase',
+      nameVi: 'Bình Gốm Liêng Men Ngà',
+      nameEn: 'Lieng Ivory Ceramic Vase',
+      shortDescriptionVi:
+        'Bình gốm thủ công dáng cao, men trắng ngà mờ tối giản cho không gian sống hiện đại.',
+      shortDescriptionEn:
+        'A handcrafted tall ceramic vase with a minimalist matte ivory glaze for modern living spaces.',
       descriptionVi:
-        'Bình gốm dáng cao với men trắng ngà tự nhiên, bề mặt có độ nhám nhẹ thủ công. Phù hợp cắm hoa cành khô hoặc trưng bày độc lập.',
+        '<p>Bình gốm Liêng mang vẻ đẹp tĩnh lặng và mộc mạc. Được chế tác thủ công từ đất sét trắng tinh khiết, trải qua quá trình nung ở nhiệt độ 1200°C tạo nên độ bền cao.</p><p>Lớp men ngà mờ (matte) tạo cảm giác ấm áp khi chạm vào. Dáng bình cao thanh thoát, lý tưởng để cắm các loại hoa cành khô như lau, bạch đàn, hoặc trưng bày như một tác phẩm điêu khắc độc lập trong phòng khách.</p><ul><li>Men ngà mờ, ánh sáng dịu</li><li>Phù hợp phong cách tối giản, Bắc Âu</li><li>Đề xuất phối cùng hoa khô trung tính</li></ul>',
       descriptionEn:
-        'Tall ceramic vase with natural ivory glaze, featuring a subtle handcrafted texture. Perfect for dried branches or standing alone as a statement piece.',
+        '<p>The Lieng vase brings tranquility and rustic charm to any space. Handcrafted from pure white clay and fired at 1200°C for exceptional durability.</p><p>The matte ivory glaze offers a warm tactile feel. Its elegant tall silhouette is ideal for dried botanicals like pampas or eucalyptus, or standing alone as an art piece.</p><ul><li>Matte ivory glaze</li><li>Minimalist, Nordic-friendly</li><li>Styled with neutral florals</li></ul>',
       priceVND: 1850000,
+      salePriceVND: 1690000,
       images: [
-        'https://images.unsplash.com/photo-1610701596007-11502861dcfa?q=80&w=1000&auto=format&fit=crop',
+        monochromeImages.vases[0],
+        monochromeImages.vases[1],
+        monochromeImages.vases[2],
       ],
-      material: 'Đất sét trắng / White clay',
+      hoverImage: monochromeImages.vases[1],
+      categorySlug: 'binh-hoa-loc',
+      material: 'Đất sét trắng nung cao độ / High-fire white clay',
       dimensions: '18cm x 45cm',
       stock: 5,
       isActive: true,
       isFeatured: true,
       inquiryEnabled: true,
-      inquiryMessageVi: `Xin chào! Tôi quan tâm đến sản phẩm "Bình Gốm Liêng".\n\nGiá: 1,850,000₫\n\nBạn tư vấn thêm giúp tôi nhé.`,
-      inquiryMessageEn: `Hi! I'm interested in the "Lieng Ceramic Vase".\n\nPrice: 1,850,000₫\n\nPlease provide more details.`,
-      createdBy: admin.id,
+      inquiryMessageVi: `Xin chào! Tôi quan tâm đến sản phẩm "Bình Gốm Liêng Men Ngà".\n\nGiá: 1,850,000₫\n\nBạn tư vấn thêm giúp tôi nhé.`,
+      inquiryMessageEn: `Hi! I'm interested in the "Lieng Ivory Ceramic Vase".\n\nPrice: 1,850,000₫\n\nPlease provide more details.`,
+    },
+    {
+      slug: 'binh-hoa-abstract',
+      nameVi: 'Bình Hoa Gốm Điêu Khắc Abstract',
+      nameEn: 'Abstract Sculptural Ceramic Vase',
+      shortDescriptionVi:
+        'Bình hoa nghệ thuật với đường nét bất đối xứng, kết hợp giữa gốm thủ công và điêu khắc hiện đại.',
+      shortDescriptionEn:
+        'Artistic vase featuring asymmetric lines, blending traditional ceramics with modern sculpture.',
+      descriptionVi:
+        '<p>Bình hoa Abstract phá vỡ các quy chuẩn hình học truyền thống. Mỗi chiếc bình là một độc bản với những đường cong uốn lượn ngẫu hứng được tạo hình hoàn toàn bằng tay.</p><p>Men oxit sắt tạo bề mặt loang tự nhiên, mang hơi thở thời gian. Phù hợp không gian tối giản, gallery, hoặc studio sáng tạo.</p><ul><li>Dáng điêu khắc bất đối xứng</li><li>Men loang tự nhiên</li><li>Phù hợp decor trưng bày độc bản</li></ul>',
+      descriptionEn:
+        '<p>The Abstract vase breaks away from traditional geometric norms. Each piece is unique with fluid, hand-molded curves.</p><p>Finished with an iron oxide glaze for a naturally weathered surface. Perfect for those seeking bold individuality in home decor.</p><ul><li>Sculptural asymmetry</li><li>Organic iron glaze</li><li>Statement decor piece</li></ul>',
+      priceVND: 2100000,
+      images: [monochromeImages.vases[1], monochromeImages.vases[2]],
+      hoverImage: monochromeImages.vases[2],
+      categorySlug: 'binh-hoa-loc',
+      material: 'Đất cao lanh nguyên bản / Raw kaolin clay',
+      dimensions: '30cm x 18cm',
+      stock: 4,
+      isActive: true,
+      isFeatured: true,
+      inquiryEnabled: true,
+      inquiryMessageVi: `Tôi rất thích mẫu "Bình Hoa Gốm Điêu Khắc Abstract".`,
+      inquiryMessageEn: `I love the "Abstract Sculptural Ceramic Vase".`,
     },
     {
       slug: 'bo-chen-dia-moc',
-      nameVi: 'Bộ Chén Đĩa Mộc',
-      nameEn: 'Moc Dinnerware Set',
+      nameVi: 'Bộ Chén Đĩa Gốm Mộc Nung Củi',
+      nameEn: 'Moc Wood-Fired Dinnerware Set',
+      shortDescriptionVi:
+        'Bộ sưu tập bàn ăn gốm mộc nung củi truyền thống, tôn vinh vẻ đẹp nguyên bản của đất và lửa.',
+      shortDescriptionEn:
+        'Traditional wood-fired stoneware collection, celebrating the raw beauty of earth and fire.',
       descriptionVi:
-        'Bộ sưu tập bàn ăn "Mộc" tôn vinh vẻ đẹp nguyên bản của đất. Nung củi truyền thống tạo ra những vệt màu ngẫu nhiên độc đáo.',
+        '<p>Bộ sản phẩm bao gồm 4 chén cơm, 2 đĩa nông, 1 đĩa sâu lòng và 2 bát tô. Được nung bằng củi trong lò bầu truyền thống suốt 72 giờ liên tục.</p><p>Khói và tro củi tạo nên vệt hỏa biến độc nhất trên bề mặt gốm. Bộ sản phẩm mang lại cảm giác ấm cúng, đậm chất gia đình cho mỗi bữa cơm.</p><ul><li>Nung củi 72 giờ</li><li>Hỏa biến tự nhiên</li><li>Phù hợp bữa ăn hằng ngày</li></ul>',
       descriptionEn:
-        'The "Moc" dinnerware collection honors the raw beauty of earth. Traditional wood firing creates unique, random color trails on each piece.',
+        '<p>The set includes 4 rice bowls, 2 shallow plates, 1 deep plate, and 2 large bowls. Wood-fired in a traditional kiln for 72 hours.</p><p>Natural ash and flame paths create stunning, unpredictable patterns on the surface. Brings a warm, soulful atmosphere to family dining.</p><ul><li>72-hour wood firing</li><li>Natural ash marks</li><li>Everyday-ready</li></ul>',
       priceVND: 3200000,
+      salePriceVND: 2890000,
       images: [
-        'https://images.unsplash.com/photo-1610701596007-11502861dcfa?q=80&w=1000&auto=format&fit=crop',
-        'https://images.unsplash.com/photo-1610701596061-2ecf227e85b2?q=80&w=1000&auto=format&fit=crop',
+        monochromeImages.dinnerware[0],
+        monochromeImages.dinnerware[1],
       ],
-      material: 'Gốm sành / Stoneware',
-      dimensions: 'Đa dạng / Assorted',
+      hoverImage: monochromeImages.dinnerware[1],
+      categorySlug: 'bo-ban-an',
+      material: 'Gốm sành chịu nhiệt / Heat-resistant stoneware',
+      dimensions: 'Đa dạng / Assorted sizes',
       stock: 3,
       isActive: true,
       isFeatured: true,
       inquiryEnabled: true,
-      inquiryMessageVi: `Xin chào! Tôi muốn đặt mua "Bộ Chén Đĩa Mộc".`,
-      inquiryMessageEn: `Hi! I'd like to order the "Moc Dinnerware Set".`,
-      createdBy: admin.id,
-    },
-    {
-      slug: 'lo-hoa-be-tho',
-      nameVi: 'Lọ Hoa Bê Thở',
-      nameEn: "'Breathing' Concrete Vase",
-      descriptionVi:
-        'Sự kết hợp táo bạo giữa gốm và chất liệu xi măng thô ráp. Thiết kế hiện đại, hình khối mạnh mẽ.',
-      descriptionEn:
-        'A bold combination of ceramics and raw concrete texture. Modern design with strong geometric layout.',
-      priceVND: 950000,
-      images: [
-        'https://images.unsplash.com/photo-1610701596061-2ecf227e85b2?q=80&w=1000&auto=format&fit=crop',
-      ],
-      material: 'Gốm lai xi măng / Ceramic-concrete hybrid',
-      dimensions: '22cm x 22cm',
-      stock: 12,
-      isActive: true,
-      isFeatured: false,
-      inquiryEnabled: true,
-      inquiryMessageVi: `Tư vấn giúp mình mẫu "Lọ Hoa Bê Thở" nhé.`,
-      inquiryMessageEn: `Please tell me more about the "'Breathing' Concrete Vase".`,
-      createdBy: admin.id,
+      inquiryMessageVi: `Xin chào! Tôi muốn đặt mua "Bộ Chén Đĩa Gốm Mộc Nung Củi".`,
+      inquiryMessageEn: `Hi! I'd like to order the "Moc Wood-Fired Dinnerware Set".`,
     },
     {
       slug: 'coc-uong-tra-nham',
-      nameVi: 'Cốc Trà Nhám',
-      nameEn: 'Textured Tea Cup',
+      nameVi: 'Cốc Trà Gốm Men Nhám Không Quai',
+      nameEn: 'Matte Handleless Ceramic Tea Cup',
+      shortDescriptionVi:
+        'Cốc trà nhỏ gọn, không quai, lớp men nhám mộc mạc mang lại trải nghiệm thưởng trà thư thái.',
+      shortDescriptionEn:
+        'Compact handleless tea cup with a rustic matte glaze for a mindful tea-drinking experience.',
       descriptionVi:
-        'Cốc trà không quai, cầm vừa tay, lớp men nhám giữ nhiệt tốt và tạo cảm giác ấm áp khi cầm vào mùa đông.',
+        '<p>Thiết kế cốc không quai tối giản theo phong cách trà đạo Á Đông. Lớp men nhám nhẹ giúp tăng độ bám khi cầm, đồng thời giữ nhiệt độ trà ổn định lâu hơn.</p><p>Dung tích vừa vặn (150ml), thích hợp cho thói quen nhâm nhi trà sáng hoặc trà chiều tĩnh tâm.</p><ul><li>Men nhám chống trơn</li><li>Dung tích 150ml</li><li>Phù hợp pha trà hằng ngày</li></ul>',
       descriptionEn:
-        'Handleless tea cup, perfect fit in hand. Matte textured glaze retains heat well and offers a warm tactile feel in winter.',
+        '<p>Minimalist handleless design inspired by Asian tea rituals. The lightly textured matte glaze provides a secure grip and retains heat effectively.</p><p>Perfect 150ml capacity, ideal for slow morning sips or calming afternoon tea sessions.</p><ul><li>Matte anti-slip glaze</li><li>150ml volume</li><li>Daily tea ritual ready</li></ul>',
       priceVND: 250000,
-      images: [
-        'https://images.unsplash.com/photo-1610701596061-2ecf227e85b2?q=80&w=1000&auto=format&fit=crop',
-      ],
+      images: [monochromeImages.tea[0], monochromeImages.tea[1]],
+      hoverImage: monochromeImages.tea[1],
+      categorySlug: 'chen-coc-tra',
       material: 'Gốm tráng men mờ / Matte glazed ceramic',
       dimensions: '8cm x 6cm',
       stock: 50,
       isActive: true,
       isFeatured: false,
       inquiryEnabled: true,
-      inquiryMessageVi: `Mình muốn mua số lượng lớn "Cốc Trà Nhám" làm quà tặng.`,
-      inquiryMessageEn: `I'm interested in buying "Textured Tea Cup" in bulk for gifts.`,
-      createdBy: admin.id,
+      inquiryMessageVi: `Tư vấn giúp mình mẫu "Cốc Trà Gốm Men Nhám Không Quai" nhé.`,
+      inquiryMessageEn: `Please tell me more about the "Matte Handleless Ceramic Tea Cup".`,
     },
     {
       slug: 'dia-gom-men-ran',
-      nameVi: 'Đĩa Gốm Men Rạn',
-      nameEn: 'Crackle Glaze Plate',
+      nameVi: 'Đĩa Gốm Men Rạn Ngọc Bích',
+      nameEn: 'Jade Green Crackle Glaze Plate',
+      shortDescriptionVi:
+        'Đĩa gốm trang trí và phục vụ với kỹ thuật men rạn cổ điển màu xanh ngọc bích sang trọng.',
+      shortDescriptionEn:
+        'Decorative serving plate featuring classic crackle glaze in a luxurious jade green tone.',
       descriptionVi:
-        'Đĩa gốm với kỹ thuật men rạn cổ điển, màu xanh ngọc bích sẫm. Sang trọng và hoài cổ.',
+        '<p>Kỹ thuật men rạn (Crackle glaze) là đỉnh cao của nghệ thuật gốm sứ truyền thống. Các đường rạn tự nhiên như vết nứt thời gian ẩn hiện dưới lớp men bóng.</p><p>Sản phẩm dùng để bày biện món ăn hoặc làm điểm nhấn nghệ thuật cho kệ bếp, bàn trà.</p><ul><li>Men rạn cổ điển</li><li>Hoàn thiện thủ công</li><li>Phù hợp plating tối giản</li></ul>',
       descriptionEn:
-        'Ceramic plate featuring classic crackle glaze technique in deep jade green. Elegant and nostalgic.',
+        '<p>Crackle glaze technique represents the pinnacle of traditional ceramic artistry. Natural crack lines emerge beneath the glossy finish.</p><p>A functional plate for food presentation and a refined accent for your kitchen shelf.</p><ul><li>Classic crackle glaze</li><li>Hand-finished</li><li>Minimal plating friendly</li></ul>',
       priceVND: 550000,
-      images: [
-        'https://images.unsplash.com/photo-1610701596007-11502861dcfa?q=80&w=1000&auto=format&fit=crop',
-      ],
-      material: 'Gốm men rạn / Crackle wear',
-      dimensions: '26cm diameter',
+      images: [monochromeImages.trays[0], monochromeImages.trays[1]],
+      hoverImage: monochromeImages.trays[1],
+      categorySlug: 'dia-khay',
+      material: 'Gốm men rạn cao cấp / Premium crackle wear',
+      dimensions: 'Đường kính 26cm / 26cm diameter',
       stock: 18,
       isActive: true,
       isFeatured: false,
       inquiryEnabled: true,
-      inquiryMessageVi: `Sản phẩm "Đĩa Gốm Men Rạn" còn hàng không ạ?`,
-      inquiryMessageEn: `Is the "Crackle Glaze Plate" still in stock?`,
-      createdBy: admin.id,
+      inquiryMessageVi: `Sản phẩm "Đĩa Gốm Men Rạn Ngọc Bích" còn hàng không ạ?`,
+      inquiryMessageEn: `Is the "Jade Green Crackle Glaze Plate" still in stock?`,
     },
     {
-      slug: 'binh-hoa-abstract',
-      nameVi: 'Bình Hoa Abstract',
-      nameEn: 'Abstract Form Vase',
+      slug: 'khay-tra-go-gom',
+      nameVi: 'Khay Trà Gốm Viền Gỗ Tràm',
+      nameEn: 'Ceramic Tea Tray with Acacia Wood Rim',
+      shortDescriptionVi:
+        'Sự kết hợp hài hòa giữa chất liệu gốm mộc và gỗ tràm tự nhiên cho bàn trà tối giản.',
+      shortDescriptionEn:
+        'A harmonious blend of raw ceramic and natural acacia wood for minimal tea setups.',
       descriptionVi:
-        'Thiết kế trừu tượng với các đường cong bất đối xứng. Vừa là lọ hoa, vừa là tượng điêu khắc nghệ thuật.',
+        '<p>Khay trà hình chữ nhật với lòng khay bằng gốm chịu nhiệt, dễ dàng vệ sinh khi nước trà rớt ra. Viền khay làm từ gỗ tràm tự nhiên đã qua xử lý chống ẩm mốc.</p><p>Sản phẩm mang lại vẻ đẹp hiện đại nhưng vẫn giữ sự ấm áp của chất liệu tự nhiên.</p><ul><li>Viền gỗ tràm tự nhiên</li><li>Lòng khay gốm chịu nhiệt</li><li>Phù hợp decor bàn trà</li></ul>',
       descriptionEn:
-        'Abstract design with Asymmetric curves. Functions as both a flower vase and an art sculpture.',
-      priceVND: 2100000,
-      images: [
-        'https://images.unsplash.com/photo-1610701596061-2ecf227e85b2?q=80&w=1000&auto=format&fit=crop',
-      ],
-      material: 'Đất cao lanh / Kaolin',
-      dimensions: '30cm x 18cm',
-      stock: 4,
+        '<p>Rectangular tea tray featuring a heat-resistant ceramic base that is easy to clean. The rim is crafted from treated, moisture-resistant natural acacia wood.</p><p>Brings a contemporary look while retaining the organic warmth of natural materials.</p><ul><li>Natural acacia rim</li><li>Heat-resistant ceramic base</li><li>Minimal tea-table styling</li></ul>',
+      priceVND: 850000,
+      images: [monochromeImages.trays[1], monochromeImages.trays[0]],
+      hoverImage: monochromeImages.trays[0],
+      categorySlug: 'dia-khay',
+      material: 'Gốm mộc & Gỗ tràm / Raw ceramic & Acacia wood',
+      dimensions: '35cm x 20cm x 3cm',
+      stock: 10,
+      isActive: true,
+      isFeatured: false,
+      inquiryEnabled: true,
+      inquiryMessageVi: `Tư vấn giúp mình mẫu "Khay Trà Gốm Viền Gỗ Tràm" nhé.`,
+      inquiryMessageEn: `Please tell me more about the "Ceramic Tea Tray with Acacia Wood Rim".`,
+    },
+    {
+      slug: 'bo-am-tra-thien',
+      nameVi: 'Bộ Ấm Trà Thiền Định Men Tro',
+      nameEn: 'Thien Ash Glaze Teapot Set',
+      shortDescriptionVi:
+        'Bộ ấm trà phong cách tối giản với lớp men tro tự nhiên, mang lại sự bình yên trong từng tách trà.',
+      shortDescriptionEn:
+        'Minimalist teapot set with natural ash glaze, bringing peace to every cup.',
+      descriptionVi:
+        '<p>Bộ sản phẩm gồm 1 ấm trà (350ml) và 4 chén nhỏ. Men tro (Ash glaze) được chế tạo từ tro thực vật tự nhiên, tạo nên màu sắc trung tính mộc mạc.</p><p>Dáng ấm tròn đầy đặn, vòi rót êm không bị rớt nước. Thích hợp cho buổi trà đạo, đàm đạo hoặc thưởng trà một mình.</p><ul><li>Men tro tự nhiên</li><li>Vòi rót chống nhỏ giọt</li><li>Set 1 ấm + 4 chén</li></ul>',
+      descriptionEn:
+        '<p>Includes 1 teapot (350ml) and 4 small cups. The ash glaze, made from natural plant ash, offers soft, rustic tones.</p><p>Round, balanced pot design with a smooth, drip-free spout. Perfect for deep conversations or quiet solitary tea moments.</p><ul><li>Natural ash glaze</li><li>Drip-free spout</li><li>1 teapot + 4 cups</li></ul>',
+      priceVND: 1550000,
+      images: [monochromeImages.tea[1], monochromeImages.tea[0]],
+      hoverImage: monochromeImages.tea[0],
+      categorySlug: 'chen-coc-tra',
+      material: 'Gốm nung men tro / Ash-glazed stoneware',
+      dimensions: 'Ấm 350ml, Chén 50ml',
+      stock: 8,
       isActive: true,
       isFeatured: true,
       inquiryEnabled: true,
-      inquiryMessageVi: `Tôi rất thích mẫu "Bình Hoa Abstract".`,
-      inquiryMessageEn: `I love the "Abstract Form Vase".`,
-      createdBy: admin.id,
+      inquiryMessageVi: `Xin chào! Tôi quan tâm đến "Bộ Ấm Trà Thiền Định Men Tro".`,
+      inquiryMessageEn: `Hi! I'm interested in the "Thien Ash Glaze Teapot Set".`,
     },
     {
-      slug: 'binh-hoa-abstract-copy',
-      nameVi: 'Bình Hoa Abstract (Copy)',
-      nameEn: 'Abstract Form Vase (Copy)',
+      slug: 'bo-bat-dia-hoa-bien',
+      nameVi: 'Bộ Bát Đĩa Men Hỏa Biến Xanh Đại Dương',
+      nameEn: 'Ocean Blue Reactive Glaze Dinnerware Set',
+      shortDescriptionVi:
+        'Bộ bát đĩa cao cấp với hiệu ứng men hỏa biến xanh đại dương sâu thẳm và huyền bí.',
+      shortDescriptionEn:
+        'Premium dinnerware set featuring a deep, mysterious ocean blue reactive glaze.',
       descriptionVi:
-        'Thiết kế trừu tượng với các đường cong bất đối xứng. Vừa là lọ hoa, vừa là tượng điêu khắc nghệ thuật.',
+        '<p>Mỗi sản phẩm trong bộ bát đĩa này là một bức tranh đại dương thu nhỏ. Hiệu ứng hỏa biến (reactive glaze) tạo nên các vệt màu loang tự nhiên.</p><p>Bộ sản phẩm gồm 10 chi tiết, phù hợp cho những bữa tiệc gia đình hoặc làm quà tặng tân gia.</p><ul><li>Men hỏa biến thủ công</li><li>Set 10 chi tiết</li><li>Phù hợp tiệc gia đình</li></ul>',
       descriptionEn:
-        'Abstract design with Asymmetric curves. Functions as both a flower vase and an art sculpture.',
-      priceVND: 2100000,
+        '<p>Each piece in this dinnerware set is like a miniature ocean painting. The reactive glaze creates natural tonal shifts.</p><p>The 10-piece set is perfect for family gatherings or as a meaningful housewarming gift.</p><ul><li>Handmade reactive glaze</li><li>10-piece set</li><li>Gift-ready</li></ul>',
+      priceVND: 4500000,
       images: [
-        'https://images.unsplash.com/photo-1610701596061-2ecf227e85b2?q=80&w=1000&auto=format&fit=crop',
+        monochromeImages.dinnerware[2],
+        monochromeImages.dinnerware[0],
       ],
-      material: 'Đất cao lanh / Kaolin',
-      dimensions: '30cm x 18cm',
-      stock: 4,
+      hoverImage: monochromeImages.dinnerware[0],
+      categorySlug: 'bo-ban-an',
+      material: 'Gốm sứ cao cấp / Premium porcelain',
+      dimensions: 'Đa dạng / Assorted sizes',
+      stock: 15,
       isActive: true,
-      isFeatured: true,
+      isFeatured: false,
       inquiryEnabled: true,
-      inquiryMessageVi: `Tôi rất thích mẫu "Bình Hoa Abstract".`,
-      inquiryMessageEn: `I love the "Abstract Form Vase".`,
-      createdBy: admin.id,
+      inquiryMessageVi: `Tư vấn giúp mình "Bộ Bát Đĩa Men Hỏa Biến Xanh Đại Dương" nhé.`,
+      inquiryMessageEn: `Please provide details on the "Ocean Blue Reactive Glaze Dinnerware Set".`,
     },
   ]
 
   const productsMap: Record<string, any> = {}
 
-  for (const product of sampleProducts) {
+  for (const productData of sampleProducts) {
+    const { categorySlug, ...rest } = productData as any
+    const categoryId = categorySlug ? categoriesMap[categorySlug]?.id : null
+
+    const createData = {
+      ...rest,
+      categoryId,
+      createdBy: admin.id,
+      updatedBy: admin.id,
+    }
+
+    const updateData = {
+      ...rest,
+      categoryId,
+      updatedBy: admin.id,
+    }
+
     const p = await prisma.product.upsert({
-      where: { slug: product.slug },
-      update: {},
-      create: product,
+      where: { slug: createData.slug },
+      update: updateData,
+      create: createData,
     })
     productsMap[p.slug] = p
   }

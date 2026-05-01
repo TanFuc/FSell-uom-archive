@@ -60,7 +60,17 @@ const nextConfig = {
     ]
   },
   async headers() {
-    return []
+    return [
+      {
+        source: '/sitemap.xml',
+        headers: [
+          {
+            key: 'Content-Type',
+            value: 'application/xml',
+          },
+        ],
+      },
+    ]
   },
   eslint: {
     ignoreDuringBuilds: true,

@@ -17,12 +17,13 @@
     "connect": "Connect",
     "shop": "Shop",
     "about": "About Us",
+    "journal": "Journal",
     "rights": "All rights reserved",
     "categories": "Categories",
     "viewMore": "View more..."
   },
   "Home": {
-    "title": "UOM ARCHIVE",
+    "title": "ƯƠM.",
     "subtitle": "Preserving the beauty of minimalism in Vietnamese craftsmanship",
     "explore": "EXPLORE",
     "featured": "NEW ARRIVALS",
@@ -36,7 +37,7 @@
   "nav": {
     "shop": "SHOP",
     "shipping": "SHIPPING & RETURNS",
-    "brand": "UOM ARCHIVE"
+    "brand": "ƯƠM."
   },
   "home": {
     "heroTitle": "Beauty in Stillness",
@@ -93,7 +94,7 @@
     "allCategories": "All Categories"
   },
   "journal": {
-    "heroTitle": "Stories from UOM.",
+    "heroTitle": "Stories from ƯƠM.",
     "heroDescription": "A place where we share handcrafted stories, creative journeys, and behind-the-scenes moments from each collection.",
     "empty": "Stories are being updated. Please check back soon.",
     "backToJournal": "Back to Journal",
@@ -101,7 +102,7 @@
     "viewAllStories": "View all stories"
   },
   "footer": {
-    "copyright": "© 2026 Uom Archive. All rights reserved.",
+    "copyright": "© 2026 ƯƠM. All rights reserved.",
     "followUs": "Follow us"
   },
   "admin": {
@@ -188,7 +189,7 @@
     "accentColorHint": "Secondary/accent color (default: clay)",
     "livePreview": "Live Preview",
     "livePreviewHint": "See how your changes will look",
-    "previewTitle": "UOM ARCHIVE",
+    "previewTitle": "ƯƠM.",
     "previewSubtitle": "Discover timeless Vietnamese fashion pieces curated with care.",
     "previewNewCollection": "New collection available now",
     "shopNow": "Shop Now",
