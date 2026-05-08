@@ -1,7 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { CreateCategoryDto } from './dto/create-category.dto';
-import { UpdateCategoryDto } from './dto/update-category.dto';
+import { Injectable, NotFoundException } from '@nestjs/common'
+import { PrismaService } from '../prisma/prisma.service'
+import { CreateCategoryDto } from './dto/create-category.dto'
+import { UpdateCategoryDto } from './dto/update-category.dto'
 
 @Injectable()
 export class CategoriesService {
@@ -19,7 +19,7 @@ export class CategoriesService {
           select: { products: true },
         },
       },
-    });
+    })
   }
 
   async findAll(includeDeleted = false, includeInactive = false) {
@@ -34,7 +34,7 @@ export class CategoriesService {
         },
       },
       orderBy: [{ order: 'asc' }, { createdAt: 'desc' }],
-    });
+    })
   }
 
   async findOne(id: string) {
@@ -45,13 +45,13 @@ export class CategoriesService {
           select: { products: true },
         },
       },
-    });
+    })
 
     if (!category) {
-      throw new NotFoundException(`Category with ID ${id} not found`);
+      throw new NotFoundException(`Category with ID ${id} not found`)
     }
 
-    return category;
+    return category
   }
 
   async findBySlug(slug: string) {
@@ -62,17 +62,17 @@ export class CategoriesService {
           select: { products: true },
         },
       },
-    });
+    })
 
     if (!category || category.deletedAt) {
-      throw new NotFoundException(`Category with slug ${slug} not found`);
+      throw new NotFoundException(`Category with slug ${slug} not found`)
     }
 
-    return category;
+    return category
   }
 
   async update(id: string, updateCategoryDto: UpdateCategoryDto, userId?: string) {
-    await this.findOne(id);
+    await this.findOne(id)
 
     return this.prisma.category.update({
       where: { id },
@@ -85,29 +85,28 @@ export class CategoriesService {
           select: { products: true },
         },
       },
-    });
+    })
   }
 
   async remove(id: string, userId?: string) {
-    await this.findOne(id);
+    await this.findOne(id)
 
-    // Soft delete
     return this.prisma.category.update({
       where: { id },
       data: {
         deletedAt: new Date(),
         deletedBy: userId,
       },
-    });
+    })
   }
 
   async restore(id: string, userId?: string) {
     const category = await this.prisma.category.findUnique({
       where: { id },
-    });
+    })
 
     if (!category) {
-      throw new NotFoundException(`Category with ID ${id} not found`);
+      throw new NotFoundException(`Category with ID ${id} not found`)
     }
 
     return this.prisma.category.update({
@@ -117,14 +116,14 @@ export class CategoriesService {
         deletedBy: null,
         updatedBy: userId,
       },
-    });
+    })
   }
 
   async permanentDelete(id: string) {
-    await this.findOne(id);
+    await this.findOne(id)
 
     return this.prisma.category.delete({
       where: { id },
-    });
+    })
   }
 }

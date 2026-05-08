@@ -3,15 +3,76 @@ const createNextIntlPlugin = require('next-intl/plugin')
 const withNextIntl = createNextIntlPlugin()
 
 /** @type {import('next').NextConfig} */
-const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888/api'
 const apiUrlObj = new URL(apiUrl)
 const apiProtocol = apiUrlObj.protocol.replace(':', '')
 const apiPort = apiUrlObj.port
 
 const nextConfig = {
+  output: 'standalone',
+  async redirects() {
+    return [
+      // 1. Non-www → www (canonical domain)
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'uomarchive.com' }],
+        destination: 'https://www.uomarchive.com/:path*',
+        permanent: true,
+      },
+      // 2. Old root → /vi (default locale for SEO authority transfer)
+      // Root URL that hits before intl middleware picks it up
+      {
+        source: '/',
+        missing: [
+          { type: 'header', key: 'x-locale-redirect-done' },
+        ],
+        destination: '/vi',
+        permanent: true, // 301 for permanent SEO authority transfer
+      },
+      // 3. Old non-locale shop URLs → /vi/shop (most critical for SEO recovery)
+      {
+        source: '/shop/:slug*',
+        destination: '/vi/shop/:slug*',
+        permanent: true,
+      },
+      // 4. Old non-locale journal/blog URLs → /vi/journal
+      {
+        source: '/journal/:slug*',
+        destination: '/vi/journal/:slug*',
+        permanent: true,
+      },
+      {
+        source: '/blog/:slug*',
+        destination: '/vi/journal/:slug*',
+        permanent: true,
+      },
+      // 5. Old non-locale static pages
+      {
+        source: '/about',
+        destination: '/vi/about',
+        permanent: true,
+      },
+      {
+        source: '/contact',
+        destination: '/vi/about',
+        permanent: true,
+      },
+    ]
+  },
+  async headers() {
+    return [
+      {
+        source: '/sitemap.xml',
+        headers: [
+          {
+            key: 'Content-Type',
+            value: 'application/xml',
+          },
+        ],
+      },
+    ]
+  },
   eslint: {
-    // Warning: This allows production builds to successfully complete even if
-    // your project has ESLint errors.
     ignoreDuringBuilds: true,
   },
   images: {
@@ -29,14 +90,10 @@ const nextConfig = {
     ],
     formats: ['image/avif', 'image/webp'],
   },
-  // Performance optimizations
+
   poweredByHeader: false,
   compress: true,
   reactStrictMode: true,
-  // Experimental features for better performance
-  experimental: {
-    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
-  },
 }
 
 module.exports = withNextIntl(nextConfig)

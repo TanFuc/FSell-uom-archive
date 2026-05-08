@@ -18,9 +18,9 @@ import {
   ApiBody,
 } from '@nestjs/swagger'
 import { Role } from '@prisma/client'
-import { UploadService } from './upload.service'
-import { JwtAuthGuard, RolesGuard } from '../auth/guards'
 import { Roles } from '../auth/decorators'
+import { JwtAuthGuard, RolesGuard } from '../auth/guards'
+import { UploadService } from './upload.service'
 
 @ApiTags('upload')
 @Controller('upload')

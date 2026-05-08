@@ -1,55 +1,55 @@
-import { IsBoolean, IsInt, IsOptional, IsString, IsUrl } from 'class-validator';
+import { IsBoolean, IsInt, IsOptional, IsString, IsUrl } from 'class-validator'
 
 export class CreateBannerDto {
   @IsOptional()
   @IsString()
-  titleVi?: string;
+  titleVi?: string
 
   @IsOptional()
   @IsString()
-  titleEn?: string;
+  titleEn?: string
 
   @IsOptional()
   @IsString()
-  subtitleVi?: string;
+  subtitleVi?: string
 
   @IsOptional()
   @IsString()
-  subtitleEn?: string;
+  subtitleEn?: string
 
   @IsOptional()
   @IsString()
-  descriptionVi?: string;
+  descriptionVi?: string
 
   @IsOptional()
   @IsString()
-  descriptionEn?: string;
+  descriptionEn?: string
 
   @IsString()
   @IsUrl()
-  imageUrl: string;
+  imageUrl: string
 
   @IsOptional()
   @IsString()
-  mobileImageUrl?: string;
+  mobileImageUrl?: string
 
   @IsOptional()
   @IsString()
-  link?: string;
+  link?: string
 
   @IsOptional()
   @IsInt()
-  order?: number;
+  order?: number
 
   @IsOptional()
   @IsBoolean()
-  isActive?: boolean;
+  isActive?: boolean
 
   @IsOptional()
   @IsString()
-  textColor?: string;
+  textColor?: string
 
   @IsOptional()
   @IsString()
-  textPosition?: string;
+  textPosition?: string
 }

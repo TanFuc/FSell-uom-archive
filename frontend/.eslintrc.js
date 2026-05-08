@@ -9,7 +9,7 @@ module.exports = {
       jsx: true,
     },
   },
-  plugins: ['@typescript-eslint', 'import', 'react', 'react-hooks'],
+  plugins: ['@typescript-eslint', 'import', 'react', 'react-hooks', 'unused-imports'],
   extends: [
     'next/core-web-vitals',
     'plugin:@typescript-eslint/recommended',
@@ -37,20 +37,22 @@ module.exports = {
     },
   },
   rules: {
-    // React rules
     'react/react-in-jsx-scope': 'off',
     'react/prop-types': 'off',
     'react/jsx-no-target-blank': 'error',
     'react/jsx-curly-brace-presence': ['warn', { props: 'never', children: 'never' }],
     'react/self-closing-comp': 'warn',
 
-    // React Hooks rules
     'react-hooks/rules-of-hooks': 'error',
     'react-hooks/exhaustive-deps': 'warn',
 
-    // TypeScript rules
     '@typescript-eslint/no-explicit-any': 'error',
-    '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+    '@typescript-eslint/no-unused-vars': 'off',
+    'unused-imports/no-unused-imports': 'error',
+    'unused-imports/no-unused-vars': [
+      'error',
+      { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
+    ],
     '@typescript-eslint/no-floating-promises': 'warn',
     '@typescript-eslint/no-misused-promises': 'warn',
     '@typescript-eslint/await-thenable': 'error',
@@ -62,7 +64,6 @@ module.exports = {
       { prefer: 'type-imports', fixStyle: 'inline-type-imports' },
     ],
 
-    // Import rules
     'import/order': [
       'error',
       {
@@ -74,7 +75,6 @@ module.exports = {
     'import/no-duplicates': 'error',
     'import/no-unresolved': 'off',
 
-    // General rules
     'no-console': ['warn', { allow: ['warn', 'error'] }],
     'prefer-const': 'error',
     'no-var': 'error',

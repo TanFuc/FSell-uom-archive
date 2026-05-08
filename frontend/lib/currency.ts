@@ -55,12 +55,10 @@ export function getDisplayPrice(
 } {
   const isEnglish = locale === 'en'
 
-  // Get the appropriate prices based on locale
   let currentPriceValue: number
   let originalPriceValue: number
 
   if (isEnglish) {
-    // For English, prefer USD prices
     originalPriceValue =
       product.priceUSD ?? convertPrice(product.priceVND, 'VND', 'USD', exchangeRate)
     currentPriceValue =
@@ -69,7 +67,6 @@ export function getDisplayPrice(
         ? convertPrice(product.salePriceVND, 'VND', 'USD', exchangeRate)
         : originalPriceValue)
   } else {
-    // For Vietnamese, use VND prices
     originalPriceValue = product.priceVND
     currentPriceValue = product.salePriceVND ?? product.priceVND
   }

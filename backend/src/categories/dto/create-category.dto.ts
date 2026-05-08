@@ -1,33 +1,33 @@
-import { IsString, IsOptional, IsBoolean, IsInt, Min } from 'class-validator';
+import { IsString, IsOptional, IsBoolean, IsInt, Min } from 'class-validator'
 
 export class CreateCategoryDto {
   @IsString()
-  slug: string;
+  slug: string
 
   @IsString()
-  nameVi: string;
+  nameVi: string
 
   @IsString()
-  nameEn: string;
-
-  @IsOptional()
-  @IsString()
-  descriptionVi?: string;
+  nameEn: string
 
   @IsOptional()
   @IsString()
-  descriptionEn?: string;
+  descriptionVi?: string
 
   @IsOptional()
   @IsString()
-  image?: string;
+  descriptionEn?: string
+
+  @IsOptional()
+  @IsString()
+  image?: string
 
   @IsOptional()
   @IsInt()
   @Min(0)
-  order?: number;
+  order?: number
 
   @IsOptional()
   @IsBoolean()
-  isActive?: boolean;
+  isActive?: boolean
 }

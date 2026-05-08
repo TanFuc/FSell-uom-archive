@@ -1,0 +1,40 @@
+groups:
+  - name: uom-backend-alerts
+    rules:
+      - alert: UomBackendHealthDown
+        expr: up{job="uom_backend"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: backend
+        annotations:
+          summary: "Backend health is down"
+          description: "Prometheus cannot scrape uom_backend for more than 2 minutes."
+
+      - alert: UomHighHttpErrorRate
+        expr: |
+          sum(rate(uom_http_requests_total{status_code=~"5.."}[5m]))
+            /
+          clamp_min(sum(rate(uom_http_requests_total[5m])), 1)
+          > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          service: backend
+        annotations:
+          summary: "High HTTP 5xx error rate"
+          description: "HTTP 5xx rate is above 5% for 5 minutes."
+
+      - alert: UomHighP95Latency
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum(rate(uom_http_request_duration_seconds_bucket[5m])) by (le)
+          ) > 0.8
+        for: 10m
+        labels:
+          severity: warning
+          service: backend
+        annotations:
+          summary: "High p95 latency"
+          description: "p95 latency is above 800ms for 10 minutes."

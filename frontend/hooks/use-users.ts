@@ -3,9 +3,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { apiClient } from '@/lib/api-client'
-import type { User, CreateUserDto, UpdateUserDto, QueryUsersDto } from '@/lib/types'
+import type { CreateUserDto, UpdateUserDto, QueryUsersDto } from '@/lib/types'
 
-// Query keys
 export const userKeys = {
   all: ['users'] as const,
   lists: () => [...userKeys.all, 'list'] as const,
@@ -14,7 +13,6 @@ export const userKeys = {
   detail: (id: string) => [...userKeys.details(), id] as const,
 }
 
-// Get users list (Admin only)
 export function useUsers(params?: QueryUsersDto) {
   return useQuery({
     queryKey: userKeys.list(params || {}),
@@ -23,7 +21,6 @@ export function useUsers(params?: QueryUsersDto) {
   })
 }
 
-// Get single user by ID (Admin only)
 export function useUser(id: string) {
   return useQuery({
     queryKey: userKeys.detail(id),
@@ -33,7 +30,6 @@ export function useUser(id: string) {
   })
 }
 
-// Create user (Admin only)
 export function useCreateUser() {
   const queryClient = useQueryClient()
 
@@ -49,7 +45,6 @@ export function useCreateUser() {
   })
 }
 
-// Update user (Admin only)
 export function useUpdateUser() {
   const queryClient = useQueryClient()
 
@@ -67,7 +62,6 @@ export function useUpdateUser() {
   })
 }
 
-// Delete user (Admin only)
 export function useDeleteUser() {
   const queryClient = useQueryClient()
 

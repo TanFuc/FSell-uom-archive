@@ -1,0 +1,240 @@
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: uom-managed-alerts
+    folder: UOM
+    interval: 1m
+    rules:
+      - uid: uom-health-down
+        title: UOM Backend Health Down
+        condition: B
+        data:
+          - refId: A
+            queryType: ''
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              datasource:
+                type: prometheus
+                uid: prometheus
+              editorMode: code
+              expr: up{job="uom_backend"}
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              range: false
+              refId: A
+          - refId: B
+            queryType: ''
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [1]
+                    type: lt
+                  operator:
+                    type: and
+                  query:
+                    params: [A]
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: A
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: B
+              type: classic_conditions
+        noDataState: Alerting
+        execErrState: Alerting
+        for: 2m
+        labels:
+          severity: critical
+          service: backend
+        annotations:
+          summary: Backend health is down
+          description: Managed alert: Prometheus target uom_backend is unavailable for 2 minutes.
+
+      - uid: uom-high-http-error-rate
+        title: UOM High HTTP Error Rate
+        condition: B
+        data:
+          - refId: A
+            queryType: ''
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              datasource:
+                type: prometheus
+                uid: prometheus
+              editorMode: code
+              expr: 100 * sum(rate(uom_http_requests_total{status_code=~"5.."}[5m])) / clamp_min(sum(rate(uom_http_requests_total[5m])), 1)
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              range: false
+              refId: A
+          - refId: B
+            queryType: ''
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [5]
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [A]
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: A
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: B
+              type: classic_conditions
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        labels:
+          severity: warning
+          service: backend
+        annotations:
+          summary: High HTTP 5xx error rate
+          description: Managed alert: HTTP 5xx error rate is above 5% for 5 minutes.
+
+      - uid: uom-high-p95-latency
+        title: UOM High P95 Latency
+        condition: B
+        data:
+          - refId: A
+            queryType: ''
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              datasource:
+                type: prometheus
+                uid: prometheus
+              editorMode: code
+              expr: histogram_quantile(0.95, sum(rate(uom_http_request_duration_seconds_bucket[5m])) by (le))
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              range: false
+              refId: A
+          - refId: B
+            queryType: ''
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [0.8]
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [A]
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: A
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: B
+              type: classic_conditions
+        noDataState: NoData
+        execErrState: Alerting
+        for: 10m
+        labels:
+          severity: warning
+          service: backend
+        annotations:
+          summary: High p95 latency
+          description: Managed alert: p95 latency is above 800ms for 10 minutes.
+
+      - uid: uom-synthetic-notify-test
+        title: UOM Synthetic Notify Test
+        condition: B
+        data:
+          - refId: A
+            queryType: ''
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              datasource:
+                type: prometheus
+                uid: prometheus
+              editorMode: code
+              expr: max((time() - uom_process_start_time_seconds{job="uom_backend"}) < bool 180)
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              range: false
+              refId: A
+          - refId: B
+            queryType: ''
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [0.5]
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [A]
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: A
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: B
+              type: classic_conditions
+        noDataState: NoData
+        execErrState: Alerting
+        for: 10s
+        labels:
+          severity: warning
+          service: backend
+          synthetic: 'true'
+        annotations:
+          summary: Synthetic notification test
+          description: Managed alert test rule. It fires for ~3 minutes after backend start, then auto-resolves.

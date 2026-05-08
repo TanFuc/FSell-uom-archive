@@ -33,6 +33,43 @@ services:
       timeout: 5s
       retries: 5
 
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: uom_prometheus
+    restart: unless-stopped
+    profiles: ['monitoring']
+    ports:
+      - '9090:9090'
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/alerts.yml:/etc/prometheus/alerts.yml:ro
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    container_name: uom_grafana
+    restart: unless-stopped
+    profiles: ['monitoring']
+    ports:
+      - '3002:3000'
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_ALERT_TELEGRAM_BOT_TOKEN: ${GF_ALERT_TELEGRAM_BOT_TOKEN:-}
+      GF_ALERT_TELEGRAM_CHAT_ID: ${GF_ALERT_TELEGRAM_CHAT_ID:-}
+      GF_ALERT_SLACK_WEBHOOK_URL: ${GF_ALERT_SLACK_WEBHOOK_URL:-}
+      GF_ALERT_EMAIL_ADDRESSES: ${GF_ALERT_EMAIL_ADDRESSES:-}
+      GF_SMTP_ENABLED: ${GF_SMTP_ENABLED:-false}
+      GF_SMTP_HOST: ${GF_SMTP_HOST:-}
+      GF_SMTP_USER: ${GF_SMTP_USER:-}
+      GF_SMTP_PASSWORD: ${GF_SMTP_PASSWORD:-}
+      GF_SMTP_FROM_ADDRESS: ${GF_SMTP_FROM_ADDRESS:-alerts@uom.local}
+      GF_SMTP_FROM_NAME: ${GF_SMTP_FROM_NAME:-UOM Alerts}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+
 volumes:
   postgres_data:
   redis_data:
+  grafana_data:

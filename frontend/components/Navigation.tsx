@@ -12,7 +12,6 @@ export default function Navigation() {
   const router = useRouter()
 
   const switchLocale = (newLocale: string) => {
-    // Remove current locale from path and add new one
     const pathWithoutLocale = pathname.replace(`/${locale}`, '') || '/'
     router.push(`/${newLocale}${pathWithoutLocale}`)
   }
@@ -32,7 +31,7 @@ export default function Navigation() {
         >
           VN
         </button>
-        <span className="text-earthy-brown">|</span>
+        <span className="text-foreground/20">|</span>
         <button
           onClick={() => switchLocale('en')}
           className={`nav-link ${locale === 'en' ? 'italic' : ''}`}

@@ -1,194 +1,216 @@
-'use client'
-
-import Image from 'next/image'
+import { type Metadata } from 'next'
 import Link from 'next/link'
-import { useLocale, useTranslations } from 'next-intl'
-import { BannerCarousel } from '@/components/BannerCarousel'
-import { ProductCard } from '@/components/ProductCard'
-import { useBanners } from '@/hooks/use-banners'
-import { useCategories } from '@/hooks/use-categories'
-import { useDocumentTitle } from '@/hooks/use-document-title'
-import { useProducts } from '@/hooks/use-products'
-import { useSiteContent } from '@/hooks/use-settings'
+import Script from 'next/script'
+import { getCanonicalBaseUrl } from '@/lib/seo'
+import { fetchBranding } from '@/lib/server-utils'
+import { type Product } from '@/lib/sitemap-data'
+import { getStorySlug, parseStories, STORIES_CONTENT_KEY } from '@/lib/stories'
+import { type Banner } from '@/lib/types'
+import HomeClient from './home-client'
 
-export default function HomePage() {
-  const t = useTranslations('Home')
-  const locale = useLocale() as 'vi' | 'en'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888/api'
+export const revalidate = 0 // Force fresh data during SEO recovery
 
-  // Update document title - just use the brand name for home page
-  useDocumentTitle('', 'Ươm Archive')
+async function fetchHomeSsrData() {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 10000) // Keep SSR responsive on slow origins
 
-  // Fetch global settings/content
-  const { data: siteContent } = useSiteContent()
-  const { data: banners } = useBanners(true)
-  const heroImage = siteContent?.[`hero.image.${locale}`] || siteContent?.['hero.image.en']
+  try {
+    const fetchOptions = {
+      next: { revalidate: 0 },
+      signal: controller.signal,
+    }
 
-  // Fetch latest products
-  const { data: latestProducts, isLoading: isLoadingLatest } = useProducts({
-    page: 1,
-    limit: 8,
-    isActive: true,
-    sortBy: 'createdAt',
-    sortOrder: 'desc',
-  })
+    const [productsRes, contentRes, bannersRes] = await Promise.allSettled([
+      fetch(`${API_URL}/products?page=1&limit=8&isActive=true`, fetchOptions),
+      fetch(`${API_URL}/settings/site-content`, fetchOptions),
+      fetch(`${API_URL}/banners?activeOnly=true`, fetchOptions),
+    ])
 
-  // Fetch categories
-  const { data: categories } = useCategories({ includeInactive: false })
+    const productsData =
+      productsRes.status === 'fulfilled' && productsRes.value.ok ? await productsRes.value.json() : null
+    const contentData =
+      contentRes.status === 'fulfilled' && contentRes.value.ok ? await contentRes.value.json() : null
+    const bannersData =
+      bannersRes.status === 'fulfilled' && bannersRes.value.ok ? await bannersRes.value.json() : null
 
-  // Fetch featured/curated products
-  const { data: featuredProducts, isLoading: isLoadingFeatured } = useProducts({
-    page: 1,
-    limit: 8,
-    isActive: true,
-    isFeatured: true,
-    sortBy: 'createdAt',
-    sortOrder: 'desc',
-  })
+    // Helper to unwrap nested data if needed
+    const products = (productsData?.data?.data || productsData?.data || []) as Product[]
+    const banners = (bannersData?.data || bannersData || []) as Banner[]
+    const stories = parseStories(
+      contentData?.data?.[STORIES_CONTENT_KEY] || contentData?.[STORIES_CONTENT_KEY],
+    ).filter((s) => s.isVisible !== false)
+
+    console.info(
+      `[SEO] SSR Data fetched: ${products.length} products, ${stories.length} stories, ${banners.length} banners`,
+    )
+    return {
+      products: { data: products.slice(0, 8), meta: { totalItems: products.length } },
+      siteContent: contentData?.data || contentData || {},
+      banners: banners.slice(0, 10),
+      stories: stories.slice(0, 4),
+    }
+  } catch (error) {
+    console.error('[SEO] SSR fetch failed or timed out:', error)
+    return { products: { data: [], meta: {} }, siteContent: {}, banners: [], stories: [] }
+  } finally {
+    clearTimeout(timeoutId)
+  }
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { locale: string }
+}): Promise<Metadata> {
+  const locale = params.locale
+  const baseUrl = getCanonicalBaseUrl()
+  const branding = await fetchBranding()
+
+  const isVi = locale === 'vi'
+  const siteTitle = isVi
+    ? (branding?.siteTitleVi ?? 'ƯƠM. - Gốm sứ thủ công Việt Nam')
+    : (branding?.siteTitleEn ?? 'ƯƠM. - Handcrafted Ceramics from Vietnam')
+  const description = isVi
+    ? (branding?.siteDescriptionVi ?? 'Gốm sứ thủ công được tuyển chọn kỹ lưỡng từ Việt Nam.')
+    : (branding?.siteDescriptionEn ?? 'Discover timeless Vietnamese ceramics curated with care.')
+  const logo = branding?.logoUrl || `${baseUrl}/assets/logo.png`
+
+  return {
+    title: { absolute: siteTitle },
+    description,
+    openGraph: {
+      title: siteTitle,
+      description,
+      url: `${baseUrl}/${locale}`,
+      type: 'website',
+      images: [{ url: logo, width: 1200, height: 630, alt: siteTitle }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: siteTitle,
+      description,
+      images: [logo],
+    },
+    alternates: {
+      canonical: `/${locale}`,
+      languages: { vi: '/vi', en: '/en', 'x-default': '/vi' },
+    },
+  }
+}
+
+export default async function HomePage({ params }: { params: { locale: string } }) {
+  const locale = params.locale
+  const baseUrl = getCanonicalBaseUrl()
+  const brandingPromise = fetchBranding()
+  const ssrDataPromise = fetchHomeSsrData()
+
+  const [branding, ssrData] = await Promise.all([brandingPromise, ssrDataPromise])
+
+  const isVi = locale === 'vi'
+  const brandName = isVi
+    ? branding?.brandNameVi || 'ƯƠM.'
+    : branding?.brandNameEn || 'ƯƠM.'
+  const alternateBrandName = isVi
+    ? branding?.brandNameEn || 'ƯƠM.'
+    : branding?.brandNameVi || 'ƯƠM.'
+  const siteTitle = isVi
+    ? branding?.siteTitleVi || 'ƯƠM. - Gốm sứ thủ công Việt Nam'
+    : branding?.siteTitleEn || 'ƯƠM. - Handcrafted Ceramics from Vietnam'
+  const description = isVi
+    ? branding?.siteDescriptionVi || 'Gốm sứ thủ công Việt Nam — Vietnamese Handcrafted Ceramics'
+    : branding?.siteDescriptionEn || 'Vietnamese handcrafted ceramics and artisan stories.'
+  const logo = branding?.logoUrl || `${baseUrl}/assets/logo.png`
+  const socialProfiles = ['https://instagram.com/uomarchive', 'https://facebook.com/uomarchive']
 
   return (
-    <div className="pt-0">
-      {/* Hero Banner Carousel - Full Width */}
-      {banners && banners.length > 0 ? (
-        <div>
-          <BannerCarousel banners={banners} locale={locale} />
-        </div>
-      ) : (
-        /* Fallback Hero Section if no banners */
-        <section className="relative flex h-[60vh] min-h-[400px] w-full items-center justify-center overflow-hidden md:h-[80vh]">
-          {/* Background Image with Parallax/Zoom effect */}
-          {heroImage && (
-            <div className="absolute inset-0 z-0">
-              <Image
-                src={heroImage}
-                alt="Hero Background"
-                fill
-                className="animate-slow-zoom object-cover"
-                priority
-              />
-              <div className="absolute inset-0 bg-black/30" /> {/* Overlay */}
-            </div>
-          )}
+    <>
+      <Script
+        id="home-org-jsonld"
+        strategy="beforeInteractive"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'Organization',
+            name: brandName,
+            alternateName: alternateBrandName,
+            url: baseUrl,
+            logo: logo,
+            sameAs: socialProfiles,
+            description: description,
+          }),
+        }}
+      />
+      <Script
+        id="home-website-jsonld"
+        strategy="beforeInteractive"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'WebSite',
+            name: brandName,
+            alternateName: [alternateBrandName, siteTitle],
+            url: `${baseUrl}/${locale}`,
+            potentialAction: {
+              '@type': 'SearchAction',
+              target: `${baseUrl}/${locale}/shop?search={search_term_string}`,
+              'query-input': 'required name=search_term_string',
+            },
+          }),
+        }}
+      />
 
-          <div className="animate-fade-in relative z-10 max-w-4xl space-y-4 px-6 text-center text-white md:space-y-6">
-            <h1 className="text-3xl font-light uppercase tracking-[0.2em] drop-shadow-lg sm:text-4xl md:text-6xl lg:text-7xl">
-              {siteContent?.[`hero.title.${locale}`] || t('title')}
-            </h1>
-            <p className="mx-auto hidden max-w-2xl text-base font-light leading-relaxed tracking-wide opacity-90 drop-shadow-md sm:block sm:text-lg md:text-xl">
-              {siteContent?.[`hero.subtitle.${locale}`] || t('subtitle')}
-            </p>
-            <div className="pt-6 md:pt-8">
-              <Link
-                href={`/${locale}/shop`}
-                className="btn min-w-[160px] border-white text-sm text-white transition-all duration-500 hover:bg-white hover:text-black md:min-w-[200px] md:text-base"
-              >
-                {t('explore')}
-              </Link>
-            </div>
+      {/* SEO Server-Side Content Summary - Hidden from users, visible to bots */}
+      <section className="sr-only" suppressHydrationWarning>
+        <h1 suppressHydrationWarning>
+          {isVi ? branding?.siteTitleVi || brandName : branding?.siteTitleEn || brandName}
+        </h1>
+        <p suppressHydrationWarning>
+          {isVi ? branding?.siteDescriptionVi : branding?.siteDescriptionEn}
+        </p>
+
+        {ssrData.products.data.length > 0 && (
+          <div suppressHydrationWarning>
+            <h2 suppressHydrationWarning>{isVi ? 'Sản phẩm mới' : 'New Arrivals'}</h2>
+            <ul suppressHydrationWarning>
+              {ssrData.products.data.map((p) => (
+                <li key={p.id} suppressHydrationWarning>
+                  <Link href={`/${locale}/shop/${p.slug}`} suppressHydrationWarning>
+                    {isVi ? p.nameVi : p.nameEn} - {p.priceVND.toLocaleString('vi-VN')} VND
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </div>
-        </section>
-      )}
+        )}
 
-      {/* New Arrivals Section */}
-      <section className="w-full px-4 py-12 pt-12 md:px-12 md:py-16 md:pt-24 lg:px-16">
-        <div className="mb-8 flex items-center justify-between md:mb-12">
-          <h2 className="text-sm uppercase tracking-wider md:text-base">{t('featured')}</h2>
-          <Link href={`/${locale}/shop`} className="nav-link text-xs md:text-sm">
-            {t('viewAll')}
-          </Link>
-        </div>
-
-        {isLoadingLatest ? (
-          <div className="grid-products">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="space-y-4">
-                <div className="aspect-product animate-pulse bg-muted/30" />
-                <div className="h-4 w-3/4 animate-pulse bg-muted/30" />
-                <div className="h-4 w-1/2 animate-pulse bg-muted/30" />
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="grid-products stagger-children">
-            {latestProducts?.data.map((product) => (
-              <ProductCard key={product.id} product={product} locale={locale} />
-            ))}
+        {ssrData.stories.length > 0 && (
+          <div suppressHydrationWarning>
+            <h2 suppressHydrationWarning>Journal</h2>
+            <ul suppressHydrationWarning>
+              {ssrData.stories.map((s) => (
+                <li key={s.id} suppressHydrationWarning>
+                  <a
+                    href={`/${locale}/journal/${getStorySlug(s, locale as 'vi' | 'en')}`}
+                    suppressHydrationWarning
+                  >
+                    {isVi ? s.titleVi : s.titleEn}
+                  </a>
+                  <p suppressHydrationWarning>{isVi ? s.summaryVi : s.summaryEn}</p>
+                </li>
+              ))}
+            </ul>
           </div>
         )}
       </section>
 
-      {/* Categories Selection */}
-      {categories && categories.length > 0 && (
-        <section className="w-full border-y border-border/10 bg-[#F8F5F2]/50 px-4 py-12 md:px-12 md:py-16 lg:px-16">
-          <div className="mb-10 text-center md:mb-16">
-            <h2 className="mb-4 text-xl font-light uppercase tracking-[0.3em] md:text-2xl">
-              Shop by Category
-            </h2>
-            <div className="mx-auto h-px w-24 bg-primary opacity-30" />
-          </div>
-
-          <div className="mx-auto grid max-w-7xl grid-cols-2 gap-4 md:grid-cols-3 md:gap-8 lg:grid-cols-4 lg:gap-12">
-            {categories.map((category) => (
-              <Link
-                key={category.id}
-                href={`/${locale}/shop?categoryId=${category.id}`}
-                className="group flex flex-col items-center"
-              >
-                <div className="relative mb-4 aspect-square w-full overflow-hidden rounded-full border border-border/10 bg-white p-2 md:mb-6">
-                  <div className="relative h-full w-full overflow-hidden rounded-full">
-                    {category.image ? (
-                      <Image
-                        src={category.image}
-                        alt={locale === 'vi' ? category.nameVi : category.nameEn}
-                        fill
-                        className="object-cover transition-transform duration-700 group-hover:scale-110"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-muted/50">
-                        <span className="font-serif text-xl text-muted-foreground/30 md:text-2xl">
-                          {(locale === 'vi' ? category.nameVi : category.nameEn).charAt(0)}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  {/* Subtle overlay */}
-                  <div className="absolute inset-0 rounded-full ring-1 ring-inset ring-black/5 transition-all duration-300 group-hover:bg-black/5" />
-                </div>
-                <h3 className="text-center text-xs font-medium uppercase tracking-widest transition-colors group-hover:text-primary md:text-sm">
-                  {locale === 'vi' ? category.nameVi : category.nameEn}
-                </h3>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Curated Selection Section (Replacing Philosophy) */}
-      <section className="w-full border-t border-border/10 px-6 py-12 md:px-12 md:py-16 lg:px-16">
-        <div className="mb-12 flex items-center justify-between">
-          <h2 className="uppercase tracking-wider">{t('curated')}</h2>
-          <Link href={`/${locale}/shop?isFeatured=true`} className="nav-link">
-            {t('showMore')}
-          </Link>
-        </div>
-
-        {isLoadingFeatured ? (
-          <div className="grid-products">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="space-y-4">
-                <div className="aspect-product animate-pulse bg-muted/30" />
-                <div className="h-4 w-3/4 animate-pulse bg-muted/30" />
-                <div className="h-4 w-1/2 animate-pulse bg-muted/30" />
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="grid-products stagger-children">
-            {featuredProducts?.data.map((product) => (
-              <ProductCard key={product.id} product={product} locale={locale} />
-            ))}
-          </div>
-        )}
-      </section>
-    </div>
+      <HomeClient
+        initialProducts={ssrData.products}
+        initialSiteContent={ssrData.siteContent}
+        initialBanners={ssrData.banners}
+      />
+    </>
   )
 }

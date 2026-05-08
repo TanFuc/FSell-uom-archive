@@ -56,7 +56,6 @@ export function RichTextEditor({
   const [isMaximized, setIsMaximized] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Prevent scroll on body when maximized
   useEffect(() => {
     if (isMaximized) {
       document.body.style.overflow = 'hidden'
@@ -102,7 +101,17 @@ export function RichTextEditor({
     },
   })
 
-  // ... (handleImageUpload, handleFileSelect, setLink consts remain the same)
+  useEffect(() => {
+    if (!editor) return
+
+    const incoming = content || ''
+    const current = editor.getHTML()
+
+    if (incoming !== current) {
+      editor.commands.setContent(incoming, { emitUpdate: false })
+    }
+  }, [content, editor])
+
   const handleImageUpload = useCallback(
     async (file: File) => {
       if (!editor) return
@@ -187,11 +196,18 @@ export function RichTextEditor({
       className={cn(
         'flex flex-col rounded-md border bg-background transition-all duration-200',
         className,
-        isMaximized && 'fixed inset-0 z-[100] h-screen w-screen rounded-none border-none',
+        isMaximized &&
+          'fixed inset-0 z-[100] h-screen w-screen rounded-none border-none bg-slate-100/95 p-5 backdrop-blur-sm',
       )}
     >
       {/* Toolbar */}
-      <div className="sticky top-0 z-10 flex w-full flex-wrap items-center gap-1 overflow-x-auto border-b bg-muted/30 p-2">
+      <div
+        className={cn(
+          'sticky top-0 z-10 flex w-full flex-wrap items-center gap-1 overflow-x-auto border-b bg-muted/30 p-2',
+          isMaximized &&
+            'mx-auto w-full max-w-5xl rounded-t-md border border-slate-300 bg-white shadow-sm',
+        )}
+      >
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleBold().run()}
           isActive={editor.isActive('bold')}
@@ -361,7 +377,7 @@ export function RichTextEditor({
       <EditorContent
         editor={editor}
         className={cn(
-          'prose prose-sm min-h-[150px] w-full max-w-none flex-1 overflow-y-auto p-4 transition-all duration-300 focus:outline-none',
+          'prose prose-sm min-h-[150px] w-full max-w-none flex-1 overflow-y-auto p-4 font-sans text-[11px] tracking-[0.05em] transition-all duration-300 focus:outline-none',
           '[&_.ProseMirror]:min-h-[130px] [&_.ProseMirror]:outline-none',
           '[&_.ProseMirror_p.is-editor-empty:first-child::before]:text-muted-foreground',
           '[&_.ProseMirror_p.is-editor-empty:first-child::before]:content-[attr(data-placeholder)]',
@@ -371,7 +387,7 @@ export function RichTextEditor({
           '[&_.ProseMirror]:text-left',
           disabled && 'cursor-not-allowed opacity-50',
           isMaximized &&
-            'mx-auto max-w-4xl border-x border-border/10 p-8 shadow-sm [&_.ProseMirror]:min-h-[calc(100vh-100px)]',
+            'mx-auto w-full max-w-5xl rounded-b-md border border-slate-300 bg-white p-8 shadow-md [&_.ProseMirror]:min-h-[calc(100vh-180px)]',
         )}
       />
     </div>

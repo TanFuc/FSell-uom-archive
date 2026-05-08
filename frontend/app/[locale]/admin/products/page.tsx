@@ -11,6 +11,9 @@ import {
   Power,
   PowerOff,
   Trash,
+  ExternalLink,
+  Zap,
+  RefreshCw,
 } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -40,7 +43,14 @@ import { useDocumentTitle } from '@/hooks/use-document-title'
 import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api'
 import { type Product } from '@/lib/types'
-import { formatPriceVND, getImageUrl, optimizeProductImage, slugify } from '@/lib/utils'
+import { formatPriceVND, getImageUrl, optimizeProductImage, cn } from '@/lib/utils'
+
+function formatUsdValue(value?: number | null): string {
+  if (value === null || value === undefined || Number.isNaN(value)) {
+    return '-'
+  }
+  return `$${value.toFixed(2)}`
+}
 
 export default function ProductsPage() {
   const router = useRouter()
@@ -48,11 +58,12 @@ export default function ProductsPage() {
   const t = useTranslations('admin')
   const { toast } = useToast()
 
-  // Update document title
-  useDocumentTitle(t('products'), 'Admin - Ươm Archive')
+  useDocumentTitle(t('products'), 'Admin - ƯƠM. Archive')
 
   const [products, setProducts] = useState<Product[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [isPinging, setIsPinging] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [selectedProducts, setSelectedProducts] = useState<string[]>([])
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; product: Product | null }>({
@@ -60,45 +71,62 @@ export default function ProductsPage() {
     product: null,
   })
 
-  const fetchProducts = useCallback(async () => {
-    try {
-      setIsLoading(true)
-      const response = await api.getAdminProducts({
-        search: search || undefined,
-        includeDeleted: false, // Don't show deleted products
-        limit: 100,
-      })
-      setProducts(response.data.filter((p: Product) => !p.deletedAt)) // Extra filter
-    } catch (error) {
-      console.error('Failed to fetch products:', error)
-      toast({
-        title: t('error'),
-        description: t('failedToUpdate'),
-        variant: 'destructive',
-      })
-    } finally {
-      setIsLoading(false)
-    }
-  }, [search, t, toast])
+  const fetchProducts = useCallback(
+    async (options?: { withLoading?: boolean }) => {
+      const withLoading = options?.withLoading ?? false
+
+      try {
+        if (withLoading) {
+          setIsLoading(true)
+        } else {
+          setIsRefreshing(true)
+        }
+
+        const response = await api.getAdminProducts({
+          search: search || undefined,
+          includeDeleted: false, // Don't show deleted products
+          limit: 100,
+        })
+        setProducts(response.data.filter((p: Product) => !p.deletedAt)) // Extra filter
+      } catch (error) {
+        console.error('Failed to fetch products:', error)
+        toast({
+          title: t('error'),
+          description: t('failedToUpdate'),
+          variant: 'destructive',
+        })
+      } finally {
+        if (withLoading) {
+          setIsLoading(false)
+        }
+        setIsRefreshing(false)
+      }
+    },
+    [search, t, toast],
+  )
 
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
-      fetchProducts()
+      fetchProducts({ withLoading: false })
     }, 300)
     return () => clearTimeout(delayDebounce)
-  }, [search])
+  }, [search, fetchProducts])
 
   useEffect(() => {
-    fetchProducts()
-  }, [])
+    fetchProducts({ withLoading: true })
+  }, [fetchProducts])
 
   const handleDelete = async () => {
     if (!deleteDialog.product) return
 
+    const productToDelete = deleteDialog.product
+
     try {
-      await api.deleteProduct(deleteDialog.product.id)
+      await api.deleteProduct(productToDelete.id)
+      setProducts((prev) => prev.filter((item) => item.id !== productToDelete.id))
+      setSelectedProducts((prev) => prev.filter((id) => id !== productToDelete.id))
       toast({ title: t('success'), description: 'Đã chuyển vào thùng rác' })
-      fetchProducts()
+      fetchProducts({ withLoading: false })
     } catch (error) {
       toast({ title: t('error'), description: t('failedToDelete'), variant: 'destructive' })
     } finally {
@@ -110,84 +138,124 @@ export default function ProductsPage() {
     try {
       await api.duplicateProduct(product.id)
       toast({ title: t('success'), description: t('productDuplicated') })
-      fetchProducts()
+      fetchProducts({ withLoading: false })
     } catch (error) {
       toast({ title: t('error'), description: t('failedToUpdate'), variant: 'destructive' })
     }
   }
 
-  // Quick toggle for active status
   const handleToggleActive = async (product: Product, e: React.MouseEvent) => {
     e.stopPropagation()
+    const nextValue = !product.isActive
+
+    setProducts((prev) =>
+      prev.map((item) => (item.id === product.id ? { ...item, isActive: nextValue } : item)),
+    )
+
     try {
-      await api.updateProduct(product.id, { isActive: !product.isActive })
+      await api.updateProduct(product.id, { isActive: nextValue })
       toast({
         title: t('success'),
-        description: product.isActive ? 'Đã tắt sản phẩm' : 'Đã bật sản phẩm',
+        description: nextValue ? 'Đã bật sản phẩm' : 'Đã tắt sản phẩm',
       })
-      fetchProducts()
     } catch (error) {
+      setProducts((prev) =>
+        prev.map((item) =>
+          item.id === product.id ? { ...item, isActive: product.isActive } : item,
+        ),
+      )
       toast({ title: t('error'), description: t('failedToUpdate'), variant: 'destructive' })
+      return
     }
+
+    fetchProducts({ withLoading: false })
   }
 
-  // Quick toggle for featured status
   const handleToggleFeatured = async (product: Product, e: React.MouseEvent) => {
     e.stopPropagation()
+    const nextValue = !product.isFeatured
+
+    setProducts((prev) =>
+      prev.map((item) => (item.id === product.id ? { ...item, isFeatured: nextValue } : item)),
+    )
+
     try {
-      await api.updateProduct(product.id, { isFeatured: !product.isFeatured })
+      await api.updateProduct(product.id, { isFeatured: nextValue })
       toast({
         title: t('success'),
-        description: product.isFeatured ? 'Đã bỏ khỏi nổi bật' : 'Đã đặt nổi bật',
+        description: nextValue ? 'Đã đặt nổi bật' : 'Đã bỏ khỏi nổi bật',
       })
-      fetchProducts()
     } catch (error) {
+      setProducts((prev) =>
+        prev.map((item) =>
+          item.id === product.id ? { ...item, isFeatured: product.isFeatured } : item,
+        ),
+      )
       toast({ title: t('error'), description: t('failedToUpdate'), variant: 'destructive' })
+      return
     }
+
+    fetchProducts({ withLoading: false })
   }
 
-  // Bulk actions
   const handleBulkDelete = async () => {
+    const idsToDelete = [...selectedProducts]
+
     try {
-      await Promise.all(selectedProducts.map((id) => api.deleteProduct(id)))
+      await Promise.all(idsToDelete.map((id) => api.deleteProduct(id)))
+      setProducts((prev) => prev.filter((item) => !idsToDelete.includes(item.id)))
       toast({
         title: t('success'),
-        description: `Đã chuyển ${selectedProducts.length} sản phẩm vào thùng rác`,
+        description: `Đã chuyển ${idsToDelete.length} sản phẩm vào thùng rác`,
       })
       setSelectedProducts([])
-      fetchProducts()
+      fetchProducts({ withLoading: false })
     } catch (error) {
       toast({ title: t('error'), description: t('failedToDelete'), variant: 'destructive' })
     }
   }
 
   const handleBulkToggleActive = async (active: boolean) => {
+    const idsToUpdate = [...selectedProducts]
+
+    setProducts((prev) =>
+      prev.map((item) => (idsToUpdate.includes(item.id) ? { ...item, isActive: active } : item)),
+    )
+
     try {
-      await Promise.all(selectedProducts.map((id) => api.updateProduct(id, { isActive: active })))
+      await Promise.all(idsToUpdate.map((id) => api.updateProduct(id, { isActive: active })))
       toast({
         title: t('success'),
-        description: `Đã ${active ? 'bật' : 'tắt'} ${selectedProducts.length} sản phẩm`,
+        description: `Đã ${active ? 'bật' : 'tắt'} ${idsToUpdate.length} sản phẩm`,
       })
       setSelectedProducts([])
-      fetchProducts()
+      fetchProducts({ withLoading: false })
     } catch (error) {
       toast({ title: t('error'), description: t('failedToUpdate'), variant: 'destructive' })
+      fetchProducts({ withLoading: false })
     }
   }
 
   const handleBulkToggleFeatured = async (featured: boolean) => {
+    const idsToUpdate = [...selectedProducts]
+
+    setProducts((prev) =>
+      prev.map((item) =>
+        idsToUpdate.includes(item.id) ? { ...item, isFeatured: featured } : item,
+      ),
+    )
+
     try {
-      await Promise.all(
-        selectedProducts.map((id) => api.updateProduct(id, { isFeatured: featured })),
-      )
+      await Promise.all(idsToUpdate.map((id) => api.updateProduct(id, { isFeatured: featured })))
       toast({
         title: t('success'),
-        description: `Đã ${featured ? 'đặt nổi bật' : 'bỏ nổi bật'} ${selectedProducts.length} sản phẩm`,
+        description: `Đã ${featured ? 'đặt nổi bật' : 'bỏ nổi bật'} ${idsToUpdate.length} sản phẩm`,
       })
       setSelectedProducts([])
-      fetchProducts()
+      fetchProducts({ withLoading: false })
     } catch (error) {
       toast({ title: t('error'), description: t('failedToUpdate'), variant: 'destructive' })
+      fetchProducts({ withLoading: false })
     }
   }
 
@@ -205,22 +273,57 @@ export default function ProductsPage() {
     )
   }
 
+  const handlePingGoogle = async (product: Product, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setIsPinging(product.id)
+
+    try {
+      const response = await fetch('/api/revalidate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          path: `/${locale}/shop/${product.slug}`,
+        }),
+      })
+
+      if (response.ok) {
+        toast({
+          title: 'SEO Refresh Thành công',
+          description: 'Đã xóa cache & gửi yêu cầu cập nhật tới Googlebot',
+        })
+      } else {
+        throw new Error('Failed to revalidate')
+      }
+    } catch (error) {
+      toast({
+        title: 'Lỗi SEO Refresh',
+        description: 'Không thể làm mới chỉ mục ngay lúc này',
+        variant: 'destructive',
+      })
+    } finally {
+      setIsPinging(null)
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="font-serif text-2xl">{t('products')}</h1>
           <p className="text-muted-foreground">{t('manageProductCatalog')}</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
           <Link href={`/${locale}/admin/products/trash`}>
-            <Button variant="outline">
+            <Button variant="outline" className="w-full sm:w-auto">
               <Trash className="mr-2 h-4 w-4" />
               {t('trash')}
             </Button>
           </Link>
-          <Button onClick={() => router.push(`/${locale}/admin/products/new`)}>
+          <Button
+            onClick={() => router.push(`/${locale}/admin/products/new`)}
+            className="w-full sm:w-auto"
+          >
             <Plus className="mr-2 h-4 w-4" />
             {t('create')}
           </Button>
@@ -228,8 +331,8 @@ export default function ProductsPage() {
       </div>
 
       {/* Search */}
-      <div className="flex items-center gap-4">
-        <div className="relative max-w-sm flex-1">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+        <div className="relative w-full max-w-sm flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder={t('search')}
@@ -238,45 +341,82 @@ export default function ProductsPage() {
             className="pl-9"
           />
         </div>
+        {isRefreshing && <span className="text-xs text-muted-foreground">{t('loading')}...</span>}
       </div>
 
       {/* Bulk Actions */}
       {selectedProducts.length > 0 && (
-        <div className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/10 p-4">
-          <span className="text-sm font-medium">
+        <div className="space-y-3 rounded-lg border border-primary/20 bg-primary/10 p-4">
+          <span className="block text-sm font-medium">
             {selectedProducts.length} {t('selected')}
           </span>
-          <Button variant="outline" size="sm" onClick={() => setSelectedProducts([])}>
-            {t('clear')}
-          </Button>
-          <div className="mx-2 h-4 w-px bg-border" />
-          <Button variant="outline" size="sm" onClick={() => handleBulkToggleActive(true)}>
-            <Power className="mr-2 h-4 w-4" />
-            Bật
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => handleBulkToggleActive(false)}>
-            <PowerOff className="mr-2 h-4 w-4" />
-            Tắt
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => handleBulkToggleFeatured(true)}>
-            <Star className="mr-2 h-4 w-4" />
-            Nổi bật
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => handleBulkToggleFeatured(false)}>
-            <StarOff className="mr-2 h-4 w-4" />
-            Bỏ nổi bật
-          </Button>
-          <div className="mx-2 h-4 w-px bg-border" />
-          <Button variant="destructive" size="sm" onClick={handleBulkDelete}>
-            <Trash2 className="mr-2 h-4 w-4" />
-            {t('deleteSelected')}
-          </Button>
+          <div className="relative">
+            <div className="hide-scrollbar -mx-1 flex snap-x snap-mandatory gap-2 overflow-x-auto px-1 pb-1 md:mx-0 md:flex-wrap md:overflow-visible md:px-0 md:pb-0">
+              <Button
+                variant="outline"
+                size="sm"
+                className="shrink-0 snap-start"
+                onClick={() => setSelectedProducts([])}
+              >
+                {t('clear')}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="shrink-0 snap-start"
+                onClick={() => handleBulkToggleActive(true)}
+              >
+                <Power className="mr-2 h-4 w-4" />
+                Bật
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="shrink-0 snap-start"
+                onClick={() => handleBulkToggleActive(false)}
+              >
+                <PowerOff className="mr-2 h-4 w-4" />
+                Tắt
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="shrink-0 snap-start"
+                onClick={() => handleBulkToggleFeatured(true)}
+              >
+                <Star className="mr-2 h-4 w-4" />
+                Nổi bật
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="shrink-0 snap-start"
+                onClick={() => handleBulkToggleFeatured(false)}
+              >
+                <StarOff className="mr-2 h-4 w-4" />
+                Bỏ nổi bật
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                className="shrink-0 snap-start"
+                onClick={handleBulkDelete}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                {t('deleteSelected')}
+              </Button>
+            </div>
+
+            {/* Mobile hint: faded edges to indicate horizontal scroll */}
+            <div className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-primary/20 to-transparent md:hidden" />
+            <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-primary/20 to-transparent md:hidden" />
+          </div>
         </div>
       )}
 
       {/* Table */}
-      <div className="overflow-hidden rounded-lg border">
-        <Table>
+      <div className="rounded-lg border bg-background">
+        <Table className="min-w-[1120px]">
           <TableHeader>
             <TableRow className="bg-muted/50">
               <TableHead className="w-12">
@@ -289,22 +429,25 @@ export default function ProductsPage() {
               <TableHead>{t('name')}</TableHead>
               <TableHead className="w-32">{t('category')}</TableHead>
               <TableHead className="w-32">{t('priceLabel')}</TableHead>
+              <TableHead className="w-32">USD</TableHead>
               <TableHead className="w-24">{t('stockLabel')}</TableHead>
+              <TableHead className="w-24 text-center">Link</TableHead>
               <TableHead className="w-32 text-center">{t('activeStatus')}</TableHead>
               <TableHead className="w-32 text-center">{t('featuredStatus')}</TableHead>
+              <TableHead className="w-20 text-center">SEO</TableHead>
               <TableHead className="w-32">{t('actions')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={8} className="h-[400px] text-center">
+                <TableCell colSpan={11} className="h-[400px] text-center">
                   <span className="text-muted-foreground">{t('loading')}...</span>
                 </TableCell>
               </TableRow>
             ) : products.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="h-[400px] text-center">
+                <TableCell colSpan={11} className="h-[400px] text-center">
                   <span className="text-muted-foreground">{t('noResults')}</span>
                 </TableCell>
               </TableRow>
@@ -365,17 +508,33 @@ export default function ProductsPage() {
                     )}
                   </TableCell>
                   <TableCell>{formatPriceVND(product.priceVND)}</TableCell>
+                  <TableCell>{formatUsdValue(product.priceUSD)}</TableCell>
                   <TableCell>
                     <span className={product.stock <= 0 ? 'font-medium text-destructive' : ''}>
                       {product.stock}
                     </span>
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()} className="text-center">
+                    {product.isActive ? (
+                      <a
+                        href={`/${locale}/shop/${product.slug}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-md border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                        title="Xem sản phẩm ngoài trang public"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </a>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">-</span>
+                    )}
+                  </TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()} className="text-center">
                     <Button
                       variant={product.isActive ? 'default' : 'outline'}
                       size="sm"
                       onClick={(e) => handleToggleActive(product, e)}
-                      className={product.isActive ? 'bg-green-600 hover:bg-green-700' : ''}
+                      className={`whitespace-nowrap ${product.isActive ? 'bg-green-600 hover:bg-green-700' : ''}`}
                     >
                       {product.isActive ? (
                         <>
@@ -395,7 +554,7 @@ export default function ProductsPage() {
                       variant={product.isFeatured ? 'default' : 'outline'}
                       size="sm"
                       onClick={(e) => handleToggleFeatured(product, e)}
-                      className={product.isFeatured ? 'bg-yellow-600 hover:bg-yellow-700' : ''}
+                      className={`whitespace-nowrap ${product.isFeatured ? 'bg-yellow-600 hover:bg-yellow-700' : ''}`}
                     >
                       {product.isFeatured ? (
                         <>
@@ -407,6 +566,25 @@ export default function ProductsPage() {
                           <StarOff className="mr-1 h-4 w-4" />
                           Thường
                         </>
+                      )}
+                    </Button>
+                  </TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()} className="text-center">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={(e) => handlePingGoogle(product, e)}
+                      disabled={isPinging === product.id}
+                      className={cn(
+                        'h-8 w-8',
+                        isPinging === product.id ? 'animate-spin' : 'hover:text-amber-600',
+                      )}
+                      title="Làm mới chỉ mục SEO (Ping Google)"
+                    >
+                      {isPinging === product.id ? (
+                        <RefreshCw className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Zap className="h-4 w-4" />
                       )}
                     </Button>
                   </TableCell>

@@ -1,61 +1,125 @@
 'use client'
 
-import { Instagram, Facebook } from 'lucide-react'
 import Link from 'next/link'
 import { useLocale, useTranslations } from 'next-intl'
-import { useCategories } from '@/hooks/use-categories'
-import { useSocialLinks } from '@/hooks/use-settings'
+import { useEffect, useState } from 'react'
+import { useBranding, useSocialLinks } from '@/hooks/use-settings'
 
 export function Footer() {
   const locale = useLocale() as 'vi' | 'en'
   const t = useTranslations('Footer')
+  const { data: branding } = useBranding()
   const { data: socialLinks } = useSocialLinks()
-  const { data: categories } = useCategories({ includeInactive: false })
+  const BRANDING_CACHE_KEY = 'uom_branding_cache'
+
+  const getCachedBranding = () => {
+    if (typeof window === 'undefined') return undefined
+    try {
+      const stored = localStorage.getItem(BRANDING_CACHE_KEY)
+      return stored
+        ? (JSON.parse(stored) as {
+            brandNameVi?: string
+            brandNameEn?: string
+            brandTaglineVi?: string
+            brandTaglineEn?: string
+          })
+        : undefined
+    } catch {
+      return undefined
+    }
+  }
+
+  const [cachedBranding, setCachedBranding] = useState<
+    | {
+        brandNameVi?: string
+        brandNameEn?: string
+        brandTaglineVi?: string
+        brandTaglineEn?: string
+      }
+    | undefined
+  >(undefined)
+
+  useEffect(() => {
+    setCachedBranding(getCachedBranding())
+  }, [
+    branding?.brandNameVi,
+    branding?.brandNameEn,
+    branding?.brandTaglineVi,
+    branding?.brandTaglineEn,
+  ])
+
+  const brandName =
+    locale === 'vi'
+      ? branding?.brandNameVi || cachedBranding?.brandNameVi || 'ƯƠM. Archive'
+      : branding?.brandNameEn || cachedBranding?.brandNameEn || 'ƯƠM.'
+
+  const brandTagline =
+    locale === 'vi'
+      ? branding?.brandTaglineVi || cachedBranding?.brandTaglineVi || t('description')
+      : branding?.brandTaglineEn || cachedBranding?.brandTaglineEn || t('description')
 
   const currentYear = new Date().getFullYear()
 
   return (
-    <footer className="border-t border-foreground/10 bg-primary/15">
-      <div className="container-custom spacing-md">
-        {/* Main Footer Content */}
-        <div className="mb-8 grid grid-cols-1 gap-8 md:grid-cols-3 md:gap-12">
+    <footer className="bg-white px-6 py-12 text-foreground lg:px-12">
+      <div className="flex w-full flex-col gap-10">
+        {/* Main Footer: Compact Grid */}
+        <div className="grid grid-cols-2 gap-8 md:grid-cols-4 lg:grid-cols-4">
           {/* Brand */}
-          <div>
+          <div className="space-y-4">
             <Link
               href={`/${locale}`}
-              className="mb-4 inline-block font-playfair text-3xl font-bold tracking-widest text-foreground transition-opacity duration-300 hover:opacity-80 md:text-4xl"
+              className="inline-block font-playfair text-2xl font-bold tracking-tighter text-foreground transition-opacity hover:opacity-70"
             >
-              ƯƠM<span className="text-primary">.</span>
+              {brandName}
             </Link>
-            <p className="max-w-xs text-muted-foreground">{t('description')}</p>
+            <p className="hidden text-[9px] font-medium uppercase leading-relaxed tracking-[0.2em] text-foreground/40 md:block">
+              {brandTagline}
+            </p>
           </div>
 
-          {/* Links */}
-          <div>
-            <h4 className="mb-4 uppercase tracking-wider">{t('navigation')}</h4>
+          {/* Navigation - Compact */}
+          <div className="space-y-4">
+            <h4 className="text-[10px] font-bold uppercase tracking-[0.4em] text-foreground">
+              {t('navigation')}
+            </h4>
             <nav className="flex flex-col gap-2">
-              <Link href={`/${locale}/shop`} className="text-link">
+              <Link
+                href={`/${locale}/shop`}
+                className="text-[10px] font-medium uppercase tracking-[0.15em] transition-all hover:opacity-60"
+              >
                 {t('shop')}
               </Link>
-              <Link href={`/${locale}/about`} className="text-link">
+              <Link
+                href={`/${locale}/about`}
+                className="text-[10px] font-medium uppercase tracking-[0.15em] transition-all hover:opacity-60"
+              >
                 {t('about')}
+              </Link>
+              <Link
+                href={`/${locale}/journal`}
+                className="text-[10px] font-medium uppercase tracking-[0.15em] transition-all hover:opacity-60"
+              >
+                {t('journal')}
               </Link>
             </nav>
           </div>
 
-          {/* Social */}
-          <div>
-            <h4 className="mb-4 uppercase tracking-wider">{t('connect')}</h4>
-            <div className="flex gap-4">
+          {/* Connect - Compact */}
+          <div className="space-y-4">
+            <h4 className="text-[10px] font-bold uppercase tracking-[0.4em] text-foreground">
+              {t('connect')}
+            </h4>
+            <div className="flex flex-col gap-2">
               {socialLinks?.instagramUsername && (
                 <a
                   href={`https://instagram.com/${socialLinks.instagramUsername}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="transition-opacity hover:opacity-60"
+                  className="text-[10px] font-medium uppercase tracking-[0.15em] transition-all hover:opacity-60"
                   aria-label="Instagram"
                 >
-                  <Instagram className="h-5 w-5" />
+                  Instagram
                 </a>
               )}
               {socialLinks?.facebookPageUrl && (
@@ -63,21 +127,40 @@ export function Footer() {
                   href={socialLinks.facebookPageUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="transition-opacity hover:opacity-60"
+                  className="text-[10px] font-medium uppercase tracking-[0.15em] transition-all hover:opacity-60"
                   aria-label="Facebook"
                 >
-                  <Facebook className="h-5 w-5" />
+                  Facebook
                 </a>
               )}
             </div>
           </div>
+
+          {/* Legal - Compact */}
+          <div className="space-y-4">
+            <h4 className="text-[10px] font-bold uppercase tracking-[0.4em] text-foreground">
+              LEGAL
+            </h4>
+            <div className="flex flex-col gap-2">
+              <span className="text-[10px] font-medium uppercase tracking-[0.15em] text-foreground/30">
+                Terms
+              </span>
+              <span className="text-[10px] font-medium uppercase tracking-[0.15em] text-foreground/30">
+                Privacy
+              </span>
+            </div>
+          </div>
         </div>
 
-        {/* Copyright */}
-        <div className="border-t border-foreground/10 pt-8 text-center md:text-left">
-          <p className="text-muted-foreground">
-            © {currentYear} Ươm Archive. {t('rights')}
+        {/* Bottom Bar: Merged into the flow, no border */}
+        <div className="flex items-center justify-between pt-4">
+          <p className="text-[8px] font-bold uppercase tracking-[0.4em] text-foreground/30">
+            © {currentYear} <span className="font-playfair text-xs lowercase">ƯƠM.</span>
           </p>
+          <div className="flex gap-6 opacity-20">
+            <span className="text-[8px] font-bold tracking-[0.5em]">VI</span>
+            <span className="text-[8px] font-bold tracking-[0.5em]">EN</span>
+          </div>
         </div>
       </div>
     </footer>

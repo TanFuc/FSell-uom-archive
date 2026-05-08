@@ -11,14 +11,12 @@ import {
   Power,
   PowerOff,
   Trash,
-  Filter,
 } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 import { useEffect, useState, useCallback } from 'react'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
@@ -30,7 +28,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
-import { Switch } from '@/components/ui/switch'
 import {
   Table,
   TableBody,
@@ -42,7 +39,7 @@ import {
 import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api'
 import { type Product } from '@/lib/types'
-import { formatPriceVND, getImageUrl, optimizeProductImage, slugify } from '@/lib/utils'
+import { formatPriceVND, getImageUrl, optimizeProductImage } from '@/lib/utils'
 
 export default function ProductsPage() {
   const router = useRouter()
@@ -115,7 +112,6 @@ export default function ProductsPage() {
     }
   }
 
-  // Quick toggle for active status
   const handleToggleActive = async (product: Product, e: React.MouseEvent) => {
     e.stopPropagation()
     try {
@@ -130,7 +126,6 @@ export default function ProductsPage() {
     }
   }
 
-  // Quick toggle for featured status
   const handleToggleFeatured = async (product: Product, e: React.MouseEvent) => {
     e.stopPropagation()
     try {
@@ -145,7 +140,6 @@ export default function ProductsPage() {
     }
   }
 
-  // Bulk actions
   const handleBulkDelete = async () => {
     try {
       await Promise.all(selectedProducts.map((id) => api.deleteProduct(id)))

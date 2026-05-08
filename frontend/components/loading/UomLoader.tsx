@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 
 /**
- * Custom "Ươm." Loading Screen Component
+ * Custom "ƯƠM." Loading Screen Component
  *
  * Features:
  * - Fullscreen overlay (NOT a small spinner)
@@ -30,10 +30,8 @@ export function UomLoader({ isLoading, showLoadingBar = true }: UomLoaderProps) 
     setMounted(true)
   }, [])
 
-  // Prevent SSR hydration mismatch
   if (!mounted) return null
 
-  // Don't render if not loading
   if (!isLoading) return null
 
   return (
@@ -42,7 +40,7 @@ export function UomLoader({ isLoading, showLoadingBar = true }: UomLoaderProps) 
       style={{ opacity: isLoading ? 1 : 0 }}
     >
       <div className="flex flex-col items-center gap-8">
-        {/* Animated "Ươm." text with Vietnamese accents */}
+        {/* Animated "ƯƠM." text with Vietnamese accents */}
         <div className="relative">
           <h1 className="select-none font-serif text-8xl tracking-wide text-foreground antialiased">
             <span className="animate-pulse-char animation-delay-0 inline-block">Ư</span>
@@ -54,7 +52,7 @@ export function UomLoader({ isLoading, showLoadingBar = true }: UomLoaderProps) 
 
         {/* Optional: Subtle loading bar */}
         {showLoadingBar && (
-          <div className="h-0.5 w-64 overflow-hidden bg-muted">
+          <div className="h-0.5 w-64 overflow-hidden bg-muted/50">
             <div className="animate-loading-bar h-full bg-foreground" />
           </div>
         )}
@@ -80,7 +78,7 @@ export function UomLoaderBreathing({ isLoading }: { isLoading: boolean }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background">
       <div className="flex flex-col items-center">
         <h1 className="animate-breathe select-none font-serif text-8xl tracking-wide text-foreground">
-          Ươm.
+          ƯƠM..
         </h1>
       </div>
     </div>

@@ -1,10 +1,8 @@
 import axios, { type AxiosInstance, type AxiosError } from 'axios'
+import { pingProductSeo, pingSitewideSeo } from './seo-ping'
 import type {
   Product,
   Category,
-  CreateProductDto,
-  UpdateProductDto,
-  QueryProductsDto,
   CreateCategoryDto,
   UpdateCategoryDto,
   PaginatedResponse,
@@ -13,16 +11,13 @@ import type {
   SiteContent,
   ExchangeRate,
   AllSettings,
+  BrandingSettings,
   User,
-  CreateUserDto,
-  UpdateUserDto,
-  QueryUsersDto,
-  BulkDeleteDto,
-  BulkUpdateDto,
   Banner,
+  UpdateMyProfileDto,
 } from './types'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888/api'
 
 class ApiClient {
   private client: AxiosInstance
@@ -39,7 +34,6 @@ class ApiClient {
       timeout: 30000,
     })
 
-    // Request interceptor - Add auth token
     this.client.interceptors.request.use(
       (config) => {
         if (typeof window !== 'undefined') {
@@ -56,15 +50,12 @@ class ApiClient {
       (error) => Promise.reject(error),
     )
 
-    // Response interceptor - Handle token refresh
     this.client.interceptors.response.use(
       (response) => response,
       async (error: AxiosError<any>) => {
         const originalRequest: any = error.config
 
-        // Handle 401 Unauthorized
         if (error.response?.status === 401 && !originalRequest._retry) {
-          // If the error comes from login endpoint, do not attempt to refresh
           if (originalRequest.url?.includes('/auth/login')) {
             return Promise.reject(error)
           }
@@ -85,20 +76,16 @@ class ApiClient {
               },
             )
 
-            // Update tokens
             localStorage.setItem('accessToken', data.data.accessToken)
             localStorage.setItem('refreshToken', data.data.refreshToken)
 
-            // Retry original request with new token
             originalRequest.headers.Authorization = `Bearer ${data.data.accessToken}`
             return this.client(originalRequest)
           } catch (refreshError: any) {
-            // Determine redirect path based on current location
             if (typeof window !== 'undefined') {
               const isAdminPage = window.location.pathname.includes('/admin')
               const locale = localStorage.getItem('locale') || 'vi'
 
-              // Clear all auth data but preserve locale
               const savedLocale = localStorage.getItem('locale')
               localStorage.clear()
               if (savedLocale) {
@@ -107,10 +94,8 @@ class ApiClient {
 
               const loginPath = isAdminPage ? `/${locale}/admin/login` : `/${locale}/login`
 
-              // Show error message
               console.error('Session expired. Please login again.')
 
-              // Redirect to appropriate login page
               window.location.href = loginPath
             }
 
@@ -118,9 +103,7 @@ class ApiClient {
           }
         }
 
-        // Handle 404 Not Found - redirect to appropriate page
         if (error.response?.status === 404) {
-          console.error('Resource not found:', error.config?.url)
         }
 
         return Promise.reject(error)
@@ -155,11 +138,9 @@ class ApiClient {
     }
 
     const response = await this.client.request(config)
-    // Handle both wrapped ({data: ...}) and unwrapped responses
+
     return response.data?.data !== undefined ? response.data.data : response.data
   }
-
-  // ==================== PUBLIC ENDPOINTS ====================
 
   async getProducts(params?: {
     page?: number
@@ -199,8 +180,6 @@ class ApiClient {
     return this.request<AllSettings>('/settings')
   }
 
-  // ==================== AUTH ENDPOINTS ====================
-
   async login(
     email: string,
     password: string,
@@ -232,15 +211,20 @@ class ApiClient {
     return this.request<User>('/auth/profile')
   }
 
-  // ==================== BANNERS ENDPOINTS ====================
+  async updateMyProfile(data: UpdateMyProfileDto): Promise<User> {
+    return this.request<User>('/auth/profile', {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    })
+  }
+
   async getBanners(activeOnly = true): Promise<Banner[]> {
-    return this.request<Banner[]>('/banners', { 
-      headers: { 
-        'ngrok-skip-browser-warning': 'true' 
+    return this.request<Banner[]>('/banners', {
+      headers: {
+        'ngrok-skip-browser-warning': 'true',
       },
-      method: 'GET'
-    }).then(data => {
-      // Handle filtering on client side if needed, or rely on backend
+      method: 'GET',
+    }).then((data) => {
       if (activeOnly) return data.filter((b: Banner) => b.isActive)
       return data
     })
@@ -251,26 +235,30 @@ class ApiClient {
   }
 
   async createBanner(data: any): Promise<Banner> {
-    return this.request<Banner>('/banners', {
+    const banner = await this.request<Banner>('/banners', {
       method: 'POST',
       body: JSON.stringify(data),
     })
+    void pingSitewideSeo()
+    return banner
   }
 
   async updateBanner(id: string, data: any): Promise<Banner> {
-    return this.request<Banner>(`/banners/${id}`, {
+    const banner = await this.request<Banner>(`/banners/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(data),
     })
+    void pingSitewideSeo()
+    return banner
   }
 
   async deleteBanner(id: string): Promise<void> {
-    return this.request<void>(`/banners/${id}`, {
+    const result = await this.request<void>(`/banners/${id}`, {
       method: 'DELETE',
     })
+    void pingSitewideSeo()
+    return result
   }
-
-  // ==================== ADMIN PRODUCT ENDPOINTS ====================
 
   async getAdminProducts(params?: {
     page?: number
@@ -310,74 +298,125 @@ class ApiClient {
   }
 
   async createProduct(data: Partial<Product>): Promise<Product> {
-    return this.request<Product>('/products', {
+    const product = await this.request<Product>('/products', {
       method: 'POST',
       body: JSON.stringify(data),
     })
+    if (product?.slug) {
+      void pingProductSeo(product.slug)
+    } else {
+      void pingSitewideSeo()
+    }
+    return product
   }
 
   async updateProduct(id: string, data: Partial<Product>): Promise<Product> {
-    return this.request<Product>(`/products/${id}`, {
+    const product = await this.request<Product>(`/products/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     })
+    if (product?.slug) {
+      void pingProductSeo(product.slug)
+    } else {
+      void pingSitewideSeo()
+    }
+    return product
   }
 
   async deleteProduct(id: string): Promise<{ message: string }> {
-    return this.request<{ message: string }>(`/products/${id}`, {
+    const result = await this.request<{ message: string }>(`/products/${id}`, {
       method: 'DELETE',
     })
+    void pingSitewideSeo()
+    return result
   }
 
   async restoreProduct(id: string): Promise<Product> {
-    return this.request<Product>(`/products/${id}/restore`, {
+    const product = await this.request<Product>(`/products/${id}/restore`, {
       method: 'POST',
     })
+    if (product?.slug) {
+      void pingProductSeo(product.slug)
+    } else {
+      void pingSitewideSeo()
+    }
+    return product
   }
 
   async duplicateProduct(id: string): Promise<Product> {
-    return this.request<Product>(`/products/${id}/duplicate`, {
+    const product = await this.request<Product>(`/products/${id}/duplicate`, {
       method: 'POST',
     })
+    if (product?.slug) {
+      void pingProductSeo(product.slug)
+    } else {
+      void pingSitewideSeo()
+    }
+    return product
   }
 
   async hardDeleteProduct(id: string): Promise<{ message: string }> {
-    return this.request<{ message: string }>(`/products/${id}/permanent`, {
+    const result = await this.request<{ message: string }>(`/products/${id}/permanent`, {
       method: 'DELETE',
     })
+    void pingSitewideSeo()
+    return result
   }
 
-  // ==================== ADMIN SETTINGS ENDPOINTS ====================
-
   async updateTheme(data: Partial<ThemeSettings>): Promise<ThemeSettings> {
-    return this.request<ThemeSettings>('/settings/theme', {
+    const theme = await this.request<ThemeSettings>('/settings/theme', {
       method: 'PUT',
       body: JSON.stringify(data),
     })
+    void pingSitewideSeo()
+    return theme
   }
 
   async updateSocialLinks(data: Partial<SocialLinks>): Promise<SocialLinks> {
-    return this.request<SocialLinks>('/settings/social-links', {
+    const socialLinks = await this.request<SocialLinks>('/settings/social-links', {
       method: 'PUT',
       body: JSON.stringify(data),
     })
+    void pingSitewideSeo()
+    return socialLinks
   }
 
   async updateSiteContent(data: SiteContent): Promise<{ success: boolean }> {
-    return this.request<{ success: boolean }>('/settings/site-content', {
+    const result = await this.request<{ success: boolean }>('/settings/site-content', {
       method: 'PUT',
       body: JSON.stringify(data),
     })
+    void pingSitewideSeo()
+    return result
   }
 
   async updateExchangeRate(rate: number): Promise<ExchangeRate> {
-    return this.request<ExchangeRate>('/settings/exchange-rate', {
+    const exchangeRate = await this.request<ExchangeRate>('/settings/exchange-rate', {
       method: 'PUT',
       body: JSON.stringify({ rate }),
     })
+    void pingSitewideSeo()
+    return exchangeRate
   }
 
-  // ==================== ADMIN USER ENDPOINTS ====================
+  async recalculateUsdPrices(): Promise<ExchangeRate> {
+    return this.request<ExchangeRate>('/settings/exchange-rate/recalculate', {
+      method: 'PUT',
+    })
+  }
+
+  async getBranding(): Promise<BrandingSettings> {
+    return this.request<BrandingSettings>('/settings/branding')
+  }
+
+  async updateBranding(data: Partial<BrandingSettings>): Promise<BrandingSettings> {
+    const branding = await this.request<BrandingSettings>('/settings/branding', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    })
+    void pingSitewideSeo()
+    return branding
+  }
 
   async getUsers(params?: {
     page?: number
@@ -429,8 +468,6 @@ class ApiClient {
     })
   }
 
-  // ==================== UPLOAD ENDPOINT ====================
-
   async uploadImage(
     file: File,
     folder: string = 'products',
@@ -460,8 +497,6 @@ class ApiClient {
     return result.data || result
   }
 
-  // ==================== CATEGORY ENDPOINTS ====================
-
   async getCategories(params?: {
     includeDeleted?: boolean
     includeInactive?: boolean
@@ -485,35 +520,45 @@ class ApiClient {
   }
 
   async createCategory(data: CreateCategoryDto): Promise<Category> {
-    return this.request<Category>('/categories', {
+    const category = await this.request<Category>('/categories', {
       method: 'POST',
       body: JSON.stringify(data),
     })
+    void pingSitewideSeo()
+    return category
   }
 
   async updateCategory(id: string, data: UpdateCategoryDto): Promise<Category> {
-    return this.request<Category>(`/categories/${id}`, {
+    const category = await this.request<Category>(`/categories/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(data),
     })
+    void pingSitewideSeo()
+    return category
   }
 
   async deleteCategory(id: string): Promise<{ message: string }> {
-    return this.request<{ message: string }>(`/categories/${id}`, {
+    const result = await this.request<{ message: string }>(`/categories/${id}`, {
       method: 'DELETE',
     })
+    void pingSitewideSeo()
+    return result
   }
 
   async restoreCategory(id: string): Promise<Category> {
-    return this.request<Category>(`/categories/${id}/restore`, {
+    const category = await this.request<Category>(`/categories/${id}/restore`, {
       method: 'POST',
     })
+    void pingSitewideSeo()
+    return category
   }
 
   async permanentDeleteCategory(id: string): Promise<{ message: string }> {
-    return this.request<{ message: string }>(`/categories/${id}/permanent`, {
+    const result = await this.request<{ message: string }>(`/categories/${id}/permanent`, {
       method: 'DELETE',
     })
+    void pingSitewideSeo()
+    return result
   }
 }
 

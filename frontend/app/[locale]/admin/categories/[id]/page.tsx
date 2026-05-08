@@ -21,7 +21,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { useDocumentTitle } from '@/hooks/use-document-title'
 import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api'
-import { Category, type CreateCategoryDto, type UpdateCategoryDto } from '@/lib/types'
+import { optimizeAndResizeImage } from '@/lib/image-upload'
+import { type CreateCategoryDto, type UpdateCategoryDto } from '@/lib/types'
 
 export default function CategoryFormPage() {
   const router = useRouter()
@@ -50,9 +51,8 @@ export default function CategoryFormPage() {
   })
 
   const categoryName = form.watch('nameVi') || form.watch('nameEn') || t('category')
-  useDocumentTitle(isNew ? t('createCategory') : categoryName, 'Admin - Ươm Archive')
+  useDocumentTitle(isNew ? t('createCategory') : categoryName, 'Admin - ƯƠM. Archive')
 
-  // Load category data if editing
   useEffect(() => {
     if (!isNew && params.id) {
       loadCategory(params.id as string)
@@ -103,16 +103,26 @@ export default function CategoryFormPage() {
     form.setValue('slug', slug)
   }
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
-    setImageFile(file)
-    const reader = new FileReader()
-    reader.onloadend = () => {
-      setImagePreview(reader.result as string)
+    try {
+      const optimizedFile = await optimizeAndResizeImage(file, {
+        maxWidth: 1200,
+        maxHeight: 1200,
+        quality: 0.88,
+        outputType: 'image/webp',
+      })
+      setImageFile(optimizedFile)
+      setImagePreview(URL.createObjectURL(optimizedFile))
+    } catch {
+      toast({
+        title: t('error'),
+        description: 'Không thể tối ưu ảnh trước khi upload',
+        variant: 'destructive',
+      })
     }
-    reader.readAsDataURL(file)
   }
 
   const removeImage = () => {
@@ -125,7 +135,6 @@ export default function CategoryFormPage() {
     try {
       setIsSaving(true)
 
-      // Upload image if new file selected
       let imageUrl = data.image
       if (imageFile) {
         const uploadResult = await api.uploadImage(imageFile, 'categories')

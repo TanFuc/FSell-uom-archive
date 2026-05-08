@@ -26,8 +26,8 @@ export default function Logo({
   const logoContent = () => {
     if (variant === 'text') {
       return (
-        <span className={`font-serif uppercase tracking-widest text-earthy-brown ${className}`}>
-          Ươm.
+        <span className={`font-serif uppercase tracking-[0.3em] text-foreground ${className}`}>
+          ƯƠM.
         </span>
       )
     }
@@ -38,12 +38,15 @@ export default function Logo({
       'png-bg': '/assets/logo.png',
     }[variant]
 
+    const isSvgLogo = logoSrc.endsWith('.svg')
+
     return (
       <Image
         src={logoSrc}
-        alt={locale === 'vi' ? 'Ươm Archive' : 'Uom Archive'}
+        alt="ƯƠM."
         width={width}
         height={height}
+        unoptimized={isSvgLogo}
         priority
         className={className}
       />

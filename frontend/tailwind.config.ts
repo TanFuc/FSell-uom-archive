@@ -43,11 +43,12 @@ const config: Config = {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
-        earthy: {
-          cream: '#F9F7F1',
-          brown: '#4A4238',
-          clay: '#8C7E6A',
-        },
+      },
+      letterSpacing: {
+        'ultra-wide': '0.3em',
+      },
+      borderWidth: {
+        '0.5': '0.5px',
       },
       borderRadius: {
         lg: 'var(--radius)',
@@ -55,7 +56,7 @@ const config: Config = {
         sm: 'calc(var(--radius) - 4px)',
       },
       fontFamily: {
-        serif: ['var(--font-lora)', '"Lora"', 'Georgia', 'serif'],
+        serif: ['var(--font-montserrat)', '"Montserrat"', 'Helvetica', 'sans-serif'],
         sans: ['var(--font-montserrat)', '"Montserrat"', 'Helvetica', 'sans-serif'],
         playfair: ['var(--font-playfair)', '"Playfair Display"', 'serif'],
       },

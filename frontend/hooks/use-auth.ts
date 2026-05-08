@@ -6,7 +6,6 @@ import { toast } from 'sonner'
 import { apiClient } from '@/lib/api-client'
 import type { User } from '@/lib/types'
 
-// Types
 interface LoginDto {
   email: string
   password: string
@@ -24,13 +23,11 @@ interface AuthResponse {
   user: User
 }
 
-// Query keys
 export const authKeys = {
   all: ['auth'] as const,
   profile: () => [...authKeys.all, 'profile'] as const,
 }
 
-// Get current user profile
 export function useProfile() {
   return useQuery({
     queryKey: authKeys.profile(),
@@ -40,7 +37,6 @@ export function useProfile() {
   })
 }
 
-// Login mutation
 export function useLogin() {
   const router = useRouter()
   const queryClient = useQueryClient()
@@ -48,11 +44,9 @@ export function useLogin() {
   return useMutation({
     mutationFn: (data: LoginDto) => apiClient.login(data),
     onSuccess: (response: AuthResponse) => {
-      // Tokens are already saved by apiClient
       queryClient.setQueryData(authKeys.profile(), response.user)
       toast.success('Đăng nhập thành công')
 
-      // Redirect based on role
       if (response.user.role === 'ADMIN' || response.user.role === 'MANAGER') {
         router.push('/admin')
       } else {
@@ -65,7 +59,6 @@ export function useLogin() {
   })
 }
 
-// Register mutation
 export function useRegister() {
   const router = useRouter()
   const queryClient = useQueryClient()
@@ -73,7 +66,6 @@ export function useRegister() {
   return useMutation({
     mutationFn: (data: RegisterDto) => apiClient.register(data),
     onSuccess: (response: AuthResponse) => {
-      // Tokens are already saved by apiClient
       queryClient.setQueryData(authKeys.profile(), response.user)
       toast.success('Đăng ký thành công')
       router.push('/')
@@ -84,7 +76,6 @@ export function useRegister() {
   })
 }
 
-// Logout mutation
 export function useLogout() {
   const router = useRouter()
   const queryClient = useQueryClient()
@@ -92,13 +83,11 @@ export function useLogout() {
   return useMutation({
     mutationFn: () => apiClient.logout(),
     onSuccess: () => {
-      // Clear all queries
       queryClient.clear()
       toast.success('Đăng xuất thành công')
       router.push('/')
     },
     onError: (error: any) => {
-      // Even if API call fails, clear local data
       queryClient.clear()
       localStorage.removeItem('accessToken')
       localStorage.removeItem('refreshToken')
@@ -108,27 +97,6 @@ export function useLogout() {
   })
 }
 
-// Refresh token mutation (handled automatically via interceptor in apiClient)
-// This hook is not needed as refresh is automatic
-// export function useRefreshToken() {
-//   const queryClient = useQueryClient()
-//
-//   return useMutation({
-//     mutationFn: () => apiClient.refreshAccessToken(),
-//     onSuccess: (response: AuthResponse) => {
-//       queryClient.setQueryData(authKeys.profile(), response.user)
-//     },
-//     onError: () => {
-//       // Clear tokens and redirect to login
-//       queryClient.clear()
-//       localStorage.removeItem('accessToken')
-//       localStorage.removeItem('refreshToken')
-//       window.location.href = '/login'
-//     },
-//   })
-// }
-
-// Check if user is authenticated
 export function useIsAuthenticated() {
   const { data: user, isLoading } = useProfile()
   return {
@@ -138,13 +106,11 @@ export function useIsAuthenticated() {
   }
 }
 
-// Check if user has specific role
 export function useHasRole(role: 'ADMIN' | 'MANAGER' | 'USER') {
   const { user } = useIsAuthenticated()
   return user?.role === role
 }
 
-// Check if user is admin or manager
 export function useIsAdmin() {
   const { user } = useIsAuthenticated()
   return user?.role === 'ADMIN' || user?.role === 'MANAGER'

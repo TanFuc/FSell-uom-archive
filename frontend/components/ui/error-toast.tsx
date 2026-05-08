@@ -1,6 +1,6 @@
 'use client'
 
-import { AlertCircle, XCircle } from 'lucide-react'
+import { AlertCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface ErrorToastContentProps {

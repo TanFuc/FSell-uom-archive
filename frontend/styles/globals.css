@@ -7,27 +7,36 @@
 
 @layer base {
   :root {
-    /* Earthy color palette */
-    --background: 39 37% 96%; /* #F9F7F1 cream */
-    --foreground: 28 11% 25%; /* #4A4238 brown */
+    /* Black & White minimalist palette */
+    --background: 0 0% 100%; /* #FFFFFF white */
+    --foreground: 0 0% 0%; /* #000000 black */
 
-    --card: 39 37% 96%;
-    --card-foreground: 28 11% 25%;
+    --card: 0 0% 100%; /* white */
+    --card-foreground: 0 0% 0%; /* black */
 
-    --primary: 34 15% 48%; /* #8C7E6A clay */
-    --primary-foreground: 39 37% 96%;
+    --primary: 0 0% 0%; /* black */
+    --primary-foreground: 0 0% 100%; /* white */
 
-    --muted: 36 10% 90%;
-    --muted-foreground: 32 10% 45%;
+    --secondary: 0 0% 96%; /* #F5F5F5 light gray */
+    --secondary-foreground: 0 0% 0%; /* black */
 
-    --accent: 34 15% 48%;
-    --accent-foreground: 39 37% 96%;
+    --muted: 0 0% 96%; /* #F5F5F5 light gray */
+    --muted-foreground: 0 0% 40%; /* #666666 medium gray */
 
-    --border: 34 15% 48%;
-    --input: 34 15% 48%;
-    --ring: 28 11% 25%;
+    --accent: 0 0% 5%; /* #0D0D0D near-black */
+    --accent-foreground: 0 0% 100%; /* white */
 
-    --radius: 0rem;
+    --destructive: 0 0% 0%; /* black for consistency */
+    --destructive-foreground: 0 0% 100%; /* white */
+
+    --border: 0 0% 85%; /* #D9D9D9 light gray */
+    --input: 0 0% 85%; /* #D9D9D9 */
+    --ring: 0 0% 0%; /* black */
+
+    --popover: 0 0% 100%; /* white */
+    --popover-foreground: 0 0% 0%; /* black */
+
+    --radius: 0rem; /* Sharp corners for minimalist feel */
   }
 
   /* Global reset */
@@ -47,11 +56,11 @@
 
   /* Consistent typography */
   body {
-    @apply bg-background text-foreground font-sans;
-    font-size: 16px; /* Increased from 14px for better readability */
-    font-weight: 400;
-    line-height: 1.6;
-    letter-spacing: 0.01em;
+    @apply bg-background font-sans text-foreground;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.4;
+    letter-spacing: 0.05em;
   }
 
   /* Links */
@@ -68,14 +77,14 @@
 }
 
 @layer components {
-  /* Container - reduced padding on smallest screens */
+  /* Container - increased padding for minimalist aesthetic */
   .container-custom {
-    @apply mx-auto w-full max-w-7xl px-4 md:px-6 lg:px-8;
+    @apply mx-auto w-full max-w-7xl px-6 md:px-10 lg:px-16;
   }
 
   /* Navigation link */
   .nav-link {
-    @apply uppercase tracking-[0.15em] text-foreground transition-all duration-300 hover:opacity-70;
+    @apply uppercase tracking-[0.25em] text-foreground transition-all duration-300 hover:opacity-70;
   }
 
   /* Text link */
@@ -89,7 +98,7 @@
 
   /* Button minimalist */
   .btn {
-    @apply inline-block cursor-pointer px-6 py-3 text-center uppercase tracking-[0.1em] transition-all duration-300;
+    @apply inline-block cursor-pointer px-6 py-3 text-center uppercase tracking-[0.2em] transition-all duration-300;
     border: 1px solid hsl(var(--foreground));
   }
 
@@ -106,24 +115,24 @@
     @apply w-full border border-foreground bg-transparent px-4 py-3 text-base text-foreground transition-all placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-foreground;
   }
 
-  /* Section spacing */
+  /* Section spacing - increased for generous whitespace */
   .section {
-    @apply py-16 md:py-24 lg:py-32;
+    @apply py-20 md:py-32 lg:py-40;
   }
 
   .section-sm {
-    @apply py-12 md:py-16 lg:py-20;
+    @apply py-16 md:py-20 lg:py-28;
   }
 
-  /* Grid system - Optimized for mobile */
+  /* Grid system - Increased gaps for minimalist aesthetic */
   .grid-products {
     @apply grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4;
-    gap: clamp(0.75rem, 3vw, 3rem); /* Smaller minimum gap (12px) for mobile */
+    gap: clamp(1.5rem, 4vw, 4rem);
   }
 
   .grid-products-simple {
     @apply grid grid-cols-1 md:grid-cols-2;
-    gap: clamp(2rem, 5vw, 6rem);
+    gap: clamp(3rem, 6vw, 8rem);
   }
 }
 
@@ -204,21 +213,21 @@
 
 /* ==================== SCROLLBAR ====================*/
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  display: none;
 }
 
-::-webkit-scrollbar-track {
-  background: hsl(var(--background));
+* {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted));
-  border-radius: 0;
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--foreground));
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
 /* ==================== SELECTION ====================*/
@@ -247,6 +256,81 @@
 
 .animate-fade-in {
   animation: fadeIn 0.6s ease-out;
+}
+
+/* ==================== JOURNAL CONTENT IMAGES ====================*/
+.journal-image-frame {
+  position: relative;
+  display: block;
+  width: min(680px, 100%);
+  max-width: 100%;
+  margin: 1rem auto;
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+.journal-image-frame img.journal-resizable-image {
+  display: block;
+  width: 100% !important;
+  height: auto !important;
+  user-select: none;
+  cursor: ew-resize;
+}
+
+.journal-image-handle {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  width: 14px;
+  height: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.5);
+  cursor: nwse-resize;
+}
+
+.journal-resize-tooltip {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  pointer-events: none;
+  border-radius: 9999px;
+  background: rgba(0, 0, 0, 0.72);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 5px 10px;
+  opacity: 1;
+  transition: opacity 0.35s ease;
+}
+
+.journal-resize-tooltip-hidden {
+  opacity: 0;
+}
+
+.journal-small-image-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 0.75rem 0;
+}
+
+.journal-small-image-cell {
+  margin: 0 !important;
+}
+
+.journal-small-image-cell .journal-image-frame {
+  width: 100% !important;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .journal-small-image-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 @keyframes slideUp {
@@ -297,9 +381,17 @@
   }
 }
 
+@keyframes slideProgress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
 .animate-slow-zoom {
   animation: slowZoom 20s infinite alternate ease-in-out;
 }
 
 /* ==================== RESPONSIVE ====================*/
-

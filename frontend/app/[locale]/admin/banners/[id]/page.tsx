@@ -4,14 +4,14 @@ import { Loader2 } from 'lucide-react'
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { api } from '@/lib/api'
-import { Banner } from '@/lib/types'
+import { type Banner } from '@/lib/types'
 import BannerForm from '../_components/banner-form'
 
 export default function EditBannerPage() {
   const params = useParams()
   const router = useRouter()
   const id = params.id as string
-  
+
   const [banner, setBanner] = useState<Banner | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
@@ -22,8 +22,6 @@ export default function EditBannerPage() {
         setBanner(data)
       } catch (error) {
         console.error('Failed to fetch banner:', error)
-        // Redirect to list if not found
-        // router.push('/admin/banners') 
       } finally {
         setIsLoading(false)
       }

@@ -22,14 +22,28 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
   'menu.inquiry.en': 'INQUIRE',
   'menu.shipping.vi': 'VẬN CHUYỂN & ĐỔI TRẢ',
   'menu.shipping.en': 'SHIPPING & RETURNS',
-  'brand.name.vi': 'Ươm Archive',
-  'brand.name.en': 'Ươm Archive',
-  'footer.text.vi': '© 2026 Ươm Archive. Tất cả quyền được bảo lưu.',
-  'footer.text.en': '© 2026 Ươm Archive. All rights reserved.',
+  'brand.name.vi': 'ƯƠM. Archive',
+  'brand.name.en': 'ƯƠM. Archive',
+  'footer.text.vi': '© 2026 ƯƠM. Archive. Tất cả quyền được bảo lưu.',
+  'footer.text.en': '© 2026 ƯƠM. Archive. All rights reserved.',
   'hero.title.vi': 'Vẻ đẹp trong sự tĩnh lặng',
   'hero.title.en': 'Beauty in Stillness',
   'hero.subtitle.vi': 'Gốm sứ thủ công từ Việt Nam',
   'hero.subtitle.en': 'Handcrafted ceramics from Vietnam',
+  'search.trending.vi': JSON.stringify([
+    'binh gom',
+    'chen tra',
+    'men ran',
+    'bo suu tap moi',
+    'lo hoa toi gian',
+  ]),
+  'search.trending.en': JSON.stringify([
+    'ceramic vase',
+    'tea cup',
+    'crackle glaze',
+    'new collection',
+    'minimal decor',
+  ]),
 }
 
 export const DEFAULT_EXCHANGE_RATE = 25000

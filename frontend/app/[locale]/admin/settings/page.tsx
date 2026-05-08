@@ -17,11 +17,9 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { Separator } from '@/components/ui/separator'
 import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api'
 import { DEFAULT_SOCIAL_LINKS, DEFAULT_EXCHANGE_RATE } from '@/lib/constants'
-import { SocialLinks } from '@/lib/types'
 
 const socialLinksSchema = z.object({
   facebookPageUrl: z.string().url('Must be a valid URL').optional().or(z.literal('')),
@@ -41,6 +39,7 @@ export default function SettingsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSavingSocial, setIsSavingSocial] = useState(false)
   const [isSavingRate, setIsSavingRate] = useState(false)
+  const [isRecalculatingUsd, setIsRecalculatingUsd] = useState(false)
 
   const socialForm = useForm<SocialLinksFormValues>({
     resolver: zodResolver(socialLinksSchema),
@@ -91,12 +90,34 @@ export default function SettingsPage() {
   const onSubmitRate = async (data: ExchangeRateFormValues) => {
     setIsSavingRate(true)
     try {
-      await api.updateExchangeRate(data.rate)
-      toast({ title: t('success'), description: 'Exchange rate updated' })
+      const result = await api.updateExchangeRate(data.rate)
+      const updatedCount = result.updatedProducts ?? 0
+      toast({
+        title: t('success'),
+        description: `Exchange rate updated. Recalculated ${updatedCount} products.`,
+      })
     } catch (error) {
       toast({ title: t('error'), description: 'Failed to update', variant: 'destructive' })
     } finally {
       setIsSavingRate(false)
+    }
+  }
+
+  const onRecalculateUsd = async () => {
+    setIsRecalculatingUsd(true)
+    try {
+      const result = await api.recalculateUsdPrices()
+      toast({
+        title: t('success'),
+        description: t('recalculateUsdSuccess', {
+          count: result.updatedProducts ?? 0,
+          rate: result.rate.toLocaleString(),
+        }),
+      })
+    } catch {
+      toast({ title: t('error'), description: t('recalculateUsdFailed'), variant: 'destructive' })
+    } finally {
+      setIsRecalculatingUsd(false)
     }
   }
 
@@ -155,7 +176,7 @@ export default function SettingsPage() {
                   )}
                 />
 
-                <Button type="submit" disabled={isSavingSocial}>
+                <Button type="submit" disabled={isSavingSocial} className="w-full sm:w-auto">
                   {isSavingSocial ? t('loading') : t('save')}
                 </Button>
               </form>
@@ -176,7 +197,7 @@ export default function SettingsPage() {
                   control={rateForm.control}
                   name="rate"
                   render={({ field }) => (
-                    <FormItem className="max-w-xs">
+                    <FormItem className="w-full sm:max-w-xs">
                       <FormLabel>{t('usdToVnd')}</FormLabel>
                       <FormControl>
                         <Input {...field} type="number" />
@@ -189,9 +210,20 @@ export default function SettingsPage() {
                   )}
                 />
 
-                <Button type="submit" disabled={isSavingRate}>
-                  {isSavingRate ? t('loading') : t('save')}
-                </Button>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Button type="submit" disabled={isSavingRate} className="w-full sm:w-auto">
+                    {isSavingRate ? t('loading') : t('save')}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={isRecalculatingUsd}
+                    onClick={onRecalculateUsd}
+                    className="w-full sm:w-auto"
+                  >
+                    {isRecalculatingUsd ? t('loading') : t('recalculateUsdPrices')}
+                  </Button>
+                </div>
               </form>
             </Form>
           </CardContent>

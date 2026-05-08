@@ -61,7 +61,19 @@ export function slugify(str: string): string {
 }
 
 export function getImageUrl(path: string): string {
-  if (path.startsWith('http')) return path
+  if (path.startsWith('http')) {
+    try {
+      const url = new URL(path)
+      const r2PublicUrl = (process.env.NEXT_PUBLIC_R2_PUBLIC_URL || '').replace(/\/$/, '')
+      if (r2PublicUrl && url.hostname.endsWith('.r2.dev')) {
+        const normalizedPath = url.pathname.replace(/^\/uom-archive\//, '/').replace(/^\//, '')
+        return `${r2PublicUrl}/${normalizedPath}`
+      }
+    } catch {
+      return path
+    }
+    return path
+  }
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
   return `${baseUrl}${path}`
 }
@@ -95,16 +107,13 @@ export function optimizeProductImage(imageUrl: string, options: OptimizeImageOpt
     format = 'auto',
   } = options
 
-  // If not a Cloudinary URL, return the original with getImageUrl
   if (!imageUrl.includes('cloudinary.com')) {
     return getImageUrl(imageUrl)
   }
 
-  // Parse Cloudinary URL
   const uploadIndex = imageUrl.indexOf('/upload/')
   if (uploadIndex === -1) return imageUrl
 
-  // Build transformation string
   const transformations = [
     `w_${width}`,
     `h_${height}`,
@@ -115,7 +124,6 @@ export function optimizeProductImage(imageUrl: string, options: OptimizeImageOpt
     `f_${format}`,
   ].join(',')
 
-  // Insert transformations after /upload/
   const beforeUpload = imageUrl.substring(0, uploadIndex + 8)
   const afterUpload = imageUrl.substring(uploadIndex + 8)
 

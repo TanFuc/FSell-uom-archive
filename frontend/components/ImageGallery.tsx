@@ -14,7 +14,7 @@ export default function ImageGallery({ images, alt }: ImageGalleryProps) {
 
   if (images.length === 0) {
     return (
-      <div className="aspect-product flex items-center justify-center bg-earthy-cream text-earthy-clay">
+      <div className="aspect-product flex items-center justify-center bg-muted text-muted-foreground">
         No images available
       </div>
     )
@@ -23,7 +23,7 @@ export default function ImageGallery({ images, alt }: ImageGalleryProps) {
   return (
     <div className="space-y-4">
       {/* Main Image */}
-      <div className="aspect-product relative overflow-hidden bg-earthy-cream">
+      <div className="aspect-product relative overflow-hidden bg-muted/10">
         <Image
           src={getImageUrl(images[activeIndex])}
           alt={`${alt} - Image ${activeIndex + 1}`}
@@ -36,7 +36,7 @@ export default function ImageGallery({ images, alt }: ImageGalleryProps) {
 
       {/* Thumbnails */}
       {images.length > 1 && (
-        <div className="flex gap-2 overflow-x-auto pb-2">
+        <div className="flex gap-4 overflow-x-auto pb-2">
           {images.map((image, index) => (
             <button
               key={index}

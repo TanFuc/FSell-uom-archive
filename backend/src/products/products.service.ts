@@ -7,13 +7,32 @@ import {
   Logger,
 } from '@nestjs/common'
 import { Prisma, Role } from '@prisma/client'
+import { createFlexibleSearchConditions } from '../common/utils/vietnamese-search.util'
 import { PrismaService } from '../prisma/prisma.service'
 import { RedisService } from '../redis/redis.service'
 import { CreateProductDto, UpdateProductDto, QueryProductsDto, BulkUpdateDto } from './dto'
-import { createFlexibleSearchConditions } from '../common/utils/vietnamese-search.util'
 
 const CACHE_TTL = 300 // 5 minutes
-const USD_EXCHANGE_RATE = 24500 // 1 USD = 24,500 VND (configurable)
+
+type ProductListResult = {
+  data: unknown[]
+  meta: {
+    total: number
+    page: number
+    limit: number
+    totalPages: number
+    hasMore: boolean
+  }
+}
+
+type ProductWithRelations = Prisma.ProductGetPayload<{
+  include: {
+    creator: { select: { id: true; email: true; fullName: true } }
+    updater: { select: { id: true; email: true; fullName: true } }
+    category: { select: { id: true; nameVi: true; nameEn: true; slug: true } }
+    relatedProducts: true
+  }
+}>
 
 @Injectable()
 export class ProductsService {
@@ -24,7 +43,13 @@ export class ProductsService {
     private redis: RedisService,
   ) {}
 
-  // ==================== FIND ALL WITH ADVANCED FILTERING ====================
+  private parseCachedJson<T>(cached: string): T | null {
+    try {
+      return JSON.parse(cached) as T
+    } catch {
+      return null
+    }
+  }
 
   async findAll(query: QueryProductsDto, userRole?: Role) {
     const {
@@ -44,23 +69,19 @@ export class ProductsService {
 
     const skip = (page - 1) * limit
 
-    // Build dynamic where clause
     const where: Prisma.ProductWhereInput = {
       hardDeletedAt: null, // Always exclude hard-deleted items
     }
 
-    // Soft delete filter - MANAGER can only see non-deleted items
     if (userRole === Role.MANAGER || !includeDeleted) {
       where.deletedAt = null
     }
 
-    // Non-authenticated users only see active, non-deleted products
     if (!userRole) {
       where.isActive = true
       where.deletedAt = null
     }
 
-    // Search across multiple fields with Vietnamese accent flexibility
     if (search) {
       where.OR = createFlexibleSearchConditions(search, [
         'nameVi',
@@ -72,25 +93,23 @@ export class ProductsService {
       ])
     }
 
-    // Filters
     if (categoryId) where.categoryId = categoryId
     if (isActive !== undefined) where.isActive = isActive
     if (inquiryEnabled !== undefined) where.inquiryEnabled = inquiryEnabled
     if (query.isFeatured !== undefined) where.isFeatured = query.isFeatured
     if (createdBy) where.createdBy = createdBy
 
-    // Price range
     if (minPrice !== undefined || maxPrice !== undefined) {
       where.priceVND = {}
       if (minPrice !== undefined) where.priceVND.gte = minPrice
       if (maxPrice !== undefined) where.priceVND.lte = maxPrice
     }
 
-    // Cache key includes all filters
     const cacheKey = `products:${JSON.stringify({ where, skip, limit, sortBy, sortOrder })}`
     const cached = await this.redis.get(cacheKey)
     if (cached) {
-      return JSON.parse(cached)
+      const parsed = this.parseCachedJson<ProductListResult>(cached)
+      if (parsed) return parsed
     }
 
     const [products, total] = await Promise.all([
@@ -133,13 +152,10 @@ export class ProductsService {
       },
     }
 
-    // Cache for 5 minutes
     await this.redis.set(cacheKey, JSON.stringify(result), CACHE_TTL)
 
     return result
   }
-
-  // ==================== STATS ====================
 
   async getStats() {
     const [totalProducts, activeProducts, featuredProducts] = await Promise.all([
@@ -155,14 +171,13 @@ export class ProductsService {
     }
   }
 
-  // ==================== FIND BY SLUG ====================
-
   async findBySlug(slug: string) {
     const cacheKey = `product:slug:${slug}`
     const cached = await this.redis.get(cacheKey)
 
     if (cached) {
-      return JSON.parse(cached)
+      const parsed = this.parseCachedJson<ProductWithRelations>(cached)
+      if (parsed) return parsed
     }
 
     const product = await this.prisma.product.findUnique({
@@ -183,13 +198,10 @@ export class ProductsService {
       throw new NotFoundException('Product has been deleted')
     }
 
-    // Cache for 1 hour
     await this.redis.set(cacheKey, JSON.stringify(product), 3600)
 
     return product
   }
-
-  // ==================== FIND BY ID ====================
 
   async findById(id: string) {
     const product = await this.prisma.product.findUnique({
@@ -210,12 +222,10 @@ export class ProductsService {
     return product
   }
 
-  // ==================== CREATE ====================
-
   async create(dto: CreateProductDto, userId: string) {
     const { relatedProductIds, ...productData } = dto
+    const exchangeRate = await this.getCurrentExchangeRate()
 
-    // Check if slug already exists
     const existingProduct = await this.prisma.product.findUnique({
       where: { slug: dto.slug },
     })
@@ -224,8 +234,7 @@ export class ProductsService {
       throw new ConflictException(`Product with slug "${dto.slug}" already exists`)
     }
 
-    // Auto-calculate USD prices if not provided
-    const priceData = this.preparePriceData(dto)
+    const priceData = this.preparePriceData(dto, exchangeRate)
 
     const product = await this.prisma.product.create({
       data: {
@@ -233,9 +242,13 @@ export class ProductsService {
         ...priceData,
         createdBy: userId,
         updatedBy: userId,
-        // Auto-generate inquiry messages if empty
-        inquiryMessageVi: dto.inquiryMessageVi || this.generateDefaultMessage(dto, 'vi'),
-        inquiryMessageEn: dto.inquiryMessageEn || this.generateDefaultMessage(dto, 'en'),
+
+        inquiryMessageVi:
+          dto.inquiryMessageVi ??
+          this.generateDefaultMessage(dto, 'vi', exchangeRate, priceData.priceUSD),
+        inquiryMessageEn:
+          dto.inquiryMessageEn ??
+          this.generateDefaultMessage(dto, 'en', exchangeRate, priceData.priceUSD),
         relatedProducts: relatedProductIds
           ? { connect: relatedProductIds.map((id) => ({ id })) }
           : undefined,
@@ -248,10 +261,9 @@ export class ProductsService {
     return product
   }
 
-  // ==================== UPDATE ====================
-
   async update(id: string, dto: UpdateProductDto, userId: string) {
     const { relatedProductIds, ...updateData } = dto
+    const exchangeRate = await this.getCurrentExchangeRate()
 
     const product = await this.prisma.product.findUnique({
       where: { id },
@@ -265,7 +277,6 @@ export class ProductsService {
       throw new ForbiddenException('Cannot update a deleted product')
     }
 
-    // Check if slug is being updated and already exists
     if (dto.slug && dto.slug !== product.slug) {
       const existingSlug = await this.prisma.product.findUnique({
         where: { slug: dto.slug },
@@ -276,8 +287,7 @@ export class ProductsService {
       }
     }
 
-    // Auto-calculate USD prices if not provided
-    const priceData = this.preparePriceData(dto)
+    const priceData = this.preparePriceData(dto, exchangeRate)
 
     const updatedProduct = await this.prisma.product.update({
       where: { id },
@@ -291,7 +301,6 @@ export class ProductsService {
       },
     })
 
-    // Invalidate caches
     await this.redis.del(`product:${id}`)
     await this.redis.del(`product:slug:${product.slug}`)
     await this.invalidateProductCache()
@@ -300,9 +309,7 @@ export class ProductsService {
     return updatedProduct
   }
 
-  // ==================== SOFT DELETE ====================
-
-  async softDelete(id: string, userId: string, userRole: Role) {
+  async softDelete(id: string, userId: string, _userRole: Role) {
     const product = await this.prisma.product.findUnique({ where: { id } })
 
     if (!product) {
@@ -327,8 +334,6 @@ export class ProductsService {
     return { message: 'Product deleted successfully', product: deleted }
   }
 
-  // ==================== HARD DELETE (ADMIN ONLY) ====================
-
   async hardDelete(id: string, userRole: Role) {
     if (userRole !== Role.ADMIN) {
       throw new ForbiddenException('Only ADMIN can permanently delete products')
@@ -340,15 +345,13 @@ export class ProductsService {
       throw new NotFoundException(`Product with ID "${id}" not found`)
     }
 
-    // Instead of deleting, just set hardDeletedAt
-    // Also change slug to free up the original slug
     const timestamp = new Date().getTime()
     await this.prisma.product.update({
       where: { id },
       data: {
         hardDeletedAt: new Date(),
         slug: `${product.slug}-deleted-${timestamp}`, // Free up the slug
-        deletedAt: product.deletedAt || new Date(), // Ensure it's marked as soft deleted too
+        deletedAt: product.deletedAt ?? new Date(), // Ensure it's marked as soft deleted too
         isActive: false,
       },
     })
@@ -358,8 +361,6 @@ export class ProductsService {
     this.logger.log(`Product hard-deleted (archived): ${product.slug}`)
     return { message: 'Product permanently deleted' }
   }
-
-  // ==================== RESTORE (ADMIN ONLY) ====================
 
   async restore(id: string, userId: string, userRole: Role) {
     if (userRole !== Role.ADMIN) {
@@ -392,8 +393,6 @@ export class ProductsService {
     return restored
   }
 
-  // ==================== DUPLICATE ====================
-
   async duplicate(id: string, userId: string) {
     const original = await this.prisma.product.findUnique({ where: { id } })
 
@@ -401,7 +400,6 @@ export class ProductsService {
       throw new NotFoundException('Product not found')
     }
 
-    // Generate unique slug
     const baseSlug = original.slug
     let newSlug = `${baseSlug}-copy`
     let counter = 1
@@ -444,10 +442,7 @@ export class ProductsService {
     return duplicated
   }
 
-  // ==================== BULK SOFT DELETE ====================
-
-  async bulkSoftDelete(ids: string[], userId: string, userRole: Role) {
-    // Validate all products exist and not deleted
+  async bulkSoftDelete(ids: string[], userId: string, _userRole: Role) {
     const products = await this.prisma.product.findMany({
       where: {
         id: { in: ids },
@@ -473,8 +468,6 @@ export class ProductsService {
     return { deleted: ids.length }
   }
 
-  // ==================== BULK UPDATE ====================
-
   async bulkUpdate(dto: BulkUpdateDto, userId: string) {
     const { ids, ...updateData } = dto
 
@@ -495,8 +488,6 @@ export class ProductsService {
     this.logger.log(`Bulk update: ${result.count} products by user ${userId}`)
     return { updated: result.count }
   }
-
-  // ==================== BULK RESTORE (ADMIN ONLY) ====================
 
   async bulkRestore(ids: string[], userId: string, userRole: Role) {
     if (userRole !== Role.ADMIN) {
@@ -519,35 +510,54 @@ export class ProductsService {
     return { restored: result.count }
   }
 
-  // ==================== HELPER METHODS ====================
-
   /**
    * Convert VND to USD using exchange rate
    */
-  private convertVndToUsd(vnd: number): number {
-    return Math.round((vnd / USD_EXCHANGE_RATE) * 100) / 100 // Round to 2 decimal places
+  private convertVndToUsd(vnd: number, exchangeRate: number): number {
+    return Math.round((vnd / exchangeRate) * 100) / 100
+  }
+
+  private async getCurrentExchangeRate(): Promise<number> {
+    const cached = await this.redis.get('exchange_rate')
+    if (cached) {
+      const parsed = parseFloat(cached)
+      if (!Number.isNaN(parsed) && parsed > 0) {
+        return parsed
+      }
+    }
+
+    const setting = await this.prisma.siteSettings.findUnique({
+      where: { key: 'exchange_rate' },
+    })
+
+    const parsed = setting ? parseFloat(setting.value) : NaN
+    const rate = !Number.isNaN(parsed) && parsed > 0 ? parsed : 25000
+
+    await this.redis.set('exchange_rate', rate.toString(), 3600)
+    return rate
   }
 
   /**
    * Prepare price data with auto-conversion
    */
-  private preparePriceData(dto: CreateProductDto | UpdateProductDto): {
+  private preparePriceData(
+    dto: CreateProductDto | UpdateProductDto,
+    exchangeRate: number,
+  ): {
     priceUSD?: number
     salePriceUSD?: number | null
   } {
     const result: { priceUSD?: number; salePriceUSD?: number | null } = {}
 
-    // Auto-calculate priceUSD if not provided but priceVND is
     if (dto.priceVND !== undefined && dto.priceUSD === undefined) {
-      result.priceUSD = this.convertVndToUsd(dto.priceVND)
+      result.priceUSD = this.convertVndToUsd(dto.priceVND, exchangeRate)
     } else if (dto.priceUSD !== undefined) {
       result.priceUSD = dto.priceUSD
     }
 
-    // Auto-calculate salePriceUSD if salePriceVND is provided
     if (dto.salePriceVND !== undefined) {
       if (dto.salePriceUSD === undefined && dto.salePriceVND !== null) {
-        result.salePriceUSD = this.convertVndToUsd(dto.salePriceVND)
+        result.salePriceUSD = this.convertVndToUsd(dto.salePriceVND, exchangeRate)
       } else {
         result.salePriceUSD = dto.salePriceUSD
       }
@@ -556,7 +566,12 @@ export class ProductsService {
     return result
   }
 
-  private generateDefaultMessage(dto: CreateProductDto | any, language: 'vi' | 'en'): string {
+  private generateDefaultMessage(
+    dto: CreateProductDto,
+    language: 'vi' | 'en',
+    exchangeRate: number,
+    computedPriceUSD?: number,
+  ): string {
     if (language === 'vi') {
       return `Xin chào! Tôi quan tâm đến sản phẩm "${dto.nameVi}".
 
@@ -567,7 +582,7 @@ Thông tin sản phẩm:
 
 Bạn có thể cho tôi biết thêm chi tiết không?`
     } else {
-      const priceUSD = Math.round(dto.priceVND / 25000)
+      const priceUSD = computedPriceUSD ?? this.convertVndToUsd(dto.priceVND, exchangeRate)
       return `Hello! I'm interested in the "${dto.nameEn}".
 
 Product details:
@@ -580,13 +595,11 @@ Could you provide more information?`
   }
 
   private async invalidateProductCache(productId?: string) {
-    // Invalidate list caches (all pages, filters)
     const keys = await this.redis.keys('products:*')
     if (keys.length > 0) {
       await Promise.all(keys.map((key) => this.redis.del(key)))
     }
 
-    // Invalidate specific product cache if ID provided
     if (productId) {
       await this.redis.del(`product:${productId}`)
     }

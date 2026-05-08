@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common'
+import { RedisModule } from '../redis'
 import { ProductsController } from './products.controller'
 import { ProductsService } from './products.service'
-import { RedisModule } from '../redis'
 
 @Module({
   imports: [RedisModule],

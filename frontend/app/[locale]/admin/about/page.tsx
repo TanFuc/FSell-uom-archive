@@ -1,7 +1,7 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Save, Upload, X, Languages } from 'lucide-react'
+import { Save, X } from 'lucide-react'
 import Image from 'next/image'
 import { useTranslations } from 'next-intl'
 import { useEffect, useState } from 'react'
@@ -19,15 +19,12 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { Separator } from '@/components/ui/separator'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { useSiteContent, useUpdateSiteContent } from '@/hooks/use-settings'
 import { useToast } from '@/hooks/use-toast'
-import { api } from '@/lib/api'
 import { getImageUrl } from '@/lib/utils'
 
-// Define the keys we manage on this page
 const ABOUT_KEYS = [
   'about.heroTitle',
   'about.heroSubtitle',
@@ -51,7 +48,6 @@ export default function AdminAboutPage() {
   const t = useTranslations('admin')
   const { toast } = useToast()
 
-  // Use hooks for fetching and updating
   const { data: content, isLoading } = useSiteContent()
   const { mutate: updateContent, isPending: isSaving } = useUpdateSiteContent()
 
@@ -62,7 +58,6 @@ export default function AdminAboutPage() {
     defaultValues: {},
   })
 
-  // Initialize form when content loads
   useEffect(() => {
     if (content) {
       const values: Record<string, string> = {}
@@ -70,12 +65,7 @@ export default function AdminAboutPage() {
         values[`${baseKey}.vi`] = content[`${baseKey}.vi`] || ''
         values[`${baseKey}.en`] = content[`${baseKey}.en`] || ''
       })
-      // Special case for image which might not have locale suffix or uses .en as fallback?
-      // Actually image is usually shared, but structure suggests we might want localized images?
-      // For simplicity, let's assume shared image stored in .en or just base key if API supports it.
-      // But SiteContent is string->string. Let's use specific key for image without locale if possible,
-      // or just default to 'en' key for shared assets.
-      // Let's stick to locale keys for consistency:
+
       values['about.storyImage'] = content['about.storyImage'] || ''
 
       form.reset(values)
@@ -133,7 +123,7 @@ export default function AdminAboutPage() {
                           <Input
                             {...field}
                             placeholder={
-                              activeTab === 'vi' ? 'VỀ ƯƠM ARCHIVE' : 'ABOUT ƯƠM ARCHIVE'
+                              activeTab === 'vi' ? 'VỀ ƯƠM. ARCHIVE' : 'ABOUT ƯƠM. ARCHIVE'
                             }
                           />
                         </FormControl>

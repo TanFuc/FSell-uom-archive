@@ -1,301 +1,364 @@
-'use client'
-
-import { Instagram, Facebook, Loader2, ArrowLeft, Info } from 'lucide-react'
-import Image from 'next/image'
-import Link from 'next/link'
+﻿import { type Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { useLocale, useTranslations } from 'next-intl'
-import { BannerCarousel } from '@/components/BannerCarousel'
-import { ProductCard } from '@/components/ProductCard'
-import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
-import { useBanners } from '@/hooks/use-banners'
-import { useDocumentTitle } from '@/hooks/use-document-title'
-import { useProduct, useProducts } from '@/hooks/use-products'
-import { useSocialLinks } from '@/hooks/use-settings'
-import { getDisplayPrice } from '@/lib/currency'
-import { optimizeProductImage } from '@/lib/utils'
+import Script from 'next/script'
+import { getLocale } from 'next-intl/server'
+import { getCanonicalBaseUrl } from '@/lib/seo'
+import { fetchBranding } from '@/lib/server-utils'
+import ProductClient from './product-client'
 
-interface ProductPageProps {
-  params: {
-    slug: string
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888/api'
+const BASE_URL = getCanonicalBaseUrl()
+
+type ProductDetail = {
+  slug: string
+  nameVi?: string
+  nameEn?: string
+  shortDescriptionVi?: string
+  shortDescriptionEn?: string
+  descriptionVi?: string
+  descriptionEn?: string
+  images?: string[]
+  priceVND?: number
+  salePriceVND?: number | null
+  stock?: number
+  material?: string
+  dimensions?: string
+  updatedAt?: string
+  category?: {
+    nameVi?: string
+    nameEn?: string
+  } | null
+}
+
+type ProductResponse = {
+  data?: ProductDetail
+}
+
+type FetchProductResult =
+  | { status: 'ok'; product: ProductDetail }
+  | { status: 'not-found' }
+  | { status: 'error' }
+
+function stripHtml(value: string | undefined): string {
+  return (value ?? '').replace(/<[^>]*>/g, '').trim()
+}
+
+function toAbsoluteUrl(value: string): string {
+  if (/^https?:\/\//i.test(value)) {
+    return value
+  }
+
+  return `${BASE_URL}${value.startsWith('/') ? value : `/${value}`}`
+}
+
+function unwrapProductResponse(payload: unknown): ProductDetail | null {
+  if (!payload || typeof payload !== 'object') {
+    return null
+  }
+
+  const root = payload as { data?: unknown }
+
+  if (root.data && typeof root.data === 'object' && !Array.isArray(root.data)) {
+    const nested = root.data as ProductResponse
+
+    if (nested.data && typeof nested.data === 'object') {
+      return nested.data
+    }
+
+    return root.data as ProductDetail
+  }
+
+  return null
+}
+
+async function fetchProduct(slug: string): Promise<FetchProductResult> {
+  try {
+    const res = await fetch(`${API_URL}/products/${slug}`, { next: { revalidate: 300 } })
+    if (res.status === 404) {
+      return { status: 'not-found' }
+    }
+
+    if (!res.ok) {
+      return { status: 'error' }
+    }
+
+    const payload = (await res.json()) as unknown
+    const product = unwrapProductResponse(payload)
+
+    if (!product) {
+      return { status: 'error' }
+    }
+
+    return { status: 'ok', product }
+  } catch {
+    return { status: 'error' }
   }
 }
 
-export default function ProductPage({ params }: ProductPageProps) {
-  const locale = useLocale() as 'vi' | 'en'
-  const t = useTranslations('product')
-  const tCommon = useTranslations('common')
-  const tHome = useTranslations('Home')
-  const { data: product, isLoading, error } = useProduct(params.slug)
-  const { data: socialLinks } = useSocialLinks()
-  const { data: banners } = useBanners(true)
+interface Props {
+  params: { slug: string }
+}
 
-  // Fetch related products (latest for now) - must be called before any conditional returns
-  const { data: relatedProducts } = useProducts({
-    page: 1,
-    limit: 4,
-    isActive: true,
-    sortBy: 'createdAt',
-    sortOrder: 'desc',
-  })
+function getBrandName(
+  locale: string,
+  branding: { brandNameVi?: string | null; brandNameEn?: string | null } | null,
+) {
+  return locale === 'vi'
+    ? (branding?.brandNameVi ?? 'ƯƠM.')
+    : (branding?.brandNameEn ?? 'ƯƠM.')
+}
 
-  // Get product name for document title (handle loading state)
-  const name = product ? (locale === 'vi' ? product.nameVi : product.nameEn) : t('loading')
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const locale = await getLocale()
+  const [result, branding] = await Promise.all([fetchProduct(params.slug), fetchBranding()])
 
-  // Update document title with product name - must be called before conditional returns
-  useDocumentTitle(name)
-
-  if (isLoading) {
-    return (
-      <div className="container-custom spacing-lg flex min-h-[60vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    )
+  if (result.status === 'not-found') {
+    return {
+      title: 'Product Not Found',
+      robots: {
+        index: false,
+        follow: false,
+      },
+    }
   }
 
-  if (error || !product) {
+  if (result.status === 'error') {
+    return {
+      title: locale === 'vi' ? 'Sản phẩm' : 'Product',
+      description:
+        locale === 'vi'
+          ? 'Khám phá sản phẩm thủ công từ ƯƠM.'
+          : 'Discover handcrafted products from ƯƠM.',
+      alternates: {
+        canonical: `/${locale}/shop/${params.slug}`,
+        languages: {
+          vi: `/vi/shop/${params.slug}`,
+          en: `/en/shop/${params.slug}`,
+          'x-default': `/vi/shop/${params.slug}`,
+        },
+      },
+      robots: {
+        index: true,
+        follow: true,
+      },
+    }
+  }
+
+  const isVi = locale === 'vi'
+  const brandName = getBrandName(locale, branding)
+  const product = result.product
+  const name = isVi ? product.nameVi : product.nameEn
+  const rawDescription =
+    (isVi
+      ? product.shortDescriptionVi || product.descriptionVi
+      : product.shortDescriptionEn || product.descriptionEn) ?? ''
+  const description = stripHtml(rawDescription).slice(0, 160) || undefined
+  const firstImage = product.images?.[0] ? toAbsoluteUrl(product.images[0]) : undefined
+  const canonicalPath = `/${locale}/shop/${params.slug}`
+
+  return {
+    title: name,
+    description,
+    openGraph: {
+      title: `${name} | ${brandName}`,
+      description,
+      url: `${BASE_URL}${canonicalPath}`,
+      type: 'website',
+      images: firstImage ? [{ url: firstImage, width: 1200, height: 1600, alt: name }] : undefined,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${name} | ${brandName}`,
+      description,
+      images: firstImage ? [firstImage] : undefined,
+    },
+    alternates: {
+      canonical: canonicalPath,
+      languages: {
+        vi: `/vi/shop/${params.slug}`,
+        en: `/en/shop/${params.slug}`,
+        'x-default': `/vi/shop/${params.slug}`,
+      },
+    },
+  }
+}
+
+export default async function ProductPage({ params }: Props) {
+  const locale = await getLocale()
+  const [result, branding] = await Promise.all([fetchProduct(params.slug), fetchBranding()])
+
+  if (result.status === 'not-found') {
     notFound()
   }
 
-  const description = locale === 'vi' ? product.descriptionVi : product.descriptionEn
-  const priceDisplay = getDisplayPrice(product, locale)
+  const product = result.status === 'ok' ? result.product : null
+  const brandName = getBrandName(locale, branding)
+  const isVi = locale === 'vi'
+  const name = product ? (isVi ? product.nameVi : product.nameEn) : ''
+  const description = product
+    ? stripHtml(
+        isVi
+          ? product.shortDescriptionVi || product.descriptionVi || ''
+          : product.shortDescriptionEn || product.descriptionEn || '',
+      ).slice(0, 300)
+    : ''
+  const productUrl = `${BASE_URL}/${locale}/shop/${params.slug}`
+  const images = (product?.images ?? []).map((value) => toAbsoluteUrl(value))
+  const categoryName = isVi ? product?.category?.nameVi : product?.category?.nameEn
+  const faqItems = product
+    ? isVi
+      ? [
+          {
+            question: `${name} phù hợp với không gian nào?`,
+            answer:
+              'Sản phẩm phù hợp với không gian sống tối giản hoặc góc trưng bày thủ công, tôn bật chất liệu gốm.',
+          },
+          {
+            question: 'Cách bảo quản gốm sứ thủ công?',
+            answer:
+              'Hạn chế va đập mạnh, vệ sinh nhẹ nhàng bằng khăn mềm và tránh thay đổi nhiệt độ đột ngột.',
+          },
+          {
+            question: 'Làm sao để đặt hàng hoặc tư vấn?',
+            answer:
+              'Bạn có thể nhắn qua Instagram/Facebook hoặc gửi yêu cầu tư vấn ngay trên trang sản phẩm.',
+          },
+        ]
+      : [
+          {
+            question: `Where does ${name} fit best?`,
+            answer:
+              'It complements minimal interiors or curated display corners, highlighting handcrafted ceramic textures.',
+          },
+          {
+            question: 'How should I care for handcrafted ceramics?',
+            answer:
+              'Avoid heavy impact, clean gently with a soft cloth, and keep away from sudden temperature changes.',
+          },
+          {
+            question: 'How can I inquire or place an order?',
+            answer:
+              'Message us via Instagram/Facebook or send an inquiry directly on the product page.',
+          },
+        ]
+    : []
+
+  const jsonLd = product
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'Product',
+        '@id': productUrl,
+        url: productUrl,
+        name,
+        description,
+        image: images,
+        sku: product.slug,
+        category: categoryName || undefined,
+        inLanguage: isVi ? 'vi-VN' : 'en-US',
+        offers: {
+          '@type': 'Offer',
+          url: productUrl,
+          priceCurrency: 'VND',
+          price: String(product.salePriceVND ?? product.priceVND ?? 0),
+          itemCondition: 'https://schema.org/NewCondition',
+          availability:
+            (product.stock ?? 0) > 0
+              ? 'https://schema.org/InStock'
+              : 'https://schema.org/OutOfStock',
+          seller: {
+            '@type': 'Organization',
+            name: brandName,
+            url: BASE_URL,
+          },
+        },
+        brand: {
+          '@type': 'Brand',
+          name: brandName,
+        },
+        additionalProperty: [
+          product.material
+            ? {
+                '@type': 'PropertyValue',
+                name: isVi ? 'Chất liệu' : 'Material',
+                value: product.material,
+              }
+            : null,
+          product.dimensions
+            ? {
+                '@type': 'PropertyValue',
+                name: isVi ? 'Kích thước' : 'Dimensions',
+                value: product.dimensions,
+              }
+            : null,
+        ].filter(Boolean),
+      }
+    : null
 
   return (
-    <div>
-      {/* Hero Banner Carousel - Full Width */}
-      {banners && banners.length > 0 && (
-        <div>
-          <BannerCarousel banners={banners} locale={locale} />
-        </div>
+    <>
+      {jsonLd && (
+        <Script
+          id="product-jsonld"
+          strategy="beforeInteractive"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
       )}
-
-      <div className="container-custom pt-12 md:pt-24">
-        {/* Back Button */}
-        <Link
-          href={`/${locale}/shop`}
-          className="animate-fade-in mb-8 inline-flex items-center gap-2 transition-all hover:italic md:mb-12"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          <span className="text-xs uppercase tracking-wider md:text-sm">{tCommon('back')}</span>
-        </Link>
-
-        <div className="mb-16 grid gap-8 md:mb-24 md:grid-cols-[1.2fr_0.8fr] md:gap-12 lg:gap-24">
-          {/* Images */}
-          <div className="stagger-children space-y-4">
-            {product.images && product.images.length > 0 ? (
-              <>
-                <div
-                  className="group relative w-full overflow-hidden rounded-sm bg-muted/20"
-                  style={{ aspectRatio: '4 / 5' }}
-                >
-                  <Image
-                    src={optimizeProductImage(product.images[0])}
-                    alt={name}
-                    fill
-                    sizes="(max-width: 768px) 100vw, 60vw"
-                    className="transition-transform duration-700 group-hover:scale-105"
-                    style={{ objectFit: 'cover', objectPosition: 'center' }}
-                    priority
-                  />
-                </div>
-                {product.images.length > 1 && (
-                  <div className="grid grid-cols-2 gap-2 md:gap-4">
-                    {product.images.slice(1).map((image, index) => (
-                      <div
-                        key={index}
-                        className="group relative w-full overflow-hidden rounded-sm bg-muted/20"
-                        style={{ aspectRatio: '4 / 5' }}
-                      >
-                        <Image
-                          src={optimizeProductImage(image, { width: 600, height: 750 })}
-                          alt={`${name} ${index + 2}`}
-                          fill
-                          sizes="(max-width: 768px) 50vw, 30vw"
-                          className="transition-transform duration-500 group-hover:scale-110"
-                          style={{ objectFit: 'cover', objectPosition: 'center' }}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="aspect-product flex items-center justify-center bg-muted/20 text-muted-foreground">
-                {t('noImages')}
-              </div>
-            )}
-          </div>
-
-          {/* Product Info */}
-          <div className="relative">
-            <div className="animate-fade-in-up space-y-8 md:sticky md:top-32 md:space-y-10">
-              {/* Header */}
-              <div className="space-y-3 md:space-y-4">
-                <h1 className="font-serif text-2xl font-normal uppercase leading-snug tracking-widest text-foreground md:text-3xl">
-                  {name}
-                </h1>
-                <div className="flex items-center gap-3">
-                  <p className="font-serif text-xl font-light text-foreground/80 md:text-2xl">
-                    {priceDisplay.currentPrice}
-                  </p>
-                  {priceDisplay.hasDiscount && priceDisplay.originalPrice && (
-                    <>
-                      <p className="text-lg font-light text-muted-foreground/40 line-through">
-                        {priceDisplay.originalPrice}
-                      </p>
-                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs uppercase tracking-wider text-primary">
-                        -{priceDisplay.discountPercentage}%
-                      </span>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {/* Short Description */}
-              {(locale === 'vi' ? product.shortDescriptionVi : product.shortDescriptionEn) && (
-                <div className="text-sm font-light leading-relaxed text-muted-foreground md:text-lg">
-                  {locale === 'vi' ? product.shortDescriptionVi : product.shortDescriptionEn}
-                </div>
-              )}
-
-              <div className="h-px w-full bg-border/40" />
-
-              {/* View Details */}
-              <Dialog>
-                <DialogTrigger asChild>
-                  <div className="group cursor-pointer py-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold uppercase tracking-widest text-foreground/80 transition-colors group-hover:text-foreground md:text-sm">
-                        {t('viewDetails')}
-                      </span>
-                      <Info className="h-5 w-5 text-muted-foreground/60 transition-colors group-hover:text-primary" />
-                    </div>
-                  </div>
-                </DialogTrigger>
-                <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto border-none bg-background/95 shadow-2xl backdrop-blur-sm">
-                  <DialogHeader className="mb-6 md:mb-8">
-                    <DialogTitle className="mb-2 font-serif text-xl uppercase tracking-wider md:text-2xl">
-                      {name}
-                    </DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-8 md:space-y-10">
-                    {/* Description */}
-                    {description && (
-                      <div className="space-y-4">
-                        <div
-                          className="prose prose-sm md:prose-base prose-neutral dark:prose-invert prose-p:font-light prose-p:leading-relaxed prose-headings:font-serif prose-headings:font-normal prose-img:rounded-md prose-img:w-full prose-a:text-primary max-w-none text-muted-foreground [&_.prose]:text-justify"
-                          dangerouslySetInnerHTML={{ __html: description }}
-                        />
-                      </div>
-                    )}
-
-                    <div className="h-px w-full bg-border/40" />
-
-                    {/* Material & Dimensions */}
-                    <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:gap-12">
-                      <div className="space-y-2">
-                        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                          {t('material')}
-                        </h3>
-                        <p className="font-serif text-lg md:text-xl">{product.material}</p>
-                      </div>
-                      <div className="space-y-2">
-                        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                          {t('dimensions')}
-                        </h3>
-                        <p className="font-serif text-lg md:text-xl">{product.dimensions}</p>
-                      </div>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
-
-              <div className="h-px w-full bg-border/40" />
-
-              {/* Inquiry Section */}
-              <div className="space-y-6">
-                <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                  {t('contactOrder')}
-                </h3>
-                <p className="max-w-sm text-sm font-light leading-relaxed text-muted-foreground/80">
-                  {t('contactNote')}
-                </p>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:gap-4">
-                  {socialLinks?.instagramUsername && (
-                    <a
-                      href={`https://instagram.com/${socialLinks.instagramUsername}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="group flex items-center justify-center gap-3 border border-foreground/10 bg-background px-6 py-3 transition-all duration-300 hover:border-foreground md:py-4"
-                    >
-                      <Instagram className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-foreground" />
-                      <span className="text-xs font-bold uppercase tracking-wider">
-                        {t('instagram')}
-                      </span>
-                    </a>
-                  )}
-                  {socialLinks?.facebookPageUrl && (
-                    <a
-                      href={socialLinks.facebookPageUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="group flex items-center justify-center gap-3 border border-foreground/10 bg-background px-6 py-3 transition-all duration-300 hover:border-foreground md:py-4"
-                    >
-                      <Facebook className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-foreground" />
-                      <span className="text-xs font-bold uppercase tracking-wider">
-                        {t('facebook')}
-                      </span>
-                    </a>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Brand Promise / Mini Footer */}
-        <div className="mb-16 grid gap-8 bg-muted/10 p-8 text-center md:mb-24 md:grid-cols-3 md:p-12">
-          <div className="space-y-2">
-            <h3 className="text-sm font-semibold uppercase tracking-wider">{t('handcrafted')}</h3>
-            <p className="text-sm text-muted-foreground">{t('handcraftedDesc')}</p>
-          </div>
-          <div className="space-y-2">
-            <h3 className="text-sm font-semibold uppercase tracking-wider">{t('safeShipping')}</h3>
-            <p className="text-sm text-muted-foreground">{t('safeShippingDesc')}</p>
-          </div>
-          <div className="space-y-2">
-            <h3 className="text-sm font-semibold uppercase tracking-wider">{t('support')}</h3>
-            <p className="text-sm text-muted-foreground">{t('supportDesc')}</p>
-          </div>
-        </div>
-
-        {/* Related Products */}
-        <section className="space-y-8 border-t border-border/10 pb-12 pt-16 md:space-y-12 md:pb-24 md:pt-24">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl uppercase tracking-wider">{t('relatedProducts')}</h2>
-            <Link href={`/${locale}/shop`} className="nav-link text-sm">
-              {tHome('viewAll')}
-            </Link>
-          </div>
-
-          <div className="grid-products stagger-children">
-            {relatedProducts?.data
-              .filter((p) => p.id !== product.id)
-              .slice(0, 4)
-              .map((item) => (
-                <ProductCard key={item.id} product={item} locale={locale} />
-              ))}
-          </div>
-        </section>
-      </div>
-    </div>
+      {product && (
+        <Script
+          id="product-breadcrumb-jsonld"
+          strategy="beforeInteractive"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'BreadcrumbList',
+              itemListElement: [
+                {
+                  '@type': 'ListItem',
+                  position: 1,
+                  name: 'Home',
+                  item: `${BASE_URL}/${locale}`,
+                },
+                {
+                  '@type': 'ListItem',
+                  position: 2,
+                  name: 'Shop',
+                  item: `${BASE_URL}/${locale}/shop`,
+                },
+                {
+                  '@type': 'ListItem',
+                  position: 3,
+                  name,
+                  item: productUrl,
+                },
+              ],
+            }),
+          }}
+        />
+      )}
+      {product && faqItems.length > 0 && (
+        <Script
+          id="product-faq-jsonld"
+          strategy="beforeInteractive"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'FAQPage',
+              mainEntity: faqItems.map((item) => ({
+                '@type': 'Question',
+                name: item.question,
+                acceptedAnswer: {
+                  '@type': 'Answer',
+                  text: item.answer,
+                },
+              })),
+            }),
+          }}
+        />
+      )}
+      <ProductClient params={params} />
+    </>
   )
 }

@@ -64,7 +64,7 @@ The API will be available at `http://localhost:3001`
 
 ## API Documentation
 
-Swagger UI: `http://localhost:3001/api/docs`
+Swagger UI: `http://localhost:8888/api/docs`
 
 ## Default Admin Credentials
 
@@ -101,6 +101,89 @@ Key variables:
 | `npm run db:seed` | Seed database |
 | `npm run test` | Run tests |
 | `npm run lint` | Run ESLint |
+| `npm run monitoring:up` | Start Prometheus + Grafana |
+| `npm run monitoring:down` | Stop monitoring stack |
+
+## Monitoring
+
+### Built-in endpoints
+
+- `GET /api/monitoring/health` - app + database + redis health status
+- `GET /api/monitoring/metrics` - Prometheus metrics endpoint
+
+### Start Prometheus + Grafana
+
+From the `backend` folder:
+
+```bash
+npm run monitoring:up
+```
+
+Services:
+
+- Prometheus: `http://localhost:9090`
+- Grafana: `http://localhost:3002` (default login: `admin` / `admin`)
+
+Prometheus scrapes backend metrics from:
+
+- `http://host.docker.internal:3001/api/monitoring/metrics`
+
+### Dashboard and Alerts
+
+- Grafana dashboard (auto-provisioned): `UOM Backend - API Overview`
+	- HTTP RPS
+	- p95 latency
+	- 5xx error rate
+	- in-flight requests
+- Prometheus alert rules (auto-loaded from `monitoring/alerts.yml`):
+	- `UomBackendHealthDown`
+	- `UomHighHttpErrorRate`
+	- `UomHighP95Latency`
+
+Grafana Alerting provisioning file:
+
+- `monitoring/grafana/provisioning/alerting/contact-points-policies.yml`
+- `monitoring/grafana/provisioning/alerting/managed-alert-rules.yml`
+
+Configured contact points:
+
+- Telegram: `telegram-critical`
+- Slack: `slack-warning`
+- Email: `email-default`
+
+Notification policy routing:
+
+- `severity=critical` -> Telegram + Email
+- `severity=warning` -> Slack + Email
+- Other alerts -> Email
+
+Managed alert rules in Grafana (not dependent on Prometheus Alerts UI):
+
+- `UOM Backend Health Down`
+- `UOM High HTTP Error Rate`
+- `UOM High P95 Latency`
+- `UOM Synthetic Notify Test` (fires for ~3 minutes after backend start, then auto-resolves)
+
+Set these environment variables before `npm run monitoring:up`:
+
+- `GF_ALERT_TELEGRAM_BOT_TOKEN`
+- `GF_ALERT_TELEGRAM_CHAT_ID`
+- `GF_ALERT_SLACK_WEBHOOK_URL`
+- `GF_ALERT_EMAIL_ADDRESSES`
+- `GF_SMTP_ENABLED=true`
+- `GF_SMTP_HOST`, `GF_SMTP_USER`, `GF_SMTP_PASSWORD`
+- `GF_SMTP_FROM_ADDRESS`, `GF_SMTP_FROM_NAME`
+
+To inspect managed alert states:
+
+- Grafana Alerting UI: `http://localhost:3002/alerting`
+
+To re-run synthetic end-to-end notification test:
+
+1. Restart backend service/app.
+2. Wait about 10-30s for evaluation.
+3. Confirm `UOM Synthetic Notify Test` enters firing state and sends notifications.
+4. Confirm it auto-resolves after ~3 minutes.
 
 ## Project Structure
 

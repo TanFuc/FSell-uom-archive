@@ -3,24 +3,42 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { apiClient } from '@/lib/api-client'
-import type {
-  AllSettings,
-  ThemeSettings,
-  SocialLinks,
-  SiteContent,
-  ExchangeRate,
-} from '@/lib/types'
+import type { ThemeSettings, SocialLinks, SiteContent, BrandingSettings } from '@/lib/types'
 
-// Query keys
+const BRANDING_CACHE_KEY = 'uom_branding_cache'
+
+function getBrandingFromStorage(): BrandingSettings | undefined {
+  if (typeof window === 'undefined') return undefined
+  try {
+    const stored = localStorage.getItem(BRANDING_CACHE_KEY)
+    return stored ? (JSON.parse(stored) as BrandingSettings) : undefined
+  } catch {
+    return undefined
+  }
+}
+
+function saveBrandingToStorage(data: BrandingSettings): void {
+  if (typeof window === 'undefined') return
+  try {
+    localStorage.setItem(BRANDING_CACHE_KEY, JSON.stringify(data))
+  } catch {}
+}
+
 export const settingsKeys = {
   all: ['settings'] as const,
   theme: () => [...settingsKeys.all, 'theme'] as const,
   social: () => [...settingsKeys.all, 'social'] as const,
   exchange: () => [...settingsKeys.all, 'exchange'] as const,
   content: () => [...settingsKeys.all, 'content'] as const,
+  branding: () => [...settingsKeys.all, 'branding'] as const,
 }
 
-// Get all settings
+type SiteContentQueryOptions = {
+  staleTime?: number
+  refetchOnMount?: boolean | 'always'
+  initialData?: any
+}
+
 export function useSettings() {
   return useQuery({
     queryKey: settingsKeys.all,
@@ -29,7 +47,6 @@ export function useSettings() {
   })
 }
 
-// Get theme settings
 export function useTheme() {
   return useQuery({
     queryKey: settingsKeys.theme(),
@@ -38,7 +55,6 @@ export function useTheme() {
   })
 }
 
-// Get social links
 export function useSocialLinks() {
   return useQuery({
     queryKey: settingsKeys.social(),
@@ -47,7 +63,6 @@ export function useSocialLinks() {
   })
 }
 
-// Get exchange rate
 export function useExchangeRate() {
   return useQuery({
     queryKey: settingsKeys.exchange(),
@@ -56,16 +71,16 @@ export function useExchangeRate() {
   })
 }
 
-// Get site content
-export function useSiteContent() {
+export function useSiteContent(options?: SiteContentQueryOptions) {
   return useQuery({
     queryKey: settingsKeys.content(),
     queryFn: () => apiClient.getSiteContent(),
-    staleTime: 10 * 60 * 1000,
+    staleTime: options?.staleTime ?? 10 * 60 * 1000,
+    refetchOnMount: options?.refetchOnMount,
+    initialData: options?.initialData,
   })
 }
 
-// Update theme (Admin only)
 export function useUpdateTheme() {
   const queryClient = useQueryClient()
 
@@ -82,7 +97,6 @@ export function useUpdateTheme() {
   })
 }
 
-// Update social links (Admin only)
 export function useUpdateSocialLinks() {
   const queryClient = useQueryClient()
 
@@ -99,7 +113,6 @@ export function useUpdateSocialLinks() {
   })
 }
 
-// Update exchange rate (Admin only)
 export function useUpdateExchangeRate() {
   const queryClient = useQueryClient()
 
@@ -116,7 +129,6 @@ export function useUpdateExchangeRate() {
   })
 }
 
-// Update site content (Admin only)
 export function useUpdateSiteContent() {
   const queryClient = useQueryClient()
 
@@ -129,6 +141,39 @@ export function useUpdateSiteContent() {
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to update site content')
+    },
+  })
+}
+
+export function useBranding() {
+  return useQuery({
+    queryKey: settingsKeys.branding(),
+    queryFn: async () => {
+      const data = await apiClient.getBranding()
+      saveBrandingToStorage(data)
+      return data
+    },
+    staleTime: 10 * 60 * 1000,
+    refetchOnMount: false,
+
+    placeholderData: getBrandingFromStorage,
+  })
+}
+
+export function useUpdateBranding() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: Partial<BrandingSettings>) => apiClient.updateBranding(data),
+    onSuccess: (updatedBranding) => {
+      saveBrandingToStorage(updatedBranding)
+      queryClient.invalidateQueries({ queryKey: settingsKeys.branding() })
+      queryClient.invalidateQueries({ queryKey: settingsKeys.content() })
+      queryClient.invalidateQueries({ queryKey: settingsKeys.all })
+      toast.success('Branding updated successfully')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to update branding')
     },
   })
 }

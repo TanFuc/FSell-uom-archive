@@ -1,22 +1,21 @@
 import { Controller, Get, Put, Body, UseGuards } from '@nestjs/common'
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger'
 import { Role } from '@prisma/client'
-import { SettingsService } from './settings.service'
+import { Roles, CurrentUser, JwtPayload } from '../auth/decorators'
+import { JwtAuthGuard, RolesGuard } from '../auth/guards'
 import {
   UpdateThemeDto,
   UpdateSiteContentDto,
   UpdateSocialLinksDto,
   UpdateExchangeRateDto,
+  UpdateBrandingDto,
 } from './dto'
-import { JwtAuthGuard, RolesGuard } from '../auth/guards'
-import { Roles, CurrentUser, JwtPayload } from '../auth/decorators'
+import { SettingsService } from './settings.service'
 
 @ApiTags('settings')
 @Controller('settings')
 export class SettingsController {
   constructor(private settingsService: SettingsService) {}
-
-  // ==================== ALL PUBLIC SETTINGS ====================
 
   @Get()
   @ApiOperation({ summary: 'Get all public settings (theme, content, social, exchange rate)' })
@@ -24,8 +23,6 @@ export class SettingsController {
   async getAllSettings() {
     return this.settingsService.getAllPublicSettings()
   }
-
-  // ==================== THEME ====================
 
   @Get('theme')
   @ApiOperation({ summary: 'Get current theme settings (public)' })
@@ -40,14 +37,9 @@ export class SettingsController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Update theme settings' })
   @ApiResponse({ status: 200, description: 'Theme updated' })
-  async updateTheme(
-    @Body() dto: UpdateThemeDto,
-    @CurrentUser() user: JwtPayload,
-  ) {
+  async updateTheme(@Body() dto: UpdateThemeDto, @CurrentUser() user: JwtPayload) {
     return this.settingsService.updateTheme(dto, user.sub)
   }
-
-  // ==================== SITE CONTENT ====================
 
   @Get('site-content')
   @ApiOperation({ summary: 'Get site content (menu, footer, etc.) (public)' })
@@ -62,14 +54,9 @@ export class SettingsController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Update site content' })
   @ApiResponse({ status: 200, description: 'Site content updated' })
-  async updateSiteContent(
-    @Body() dto: UpdateSiteContentDto,
-    @CurrentUser() user: JwtPayload,
-  ) {
+  async updateSiteContent(@Body() dto: UpdateSiteContentDto, @CurrentUser() user: JwtPayload) {
     return this.settingsService.updateSiteContent(dto, user.sub)
   }
-
-  // ==================== SOCIAL LINKS ====================
 
   @Get('social-links')
   @ApiOperation({ summary: 'Get social media links for inquiry feature (public)' })
@@ -84,14 +71,9 @@ export class SettingsController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Update social media links (ADMIN only)' })
   @ApiResponse({ status: 200, description: 'Social links updated' })
-  async updateSocialLinks(
-    @Body() dto: UpdateSocialLinksDto,
-    @CurrentUser() user: JwtPayload,
-  ) {
+  async updateSocialLinks(@Body() dto: UpdateSocialLinksDto, @CurrentUser() user: JwtPayload) {
     return this.settingsService.updateSocialLinks(dto, user.sub)
   }
-
-  // ==================== EXCHANGE RATE ====================
 
   @Get('exchange-rate')
   @ApiOperation({ summary: 'Get current VND/USD exchange rate (public)' })
@@ -106,10 +88,40 @@ export class SettingsController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Update exchange rate (ADMIN only)' })
   @ApiResponse({ status: 200, description: 'Exchange rate updated' })
-  async updateExchangeRate(
-    @Body() dto: UpdateExchangeRateDto,
-    @CurrentUser() user: JwtPayload,
-  ) {
-    return this.settingsService.updateExchangeRate(dto.rate)
+  async updateExchangeRate(@Body() dto: UpdateExchangeRateDto, @CurrentUser() user: JwtPayload) {
+    return this.settingsService.updateExchangeRate(dto.rate, user.sub)
+  }
+
+  @Put('exchange-rate/recalculate')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Recalculate all product USD prices with current exchange rate (ADMIN only)',
+  })
+  @ApiResponse({ status: 200, description: 'USD prices recalculated' })
+  async recalculateUsdPrices(@CurrentUser() user: JwtPayload) {
+    return this.settingsService.recalculateUsdPrices(user.sub)
+  }
+
+  @Get('branding')
+  @ApiOperation({
+    summary: 'Get branding settings: logo, brand name, site title, loading text (public)',
+  })
+  @ApiResponse({ status: 200, description: 'Branding settings' })
+  async getBranding() {
+    return this.settingsService.getBranding()
+  }
+
+  @Put('branding')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.MANAGER)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Update branding settings (logo, brand name, site title, loading text)',
+  })
+  @ApiResponse({ status: 200, description: 'Branding updated' })
+  async updateBranding(@Body() dto: UpdateBrandingDto, @CurrentUser() user: JwtPayload) {
+    return this.settingsService.updateBranding(dto, user.sub)
   }
 }

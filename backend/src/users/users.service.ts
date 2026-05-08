@@ -5,7 +5,7 @@ import {
   ForbiddenException,
   Logger,
 } from '@nestjs/common'
-import { Prisma, Role } from '@prisma/client'
+import { Prisma } from '@prisma/client'
 import * as bcrypt from 'bcrypt'
 import { PrismaService } from '../prisma/prisma.service'
 import { RedisService } from '../redis/redis.service'
@@ -20,28 +20,17 @@ export class UsersService {
     private redis: RedisService,
   ) {}
 
-  // ==================== FIND ALL ====================
-
   async findAll(query: QueryUsersDto) {
-    const {
-      page = 1,
-      limit = 10,
-      search,
-      role,
-      isActive,
-      includeDeleted = false,
-    } = query
+    const { page = 1, limit = 10, search, role, isActive, includeDeleted = false } = query
 
     const skip = (page - 1) * limit
 
     const where: Prisma.UserWhereInput = {}
 
-    // Soft delete filter
     if (!includeDeleted) {
       where.deletedAt = null
     }
 
-    // Search
     if (search) {
       where.OR = [
         { email: { contains: search, mode: 'insensitive' } },
@@ -49,7 +38,6 @@ export class UsersService {
       ]
     }
 
-    // Filters
     if (role) where.role = role
     if (isActive !== undefined) where.isActive = isActive
 
@@ -87,8 +75,6 @@ export class UsersService {
     }
   }
 
-  // ==================== FIND BY ID ====================
-
   async findById(id: string) {
     const user = await this.prisma.user.findUnique({
       where: { id },
@@ -114,10 +100,7 @@ export class UsersService {
     return user
   }
 
-  // ==================== CREATE ====================
-
   async create(dto: CreateUserDto, creatorId: string) {
-    // Check if email already exists
     const existingUser = await this.prisma.user.findUnique({
       where: { email: dto.email },
     })
@@ -154,8 +137,6 @@ export class UsersService {
     return user
   }
 
-  // ==================== UPDATE ====================
-
   async update(id: string, dto: UpdateUserDto, updaterId: string) {
     const user = await this.prisma.user.findUnique({ where: { id } })
 
@@ -167,15 +148,27 @@ export class UsersService {
       throw new ForbiddenException('Cannot update a deleted user')
     }
 
-    const updateData: any = {
-      ...dto,
+    if (dto.email && dto.email !== user.email) {
+      const existingUser = await this.prisma.user.findUnique({
+        where: { email: dto.email },
+      })
+
+      if (existingUser && existingUser.id !== id) {
+        throw new ConflictException(`User with email "${dto.email}" already exists`)
+      }
+    }
+
+    const updateData: Prisma.UserUncheckedUpdateInput = {
       updatedBy: updaterId,
     }
 
-    // Hash new password if provided
+    if (dto.email !== undefined) updateData.email = dto.email
+    if (dto.fullName !== undefined) updateData.fullName = dto.fullName
+    if (dto.role !== undefined) updateData.role = dto.role
+    if (dto.isActive !== undefined) updateData.isActive = dto.isActive
+
     if (dto.password) {
       updateData.passwordHash = await bcrypt.hash(dto.password, 10)
-      delete updateData.password
     }
 
     const updatedUser = await this.prisma.user.update({
@@ -198,8 +191,6 @@ export class UsersService {
     return updatedUser
   }
 
-  // ==================== SOFT DELETE ====================
-
   async softDelete(id: string, deleterId: string) {
     const user = await this.prisma.user.findUnique({ where: { id } })
 
@@ -211,7 +202,6 @@ export class UsersService {
       throw new ForbiddenException('User is already deleted')
     }
 
-    // Prevent self-deletion
     if (user.id === deleterId) {
       throw new ForbiddenException('Cannot delete your own account')
     }
@@ -236,8 +226,6 @@ export class UsersService {
     this.logger.log(`User soft-deleted: ${deleted.email} by user ${deleterId}`)
     return { message: 'User deleted successfully', user: deleted }
   }
-
-  // ==================== RESTORE ====================
 
   async restore(id: string, restorerId: string) {
     const user = await this.prisma.user.findUnique({ where: { id } })
@@ -272,8 +260,6 @@ export class UsersService {
     this.logger.log(`User restored: ${restored.email} by user ${restorerId}`)
     return restored
   }
-
-  // ==================== HELPER METHODS ====================
 
   private async invalidateUserCache() {
     const keys = await this.redis.keys('users:*')

@@ -1,14 +1,6 @@
 'use client'
 
-import {
-  Plus,
-  Edit,
-  Trash2,
-  Power,
-  PowerOff,
-  MoveVertical,
-  Loader2
-} from 'lucide-react'
+import { Plus, Edit, Trash2, Power, PowerOff, MoveVertical, Loader2 } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -31,18 +23,16 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { useUpdateBanner, useDeleteBanner } from '@/hooks/use-banners'
 import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api'
-import { Banner } from '@/lib/types'
+import { type Banner } from '@/lib/types'
 import { optimizeProductImage } from '@/lib/utils'
-
-import { useUpdateBanner, useDeleteBanner } from '@/hooks/use-banners'
-// ... (keep other imports)
 
 export default function BannersPage() {
   const router = useRouter()
   const locale = useLocale()
-  const t = useTranslations('admin') 
+  const t = useTranslations('admin')
   const { toast } = useToast()
 
   const [banners, setBanners] = useState<Banner[]>([])
@@ -55,11 +45,10 @@ export default function BannersPage() {
   const updateBanner = useUpdateBanner()
   const deleteBanner = useDeleteBanner()
 
-  // We want to see all banners, including inactive ones
   const fetchBanners = async () => {
     try {
       setIsLoading(true)
-      // Pass false to get all banners (active and inactive)
+
       const data = await api.getBanners(false)
       setBanners(data)
     } catch (error) {
@@ -78,12 +67,6 @@ export default function BannersPage() {
     fetchBanners()
   }, [])
 
-  // Since we are using manual fetch in useEffect for this admin page (to bypass the useBanners hook which might be tailored for public view or we just want simpler logic here),
-  // we need to manually refresh the list after mutations, OR ideally convert this page to use useQuery too.
-  // For now, to minimize changes, we'll keep fetchBanners but call it after mutation success.
-  // Actually, useDeleteBanner invalidates cache, but fetchBanners calls API directly!
-  // It's better to refetch explicitly.
-  
   const handleDelete = async () => {
     if (!deleteDialog.banner) return
 
@@ -100,27 +83,45 @@ export default function BannersPage() {
 
   const handleToggleActive = async (banner: Banner, e: React.MouseEvent) => {
     e.stopPropagation()
+
+    // Optimistic update — flip the status immediately so the UI doesn't flash
+    const newIsActive = !banner.isActive
+    setBanners((prev) =>
+      prev.map((b) => (b.id === banner.id ? { ...b, isActive: newIsActive } : b))
+    )
+
     try {
-      await updateBanner.mutateAsync({ id: banner.id, data: { isActive: !banner.isActive } })
+      const updated = await updateBanner.mutateAsync({ id: banner.id, data: { isActive: newIsActive } })
+      // Sync with server response to ensure consistency
+      setBanners((prev) =>
+        prev.map((b) => (b.id === banner.id ? { ...b, ...updated } : b))
+      )
       toast({
         title: t('success'),
-        description: banner.isActive ? t('banners.deactivated') : t('banners.activated'),
+        description: newIsActive ? t('banners.activated') : t('banners.deactivated'),
       })
-      fetchBanners() // Re-fetch list
     } catch (error) {
-      toast({ title: t('error'), description: t('banners.statusUpdateError'), variant: 'destructive' })
+      // Rollback on failure
+      setBanners((prev) =>
+        prev.map((b) => (b.id === banner.id ? { ...b, isActive: banner.isActive } : b))
+      )
+      toast({
+        title: t('error'),
+        description: t('banners.statusUpdateError'),
+        variant: 'destructive',
+      })
     }
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="font-serif text-2xl">{t('banners.pageTitle')}</h1>
           <p className="text-muted-foreground">{t('banners.pageDesc')}</p>
         </div>
         <Link href={`/${locale}/admin/banners/new`}>
-          <Button>
+          <Button className="w-full sm:w-auto">
             <Plus className="mr-2 h-4 w-4" />
             {t('banners.create')}
           </Button>
@@ -173,14 +174,16 @@ export default function BannersPage() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="font-medium">{banner.titleVi || banner.titleEn || t('banners.untitled')}</div>
-                    <div className="text-xs text-muted-foreground truncate max-w-[200px]">
+                    <div className="font-medium">
+                      {banner.titleVi || banner.titleEn || t('banners.untitled')}
+                    </div>
+                    <div className="max-w-[200px] truncate text-xs text-muted-foreground">
                       {banner.subtitleVi || banner.subtitleEn}
                     </div>
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
                     {banner.link ? (
-                      <span className="text-xs font-mono text-muted-foreground">{banner.link}</span>
+                      <span className="font-mono text-xs text-muted-foreground">{banner.link}</span>
                     ) : (
                       <span className="text-xs text-muted-foreground">-</span>
                     )}
@@ -244,9 +247,7 @@ export default function BannersPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('banners.deleteConfirmTitle')}</DialogTitle>
-            <DialogDescription>
-              {t('banners.deleteConfirmDesc')}
-            </DialogDescription>
+            <DialogDescription>{t('banners.deleteConfirmDesc')}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button

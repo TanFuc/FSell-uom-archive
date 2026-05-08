@@ -6,11 +6,9 @@ import FilePondPluginImagePreview from 'filepond-plugin-image-preview'
 import React, { useState } from 'react'
 import { FilePond, registerPlugin } from 'react-filepond'
 
-// Import FilePond styles
 import 'filepond/dist/filepond.min.css'
 import 'filepond-plugin-image-preview/dist/filepond-plugin-image-preview.min.css'
 
-// Register plugins
 registerPlugin(
   FilePondPluginImagePreview,
   FilePondPluginFileValidateType,
@@ -33,14 +31,14 @@ export function FileUpload({
   onUploadError,
   maxFiles = 1,
   allowMultiple = false,
-  folder,
+  folder: _folder,
   acceptedFileTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
   maxFileSize = '10MB',
   className,
 }: FileUploadProps) {
   const [files, setFiles] = useState<any[]>([])
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888/api'
 
   return (
     <div className={className}>
@@ -98,7 +96,7 @@ export function MultipleFileUpload({
   onUploadSuccess,
   onUploadError,
   maxFiles = 10,
-  folder,
+  folder: _folder,
   acceptedFileTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
   maxFileSize = '10MB',
   className,
@@ -107,7 +105,7 @@ export function MultipleFileUpload({
   const [uploadedUrls, setUploadedUrls] = useState<string[]>([])
   const [uploadedPublicIds, setUploadedPublicIds] = useState<string[]>([])
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888/api'
 
   return (
     <div className={className}>
@@ -132,7 +130,6 @@ export function MultipleFileUpload({
                 setUploadedUrls(newUrls)
                 setUploadedPublicIds(newPublicIds)
 
-                // Call success callback with all uploaded files
                 onUploadSuccess?.(newUrls, newPublicIds)
               }
               return data.data?.publicId || response

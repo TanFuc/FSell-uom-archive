@@ -15,19 +15,6 @@ export function Banner({ banner, locale, className = '' }: BannerProps) {
   const subtitle = locale === 'vi' ? banner.subtitleVi : banner.subtitleEn
   const description = locale === 'vi' ? banner.descriptionVi : banner.descriptionEn
 
-  const textAlign =
-    banner.textPosition === 'left'
-      ? 'text-left'
-      : banner.textPosition === 'right'
-        ? 'text-right'
-        : 'text-center'
-  const justifyContent =
-    banner.textPosition === 'left'
-      ? 'justify-start'
-      : banner.textPosition === 'right'
-        ? 'justify-end'
-        : 'justify-center'
-
   const content = (
     <div className={`relative w-full overflow-hidden ${className}`}>
       {/* Background Image - Hero Style */}
@@ -72,7 +59,6 @@ export function Banner({ banner, locale, className = '' }: BannerProps) {
     </div>
   )
 
-  // If banner has a link, wrap in Link component
   if (banner.link) {
     return (
       <Link href={banner.link} className="group block">
@@ -84,7 +70,6 @@ export function Banner({ banner, locale, className = '' }: BannerProps) {
   return content
 }
 
-// Banner list component for displaying multiple banners
 interface BannerListProps {
   banners: BannerType[]
   locale: 'vi' | 'en'
@@ -94,7 +79,6 @@ interface BannerListProps {
 export function BannerList({ banners, locale, className = '' }: BannerListProps) {
   if (!banners || banners.length === 0) return null
 
-  // Sort by order field
   const sortedBanners = [...banners].sort((a, b) => a.order - b.order)
 
   return (
