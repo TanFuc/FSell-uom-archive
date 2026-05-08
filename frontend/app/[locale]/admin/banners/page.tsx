@@ -83,14 +83,28 @@ export default function BannersPage() {
 
   const handleToggleActive = async (banner: Banner, e: React.MouseEvent) => {
     e.stopPropagation()
+
+    // Optimistic update — flip the status immediately so the UI doesn't flash
+    const newIsActive = !banner.isActive
+    setBanners((prev) =>
+      prev.map((b) => (b.id === banner.id ? { ...b, isActive: newIsActive } : b))
+    )
+
     try {
-      await updateBanner.mutateAsync({ id: banner.id, data: { isActive: !banner.isActive } })
+      const updated = await updateBanner.mutateAsync({ id: banner.id, data: { isActive: newIsActive } })
+      // Sync with server response to ensure consistency
+      setBanners((prev) =>
+        prev.map((b) => (b.id === banner.id ? { ...b, ...updated } : b))
+      )
       toast({
         title: t('success'),
-        description: banner.isActive ? t('banners.deactivated') : t('banners.activated'),
+        description: newIsActive ? t('banners.activated') : t('banners.deactivated'),
       })
-      fetchBanners() // Re-fetch list
     } catch (error) {
+      // Rollback on failure
+      setBanners((prev) =>
+        prev.map((b) => (b.id === banner.id ? { ...b, isActive: banner.isActive } : b))
+      )
       toast({
         title: t('error'),
         description: t('banners.statusUpdateError'),
