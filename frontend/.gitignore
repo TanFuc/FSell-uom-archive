@@ -101,3 +101,7 @@ storybook-static
 *.old.tsx
 *.old.ts
 *.old.js
+
+# AI Codex
+.codex/
+AGENTS.md
