@@ -1,84 +1,90 @@
-import { cpSync, existsSync, mkdirSync, rmSync } from 'node:fs';
-import path from 'node:path';
-import { spawn } from 'node:child_process';
+import { cpSync, existsSync, mkdirSync, rmSync } from 'node:fs'
+import path from 'node:path'
+import { spawn } from 'node:child_process'
 
-const root = process.cwd();
-const nextDir = path.join(root, '.next');
-const standaloneDir = path.join(nextDir, 'standalone');
-const serverSrc = path.join(nextDir, 'server');
-const serverDest = path.join(standaloneDir, '.next', 'server');
-const staticSrc = path.join(nextDir, 'static');
-const staticDest = path.join(standaloneDir, '.next', 'static');
-const publicSrc = path.join(root, 'public');
-const publicDest = path.join(standaloneDir, 'public');
-const serverEntry = path.join(standaloneDir, 'server.js');
+const root = process.cwd()
+const nextDir = path.join(root, '.next')
+const standaloneDir = path.join(nextDir, 'standalone')
+const serverSrc = path.join(nextDir, 'server')
+const serverDest = path.join(standaloneDir, '.next', 'server')
+const staticSrc = path.join(nextDir, 'static')
+const staticDest = path.join(standaloneDir, '.next', 'static')
+const publicSrc = path.join(root, 'public')
+const publicDest = path.join(standaloneDir, 'public')
+const serverEntry = path.join(standaloneDir, 'server.js')
 const requiredServerFiles = [
   ['pages', '_error.js'],
   ['pages', '_error.js.nft.json'],
   ['app', '[locale]', 'shop', '[slug]', 'page.js'],
   ['app', '[locale]', 'shop', '[slug]', 'page.js.nft.json'],
-];
+]
 
 function copyDirIfExists(src, dest) {
   if (!existsSync(src)) {
-    return;
+    return
   }
 
   if (existsSync(dest)) {
-    rmSync(dest, { recursive: true, force: true });
+    rmSync(dest, { recursive: true, force: true })
   }
 
-  mkdirSync(path.dirname(dest), { recursive: true });
-  cpSync(src, dest, { recursive: true });
+  mkdirSync(path.dirname(dest), { recursive: true })
+  cpSync(src, dest, { recursive: true })
 }
 
 function ensureServerFile(relativeParts) {
-  const src = path.join(serverSrc, ...relativeParts);
-  const dest = path.join(serverDest, ...relativeParts);
+  const src = path.join(serverSrc, ...relativeParts)
+  const dest = path.join(serverDest, ...relativeParts)
 
   if (existsSync(dest)) {
-    return true;
+    return true
   }
 
   if (!existsSync(src)) {
-    return false;
+    return false
   }
 
-  mkdirSync(path.dirname(dest), { recursive: true });
-  cpSync(src, dest);
-  return true;
+  mkdirSync(path.dirname(dest), { recursive: true })
+  cpSync(src, dest)
+  return true
 }
 
 if (!existsSync(serverEntry)) {
-  console.error('Missing standalone build output. Run "npm run build" first.');
-  process.exit(1);
+  console.error('Missing standalone build output. Run "npm run build" first.')
+  process.exit(1)
 }
 
-copyDirIfExists(staticSrc, staticDest);
-copyDirIfExists(serverSrc, serverDest);
-copyDirIfExists(publicSrc, publicDest);
+if (!existsSync(serverSrc) || !existsSync(staticSrc)) {
+  console.error(
+    'Incomplete Next.js build output. Missing .next/server or .next/static. Run "npm run build" again before starting standalone.',
+  )
+  process.exit(1)
+}
 
-const missingRequired = requiredServerFiles.filter((parts) => !ensureServerFile(parts));
+copyDirIfExists(staticSrc, staticDest)
+copyDirIfExists(publicSrc, publicDest)
+
+const missingRequired = requiredServerFiles.filter((parts) => !ensureServerFile(parts))
 if (missingRequired.length > 0) {
   console.error(
     `Missing required standalone server files:\n${missingRequired
       .map((parts) => `- .next/server/${parts.join('/')}`)
       .join('\n')}`,
-  );
-  process.exit(1);
+  )
+  process.exit(1)
 }
 
 const child = spawn(process.execPath, [serverEntry], {
   cwd: standaloneDir,
   env: process.env,
   stdio: 'inherit',
-});
+})
 
 child.on('exit', (code, signal) => {
   if (signal) {
-    process.kill(process.pid, signal);
-    return;
+    process.kill(process.pid, signal)
+    return
   }
 
-  process.exit(code ?? 0);
-});
+  process.exit(code ?? 0)
+})
