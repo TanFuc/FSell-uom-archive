@@ -10,12 +10,12 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: 'Googlebot',
         allow: '/',
-        disallow: ['/admin/', '/vi/admin/', '/en/admin/', '/api/'],
+        disallow: ['/admin/', '/vi/admin/', '/en/admin/', '/vi/page-new', '/en/page-new', '/api/'],
       },
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/admin/', '/vi/admin/', '/en/admin/', '/api/'],
+        disallow: ['/admin/', '/vi/admin/', '/en/admin/', '/vi/page-new', '/en/page-new', '/api/'],
       },
       { userAgent: 'GPTBot', disallow: '/' },
       { userAgent: 'ChatGPT-User', disallow: '/' },

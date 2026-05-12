@@ -8,7 +8,17 @@ type RevalidateRequestBody = {
 }
 
 const DEFAULT_TAGS = [SITEMAP_PRODUCTS_TAG, SITEMAP_STORIES_TAG, SITEMAP_STATIC_TAG]
-const DEFAULT_PATHS = ['/sitemap.xml', '/sitemaps/static.xml']
+const DEFAULT_PATHS = [
+  '/sitemap.xml',
+  '/vi',
+  '/en',
+  '/vi/about',
+  '/en/about',
+  '/vi/shop',
+  '/en/shop',
+  '/vi/journal',
+  '/en/journal',
+]
 
 function normalizeStringList(value: unknown): string[] {
   if (!Array.isArray(value)) return []

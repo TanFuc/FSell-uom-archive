@@ -1,5 +1,6 @@
 import axios, { type AxiosInstance, type AxiosError } from 'axios'
-import { pingProductSeo, pingSitewideSeo } from './seo-ping'
+import { pingProductSeo, pingSitewideSeo, pingStoriesSeo } from './seo-ping'
+import { parseStories, STORIES_CONTENT_KEY } from './stories'
 import type {
   Product,
   CreateProductDto,
@@ -253,7 +254,11 @@ class ApiClient {
 
   async updateSiteContent(data: Partial<SiteContent>): Promise<SiteContent> {
     const siteContent = await this.client.put<any, SiteContent>('/settings/site-content', data)
-    void pingSitewideSeo()
+    if (typeof data[STORIES_CONTENT_KEY] === 'string') {
+      void pingStoriesSeo(parseStories(data[STORIES_CONTENT_KEY]))
+    } else {
+      void pingSitewideSeo()
+    }
     return siteContent
   }
 

@@ -14,7 +14,17 @@ type PingResult = {
 }
 
 const DEFAULT_REVALIDATE_TAGS = [SITEMAP_PRODUCTS_TAG, SITEMAP_STORIES_TAG, SITEMAP_STATIC_TAG]
-const DEFAULT_REVALIDATE_PATHS = ['/sitemap.xml', '/sitemaps/static.xml']
+const DEFAULT_REVALIDATE_PATHS = [
+  '/sitemap.xml',
+  '/vi',
+  '/en',
+  '/vi/about',
+  '/en/about',
+  '/vi/shop',
+  '/en/shop',
+  '/vi/journal',
+  '/en/journal',
+]
 
 function normalizeBaseUrl(): string {
   return getCanonicalBaseUrl()
@@ -121,18 +131,38 @@ async function emitMonitorLog(payload: Record<string, unknown>): Promise<void> {
   }
 }
 
-function revalidateSitemapCaches(): { tags: string[]; paths: string[] } {
+function getRevalidatePathsFromUrls(baseUrl: string, urls: string[]): string[] {
+  const baseHost = new URL(baseUrl).host
+  const paths = new Set(DEFAULT_REVALIDATE_PATHS)
+
+  for (const value of urls) {
+    try {
+      const url = new URL(value)
+      if (url.host !== baseHost) continue
+      paths.add(url.pathname || '/')
+    } catch {}
+  }
+
+  return Array.from(paths)
+}
+
+function revalidateSitemapCaches(
+  baseUrl: string,
+  urls: string[],
+): { tags: string[]; paths: string[] } {
+  const paths = getRevalidatePathsFromUrls(baseUrl, urls)
+
   for (const tag of DEFAULT_REVALIDATE_TAGS) {
     revalidateTag(tag)
   }
 
-  for (const path of DEFAULT_REVALIDATE_PATHS) {
+  for (const path of paths) {
     revalidatePath(path)
   }
 
   return {
     tags: DEFAULT_REVALIDATE_TAGS,
-    paths: DEFAULT_REVALIDATE_PATHS,
+    paths,
   }
 }
 
@@ -153,7 +183,7 @@ export async function POST(request: Request): Promise<Response> {
   const baseUrl = normalizeBaseUrl()
   const results = await Promise.all([pingIndexNow(baseUrl, urls), pingBingSitemap(baseUrl)])
   const failedResults = results.filter((result) => !result.ok)
-  const revalidated = revalidateSitemapCaches()
+  const revalidated = revalidateSitemapCaches(baseUrl, urls)
 
   if (failedResults.length > 0) {
     const failureLog = {
