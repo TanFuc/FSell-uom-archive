@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
 import { FileUpload } from '@/components/FileUpload'
+import { SeoSnippetPreview } from '@/components/admin/SeoSnippetPreview'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -21,7 +22,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
-import { useSiteContent, useUpdateSiteContent } from '@/hooks/use-settings'
+import { useBranding, useSiteContent, useUpdateSiteContent } from '@/hooks/use-settings'
 import { useToast } from '@/hooks/use-toast'
 import { getImageUrl } from '@/lib/utils'
 
@@ -49,6 +50,7 @@ export default function AdminAboutPage() {
   const { toast } = useToast()
 
   const { data: content, isLoading } = useSiteContent()
+  const { data: branding } = useBranding()
   const { mutate: updateContent, isPending: isSaving } = useUpdateSiteContent()
 
   const [activeTab, setActiveTab] = useState('vi')
@@ -79,6 +81,16 @@ export default function AdminAboutPage() {
   if (isLoading) {
     return <div className="p-8 text-center">{t('loading')}...</div>
   }
+
+  const previewLocale = activeTab === 'vi' ? 'vi' : 'en'
+  const aboutTitle =
+    form.watch(`about.heroTitle.${activeTab}`) || (activeTab === 'vi' ? 'Về chúng tôi' : 'About Us')
+  const aboutDescription =
+    form.watch(`about.heroSubtitle.${activeTab}`) ||
+    form.watch(`about.storyContent.${activeTab}`) ||
+    (activeTab === 'vi'
+      ? 'Câu chuyện về ƯƠM. Archive và vẻ đẹp thủ công của gốm sứ Việt Nam.'
+      : 'The story of ƯƠM. Archive and the handcrafted beauty of Vietnamese ceramics.')
 
   return (
     <div className="space-y-6">
@@ -145,6 +157,24 @@ export default function AdminAboutPage() {
                         <FormMessage />
                       </FormItem>
                     )}
+                  />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="uppercase tracking-wide">SEO Preview</CardTitle>
+                  <CardDescription>
+                    Google snippet auto-generated from the About content.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <SeoSnippetPreview
+                    locale={previewLocale}
+                    path={`/${previewLocale}/about`}
+                    title={aboutTitle}
+                    description={aboutDescription}
+                    branding={branding}
                   />
                 </CardContent>
               </Card>

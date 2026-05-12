@@ -5,9 +5,11 @@ import Image from 'next/image'
 import { useLocale, useTranslations } from 'next-intl'
 import { useEffect, useMemo, useState } from 'react'
 import { RichTextEditor } from '@/components/RichTextEditor'
+import { SeoSnippetPreview } from '@/components/admin/SeoSnippetPreview'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { useBranding } from '@/hooks/use-settings'
 import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api'
 import { pingStorySeo } from '@/lib/seo-ping'
@@ -40,6 +42,7 @@ export default function AdminStoriesPage() {
   const t = useTranslations('admin')
   const locale = useLocale()
   const { toast } = useToast()
+  const { data: branding } = useBranding()
 
   const [stories, setStories] = useState<StoryItem[]>([])
   const [draft, setDraft] = useState(EMPTY_STORY)
@@ -511,6 +514,23 @@ export default function AdminStoriesPage() {
                   setDraft((prev) => ({ ...prev, summaryEn: event.target.value }))
                 }
                 placeholder={t('stories.summaryEn')}
+              />
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <SeoSnippetPreview
+                locale="vi"
+                path={`/vi/journal/${draft.slugVi || 'story-slug'}`}
+                title={draft.titleVi || 'Tiêu đề story'}
+                description={draft.summaryVi || 'Tóm tắt story sẽ hiển thị ở đây.'}
+                branding={branding}
+              />
+              <SeoSnippetPreview
+                locale="en"
+                path={`/en/journal/${draft.slugEn || 'story-slug'}`}
+                title={draft.titleEn || 'Story title'}
+                description={draft.summaryEn || 'The story summary shown in Google appears here.'}
+                branding={branding}
               />
             </div>
 

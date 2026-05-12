@@ -96,10 +96,10 @@ export default function AdminLayoutClient({ children }: AdminLayoutProps) {
   }
 
   return (
-    <div className="flex min-h-screen bg-background pt-16 text-foreground md:pt-0">
+    <div className="safe-screen flex min-h-screen bg-background pt-16 text-foreground md:pt-0">
       {/* Mobile Top Bar */}
       <div className="fixed left-0 right-0 top-0 z-30 flex h-16 items-center justify-between border-b bg-background px-4 md:hidden">
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 items-center gap-2">
           <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(true)}>
             <Menu className="h-5 w-5" />
           </Button>
@@ -198,8 +198,8 @@ export default function AdminLayoutClient({ children }: AdminLayoutProps) {
       )}
 
       {/* Main content */}
-      <main className="min-w-0 flex-1 overflow-auto">
-        <div className="p-4 sm:p-6 md:p-8">{children}</div>
+      <main className="min-w-0 flex-1 overflow-y-auto overflow-x-hidden">
+        <div className="min-w-0 p-4 sm:p-6 md:p-8">{children}</div>
       </main>
     </div>
   )

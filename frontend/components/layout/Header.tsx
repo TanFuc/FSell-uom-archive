@@ -71,40 +71,43 @@ const SearchResultItem = memo(
 
     return (
       <Link
-      href={`/${locale}/shop/${product.slug}`}
-      onClick={onClick}
-      prefetch={false}
-      className={cn(
-        'group block rounded-2xl border border-foreground/[0.08] bg-[linear-gradient(160deg,#ffffff_0%,#faf8f2_100%)] p-3 text-center shadow-[0_8px_20px_rgba(0,0,0,0.05)] transition-all duration-300 hover:-translate-y-1 hover:border-foreground/20 hover:shadow-[0_18px_34px_rgba(0,0,0,0.15)]',
-        isActive &&
-          'border-foreground/45 bg-[linear-gradient(160deg,#fffdfa_0%,#f4ecdd_100%)] shadow-[0_0_0_2px_rgba(66,56,42,0.16),0_16px_34px_rgba(0,0,0,0.15)]',
-      )}
-    >
-      <div className="relative mx-auto mb-3 aspect-square w-20 overflow-hidden rounded-full border border-foreground/[0.08] bg-muted/5 md:w-24">
-        {product.images?.[0] && (
-          <Image
-            src={optimizeProductImage(product.images[0], { width: 320, height: 320 })}
-            alt={
-              locale === 'vi'
-                ? `${productName} - Gợi ý tìm kiếm ƯƠM. Archive`
-                : `${productName} - Search suggestion by ƯƠM.`
-            }
-            fill
-            sizes="(max-width: 768px) 80px, 96px"
-            className="object-cover transition-transform duration-500 group-hover:scale-110"
-          />
+        href={`/${locale}/shop/${product.slug}`}
+        onClick={onClick}
+        prefetch={false}
+        className={cn(
+          'group block rounded-2xl border border-foreground/[0.08] bg-[linear-gradient(160deg,#ffffff_0%,#faf8f2_100%)] p-3 text-center shadow-[0_8px_20px_rgba(0,0,0,0.05)] transition-all duration-300 hover:-translate-y-1 hover:border-foreground/20 hover:shadow-[0_18px_34px_rgba(0,0,0,0.15)]',
+          isActive &&
+            'border-foreground/45 bg-[linear-gradient(160deg,#fffdfa_0%,#f4ecdd_100%)] shadow-[0_0_0_2px_rgba(66,56,42,0.16),0_16px_34px_rgba(0,0,0,0.15)]',
         )}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/15 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-      </div>
-      <div className="space-y-1">
-        <p className="line-clamp-2 min-h-[2.15rem] text-[9px] font-bold uppercase leading-tight tracking-[0.13em] text-foreground/90">
-          <HighlightedText text={locale === 'vi' ? product.nameVi : product.nameEn} query={query} />
-        </p>
-        <p className="text-[8px] font-semibold uppercase tracking-[0.16em] text-foreground/45">
-          {getDisplayPrice(product, locale, exchangeRate).currentPrice}
-        </p>
-      </div>
-    </Link>
+      >
+        <div className="relative mx-auto mb-3 aspect-square w-20 overflow-hidden rounded-full border border-foreground/[0.08] bg-muted/5 md:w-24">
+          {product.images?.[0] && (
+            <Image
+              src={optimizeProductImage(product.images[0], { width: 320, height: 320 })}
+              alt={
+                locale === 'vi'
+                  ? `${productName} - Gợi ý tìm kiếm ƯƠM. Archive`
+                  : `${productName} - Search suggestion by ƯƠM.`
+              }
+              fill
+              sizes="(max-width: 768px) 80px, 96px"
+              className="object-cover transition-transform duration-500 group-hover:scale-110"
+            />
+          )}
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/15 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+        </div>
+        <div className="space-y-1">
+          <p className="line-clamp-2 min-h-[2.15rem] text-[9px] font-bold uppercase leading-tight tracking-[0.13em] text-foreground/90">
+            <HighlightedText
+              text={locale === 'vi' ? product.nameVi : product.nameEn}
+              query={query}
+            />
+          </p>
+          <p className="text-[8px] font-semibold uppercase tracking-[0.16em] text-foreground/45">
+            {getDisplayPrice(product, locale, exchangeRate).currentPrice}
+          </p>
+        </div>
+      </Link>
     )
   },
 )
@@ -141,11 +144,13 @@ export function Header() {
   const [activeSearchIndex, setActiveSearchIndex] = useState(-1)
   const [recentSearches, setRecentSearches] = useState<string[]>([])
   const activeCardRefs = useRef<Array<HTMLDivElement | null>>([])
+  const scrollLockYRef = useRef(0)
 
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50)
     }
+    handleScroll()
     window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
@@ -238,17 +243,31 @@ export function Header() {
     setRecentSearches([])
   }, [RECENT_SEARCHES_KEY])
 
-  const { data: categories } = useCategories(
-    { includeInactive: false },
-    { enabled: showSearch || showMobileMenu },
-  )
+  const { data: categories } = useCategories({ includeInactive: false }, { enabled: showSearch })
 
   useLayoutEffect(() => {
-    if (showSearch || showMobileMenu) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
+    if (!showSearch && !showMobileMenu) {
       setIsPanelReady(false)
+      return
+    }
+
+    scrollLockYRef.current = window.scrollY
+    document.body.style.position = 'fixed'
+    document.body.style.top = `-${scrollLockYRef.current}px`
+    document.body.style.left = '0'
+    document.body.style.right = '0'
+    document.body.style.width = '100%'
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      const scrollY = scrollLockYRef.current
+      document.body.style.position = ''
+      document.body.style.top = ''
+      document.body.style.left = ''
+      document.body.style.right = ''
+      document.body.style.width = ''
+      document.body.style.overflow = ''
+      window.scrollTo(0, scrollY)
     }
   }, [showSearch, showMobileMenu])
 
@@ -403,6 +422,21 @@ export function Header() {
     }
   }
 
+  const closeMobileMenu = () => {
+    setShowMobileMenu(false)
+  }
+
+  const toggleMobileMenu = () => {
+    if (showMobileMenu) {
+      closeMobileMenu()
+      return
+    }
+
+    setIsPanelReady(false)
+    setShowSearch(false)
+    setShowMobileMenu(true)
+  }
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     if (searchQuery.trim()) {
@@ -477,13 +511,13 @@ export function Header() {
   return (
     <header
       className={cn(
-        'fixed left-0 right-0 top-0 z-50 transition-all duration-500',
+        'fixed left-0 right-0 top-0 z-50 transition-colors duration-200',
         isHeaderOpaque ? 'bg-white shadow-sm' : 'bg-transparent',
       )}
     >
       <div
         className={cn(
-          'relative z-[70] flex items-center bg-inherit px-6 transition-all duration-500 lg:px-12',
+          'relative z-[70] flex items-center bg-inherit px-6 transition-[height,border-color] duration-200 lg:px-12',
           isScrolled ? 'h-16 lg:h-20' : 'h-20 lg:h-28',
           isHeaderOpaque && !isScrolled ? 'border-b border-foreground/[0.03]' : 'border-b-0',
         )}
@@ -492,26 +526,23 @@ export function Header() {
           {/* Left */}
           <div className="flex w-1/3 items-center">
             <button
-              onClick={() => {
-                setShowMobileMenu(!showMobileMenu)
-                closeSearchPanel()
-              }}
+              onClick={toggleMobileMenu}
               aria-label={showMobileMenu ? t('closeMenu') : t('openMenu')}
               className="group flex items-center gap-2 py-2 outline-none"
             >
               <div className="flex items-center justify-center">
-                <AnimatePresence mode="wait">
+                <AnimatePresence initial={false}>
                   {showMobileMenu ? (
                     <motion.div
                       key="close"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      transition={{ duration: 0.15 }}
+                      transition={{ duration: 0.08 }}
                     >
                       <X
                         className={cn(
-                          'transition-all duration-500',
+                          'transition-[height,width] duration-200',
                           isScrolled ? 'h-5 w-5 lg:h-6 lg:w-6' : 'h-6 w-6 lg:h-8 lg:w-8',
                         )}
                       />
@@ -522,11 +553,11 @@ export function Header() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      transition={{ duration: 0.15 }}
+                      transition={{ duration: 0.08 }}
                     >
                       <Menu
                         className={cn(
-                          'transition-all duration-500',
+                          'transition-[height,width] duration-200',
                           isScrolled ? 'h-5 w-5 lg:h-6 lg:w-6' : 'h-6 w-6 lg:h-8 lg:w-8',
                         )}
                       />
@@ -932,46 +963,38 @@ export function Header() {
       </AnimatePresence>
 
       {/* SIDE MENU */}
-      <AnimatePresence>
+      <AnimatePresence initial={false}>
         {showMobileMenu && (
           <div className="fixed inset-0 z-50">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
+              transition={{ duration: 0.12 }}
               className="absolute inset-0 bg-black/30"
-              onClick={() => setShowMobileMenu(false)}
+              onClick={closeMobileMenu}
             />
             <motion.div
-              initial={{ x: '-100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '-100%' }}
-              onAnimationComplete={() => setIsPanelReady(true)}
-              transition={{ duration: 0.5, ease: cubicBezier }}
-              className="absolute bottom-0 left-0 top-0 flex w-[85vw] max-w-[380px] flex-col bg-white pt-16 shadow-2xl will-change-transform lg:pt-20"
+              initial={{ opacity: 0, x: -16 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -16 }}
+              transition={{ duration: 0.16, ease: cubicBezier }}
+              className="absolute bottom-0 left-0 top-0 flex w-[85vw] max-w-[380px] flex-col bg-white pt-16 shadow-2xl lg:pt-20"
             >
               <div className="flex flex-1 flex-col justify-between px-8 py-12 lg:px-12">
-                <motion.nav
-                  animate={isPanelReady ? { opacity: 1, x: 0 } : { opacity: 0, x: -10 }}
-                  className="flex flex-col space-y-6"
-                >
+                <nav className="flex flex-col space-y-6">
                   {navigation.map((item) => (
                     <Link
                       key={item.href}
                       href={item.href}
-                      onClick={() => setShowMobileMenu(false)}
-                      className="text-3xl font-bold uppercase tracking-tighter transition-all hover:text-primary"
+                      onClick={closeMobileMenu}
+                      className="text-3xl font-bold uppercase tracking-tighter transition-colors hover:text-primary"
                     >
                       {item.name}
                     </Link>
                   ))}
-                </motion.nav>
-                <motion.div
-                  animate={isPanelReady ? { opacity: 1 } : { opacity: 0 }}
-                  transition={{ delay: 0.1 }}
-                  className="space-y-8"
-                >
+                </nav>
+                <div className="space-y-8">
                   <div className="flex gap-6 text-foreground/40">
                     {socialLinks?.instagramUsername && (
                       <a
@@ -997,7 +1020,7 @@ export function Header() {
                   <p className="text-[8px] font-bold uppercase tracking-[0.4em] text-foreground/20">
                     Saigon / Vietnam
                   </p>
-                </motion.div>
+                </div>
               </div>
             </motion.div>
           </div>

@@ -61,15 +61,15 @@ export function Footer() {
   const currentYear = new Date().getFullYear()
 
   return (
-    <footer className="bg-white px-6 py-12 text-foreground lg:px-12">
+    <footer className="safe-screen bg-white px-4 py-12 text-foreground sm:px-6 lg:px-12">
       <div className="flex w-full flex-col gap-10">
         {/* Main Footer: Compact Grid */}
-        <div className="grid grid-cols-2 gap-8 md:grid-cols-4 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4">
           {/* Brand */}
           <div className="space-y-4">
             <Link
               href={`/${locale}`}
-              className="inline-block font-playfair text-2xl font-bold tracking-tighter text-foreground transition-opacity hover:opacity-70"
+              className="text-mobile-safe inline-block font-playfair text-2xl font-bold tracking-tighter text-foreground transition-opacity hover:opacity-70"
             >
               {brandName}
             </Link>
@@ -80,7 +80,7 @@ export function Footer() {
 
           {/* Navigation - Compact */}
           <div className="space-y-4">
-            <h4 className="text-[10px] font-bold uppercase tracking-[0.4em] text-foreground">
+            <h4 className="text-[10px] font-bold uppercase tracking-[0.28em] text-foreground sm:tracking-[0.4em]">
               {t('navigation')}
             </h4>
             <nav className="flex flex-col gap-2">
@@ -107,7 +107,7 @@ export function Footer() {
 
           {/* Connect - Compact */}
           <div className="space-y-4">
-            <h4 className="text-[10px] font-bold uppercase tracking-[0.4em] text-foreground">
+            <h4 className="text-[10px] font-bold uppercase tracking-[0.28em] text-foreground sm:tracking-[0.4em]">
               {t('connect')}
             </h4>
             <div className="flex flex-col gap-2">
@@ -138,7 +138,7 @@ export function Footer() {
 
           {/* Legal - Compact */}
           <div className="space-y-4">
-            <h4 className="text-[10px] font-bold uppercase tracking-[0.4em] text-foreground">
+            <h4 className="text-[10px] font-bold uppercase tracking-[0.28em] text-foreground sm:tracking-[0.4em]">
               LEGAL
             </h4>
             <div className="flex flex-col gap-2">
@@ -153,8 +153,8 @@ export function Footer() {
         </div>
 
         {/* Bottom Bar: Merged into the flow, no border */}
-        <div className="flex items-center justify-between pt-4">
-          <p className="text-[8px] font-bold uppercase tracking-[0.4em] text-foreground/30">
+        <div className="flex flex-wrap items-center justify-between gap-4 pt-4">
+          <p className="text-[8px] font-bold uppercase tracking-[0.22em] text-foreground/30 sm:tracking-[0.4em]">
             © {currentYear} <span className="font-playfair text-xs lowercase">ƯƠM.</span>
           </p>
           <div className="flex gap-6 opacity-20">

@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from 'next-intl'
 import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
+import { SeoSnippetPreview } from '@/components/admin/SeoSnippetPreview'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -125,6 +126,19 @@ export default function BrandingPage() {
   const brandNameEn = form.watch('brandNameEn')
   const brandTaglineVi = form.watch('brandTaglineVi')
   const brandTaglineEn = form.watch('brandTaglineEn')
+  const siteTitleVi = form.watch('siteTitleVi')
+  const siteTitleEn = form.watch('siteTitleEn')
+  const siteDescriptionVi = form.watch('siteDescriptionVi')
+  const siteDescriptionEn = form.watch('siteDescriptionEn')
+  const previewBranding = {
+    brandNameVi,
+    brandNameEn,
+    siteTitleVi,
+    siteTitleEn,
+    siteDescriptionVi,
+    siteDescriptionEn,
+    logoUrl,
+  }
 
   return (
     <div className="space-y-6">
@@ -349,6 +363,29 @@ export default function BrandingPage() {
                       <FormMessage />
                     </FormItem>
                   )}
+                />
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <SeoSnippetPreview
+                  locale="vi"
+                  path="/vi"
+                  title={siteTitleVi || 'ƯƠM. Archive - Gốm sứ thủ công Việt Nam'}
+                  description={
+                    siteDescriptionVi ||
+                    'Gốm sứ thủ công Việt Nam được tuyển chọn kỹ lưỡng từ nghệ nhân và câu chuyện bản địa.'
+                  }
+                  branding={previewBranding}
+                />
+                <SeoSnippetPreview
+                  locale="en"
+                  path="/en"
+                  title={siteTitleEn || 'ƯƠM. Archive - Handcrafted Ceramics from Vietnam'}
+                  description={
+                    siteDescriptionEn ||
+                    'Discover timeless Vietnamese handcrafted ceramics curated with care.'
+                  }
+                  branding={previewBranding}
                 />
               </div>
             </CardContent>

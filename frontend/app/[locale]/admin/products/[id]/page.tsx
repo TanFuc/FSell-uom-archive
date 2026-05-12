@@ -20,6 +20,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import * as z from 'zod'
 import { RichTextEditor } from '@/components/RichTextEditor'
+import { SeoSnippetPreview } from '@/components/admin/SeoSnippetPreview'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -52,7 +53,7 @@ import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { useDocumentTitle } from '@/hooks/use-document-title'
-import { useExchangeRate } from '@/hooks/use-settings'
+import { useBranding, useExchangeRate } from '@/hooks/use-settings'
 import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api'
 import { vndToUsd } from '@/lib/currency'
@@ -264,6 +265,7 @@ export default function ProductFormPage() {
   const [isLeftColumnCollapsed, setIsLeftColumnCollapsed] = useState(false)
   const [isRightColumnCollapsed, setIsRightColumnCollapsed] = useState(false)
   const { data: exchangeRateData } = useExchangeRate()
+  const { data: branding } = useBranding()
   const exchangeRate = exchangeRateData?.rate
 
   const form = useForm<ProductFormValues>({
@@ -331,6 +333,10 @@ export default function ProductFormPage() {
   const priceVND = useWatch({ control: form.control, name: 'priceVND' })
   const salePriceVND = useWatch({ control: form.control, name: 'salePriceVND' })
   const nameViWatch = useWatch({ control: form.control, name: 'nameVi' })
+  const nameEnWatch = useWatch({ control: form.control, name: 'nameEn' })
+  const slugWatch = useWatch({ control: form.control, name: 'slug' })
+  const shortDescriptionViWatch = useWatch({ control: form.control, name: 'shortDescriptionVi' })
+  const shortDescriptionEnWatch = useWatch({ control: form.control, name: 'shortDescriptionEn' })
 
   useEffect(() => {
     const nextSlug = slugify(nameViWatch || '')
@@ -752,6 +758,36 @@ export default function ProductFormPage() {
                         </CardContent>
                       </Card>
                     </div>
+
+                    <Card className="bg-muted/20">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-base">SEO Preview</CardTitle>
+                        <CardDescription>
+                          Google snippet auto-generated from product name, summary, and slug.
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="grid gap-4 md:grid-cols-2">
+                        <SeoSnippetPreview
+                          locale="vi"
+                          path={`/vi/shop/${slugWatch || 'product-slug'}`}
+                          title={nameViWatch || 'Tên sản phẩm'}
+                          description={
+                            shortDescriptionViWatch || 'Mô tả ngắn của sản phẩm sẽ hiển thị ở đây.'
+                          }
+                          branding={branding}
+                        />
+                        <SeoSnippetPreview
+                          locale="en"
+                          path={`/en/shop/${slugWatch || 'product-slug'}`}
+                          title={nameEnWatch || 'Product name'}
+                          description={
+                            shortDescriptionEnWatch ||
+                            'The product summary shown in Google search results appears here.'
+                          }
+                          branding={branding}
+                        />
+                      </CardContent>
+                    </Card>
 
                     {/* Price Fields */}
                     <Card className="bg-muted/30">

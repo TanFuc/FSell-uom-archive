@@ -9,7 +9,13 @@ import { ConditionalLayout } from '@/components/layout/ConditionalLayout'
 import { QueryProvider } from '@/components/providers/QueryProvider'
 import { Toaster } from '@/components/ui/toaster'
 import { locales } from '@/i18n'
-import { getCanonicalBaseUrl } from '@/lib/seo'
+import {
+  getCanonicalBaseUrl,
+  getSeoBrandName,
+  getSeoImageUrl,
+  getSeoSiteDescription,
+  getSeoSiteTitle,
+} from '@/lib/seo'
 import { fetchBranding } from '@/lib/server-utils'
 import '@/styles/globals.css'
 import '@/styles/loading-animations.css'
@@ -52,23 +58,10 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const branding = await fetchBranding()
   const baseUrl = getCanonicalBaseUrl()
-
-  const defaultTitle =
-    locale === 'vi'
-      ? (branding?.siteTitleVi ?? 'ƯƠM. - Gốm sứ thủ công Việt Nam')
-      : (branding?.siteTitleEn ?? 'ƯƠM. - Handcrafted Ceramics from Vietnam')
-
-  const brandName =
-    locale === 'vi'
-      ? (branding?.brandNameVi ?? 'ƯƠM.')
-      : (branding?.brandNameEn ?? 'ƯƠM.')
-
-  const description =
-    locale === 'vi'
-      ? (branding?.siteDescriptionVi ?? 'Gốm sứ thủ công được tuyển chọn kỹ lưỡng từ Việt Nam.')
-      : (branding?.siteDescriptionEn ?? 'Discover timeless Vietnamese ceramics curated with care.')
-
-  const logoUrl = branding?.logoUrl || '/assets/logo.png'
+  const defaultTitle = getSeoSiteTitle(locale, branding)
+  const brandName = getSeoBrandName(locale, branding)
+  const description = getSeoSiteDescription(locale, branding)
+  const logoUrl = getSeoImageUrl(branding)
   const tabIconUrl = '/assets/logo.png'
 
   return {
@@ -116,7 +109,7 @@ export async function generateMetadata({
     },
     twitter: {
       card: 'summary_large_image',
-      title: brandName,
+      title: defaultTitle,
       description,
       images: [logoUrl],
     },
@@ -130,11 +123,11 @@ export async function generateMetadata({
     },
     manifest: '/manifest.webmanifest',
     alternates: {
-      canonical: `${baseUrl}/${locale}`,
+      canonical: `/${locale}`,
       languages: {
-        vi: `${baseUrl}/vi`,
-        en: `${baseUrl}/en`,
-        'x-default': `${baseUrl}/vi`,
+        vi: '/vi',
+        en: '/en',
+        'x-default': '/vi',
       },
     },
   }

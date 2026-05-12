@@ -5,7 +5,12 @@ import { notFound, permanentRedirect } from 'next/navigation'
 import Script from 'next/script'
 import { getTranslations } from 'next-intl/server'
 import { JournalRichContent } from '@/components/journal/JournalRichContent'
-import { getCanonicalBaseUrl } from '@/lib/seo'
+import {
+  buildPageMetadata,
+  getCanonicalBaseUrl,
+  getSeoBrandName,
+  truncateMetaDescription,
+} from '@/lib/seo'
 import { fetchBranding } from '@/lib/server-utils'
 import {
   getStoryBySlug,
@@ -32,18 +37,11 @@ async function fetchSiteContent(): Promise<FetchSiteContentResult> {
       next: { revalidate: 300 },
     })
 
-    if (response.status === 404) {
-      return { status: 'not-found' }
-    }
-
-    if (!response.ok) {
-      return { status: 'error' }
-    }
+    if (response.status === 404) return { status: 'not-found' }
+    if (!response.ok) return { status: 'error' }
 
     const payload = (await response.json()) as unknown
-    if (!payload || typeof payload !== 'object') {
-      return { status: 'error' }
-    }
+    if (!payload || typeof payload !== 'object') return { status: 'error' }
 
     const root = payload as { data?: unknown }
     if (root.data && typeof root.data === 'object' && !Array.isArray(root.data)) {
@@ -62,28 +60,25 @@ interface StoryDetailProps {
 
 export async function generateMetadata({ params }: StoryDetailProps): Promise<Metadata> {
   const [siteContent, branding] = await Promise.all([fetchSiteContent(), fetchBranding()])
-  const brandName =
-    params.locale === 'vi'
-      ? (branding?.brandNameVi ?? 'ƯƠM.')
-      : (branding?.brandNameEn ?? 'ƯƠM.')
+  const brandName = getSeoBrandName(params.locale, branding)
 
   if (siteContent.status === 'error') {
-    return {
-      title: params.locale === 'vi' ? 'Bai viet' : 'Story',
+    return buildPageMetadata({
+      locale: params.locale,
+      path: `/${params.locale}/journal/${params.slug}`,
+      title: params.locale === 'vi' ? 'Bài viết' : 'Story',
       description:
         params.locale === 'vi'
-          ? `Doc cac cau chuyen thu cong tu ${brandName}.`
+          ? `Đọc các câu chuyện thủ công từ ${brandName}.`
           : `Read handcrafted stories from ${brandName}.`,
-      robots: { index: true, follow: true },
+      branding,
+      type: 'article',
       alternates: {
-        canonical: `/${params.locale}/journal/${params.slug}`,
-        languages: {
-          vi: `/vi/journal/${params.slug}`,
-          en: `/en/journal/${params.slug}`,
-          'x-default': `/vi/journal/${params.slug}`,
-        },
+        vi: `/vi/journal/${params.slug}`,
+        en: `/en/journal/${params.slug}`,
+        'x-default': `/vi/journal/${params.slug}`,
       },
-    }
+    })
   }
 
   const stories = parseStories(
@@ -99,53 +94,33 @@ export async function generateMetadata({ params }: StoryDetailProps): Promise<Me
   }
 
   const title = params.locale === 'vi' ? story.titleVi : story.titleEn
-  const description = stripHtmlTags(
-    params.locale === 'vi' ? story.summaryVi : story.summaryEn,
-  ).slice(0, 170)
+  const description = truncateMetaDescription(
+    stripHtmlTags(params.locale === 'vi' ? story.summaryVi : story.summaryEn),
+  )
   const viSlug = encodeURIComponent(getStorySlug(story, 'vi'))
   const enSlug = encodeURIComponent(getStorySlug(story, 'en'))
   const canonicalPath = params.locale === 'vi' ? `/vi/journal/${viSlug}` : `/en/journal/${enSlug}`
-  const storyImage = story.imageUrl
 
-  return {
+  return buildPageMetadata({
+    locale: params.locale,
+    path: canonicalPath,
     title,
     description,
+    branding,
+    image: story.imageUrl,
+    type: 'article',
     alternates: {
-      canonical: canonicalPath,
-      languages: {
-        vi: `/vi/journal/${viSlug}`,
-        en: `/en/journal/${enSlug}`,
-        'x-default': `/vi/journal/${viSlug}`,
-      },
+      vi: `/vi/journal/${viSlug}`,
+      en: `/en/journal/${enSlug}`,
+      'x-default': `/vi/journal/${viSlug}`,
     },
-    openGraph: {
-      type: 'article',
-      title,
-      description,
-      url: `${BASE_URL}${canonicalPath}`,
-      images: storyImage
-        ? [{ url: storyImage, width: 1200, height: 800, alt: title }]
-        : undefined,
-      publishedTime: story.publishedAt
-        ? new Date(story.publishedAt).toISOString()
-        : undefined,
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title,
-      description,
-      images: storyImage ? [storyImage] : undefined,
-    },
-  }
+  })
 }
 
 export default async function StoryDetailPage({ params }: StoryDetailProps) {
   const t = await getTranslations({ locale: params.locale, namespace: 'journal' })
   const [siteContent, branding] = await Promise.all([fetchSiteContent(), fetchBranding()])
-  const brandName =
-    params.locale === 'vi'
-      ? (branding?.brandNameVi ?? 'ƯƠM.')
-      : (branding?.brandNameEn ?? 'ƯƠM.')
+  const brandName = getSeoBrandName(params.locale, branding)
   const stories = parseStories(
     siteContent.status === 'ok' ? siteContent.data[STORIES_CONTENT_KEY] : undefined,
   ).filter((item) => item.isVisible !== false)
@@ -176,13 +151,14 @@ export default async function StoryDetailPage({ params }: StoryDetailProps) {
 
   const articleJsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'NewsArticle',
+    '@type': 'Article',
     headline: title,
     description: summary,
     image: [story.imageUrl],
     datePublished: story.publishedAt
       ? new Date(story.publishedAt).toISOString()
       : new Date().toISOString(),
+    dateModified: story.updatedAt ? new Date(story.updatedAt).toISOString() : undefined,
     author: [
       {
         '@type': 'Organization',
@@ -190,6 +166,12 @@ export default async function StoryDetailPage({ params }: StoryDetailProps) {
         url: BASE_URL,
       },
     ],
+    publisher: {
+      '@type': 'Organization',
+      name: brandName,
+      url: BASE_URL,
+    },
+    mainEntityOfPage: `${BASE_URL}${canonicalPath}`,
   }
 
   const breadcrumbJsonLd = {
@@ -218,7 +200,7 @@ export default async function StoryDetailPage({ params }: StoryDetailProps) {
   }
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,#efe5d6_0%,#f7f4ef_40%,#f9f7f3_100%)] pt-20">
+    <div className="safe-screen min-h-screen bg-[radial-gradient(circle_at_top,#efe5d6_0%,#f7f4ef_40%,#f9f7f3_100%)] pt-20">
       <Script
         id="article-jsonld"
         strategy="afterInteractive"
@@ -231,24 +213,24 @@ export default async function StoryDetailPage({ params }: StoryDetailProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
-      <article className="mx-auto w-full max-w-5xl px-6 py-12 lg:px-10">
+      <article className="mx-auto w-full max-w-5xl px-4 py-12 sm:px-6 lg:px-10">
         <Link
           href={`/${params.locale}/journal#stories`}
-          className="mb-6 inline-flex text-[11px] uppercase tracking-[0.2em] text-foreground/55 transition hover:text-foreground"
+          className="mb-6 inline-flex text-[11px] uppercase tracking-[0.14em] text-foreground/55 transition hover:text-foreground sm:tracking-[0.2em]"
         >
           {t('backToJournal')}
         </Link>
 
-        <div className="rounded-3xl border border-black/10 bg-white/80 p-6 shadow-sm backdrop-blur-sm md:p-10">
+        <div className="rounded-2xl border border-black/10 bg-white/80 p-5 shadow-sm backdrop-blur-sm sm:p-6 md:p-10">
           <div className="space-y-5">
-            <p className="text-[10px] uppercase tracking-[0.35em] text-foreground/45">
+            <p className="text-mobile-safe text-[10px] uppercase tracking-[0.22em] text-foreground/45 sm:tracking-[0.35em]">
               JOURNAL STORY
             </p>
-            <h1 className="font-playfair text-3xl leading-tight text-foreground md:text-5xl">
+            <h1 className="text-mobile-safe font-playfair text-3xl leading-tight text-foreground md:text-5xl">
               {title}
             </h1>
             {story.publishedAt && (
-              <p className="inline-flex rounded-full border border-foreground/10 bg-foreground/[0.03] px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-foreground/55">
+              <p className="inline-flex max-w-full rounded-full border border-foreground/10 bg-foreground/[0.03] px-3 py-1 text-[10px] uppercase tracking-[0.14em] text-foreground/55 sm:tracking-[0.2em]">
                 {story.publishedAt}
               </p>
             )}
@@ -258,7 +240,7 @@ export default async function StoryDetailPage({ params }: StoryDetailProps) {
           </div>
         </div>
 
-        <div className="relative mt-10 aspect-[16/10] overflow-hidden rounded-3xl border border-black/10 bg-white shadow-lg">
+        <div className="relative mt-10 aspect-[16/10] overflow-hidden rounded-2xl border border-black/10 bg-white shadow-lg sm:rounded-3xl">
           <Image
             src={story.imageUrl}
             alt={`${title} - Câu chuyện từ ƯƠM. Archive - Handcrafted Journal`}
@@ -272,7 +254,7 @@ export default async function StoryDetailPage({ params }: StoryDetailProps) {
         <JournalRichContent
           content={content}
           fallbackAlt={`${title} - ƯƠM. Archive Journal`}
-          className="prose prose-neutral prose-headings:font-playfair prose-headings:text-foreground prose-p:text-foreground/85 prose-li:text-foreground/85 mt-10 max-w-none rounded-3xl border border-black/10 bg-white/85 p-6 leading-relaxed shadow-sm backdrop-blur-sm md:p-10"
+          className="prose prose-neutral prose-headings:font-playfair prose-headings:text-foreground prose-p:text-foreground/85 prose-li:text-foreground/85 mt-10 max-w-none overflow-hidden rounded-2xl border border-black/10 bg-white/85 p-5 leading-relaxed shadow-sm backdrop-blur-sm [overflow-wrap:anywhere] sm:rounded-3xl sm:p-6 md:p-10"
         />
 
         <div className="mt-10 flex justify-center">
@@ -286,18 +268,18 @@ export default async function StoryDetailPage({ params }: StoryDetailProps) {
 
         {relatedStories.length > 0 && (
           <section className="mt-16 border-t border-black/10 pt-12">
-            <div className="mb-8 flex items-end justify-between gap-4">
+            <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
               <div>
-                <p className="text-[10px] uppercase tracking-[0.28em] text-foreground/45">
+                <p className="text-[10px] uppercase tracking-[0.18em] text-foreground/45 sm:tracking-[0.28em]">
                   JOURNAL
                 </p>
-                <h2 className="mt-2 font-playfair text-2xl text-foreground">
+                <h2 className="text-mobile-safe mt-2 font-playfair text-2xl text-foreground">
                   {t('relatedStories')}
                 </h2>
               </div>
               <Link
                 href={`/${params.locale}/journal#stories`}
-                className="text-[10px] uppercase tracking-[0.2em] text-foreground/60 transition hover:text-foreground"
+                className="text-[10px] uppercase tracking-[0.14em] text-foreground/60 transition hover:text-foreground sm:tracking-[0.2em]"
               >
                 {t('viewAllStories')}
               </Link>
@@ -327,7 +309,7 @@ export default async function StoryDetailPage({ params }: StoryDetailProps) {
                       />
                     </div>
                     <div className="space-y-2 p-4">
-                      <h3 className="font-playfair text-xl leading-tight text-foreground">
+                      <h3 className="text-mobile-safe font-playfair text-xl leading-tight text-foreground">
                         {itemTitle}
                       </h3>
                       <p className="line-clamp-3 text-sm text-foreground/70">{itemSummary}</p>

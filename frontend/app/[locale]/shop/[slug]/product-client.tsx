@@ -337,7 +337,7 @@ export default function ProductClient({ params }: ProductPageProps) {
           },
         ]
   return (
-    <div className="w-full">
+    <div className="safe-screen">
       {/* Header padding for fixed header */}
       <div className="h-24 lg:h-28" />
 
@@ -374,7 +374,7 @@ export default function ProductClient({ params }: ProductPageProps) {
       </AnimatePresence>
 
       <div className="w-full bg-white pb-24">
-        <div className="px-6 lg:px-12">
+        <div className="px-4 sm:px-6 lg:px-12">
           {/* Back Button - Arrow only */}
           {/* Back Button (Mobile/Tablet Only) */}
           <Link
@@ -386,9 +386,9 @@ export default function ProductClient({ params }: ProductPageProps) {
           </Link>
 
           {/* Main Product Layout: Image Vertical Stack + Sticky Info */}
-          <div className="grid grid-cols-1 justify-center gap-0 md:grid-cols-[1fr_400px] md:gap-12 lg:grid-cols-[55vw_400px] lg:gap-32">
+          <div className="grid min-w-0 grid-cols-1 justify-center gap-0 md:grid-cols-[minmax(0,1fr)_minmax(320px,400px)] md:gap-12 lg:grid-cols-[minmax(0,55vw)_400px] lg:gap-32">
             {/* 1. Left Column: Vertical Image Stack (Desktop) / Carousel (Mobile) */}
-            <div className="relative w-full pb-0 md:max-w-[700px] md:pb-24">
+            <div className="relative w-full min-w-0 pb-0 md:max-w-[700px] md:pb-24">
               {product.images && product.images.length > 0 ? (
                 <>
                   {/* Mobile Navigation Arrows */}
@@ -430,7 +430,7 @@ export default function ProductClient({ params }: ProductPageProps) {
                     onMouseEnter={() => setIsHoveringImage(true)}
                     onClickCapture={imageDrag.onClickCapture}
                     className={cn(
-                      'hide-scrollbar -ml-6 flex w-[calc(100%+48px)] snap-x snap-mandatory gap-0 overflow-x-auto pb-0 md:ml-0 md:w-full md:flex-col md:gap-12 md:px-0 lg:cursor-none',
+                      'hide-scrollbar -mx-4 flex w-[calc(100%+32px)] snap-x snap-mandatory gap-0 overflow-x-auto pb-0 sm:-mx-6 sm:w-[calc(100%+48px)] md:mx-0 md:w-full md:flex-col md:gap-12 md:px-0 lg:cursor-none',
                       imageDrag.isDragging ? 'cursor-grabbing' : 'cursor-grab lg:cursor-none',
                     )}
                   >
@@ -460,11 +460,11 @@ export default function ProductClient({ params }: ProductPageProps) {
             </div>
 
             {/* 2. Right Column: Sticky Product Details */}
-            <div className="relative px-0 md:px-0">
+            <div className="relative min-w-0 px-0 md:px-0">
               <div className="space-y-4 pb-12 pt-10 md:sticky md:top-32 md:space-y-12 md:pb-24 md:pt-0">
                 {/* Info Header */}
                 <div className="mb-8 space-y-2">
-                  <h1 className="font-sans text-[13px] font-bold leading-tight tracking-[0.1em] text-foreground">
+                  <h1 className="text-mobile-safe font-sans text-[13px] font-bold leading-tight tracking-[0.08em] text-foreground sm:tracking-[0.1em]">
                     {name}
                   </h1>
                   <div className="flex items-center gap-4">
@@ -503,7 +503,7 @@ export default function ProductClient({ params }: ProductPageProps) {
 
                   {/* HTML Description */}
                   <div
-                    className="prose prose-sm max-w-none font-sans text-[11px] font-medium tracking-[0.05em] text-foreground [&_a]:underline [&_a]:underline-offset-2 [&_blockquote]:border-l [&_blockquote]:border-foreground/30 [&_blockquote]:pl-4 [&_h1]:text-lg [&_h1]:font-bold [&_h2]:text-base [&_h2]:font-bold [&_h3]:text-sm [&_h3]:font-semibold [&_img]:my-4 [&_img]:h-auto [&_img]:max-w-full [&_img]:rounded-lg [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:leading-relaxed [&_ul]:list-disc [&_ul]:pl-5"
+                    className="prose prose-sm max-w-none overflow-hidden font-sans text-[11px] font-medium tracking-[0.05em] text-foreground [overflow-wrap:anywhere] [&_a]:underline [&_a]:underline-offset-2 [&_blockquote]:border-l [&_blockquote]:border-foreground/30 [&_blockquote]:pl-4 [&_h1]:text-lg [&_h1]:font-bold [&_h2]:text-base [&_h2]:font-bold [&_h3]:text-sm [&_h3]:font-semibold [&_img]:my-4 [&_img]:h-auto [&_img]:max-w-full [&_img]:rounded-lg [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:leading-relaxed [&_ul]:list-disc [&_ul]:pl-5"
                     dangerouslySetInnerHTML={{ __html: description || '' }}
                   />
 
@@ -534,10 +534,10 @@ export default function ProductClient({ params }: ProductPageProps) {
                         href={`https://instagram.com/${socialLinks.instagramUsername}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="group flex items-center justify-between border border-foreground/10 px-6 py-4 transition-all duration-300 hover:bg-foreground hover:text-white"
+                        className="group flex max-w-full items-center justify-between gap-4 border border-foreground/10 px-4 py-4 transition-all duration-300 hover:bg-foreground hover:text-white sm:px-6"
                         aria-label="Instagram Inquiry"
                       >
-                        <span className="text-[10px] font-bold uppercase tracking-[0.3em]">
+                        <span className="min-w-0 text-[10px] font-bold uppercase tracking-[0.2em] sm:tracking-[0.3em]">
                           Instagram
                         </span>
                         <Instagram className="h-4 w-4" />
@@ -548,10 +548,10 @@ export default function ProductClient({ params }: ProductPageProps) {
                         href={socialLinks.facebookPageUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="group flex items-center justify-between border border-foreground/10 px-6 py-4 transition-all duration-300 hover:bg-foreground hover:text-white"
+                        className="group flex max-w-full items-center justify-between gap-4 border border-foreground/10 px-4 py-4 transition-all duration-300 hover:bg-foreground hover:text-white sm:px-6"
                         aria-label="Facebook Inquiry"
                       >
-                        <span className="text-[10px] font-bold uppercase tracking-[0.3em]">
+                        <span className="min-w-0 text-[10px] font-bold uppercase tracking-[0.2em] sm:tracking-[0.3em]">
                           Facebook
                         </span>
                         <Facebook className="h-4 w-4" />
@@ -566,13 +566,13 @@ export default function ProductClient({ params }: ProductPageProps) {
       </div>
 
       {/* Related Products Section */}
-      <section className="w-full bg-white px-6 py-24 lg:px-12">
-        <div className="mb-16 flex items-end justify-between">
-          <div className="space-y-3">
-            <h2 className="text-[8px] font-bold uppercase tracking-[0.4em] text-foreground/40">
+      <section className="w-full bg-white px-4 py-24 sm:px-6 lg:px-12">
+        <div className="mb-16 flex flex-wrap items-end justify-between gap-4">
+          <div className="min-w-0 space-y-3">
+            <h2 className="text-mobile-safe text-[8px] font-bold uppercase tracking-[0.28em] text-foreground/40 sm:tracking-[0.4em]">
               {locale === 'vi' ? 'CÓ THỂ BẠN THÍCH' : 'YOU MAY ALSO LIKE'}
             </h2>
-            <p className="font-sans text-lg font-bold uppercase tracking-[0.1em]">
+            <p className="text-mobile-safe font-sans text-lg font-bold uppercase tracking-[0.08em] sm:tracking-[0.1em]">
               {locale === 'vi' ? 'Sản phẩm tương tự' : 'Related pieces'}
             </p>
           </div>
@@ -594,7 +594,7 @@ export default function ProductClient({ params }: ProductPageProps) {
             onMouseLeave={relatedDrag.onMouseLeave}
             onClickCapture={relatedDrag.onClickCapture}
             className={cn(
-              'hide-scrollbar -mx-6 flex w-[calc(100%+48px)] select-none gap-6 overflow-x-auto px-4 pb-12 transition-transform duration-500 ease-out lg:mx-0 lg:w-full lg:px-0',
+              'hide-scrollbar -mx-4 flex w-[calc(100%+32px)] select-none gap-6 overflow-x-auto px-4 pb-12 transition-transform duration-500 ease-out sm:-mx-6 sm:w-[calc(100%+48px)] lg:mx-0 lg:w-full lg:px-0',
               relatedDrag.isDragging ? 'scale-[0.995] cursor-grabbing' : 'cursor-grab',
             )}
           >
@@ -618,9 +618,9 @@ export default function ProductClient({ params }: ProductPageProps) {
         </div>
       </section>
 
-      <section className="w-full bg-white px-6 pb-24 lg:px-12">
-        <div className="mx-auto max-w-4xl rounded-3xl border border-foreground/10 bg-foreground/[0.02] p-8 shadow-sm">
-          <h2 className="text-center text-[10px] font-bold uppercase tracking-[0.35em] text-foreground/70">
+      <section className="w-full bg-white px-4 pb-24 sm:px-6 lg:px-12">
+        <div className="mx-auto max-w-4xl rounded-2xl border border-foreground/10 bg-foreground/[0.02] p-5 shadow-sm sm:p-8">
+          <h2 className="text-mobile-safe text-center text-[10px] font-bold uppercase tracking-[0.22em] text-foreground/70 sm:tracking-[0.35em]">
             {faqTitle}
           </h2>
           <div className="mt-8 grid gap-6 md:grid-cols-2">

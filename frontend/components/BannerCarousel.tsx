@@ -108,7 +108,7 @@ export function BannerCarousel({ banners, locale, autoPlayInterval = 5000 }: Ban
   const BannerContent = () => (
     <>
       {/* Background Image - Hero Style */}
-      <div className="relative aspect-[4/5] w-full md:aspect-[21/9] lg:aspect-[3/1]">
+      <div className="relative aspect-[4/5] w-full max-w-full overflow-hidden md:aspect-[21/9] lg:aspect-[3/1]">
         <picture className="absolute inset-0 block h-full w-full">
           {currentBanner.mobileImageUrl && (
             <source
@@ -132,18 +132,18 @@ export function BannerCarousel({ banners, locale, autoPlayInterval = 5000 }: Ban
 
         {/* Text Content - Positioned at bottom left */}
         {(title || subtitle || description) && (
-          <div className="absolute inset-0 flex items-end px-6 pb-12 md:px-16 md:pb-16 lg:px-24 lg:pb-20">
+          <div className="absolute inset-0 flex items-end px-4 pb-10 sm:px-6 sm:pb-12 md:px-16 md:pb-16 lg:px-24 lg:pb-20">
             <div
-              className="animate-fade-in max-w-3xl space-y-3 md:space-y-3"
+              className="animate-fade-in min-w-0 max-w-3xl space-y-3 md:space-y-3"
               style={{ color: currentBanner.textColor || '#FFFFFF' }}
             >
               {title && (
-                <h2 className="text-3xl font-light uppercase leading-tight tracking-[0.15em] sm:text-4xl md:text-5xl lg:text-6xl">
+                <h2 className="text-mobile-safe text-2xl font-light uppercase leading-tight tracking-[0.08em] sm:text-4xl sm:tracking-[0.15em] md:text-5xl lg:text-6xl">
                   {title}
                 </h2>
               )}
               {subtitle && (
-                <p className="text-xs font-light uppercase tracking-[0.25em] opacity-90 md:text-sm">
+                <p className="text-mobile-safe text-xs font-light uppercase tracking-[0.14em] opacity-90 sm:tracking-[0.25em] md:text-sm">
                   {subtitle}
                 </p>
               )}

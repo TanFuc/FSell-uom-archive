@@ -81,17 +81,17 @@ export default function ShopClient() {
   })
 
   return (
-    <div className="w-full bg-white pb-24">
+    <div className="safe-screen bg-white pb-24">
       {/* Header padding for fixed header */}
       <div className="h-16 lg:h-20" />
 
-      <div className="px-6 lg:px-12">
+      <div className="px-4 sm:px-6 lg:px-12">
         {/* Page Header - Minimalist */}
         <div className="space-y-6 py-16 text-center md:py-24">
           <motion.h1
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-3xl font-bold uppercase tracking-[0.2em] text-foreground md:text-5xl"
+            className="text-mobile-safe text-3xl font-bold uppercase tracking-[0.14em] text-foreground sm:tracking-[0.2em] md:text-5xl"
           >
             {t('title')}
           </motion.h1>
@@ -99,11 +99,11 @@ export default function ShopClient() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="mx-auto max-w-2xl text-[10px] font-medium uppercase leading-relaxed tracking-[0.2em] text-foreground/40 md:text-xs"
+            className="text-mobile-safe mx-auto max-w-2xl text-[10px] font-medium uppercase leading-relaxed tracking-[0.14em] text-foreground/40 sm:tracking-[0.2em] md:text-xs"
           >
             {t('subtitle')}
           </motion.p>
-          <div className="flex flex-wrap justify-center gap-3 text-[9px] font-semibold uppercase tracking-[0.28em] text-foreground/55">
+          <div className="flex flex-wrap justify-center gap-3 text-[9px] font-semibold uppercase tracking-[0.18em] text-foreground/55 sm:tracking-[0.28em]">
             <Link
               href={`/${locale}/about`}
               className="rounded-full border border-foreground/15 px-4 py-2 transition-all hover:border-foreground/40 hover:text-foreground"
@@ -152,7 +152,7 @@ export default function ShopClient() {
 
         {/* Category Tabs - Minimalist */}
         {categories.length > 0 && (
-          <div className="mb-20 flex flex-wrap justify-center gap-4">
+          <div className="mb-20 flex flex-wrap justify-center gap-3 sm:gap-4">
             <Link
               href={buildCategoryHref()}
               onClick={() => {
@@ -160,7 +160,7 @@ export default function ShopClient() {
                 setPage(1)
               }}
               className={cn(
-                'rounded-full border px-6 py-2 text-[10px] font-bold uppercase tracking-[0.3em] transition-all duration-300',
+                'max-w-full rounded-full border px-4 py-2 text-[10px] font-bold uppercase tracking-[0.18em] transition-all duration-300 sm:px-6 sm:tracking-[0.3em]',
                 !categoryId
                   ? 'border-foreground bg-foreground text-white'
                   : 'border-foreground/10 text-foreground/40 hover:border-foreground/30',
@@ -177,7 +177,7 @@ export default function ShopClient() {
                   setPage(1)
                 }}
                 className={cn(
-                  'rounded-full border px-6 py-2 text-[10px] font-bold uppercase tracking-[0.3em] transition-all duration-300',
+                  'max-w-full rounded-full border px-4 py-2 text-[10px] font-bold uppercase tracking-[0.18em] transition-all duration-300 sm:px-6 sm:tracking-[0.3em]',
                   categoryId === category.id
                     ? 'border-foreground bg-foreground text-white'
                     : 'border-foreground/10 text-foreground/40 hover:border-foreground/30',
@@ -192,7 +192,7 @@ export default function ShopClient() {
         {/* Products Grid */}
         <div className="min-h-[40vh]">
           {isLoading ? (
-            <div className="grid grid-cols-2 gap-8 lg:grid-cols-4 lg:gap-12">
+            <div className="grid grid-cols-2 gap-5 sm:gap-8 lg:grid-cols-4 lg:gap-12">
               {[...Array(8)].map((_, i) => (
                 <div key={i} className="space-y-6">
                   <div className="aspect-[3/4] animate-pulse bg-muted/30" />
@@ -203,7 +203,7 @@ export default function ShopClient() {
           ) : data && data.data.length > 0 ? (
             <>
               <AnimatePresence mode="popLayout">
-                <div className="grid grid-cols-2 gap-8 lg:grid-cols-4 lg:gap-12">
+                <div className="grid grid-cols-2 gap-5 sm:gap-8 lg:grid-cols-4 lg:gap-12">
                   {data.data.map((product: Product, idx: number) => (
                     <motion.div
                       key={product.id}
@@ -219,19 +219,19 @@ export default function ShopClient() {
 
               {/* Pagination - Minimalist */}
               {data.meta.totalPages > 1 && (
-                <div className="mt-24 flex items-center justify-center gap-12 border-t border-foreground/5 pt-12">
+                <div className="mt-24 flex flex-wrap items-center justify-center gap-5 border-t border-foreground/5 pt-12 sm:gap-12">
                   <button
                     onClick={() => {
                       setPage((p) => Math.max(1, p - 1))
                       window.scrollTo({ top: 0, behavior: 'smooth' })
                     }}
                     disabled={page === 1}
-                    className="group flex items-center gap-4 text-[10px] font-bold uppercase tracking-[0.4em] transition-all disabled:cursor-not-allowed disabled:opacity-20"
+                    className="group flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] transition-all disabled:cursor-not-allowed disabled:opacity-20 sm:gap-4 sm:tracking-[0.4em]"
                   >
                     <span className="transition-transform group-hover:translate-x-[-4px]">←</span>
                     {tCommon('previous')}
                   </button>
-                  <span className="text-[10px] font-bold tracking-[0.4em] text-foreground/30">
+                  <span className="text-[10px] font-bold tracking-[0.24em] text-foreground/30 sm:tracking-[0.4em]">
                     {page} / {data.meta.totalPages}
                   </span>
                   <button
@@ -240,7 +240,7 @@ export default function ShopClient() {
                       window.scrollTo({ top: 0, behavior: 'smooth' })
                     }}
                     disabled={page === data.meta.totalPages}
-                    className="group flex items-center gap-4 text-[10px] font-bold uppercase tracking-[0.4em] transition-all disabled:cursor-not-allowed disabled:opacity-20"
+                    className="group flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] transition-all disabled:cursor-not-allowed disabled:opacity-20 sm:gap-4 sm:tracking-[0.4em]"
                   >
                     {tCommon('next')}
                     <span className="transition-transform group-hover:translate-x-[4px]">→</span>

@@ -49,6 +49,9 @@
   }
 
   html {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -57,10 +60,22 @@
   /* Consistent typography */
   body {
     @apply bg-background font-sans text-foreground;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: hidden;
     font-size: 14px;
     font-weight: 500;
     line-height: 1.4;
     letter-spacing: 0.05em;
+  }
+
+  main,
+  section,
+  header,
+  footer {
+    min-width: 0;
+    max-width: 100%;
   }
 
   /* Links */
@@ -74,12 +89,18 @@
     height: auto;
     display: block;
   }
+
+  video,
+  canvas,
+  svg {
+    max-width: 100%;
+  }
 }
 
 @layer components {
   /* Container - increased padding for minimalist aesthetic */
   .container-custom {
-    @apply mx-auto w-full max-w-7xl px-6 md:px-10 lg:px-16;
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 md:px-10 lg:px-16;
   }
 
   /* Navigation link */
@@ -127,16 +148,27 @@
   /* Grid system - Increased gaps for minimalist aesthetic */
   .grid-products {
     @apply grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4;
-    gap: clamp(1.5rem, 4vw, 4rem);
+    gap: clamp(1rem, 4vw, 4rem);
   }
 
   .grid-products-simple {
     @apply grid grid-cols-1 md:grid-cols-2;
-    gap: clamp(3rem, 6vw, 8rem);
+    gap: clamp(2rem, 6vw, 8rem);
   }
 }
 
 @layer utilities {
+  .safe-screen {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .text-mobile-safe {
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
+
   /* Responsive text */
   .text-responsive {
     font-size: clamp(1rem, 2.5vw, 1.25rem); /* 16px to 20px */

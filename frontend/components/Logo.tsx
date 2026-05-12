@@ -26,7 +26,9 @@ export default function Logo({
   const logoContent = () => {
     if (variant === 'text') {
       return (
-        <span className={`font-serif uppercase tracking-[0.3em] text-foreground ${className}`}>
+        <span
+          className={`text-mobile-safe font-serif uppercase tracking-[0.18em] text-foreground sm:tracking-[0.3em] ${className}`}
+        >
           ƯƠM.
         </span>
       )
@@ -56,7 +58,7 @@ export default function Logo({
   if (linkToHome || customHref) {
     const href = customHref || `/${locale}`
     return (
-      <Link href={href} className="transition-opacity hover:opacity-80">
+      <Link href={href} className="min-w-0 transition-opacity hover:opacity-80">
         {logoContent()}
       </Link>
     )

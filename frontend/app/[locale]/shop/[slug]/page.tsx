@@ -2,7 +2,13 @@
 import { notFound } from 'next/navigation'
 import Script from 'next/script'
 import { getLocale } from 'next-intl/server'
-import { getCanonicalBaseUrl } from '@/lib/seo'
+import {
+  buildPageMetadata,
+  getCanonicalBaseUrl,
+  getSeoBrandName,
+  normalizeSeoText,
+  truncateMetaDescription,
+} from '@/lib/seo'
 import { fetchBranding } from '@/lib/server-utils'
 import ProductClient from './product-client'
 
@@ -38,10 +44,6 @@ type FetchProductResult =
   | { status: 'ok'; product: ProductDetail }
   | { status: 'not-found' }
   | { status: 'error' }
-
-function stripHtml(value: string | undefined): string {
-  return (value ?? '').replace(/<[^>]*>/g, '').trim()
-}
 
 function toAbsoluteUrl(value: string): string {
   if (/^https?:\/\//i.test(value)) {
@@ -99,17 +101,8 @@ interface Props {
   params: { slug: string }
 }
 
-function getBrandName(
-  locale: string,
-  branding: { brandNameVi?: string | null; brandNameEn?: string | null } | null,
-) {
-  return locale === 'vi'
-    ? (branding?.brandNameVi ?? 'ƯƠM.')
-    : (branding?.brandNameEn ?? 'ƯƠM.')
-}
-
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const locale = await getLocale()
+  const locale = (await getLocale()) === 'vi' ? 'vi' : 'en'
   const [result, branding] = await Promise.all([fetchProduct(params.slug), fetchBranding()])
 
   if (result.status === 'not-found') {
@@ -123,64 +116,51 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   if (result.status === 'error') {
-    return {
+    return buildPageMetadata({
+      locale,
+      path: `/${locale}/shop/${params.slug}`,
       title: locale === 'vi' ? 'Sản phẩm' : 'Product',
       description:
         locale === 'vi'
-          ? 'Khám phá sản phẩm thủ công từ ƯƠM.'
-          : 'Discover handcrafted products from ƯƠM.',
+          ? 'Khám phá sản phẩm thủ công từ ƯƠM. Archive.'
+          : 'Discover handcrafted products from ƯƠM. Archive.',
+      branding,
       alternates: {
-        canonical: `/${locale}/shop/${params.slug}`,
-        languages: {
-          vi: `/vi/shop/${params.slug}`,
-          en: `/en/shop/${params.slug}`,
-          'x-default': `/vi/shop/${params.slug}`,
-        },
-      },
-      robots: {
-        index: true,
-        follow: true,
-      },
-    }
-  }
-
-  const isVi = locale === 'vi'
-  const brandName = getBrandName(locale, branding)
-  const product = result.product
-  const name = isVi ? product.nameVi : product.nameEn
-  const rawDescription =
-    (isVi
-      ? product.shortDescriptionVi || product.descriptionVi
-      : product.shortDescriptionEn || product.descriptionEn) ?? ''
-  const description = stripHtml(rawDescription).slice(0, 160) || undefined
-  const firstImage = product.images?.[0] ? toAbsoluteUrl(product.images[0]) : undefined
-  const canonicalPath = `/${locale}/shop/${params.slug}`
-
-  return {
-    title: name,
-    description,
-    openGraph: {
-      title: `${name} | ${brandName}`,
-      description,
-      url: `${BASE_URL}${canonicalPath}`,
-      type: 'website',
-      images: firstImage ? [{ url: firstImage, width: 1200, height: 1600, alt: name }] : undefined,
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: `${name} | ${brandName}`,
-      description,
-      images: firstImage ? [firstImage] : undefined,
-    },
-    alternates: {
-      canonical: canonicalPath,
-      languages: {
         vi: `/vi/shop/${params.slug}`,
         en: `/en/shop/${params.slug}`,
         'x-default': `/vi/shop/${params.slug}`,
       },
-    },
+    })
   }
+
+  const isVi = locale === 'vi'
+  const product = result.product
+  const name = normalizeSeoText(isVi ? product.nameVi : product.nameEn) || params.slug
+  const rawDescription =
+    (isVi
+      ? product.shortDescriptionVi || product.descriptionVi
+      : product.shortDescriptionEn || product.descriptionEn) ?? ''
+  const description =
+    truncateMetaDescription(rawDescription) ||
+    (isVi
+      ? `Khám phá ${name}, sản phẩm gốm sứ thủ công từ ƯƠM. Archive.`
+      : `Discover ${name}, a handcrafted ceramic product from ƯƠM. Archive.`)
+  const firstImage = product.images?.[0] ? toAbsoluteUrl(product.images[0]) : undefined
+  const canonicalPath = `/${locale}/shop/${params.slug}`
+
+  return buildPageMetadata({
+    locale,
+    path: canonicalPath,
+    title: name,
+    description,
+    branding,
+    image: firstImage,
+    alternates: {
+      vi: `/vi/shop/${params.slug}`,
+      en: `/en/shop/${params.slug}`,
+      'x-default': `/vi/shop/${params.slug}`,
+    },
+  })
 }
 
 export default async function ProductPage({ params }: Props) {
@@ -192,11 +172,11 @@ export default async function ProductPage({ params }: Props) {
   }
 
   const product = result.status === 'ok' ? result.product : null
-  const brandName = getBrandName(locale, branding)
+  const brandName = getSeoBrandName(locale, branding)
   const isVi = locale === 'vi'
   const name = product ? (isVi ? product.nameVi : product.nameEn) : ''
   const description = product
-    ? stripHtml(
+    ? normalizeSeoText(
         isVi
           ? product.shortDescriptionVi || product.descriptionVi || ''
           : product.shortDescriptionEn || product.descriptionEn || '',

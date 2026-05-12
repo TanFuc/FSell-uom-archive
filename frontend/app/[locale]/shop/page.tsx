@@ -1,66 +1,51 @@
 import { type Metadata } from 'next'
-import { Suspense } from 'react'
 import Script from 'next/script'
-import { getCanonicalBaseUrl } from '@/lib/seo'
+import { Suspense } from 'react'
+import { buildPageMetadata, getCanonicalBaseUrl, getSeoBrandName } from '@/lib/seo'
 import { fetchBranding } from '@/lib/server-utils'
 import ShopClient from './shop-client'
 
 const BASE_URL = getCanonicalBaseUrl()
 export const revalidate = 3600
 
+function getShopSeo(locale: string) {
+  return locale === 'vi'
+    ? {
+        title: 'Tất cả sản phẩm',
+        description:
+          'Khám phá bộ sưu tập gốm sứ thủ công được tuyển chọn từ các nghệ nhân Việt Nam.',
+      }
+    : {
+        title: 'Shop',
+        description:
+          'Discover our curated collection of handcrafted ceramics from Vietnamese artisans.',
+      }
+}
+
 export async function generateMetadata({
   params,
 }: {
   params: { locale: string }
 }): Promise<Metadata> {
-  const locale = params.locale
+  const locale = params.locale === 'vi' ? 'vi' : 'en'
   const branding = await fetchBranding()
+  const seo = getShopSeo(locale)
 
-  const isVi = locale === 'vi'
-  const brandName = isVi
-    ? (branding?.brandNameVi ?? 'ƯƠM.')
-    : (branding?.brandNameEn ?? 'ƯƠM.')
-
-  const title = isVi ? 'Tất cả sản phẩm' : 'Shop'
-  const description = isVi
-    ? 'Khám phá bộ sưu tập gốm sứ thủ công được tuyển chọn từ các nghệ nhân Việt Nam.'
-    : 'Discover our curated collection of handcrafted ceramics from Vietnamese artisans.'
-  const logoUrl = branding?.logoUrl || `${BASE_URL}/assets/logo.png`
-
-  return {
-    title,
-    description,
-    openGraph: {
-      title: `${title} | ${brandName}`,
-      description,
-      url: `${BASE_URL}/${locale}/shop`,
-      type: 'website',
-      images: [{ url: logoUrl, width: 1200, height: 630, alt: `${brandName} Logo` }],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: `${title} | ${brandName}`,
-      description,
-      images: [logoUrl],
-    },
-    alternates: {
-      canonical: `/${locale}/shop`,
-      languages: { vi: '/vi/shop', en: '/en/shop', 'x-default': '/vi/shop' },
-    },
-  }
+  return buildPageMetadata({
+    locale,
+    path: `/${locale}/shop`,
+    title: seo.title,
+    description: seo.description,
+    branding,
+    alternates: { vi: '/vi/shop', en: '/en/shop', 'x-default': '/vi/shop' },
+  })
 }
 
 export default async function ShopPage({ params }: { params: { locale: string } }) {
-  const locale = params.locale
+  const locale = params.locale === 'vi' ? 'vi' : 'en'
   const branding = await fetchBranding()
-  const brandName =
-    locale === 'vi'
-      ? (branding?.brandNameVi ?? 'ƯƠM.')
-      : (branding?.brandNameEn ?? 'ƯƠM.')
-  const description =
-    locale === 'vi'
-      ? 'Khám phá bộ sưu tập gốm sứ thủ công được tuyển chọn từ các nghệ nhân Việt Nam.'
-      : 'Discover our curated collection of handcrafted ceramics from Vietnamese artisans.'
+  const brandName = getSeoBrandName(locale, branding)
+  const seo = getShopSeo(locale)
 
   return (
     <>
@@ -74,7 +59,7 @@ export default async function ShopPage({ params }: { params: { locale: string } 
             '@type': 'CollectionPage',
             name: `${brandName} Shop`,
             url: `${BASE_URL}/${locale}/shop`,
-            description,
+            description: seo.description,
           }),
         }}
       />
@@ -96,7 +81,7 @@ export default async function ShopPage({ params }: { params: { locale: string } 
               {
                 '@type': 'ListItem',
                 position: 2,
-                name: locale === 'vi' ? 'Cua hang' : 'Shop',
+                name: locale === 'vi' ? 'Cửa hàng' : 'Shop',
                 item: `${BASE_URL}/${locale}/shop`,
               },
             ],

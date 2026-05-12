@@ -26,9 +26,6 @@ function usePremiumSmoothScroll() {
   const lastX = useRef(0)
   const lastTime = useRef(0)
   const dragDistance = useRef(0)
-  const touchStartX = useRef(0)
-  const touchPrevX = useRef(0)
-  const touchPrevTime = useRef(0)
   const isPointerDown = useRef(false)
   const hasMovedWhilePointerDown = useRef(false)
 
@@ -98,6 +95,15 @@ function usePremiumSmoothScroll() {
     }
   }, [])
 
+  const handleScroll = useCallback(() => {
+    if (!scrollRef.current) return
+
+    const maxScroll = scrollRef.current.scrollWidth - scrollRef.current.clientWidth
+    if (maxScroll > 0) {
+      setProgress(scrollRef.current.scrollLeft / maxScroll)
+    }
+  }, [])
+
   const handleMouseUp = useCallback(() => {
     if (!isPointerDown.current && !isDragging) return
     isPointerDown.current = false
@@ -106,7 +112,7 @@ function usePremiumSmoothScroll() {
       animationFrame.current = requestAnimationFrame(step)
     }
     hasMovedWhilePointerDown.current = false
-  }, [step])
+  }, [isDragging, step])
 
   const handleCaptureClick = useCallback((e: React.MouseEvent) => {
     if (dragDistance.current > 15) {
@@ -114,55 +120,6 @@ function usePremiumSmoothScroll() {
       e.stopPropagation()
     }
   }, [])
-
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    if (!scrollRef.current || e.touches.length !== 1) return
-    const touchX = e.touches[0].clientX
-    setIsDragging(true)
-    touchStartX.current = touchX
-    touchPrevX.current = touchX
-    touchPrevTime.current = Date.now()
-    scrollLeft.current = scrollRef.current.scrollLeft
-    dragDistance.current = 0
-    velocity.current = 0
-    if (animationFrame.current) cancelAnimationFrame(animationFrame.current)
-  }, [])
-
-  const handleTouchMove = useCallback(
-    (e: React.TouchEvent) => {
-      if (!isDragging || !scrollRef.current || e.touches.length !== 1) return
-
-      const touchX = e.touches[0].clientX
-      const walk = (touchX - touchStartX.current) * 1.45
-      const prevScroll = scrollRef.current.scrollLeft
-      scrollRef.current.scrollLeft = scrollLeft.current - walk
-      dragDistance.current += Math.abs(scrollRef.current.scrollLeft - prevScroll)
-
-      const now = Date.now()
-      const dt = now - touchPrevTime.current
-      const dx = touchX - touchPrevX.current
-      if (dt > 0) {
-        const newVelocity = (-dx / dt) * 16
-        velocity.current = velocity.current * 0.25 + newVelocity * 0.75
-      }
-
-      touchPrevX.current = touchX
-      touchPrevTime.current = now
-
-      const maxScroll = scrollRef.current.scrollWidth - scrollRef.current.clientWidth
-      if (maxScroll > 0) {
-        setProgress(scrollRef.current.scrollLeft / maxScroll)
-      }
-    },
-    [isDragging],
-  )
-
-  const handleTouchEnd = useCallback(() => {
-    setIsDragging(false)
-    if (Math.abs(velocity.current) > 1) {
-      animationFrame.current = requestAnimationFrame(step)
-    }
-  }, [step])
 
   const handleDragStart = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -193,9 +150,7 @@ function usePremiumSmoothScroll() {
     onMouseLeave: handleMouseUp,
     onDragStart: handleDragStart,
     onClickCapture: handleCaptureClick,
-    onTouchStart: handleTouchStart,
-    onTouchMove: handleTouchMove,
-    onTouchEnd: handleTouchEnd,
+    onScroll: handleScroll,
     isDragging,
     progress,
   }
@@ -227,8 +182,8 @@ export default function HomeClient({
   )
 
   const { data: siteContent, isLoading: isLoadingStories } = useSiteContent({
-    staleTime: 0,
-    refetchOnMount: 'always',
+    staleTime: 5 * 60 * 1000,
+    refetchOnMount: false,
     initialData: initialSiteContent,
   })
   const stories = parseStories(siteContent?.[STORIES_CONTENT_KEY]).filter(
@@ -243,7 +198,7 @@ export default function HomeClient({
   })
 
   return (
-    <div className="overflow-hidden pt-0">
+    <div className="safe-screen pt-0">
       {/* Hero Banner Section */}
       <section className="w-full">
         {isLoadingBanners ? (
@@ -259,13 +214,13 @@ export default function HomeClient({
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="mb-16 flex items-end justify-between px-6 pb-8 lg:px-12"
+          className="mb-16 flex flex-wrap items-end justify-between gap-4 px-4 pb-8 sm:px-6 lg:px-12"
         >
-          <div className="space-y-3">
-            <h2 className="text-[8px] font-bold uppercase tracking-[0.4em] text-foreground/40">
+          <div className="min-w-0 space-y-3">
+            <h2 className="text-mobile-safe text-[8px] font-bold uppercase tracking-[0.28em] text-foreground/40 sm:tracking-[0.4em]">
               {locale === 'vi' ? 'BST MỚI NHẤT' : 'NEW COLLECTIONS'}
             </h2>
-            <p className="font-sans text-lg font-bold uppercase tracking-[0.1em]">
+            <p className="text-mobile-safe font-sans text-lg font-bold uppercase tracking-[0.08em] sm:tracking-[0.1em]">
               {locale === 'vi' ? 'Sản phẩm gợi ý' : 'Suggested for you'}
             </p>
           </div>
@@ -280,11 +235,11 @@ export default function HomeClient({
         </motion.div>
 
         {isLoadingLatest ? (
-          <div className="flex gap-6 overflow-hidden px-6 lg:px-12">
+          <div className="flex gap-6 overflow-hidden px-4 sm:px-6 lg:px-12">
             {[...Array(3)].map((_, i) => (
               <div
                 key={i}
-                className="w-[calc(100vw-64px)] shrink-0 space-y-6 md:w-[45vw] lg:w-[31vw]"
+                className="w-[calc(100vw-32px)] max-w-full shrink-0 space-y-6 sm:w-[calc(100vw-64px)] md:w-[45vw] lg:w-[31vw]"
               >
                 <div className="aspect-[4/5] animate-pulse bg-muted/30" />
               </div>
@@ -300,11 +255,9 @@ export default function HomeClient({
               onMouseLeave={latestDrag.onMouseLeave}
               onDragStart={latestDrag.onDragStart}
               onClickCapture={latestDrag.onClickCapture}
-              onTouchStart={latestDrag.onTouchStart}
-              onTouchMove={latestDrag.onTouchMove}
-              onTouchEnd={latestDrag.onTouchEnd}
+              onScroll={latestDrag.onScroll}
               className={cn(
-                'hide-scrollbar flex select-none gap-6 overflow-x-auto px-6 pb-12 transition-transform duration-500 ease-out lg:px-12',
+                'hide-scrollbar flex w-full select-none gap-6 overflow-x-auto overscroll-x-contain px-4 pb-12 transition-transform duration-500 ease-out sm:px-6 lg:px-12',
                 latestDrag.isDragging ? 'scale-[0.995] cursor-grabbing' : 'cursor-grab',
               )}
             >
@@ -316,7 +269,7 @@ export default function HomeClient({
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ delay: idx * 0.05, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                    className="w-[calc(100vw-64px)] shrink-0 md:w-[45vw] lg:w-[31vw]"
+                    className="w-[calc(100vw-32px)] max-w-full shrink-0 sm:w-[calc(100vw-64px)] md:w-[45vw] lg:w-[31vw]"
                   >
                     <ProductCard product={product} locale={locale} priority={idx === 0} />
                   </motion.div>
@@ -329,12 +282,12 @@ export default function HomeClient({
 
       {/* Section: JOURNAL */}
       <section className="w-full border-t border-foreground/[0.03] bg-white py-24">
-        <div className="mb-16 flex items-end justify-between px-6 pb-8 lg:px-12">
-          <div className="space-y-3">
-            <h2 className="text-[9px] font-bold uppercase tracking-[0.35em] text-foreground/40 md:text-[10px]">
+        <div className="mb-16 flex flex-wrap items-end justify-between gap-4 px-4 pb-8 sm:px-6 lg:px-12">
+          <div className="min-w-0 space-y-3">
+            <h2 className="text-mobile-safe text-[9px] font-bold uppercase tracking-[0.28em] text-foreground/40 sm:tracking-[0.35em] md:text-[10px]">
               JOURNAL
             </h2>
-            <p className="font-sans text-base font-bold uppercase tracking-[0.1em] md:text-lg">
+            <p className="text-mobile-safe font-sans text-base font-bold uppercase tracking-[0.08em] md:text-lg md:tracking-[0.1em]">
               {locale === 'vi' ? 'Nhật ký & Câu chuyện' : 'Stories & Journal'}
             </p>
           </div>
@@ -349,11 +302,11 @@ export default function HomeClient({
         </div>
 
         {isLoadingStories ? (
-          <div className="flex gap-6 overflow-hidden px-6 lg:px-12">
+          <div className="flex gap-6 overflow-hidden px-4 sm:px-6 lg:px-12">
             {[...Array(2)].map((_, i) => (
               <div
                 key={i}
-                className="w-[calc(100vw-64px)] shrink-0 space-y-6 md:w-[45vw] lg:w-[calc(50vw-48px)]"
+                className="w-[calc(100vw-32px)] max-w-full shrink-0 space-y-6 sm:w-[calc(100vw-64px)] md:w-[45vw] lg:w-[calc(50vw-48px)]"
               >
                 <div className="overflow-hidden rounded-xl border border-foreground/5">
                   <div className="aspect-[4/5] animate-pulse bg-muted/20" />
@@ -367,7 +320,7 @@ export default function HomeClient({
             ))}
           </div>
         ) : stories.length === 0 ? (
-          <div className="px-6 text-sm text-foreground/50 lg:px-12">
+          <div className="px-4 text-sm text-foreground/50 sm:px-6 lg:px-12">
             {locale === 'vi'
               ? 'Stories đang được cập nhật. Xem lại sau nhé.'
               : 'Stories are being updated. Please check back soon.'}
@@ -382,11 +335,9 @@ export default function HomeClient({
               onMouseLeave={featuredDrag.onMouseLeave}
               onDragStart={featuredDrag.onDragStart}
               onClickCapture={featuredDrag.onClickCapture}
-              onTouchStart={featuredDrag.onTouchStart}
-              onTouchMove={featuredDrag.onTouchMove}
-              onTouchEnd={featuredDrag.onTouchEnd}
+              onScroll={featuredDrag.onScroll}
               className={cn(
-                'hide-scrollbar flex touch-pan-x select-none gap-6 overflow-x-auto px-6 pb-12 transition-transform duration-500 ease-out lg:px-12',
+                'hide-scrollbar flex w-full select-none gap-6 overflow-x-auto overscroll-x-contain px-4 pb-12 transition-transform duration-500 ease-out sm:px-6 lg:px-12',
                 featuredDrag.isDragging ? 'scale-[0.995] cursor-grabbing' : 'cursor-grab',
               )}
             >
@@ -394,11 +345,8 @@ export default function HomeClient({
                 {stories.map((story: StoryItem, idx: number) => (
                   <motion.div
                     key={story.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: idx * 0.05, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                    className="w-[calc(100vw-64px)] shrink-0 md:w-[45vw] lg:w-[calc(50vw-48px)]"
+                    initial={false}
+                    className="w-[calc(100vw-32px)] max-w-full shrink-0 sm:w-[calc(100vw-64px)] md:w-[45vw] lg:w-[calc(50vw-48px)]"
                   >
                     <Link
                       href={`/${locale}/journal/${encodeURIComponent(getStorySlug(story, locale))}`}
