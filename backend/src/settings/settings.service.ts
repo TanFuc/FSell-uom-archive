@@ -358,12 +358,14 @@ export class SettingsService {
       brandNameEn: map['brand.name.en'] ?? 'ƯƠM. Archive',
       brandTaglineVi: map['brand.tagline.vi'] ?? '',
       brandTaglineEn: map['brand.tagline.en'] ?? '',
-      siteTitleVi: map['site.title.vi'] ?? 'ƯƠM. Archive - Gốm sứ thủ công Việt Nam',
-      siteTitleEn: map['site.title.en'] ?? 'ƯƠM. Archive - Handcrafted Ceramics from Vietnam',
+      siteTitleVi: map['site.title.vi'] ?? 'ƯƠM. - Gốm sứ thủ công Việt Nam',
+      siteTitleEn: map['site.title.en'] ?? 'ƯƠM. - Handcrafted Ceramics from Vietnam',
       siteDescriptionVi:
-        map['site.description.vi'] ?? 'Gốm sứ thủ công được tuyển chọn kỹ lưỡng từ Việt Nam.',
+        map['site.description.vi'] ??
+        'ƯƠM. tuyển chọn gốm sứ thủ công Việt Nam, lưu giữ vẻ đẹp mộc mạc, tinh tế và câu chuyện của nghệ nhân bản địa.',
       siteDescriptionEn:
-        map['site.description.en'] ?? 'Discover timeless Vietnamese ceramics curated with care.',
+        map['site.description.en'] ??
+        'Discover Vietnamese handcrafted ceramics curated for quiet beauty, refined living, and artisan stories.',
       logoUrl: map['site.logoUrl'] ?? '',
       loadingText: map['site.loadingText'] ?? 'ƯƠM.',
     }

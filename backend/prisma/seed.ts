@@ -316,10 +316,15 @@ async function main() {
   const brandingDefaults = [
     { key: 'site.title.vi', value: 'ƯƠM. - Gốm sứ thủ công Việt Nam' },
     { key: 'site.title.en', value: 'ƯƠM. - Handcrafted Ceramics from Vietnam' },
-    { key: 'site.description.vi', value: 'Gốm sứ thủ công được tuyển chọn kỹ lưỡng từ Việt Nam.' },
+    {
+      key: 'site.description.vi',
+      value:
+        'ƯƠM. tuyển chọn gốm sứ thủ công Việt Nam, lưu giữ vẻ đẹp mộc mạc, tinh tế và câu chuyện của nghệ nhân bản địa.',
+    },
     {
       key: 'site.description.en',
-      value: 'Discover timeless Vietnamese ceramics curated with care.',
+      value:
+        'Discover Vietnamese handcrafted ceramics curated for quiet beauty, refined living, and artisan stories.',
     },
     { key: 'site.logoUrl', value: '' },
     { key: 'site.loadingText', value: 'ƯƠM.' },
@@ -445,11 +450,7 @@ async function main() {
         '<p>The Lieng vase brings tranquility and rustic charm to any space. Handcrafted from pure white clay and fired at 1200°C for exceptional durability.</p><p>The matte ivory glaze offers a warm tactile feel. Its elegant tall silhouette is ideal for dried botanicals like pampas or eucalyptus, or standing alone as an art piece.</p><ul><li>Matte ivory glaze</li><li>Minimalist, Nordic-friendly</li><li>Styled with neutral florals</li></ul>',
       priceVND: 1850000,
       salePriceVND: 1690000,
-      images: [
-        monochromeImages.vases[0],
-        monochromeImages.vases[1],
-        monochromeImages.vases[2],
-      ],
+      images: [monochromeImages.vases[0], monochromeImages.vases[1], monochromeImages.vases[2]],
       hoverImage: monochromeImages.vases[1],
       categorySlug: 'binh-hoa-loc',
       material: 'Đất sét trắng nung cao độ / High-fire white clay',
@@ -500,10 +501,7 @@ async function main() {
         '<p>The set includes 4 rice bowls, 2 shallow plates, 1 deep plate, and 2 large bowls. Wood-fired in a traditional kiln for 72 hours.</p><p>Natural ash and flame paths create stunning, unpredictable patterns on the surface. Brings a warm, soulful atmosphere to family dining.</p><ul><li>72-hour wood firing</li><li>Natural ash marks</li><li>Everyday-ready</li></ul>',
       priceVND: 3200000,
       salePriceVND: 2890000,
-      images: [
-        monochromeImages.dinnerware[0],
-        monochromeImages.dinnerware[1],
-      ],
+      images: [monochromeImages.dinnerware[0], monochromeImages.dinnerware[1]],
       hoverImage: monochromeImages.dinnerware[1],
       categorySlug: 'bo-ban-an',
       material: 'Gốm sành chịu nhiệt / Heat-resistant stoneware',
@@ -628,10 +626,7 @@ async function main() {
       descriptionEn:
         '<p>Each piece in this dinnerware set is like a miniature ocean painting. The reactive glaze creates natural tonal shifts.</p><p>The 10-piece set is perfect for family gatherings or as a meaningful housewarming gift.</p><ul><li>Handmade reactive glaze</li><li>10-piece set</li><li>Gift-ready</li></ul>',
       priceVND: 4500000,
-      images: [
-        monochromeImages.dinnerware[2],
-        monochromeImages.dinnerware[0],
-      ],
+      images: [monochromeImages.dinnerware[2], monochromeImages.dinnerware[0]],
       hoverImage: monochromeImages.dinnerware[0],
       categorySlug: 'bo-ban-an',
       material: 'Gốm sứ cao cấp / Premium porcelain',
