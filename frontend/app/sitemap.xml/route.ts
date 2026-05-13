@@ -61,8 +61,8 @@ export async function GET(): Promise<Response> {
     headers: {
       'Content-Type': 'application/xml',
       'Content-Disposition': 'inline; filename="sitemap.xml"',
-      'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
-      'CDN-Cache-Control': 'no-store',
+      'Cache-Control': 'public, max-age=0, s-maxage=3600, stale-while-revalidate=86400',
+      'CDN-Cache-Control': 'public, max-age=3600',
       Vary: 'Accept-Encoding',
       'X-Content-Type-Options': 'nosniff',
     },

@@ -3,12 +3,13 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useLocale } from 'next-intl'
-import { useSiteContent } from '@/hooks/use-settings'
+import { useSiteContent, useSocialLinks } from '@/hooks/use-settings'
 import { getImageUrl } from '@/lib/utils'
 
 export default function AboutClient() {
   const locale = useLocale() as 'vi' | 'en'
   const { data: content } = useSiteContent()
+  const { data: socialLinks } = useSocialLinks()
 
   const getVal = (key: string, fallback: string = '') => {
     if (!content) return fallback
@@ -21,6 +22,11 @@ export default function AboutClient() {
   const shopCta = locale === 'vi' ? 'Xem shop' : 'Visit the shop'
   const journalCta = locale === 'vi' ? 'Đọc Journal' : 'Read the journal'
   const faqTitle = locale === 'vi' ? 'Câu hỏi thường gặp' : 'Frequently asked questions'
+  const contactTitle = locale === 'vi' ? 'Liên hệ' : 'Contact'
+  const contactDescription =
+    locale === 'vi'
+      ? 'Kết nối với ƯƠM. để được tư vấn sản phẩm gốm sứ thủ công phù hợp với không gian của bạn.'
+      : 'Connect with ƯƠM. for guidance on handcrafted ceramics that fit your space.'
 
   return (
     <div className="safe-screen pb-16 pt-16 md:pb-32 md:pt-32">
@@ -186,6 +192,41 @@ export default function AboutClient() {
                   : 'Start with the Journal to understand our philosophy, then explore products that fit your style.'}
               </p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="contact" className="container-custom spacing-md scroll-mt-24">
+        <div className="mx-auto max-w-3xl space-y-6 text-center">
+          <h2 className="text-mobile-safe uppercase tracking-[0.16em] sm:tracking-[0.25em]">
+            {contactTitle}
+          </h2>
+          <p className="text-mobile-safe leading-relaxed text-muted-foreground">
+            {contactDescription}
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            {socialLinks?.instagramUsername && (
+              <a
+                href={`https://instagram.com/${socialLinks.instagramUsername}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Instagram"
+                className="text-[10px] font-bold uppercase tracking-[0.3em] text-foreground underline decoration-foreground/15 underline-offset-8 transition hover:opacity-70"
+              >
+                Instagram
+              </a>
+            )}
+            {socialLinks?.facebookPageUrl && (
+              <a
+                href={socialLinks.facebookPageUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Facebook"
+                className="text-[10px] font-bold uppercase tracking-[0.3em] text-foreground underline decoration-foreground/15 underline-offset-8 transition hover:opacity-70"
+              >
+                Facebook
+              </a>
+            )}
           </div>
         </div>
       </section>

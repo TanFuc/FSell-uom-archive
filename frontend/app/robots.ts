@@ -3,6 +3,17 @@ import { getCanonicalBaseUrl, getCanonicalHost } from '@/lib/seo'
 
 const BASE_URL = getCanonicalBaseUrl()
 const CANONICAL_HOST = getCanonicalHost()
+const DISALLOWED_PATHS = [
+  '/admin/',
+  '/vi/admin/',
+  '/en/admin/',
+  '/api/',
+  '/vi/page-new',
+  '/en/page-new',
+  '/manifest.json/',
+  '/*?*token=',
+  '/*?*preview=',
+]
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -10,12 +21,12 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: 'Googlebot',
         allow: '/',
-        disallow: ['/admin/', '/vi/admin/', '/en/admin/', '/vi/page-new', '/en/page-new', '/api/'],
+        disallow: DISALLOWED_PATHS,
       },
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/admin/', '/vi/admin/', '/en/admin/', '/vi/page-new', '/en/page-new', '/api/'],
+        disallow: DISALLOWED_PATHS,
       },
       { userAgent: 'GPTBot', disallow: '/' },
       { userAgent: 'ChatGPT-User', disallow: '/' },

@@ -2,6 +2,7 @@ import { type Metadata } from 'next'
 import Link from 'next/link'
 import Script from 'next/script'
 import {
+  buildAbsoluteUrl,
   buildPageMetadata,
   getCanonicalBaseUrl,
   getSeoBrandName,
@@ -137,44 +138,62 @@ export default async function HomePage({ params }: { params: { locale: string } 
   const alternateBrandName = getSeoBrandName(isVi ? 'en' : 'vi', branding)
   const siteTitle = getSeoSiteTitle(locale, branding)
   const description = getSeoSiteDescription(locale, branding)
-  const logo = getSeoImageUrl(branding)
+  const logo = buildAbsoluteUrl(getSeoImageUrl(branding), baseUrl)
   const socialProfiles = ['https://instagram.com/uomarchive', 'https://facebook.com/uomarchive']
+  const navigationItems = [
+    { name: isVi ? 'Trang chủ' : 'Home', url: `${baseUrl}/${locale}` },
+    { name: isVi ? 'Sản phẩm' : 'Shop', url: `${baseUrl}/${locale}/shop` },
+    { name: isVi ? 'Về chúng tôi' : 'About Us', url: `${baseUrl}/${locale}/about` },
+    { name: isVi ? 'Tạp chí' : 'Journal', url: `${baseUrl}/${locale}/journal` },
+    { name: isVi ? 'Liên hệ' : 'Contact', url: `${baseUrl}/${locale}/about#contact` },
+  ]
 
   return (
     <>
       <Script
-        id="home-org-jsonld"
+        id="home-structured-data-jsonld"
         strategy="beforeInteractive"
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify({
             '@context': 'https://schema.org',
-            '@type': 'Organization',
-            name: brandName,
-            alternateName: alternateBrandName,
-            url: baseUrl,
-            logo,
-            sameAs: socialProfiles,
-            description,
-          }),
-        }}
-      />
-      <Script
-        id="home-website-jsonld"
-        strategy="beforeInteractive"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'WebSite',
-            name: brandName,
-            alternateName: [alternateBrandName, siteTitle],
-            url: `${baseUrl}/${locale}`,
-            potentialAction: {
-              '@type': 'SearchAction',
-              target: `${baseUrl}/${locale}/shop?search={search_term_string}`,
-              'query-input': 'required name=search_term_string',
-            },
+            '@graph': [
+              {
+                '@type': 'Organization',
+                '@id': `${baseUrl}/#organization`,
+                name: brandName,
+                alternateName: alternateBrandName,
+                url: baseUrl,
+                logo: {
+                  '@type': 'ImageObject',
+                  url: logo,
+                },
+                sameAs: socialProfiles,
+                description,
+              },
+              {
+                '@type': 'WebSite',
+                '@id': `${baseUrl}/#website`,
+                name: brandName,
+                alternateName: [alternateBrandName, siteTitle],
+                url: `${baseUrl}/${locale}`,
+                publisher: {
+                  '@id': `${baseUrl}/#organization`,
+                },
+                potentialAction: {
+                  '@type': 'SearchAction',
+                  target: `${baseUrl}/${locale}/shop?search={search_term_string}`,
+                  'query-input': 'required name=search_term_string',
+                },
+              },
+              ...navigationItems.map((item, index) => ({
+                '@type': 'SiteNavigationElement',
+                '@id': `${baseUrl}/#site-navigation-${index + 1}`,
+                position: index + 1,
+                name: item.name,
+                url: item.url,
+              })),
+            ],
           }),
         }}
       />
@@ -182,6 +201,17 @@ export default async function HomePage({ params }: { params: { locale: string } 
       <section className="sr-only" suppressHydrationWarning>
         <h1 suppressHydrationWarning>{siteTitle}</h1>
         <p suppressHydrationWarning>{description}</p>
+        <nav aria-label={isVi ? 'Điều hướng chính' : 'Primary navigation'} suppressHydrationWarning>
+          <ul suppressHydrationWarning>
+            {navigationItems.map((item) => (
+              <li key={item.url} suppressHydrationWarning>
+                <a href={item.url.replace(baseUrl, '')} title={item.name} suppressHydrationWarning>
+                  {item.name}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
 
         {ssrData.products.data.length > 0 && (
           <div suppressHydrationWarning>

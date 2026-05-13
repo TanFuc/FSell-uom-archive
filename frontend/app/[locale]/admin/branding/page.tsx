@@ -55,8 +55,8 @@ export default function BrandingPage() {
       brandNameEn: 'ƯƠM. Archive',
       brandTaglineVi: '',
       brandTaglineEn: '',
-      siteTitleVi: 'ƯƠM. Archive - Gốm sứ thủ công Việt Nam',
-      siteTitleEn: 'ƯƠM. Archive - Handcrafted Ceramics from Vietnam',
+      siteTitleVi: 'ƯƠM. - Gốm sứ thủ công Việt Nam',
+      siteTitleEn: 'ƯƠM. - Handcrafted Ceramics from Vietnam',
       siteDescriptionVi: '',
       siteDescriptionEn: '',
       logoUrl: '',
@@ -370,20 +370,20 @@ export default function BrandingPage() {
                 <SeoSnippetPreview
                   locale="vi"
                   path="/vi"
-                  title={siteTitleVi || 'ƯƠM. Archive - Gốm sứ thủ công Việt Nam'}
+                  title={siteTitleVi || 'ƯƠM. - Gốm sứ thủ công Việt Nam'}
                   description={
                     siteDescriptionVi ||
-                    'Gốm sứ thủ công Việt Nam được tuyển chọn kỹ lưỡng từ nghệ nhân và câu chuyện bản địa.'
+                    'ƯƠM. tuyển chọn gốm sứ thủ công Việt Nam, lưu giữ vẻ đẹp mộc mạc, tinh tế và câu chuyện của nghệ nhân bản địa.'
                   }
                   branding={previewBranding}
                 />
                 <SeoSnippetPreview
                   locale="en"
                   path="/en"
-                  title={siteTitleEn || 'ƯƠM. Archive - Handcrafted Ceramics from Vietnam'}
+                  title={siteTitleEn || 'ƯƠM. - Handcrafted Ceramics from Vietnam'}
                   description={
                     siteDescriptionEn ||
-                    'Discover timeless Vietnamese handcrafted ceramics curated with care.'
+                    'Discover Vietnamese handcrafted ceramics curated for quiet beauty, refined living, and artisan stories.'
                   }
                   branding={previewBranding}
                 />

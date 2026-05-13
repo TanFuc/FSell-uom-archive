@@ -3,7 +3,7 @@ import { getCanonicalBaseUrl } from '@/lib/seo'
 
 export const BASE_URL = getCanonicalBaseUrl()
 export const LOCALES = ['vi', 'en'] as const
-export const SITEMAP_REVALIDATE = 0 // Disable cache for sitemap to prevent stale data conflicts
+export const SITEMAP_REVALIDATE = 3600
 export const SITEMAP_CHUNK_SIZE = 1000
 export const SITEMAP_PRODUCTS_TAG = 'sitemap-products'
 export const SITEMAP_STORIES_TAG = 'sitemap-stories'
@@ -382,12 +382,6 @@ export function buildStaticEntries(products: Product[], stories: StoryItem[]): S
     latestProductDate.getTime() > latestStoryDate.getTime() ? latestProductDate : latestStoryDate
 
   return [
-    {
-      loc: `${BASE_URL}/`,
-      lastmod: latestContentDate.toISOString(),
-      changefreq: 'daily' as const,
-      priority: 1.0,
-    },
     ...LOCALES.flatMap((locale) => [
       {
         loc: `${BASE_URL}/${locale}`,

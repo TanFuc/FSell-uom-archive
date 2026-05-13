@@ -139,12 +139,13 @@ export function Header() {
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
-  const [isPanelReady, setIsPanelReady] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
   const [activeSearchIndex, setActiveSearchIndex] = useState(-1)
   const [recentSearches, setRecentSearches] = useState<string[]>([])
   const activeCardRefs = useRef<Array<HTMLDivElement | null>>([])
-  const scrollLockYRef = useRef(0)
+  const scrollbarPaddingRef = useRef('')
+  const bodyOverflowRef = useRef('')
+  const bodyScrollCompensationRef = useRef('')
 
   useEffect(() => {
     const handleScroll = () => {
@@ -247,27 +248,32 @@ export function Header() {
 
   useLayoutEffect(() => {
     if (!showSearch && !showMobileMenu) {
-      setIsPanelReady(false)
       return
     }
 
-    scrollLockYRef.current = window.scrollY
-    document.body.style.position = 'fixed'
-    document.body.style.top = `-${scrollLockYRef.current}px`
-    document.body.style.left = '0'
-    document.body.style.right = '0'
-    document.body.style.width = '100%'
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth
+    bodyOverflowRef.current = document.body.style.overflow
+    scrollbarPaddingRef.current = document.body.style.paddingRight
+    bodyScrollCompensationRef.current = document.body.style.getPropertyValue(
+      '--scrollbar-compensation',
+    )
     document.body.style.overflow = 'hidden'
+    if (scrollbarWidth > 0) {
+      document.body.style.paddingRight = `${scrollbarWidth}px`
+      document.body.style.setProperty('--scrollbar-compensation', `${scrollbarWidth}px`)
+    }
 
     return () => {
-      const scrollY = scrollLockYRef.current
-      document.body.style.position = ''
-      document.body.style.top = ''
-      document.body.style.left = ''
-      document.body.style.right = ''
-      document.body.style.width = ''
-      document.body.style.overflow = ''
-      window.scrollTo(0, scrollY)
+      document.body.style.overflow = bodyOverflowRef.current
+      document.body.style.paddingRight = scrollbarPaddingRef.current
+      if (bodyScrollCompensationRef.current) {
+        document.body.style.setProperty(
+          '--scrollbar-compensation',
+          bodyScrollCompensationRef.current,
+        )
+      } else {
+        document.body.style.removeProperty('--scrollbar-compensation')
+      }
     }
   }, [showSearch, showMobileMenu])
 
@@ -405,21 +411,27 @@ export function Header() {
   }, [activeSearchIndex, resultBatchKey, showSearch])
 
   const navigation = [
-    { name: t('shop'), href: `/${locale}/shop` },
-    { name: t('about'), href: `/${locale}/about` },
-    { name: t('journal'), href: `/${locale}/journal` },
+    { name: locale === 'vi' ? 'Trang chủ' : 'Home', href: `/${locale}` },
+    { name: locale === 'vi' ? 'Sản phẩm' : 'Shop', href: `/${locale}/shop` },
+    { name: locale === 'vi' ? 'Về chúng tôi' : 'About Us', href: `/${locale}/about` },
+    { name: locale === 'vi' ? 'Tạp chí' : 'Journal', href: `/${locale}/journal` },
+    { name: locale === 'vi' ? 'Liên hệ' : 'Contact', href: `/${locale}/about#contact` },
   ]
 
   const switchLocale = locale === 'vi' ? 'en' : 'vi'
   const newPath = pathname.replace(`/${locale}`, `/${switchLocale}`)
 
   const closeSearchPanel = () => {
-    setIsPanelReady(false)
     setShowSearch(false)
     if (typeof document !== 'undefined') {
       const active = document.activeElement as HTMLElement | null
       active?.blur()
     }
+  }
+
+  const openSearchPanel = () => {
+    setShowMobileMenu(false)
+    setShowSearch(true)
   }
 
   const closeMobileMenu = () => {
@@ -432,7 +444,6 @@ export function Header() {
       return
     }
 
-    setIsPanelReady(false)
     setShowSearch(false)
     setShowMobileMenu(true)
   }
@@ -486,34 +497,48 @@ export function Header() {
   }
 
   const cubicBezier = [0.22, 1, 0.36, 1]
+  const menuItemRise = {
+    hidden: { opacity: 0, x: -10 },
+    show: {
+      opacity: 1,
+      x: 0,
+      transition: { duration: 0.26, ease: cubicBezier },
+    },
+  }
+  const menuListStagger = {
+    hidden: { opacity: 1 },
+    show: {
+      opacity: 1,
+      transition: {
+        delayChildren: 0.16,
+        staggerChildren: 0.055,
+      },
+    },
+  }
   const listStagger = {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
-      transition: {
-        staggerChildren: 0.06,
-        delayChildren: 0.04,
-      },
+      transition: { duration: 0.08 },
     },
   }
   const itemRise = {
-    hidden: { opacity: 0, y: 10 },
+    hidden: { opacity: 0 },
     show: {
       opacity: 1,
-      y: 0,
-      transition: { duration: 0.28, ease: cubicBezier },
+      transition: { duration: 0.18, ease: cubicBezier },
     },
   }
 
   const isHeaderOpaque = showMobileMenu
-  const panelOffsetClass = isScrolled ? 'top-16 lg:top-20' : 'top-20 lg:top-28'
 
   return (
     <header
       className={cn(
-        'fixed left-0 right-0 top-0 z-50 transition-colors duration-200',
+        'fixed left-0 right-0 top-0 z-50 transition-colors duration-300',
         isHeaderOpaque ? 'bg-white shadow-sm' : 'bg-transparent',
       )}
+      style={{ paddingRight: 'var(--scrollbar-compensation, 0px)' }}
     >
       <div
         className={cn(
@@ -531,14 +556,14 @@ export function Header() {
               className="group flex items-center gap-2 py-2 outline-none"
             >
               <div className="flex items-center justify-center">
-                <AnimatePresence initial={false}>
+                <AnimatePresence mode="wait" initial={false}>
                   {showMobileMenu ? (
                     <motion.div
                       key="close"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      transition={{ duration: 0.08 }}
+                      transition={{ duration: 0.18 }}
                     >
                       <X
                         className={cn(
@@ -553,7 +578,7 @@ export function Header() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      transition={{ duration: 0.08 }}
+                      transition={{ duration: 0.18 }}
                     >
                       <Menu
                         className={cn(
@@ -573,13 +598,10 @@ export function Header() {
             <Link
               href={`/${locale}`}
               className={cn(
-                'font-playfair font-bold tracking-tighter transition-all duration-500',
-                'text-2xl lg:text-4xl',
-                isScrolled
-                  ? 'pointer-events-none -translate-y-8 scale-90 opacity-0 blur-sm'
-                  : 'translate-y-0 opacity-100 hover:opacity-80',
+                'font-playfair font-bold tracking-tighter transition-all duration-500 hover:opacity-80',
+                isScrolled ? 'text-xl lg:text-3xl' : 'text-2xl lg:text-4xl',
               )}
-              tabIndex={isScrolled ? -1 : 0}
+              tabIndex={0}
               suppressHydrationWarning
             >
               {brandText}
@@ -616,8 +638,7 @@ export function Header() {
 
             <button
               onClick={() => {
-                showSearch ? closeSearchPanel() : setShowSearch(true)
-                setShowMobileMenu(false)
+                showSearch ? closeSearchPanel() : openSearchPanel()
               }}
               className="flex items-center gap-2 py-1 outline-none"
               aria-label={showSearch ? t('closeSearch') : t('openSearch')}
@@ -646,34 +667,25 @@ export function Header() {
       {/* SEARCH PANEL */}
       <AnimatePresence>
         {showSearch && (
-          <div className="fixed inset-0 z-40">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.25 }}
-              className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(0,0,0,0.46)_0%,rgba(0,0,0,0.62)_100%)] backdrop-blur-[3px]"
-              onClick={closeSearchPanel}
-            />
-            <motion.div
-              initial={{ y: '-10%', opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: '-10%', opacity: 0 }}
-              onAnimationComplete={() => setIsPanelReady(true)}
-              transition={{ duration: 0.35, ease: cubicBezier }}
-              className={cn(
-                'absolute inset-x-0 bottom-0 overflow-y-auto px-3 pb-4 will-change-transform md:px-6 md:pb-6',
-                panelOffsetClass,
-              )}
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[90]"
+          >
+            <div className="absolute inset-0 bg-black/80" onClick={closeSearchPanel} />
+            <motion.div 
+              initial={{ opacity: 0, y: -20, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.98 }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
+              className="absolute inset-x-0 bottom-0 top-16 overflow-y-auto px-3 pb-4 md:top-24 md:px-6 md:pb-6"
             >
               <div className="relative mx-auto w-full max-w-[1160px] overflow-hidden rounded-2xl border border-black/10 bg-[#fcfcfa] shadow-[0_24px_70px_rgba(0,0,0,0.3)]">
-                <div className="pointer-events-none absolute -right-16 -top-20 h-52 w-52 rounded-full bg-[#d7cab3]/45 blur-3xl" />
-                <div className="pointer-events-none absolute -left-12 bottom-0 h-40 w-40 rounded-full bg-[#e7dfcf]/55 blur-3xl" />
-                <motion.div
-                  animate={isPanelReady ? { opacity: 1, y: 0 } : { opacity: 0, y: 5 }}
-                  transition={{ duration: 0.3 }}
-                  className="relative min-h-[300px] px-5 py-6 md:px-8 md:py-8 lg:px-10 lg:py-9"
-                >
+                <div className="pointer-events-none absolute -right-16 -top-20 hidden h-52 w-52 rounded-full bg-[#d7cab3]/45 blur-3xl md:block" />
+                <div className="pointer-events-none absolute -left-12 bottom-0 hidden h-40 w-40 rounded-full bg-[#e7dfcf]/55 blur-3xl md:block" />
+                <div className="relative min-h-[300px] px-5 py-6 md:px-8 md:py-8 lg:px-10 lg:py-9">
                   <form
                     onSubmit={handleSearch}
                     className="relative mb-8 rounded-xl border border-foreground/10 bg-white px-4 py-3 shadow-sm transition-all duration-300 focus-within:border-foreground/30 focus-within:shadow-[0_10px_26px_rgba(0,0,0,0.08)] md:px-5"
@@ -728,8 +740,8 @@ export function Header() {
                     <div className="md:col-span-3">
                       {isQueryEmpty && (
                         <motion.div
-                          initial={{ opacity: 0, y: 6 }}
-                          animate={{ opacity: 1, y: 0 }}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
                           className="mb-6 rounded-xl border border-foreground/10 bg-[linear-gradient(120deg,rgba(255,255,255,0.95)_0%,rgba(244,237,224,0.95)_100%)] p-4 shadow-sm"
                         >
                           <p className="mb-3 text-[9px] font-bold uppercase tracking-[0.28em] text-foreground/40">
@@ -752,8 +764,8 @@ export function Header() {
 
                       {isQueryEmpty && recentSearches.length > 0 && (
                         <motion.div
-                          initial={{ opacity: 0, y: 6 }}
-                          animate={{ opacity: 1, y: 0 }}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
                           transition={{ delay: 0.04 }}
                           className="mb-6 rounded-xl border border-foreground/10 bg-white/90 p-4 shadow-sm"
                         >
@@ -806,10 +818,10 @@ export function Header() {
                             {isSearchLoading ? (
                               <motion.div
                                 key={`skeleton-${debouncedQuery}`}
-                                initial={{ opacity: 0, y: 8 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -8 }}
-                                transition={{ duration: 0.22 }}
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                transition={{ duration: 0.12 }}
                                 className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4 md:gap-4"
                               >
                                 {Array.from({ length: 4 }).map((_, idx) => (
@@ -821,18 +833,18 @@ export function Header() {
                                 key={`results-${resultBatchKey}`}
                                 variants={listStagger}
                                 initial="hidden"
-                                animate={isPanelReady ? 'show' : 'hidden'}
-                                exit={{ opacity: 0, y: -8 }}
+                                animate="show"
+                                exit={{ opacity: 0 }}
                                 className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4 md:gap-4"
                               >
                                 {foundSuggestions.map((product, index) => (
                                   <motion.div
                                     key={`${product.id}-${resultBatchKey}`}
                                     variants={itemRise}
-                                    initial={{ opacity: 0, y: 8, filter: 'blur(8px)' }}
-                                    animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                                    exit={{ opacity: 0, y: -6, filter: 'blur(8px)' }}
-                                    transition={{ duration: 0.26, ease: cubicBezier }}
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    transition={{ duration: 0.12 }}
                                     ref={(node) => {
                                       activeCardRefs.current[index] = node
                                     }}
@@ -854,9 +866,9 @@ export function Header() {
                             ) : (
                               <motion.p
                                 key={`empty-${debouncedQuery}`}
-                                initial={{ opacity: 0, y: 8 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -8 }}
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
                                 className="mb-8 rounded-lg border border-dashed border-foreground/15 bg-white/70 px-4 py-4 text-xs uppercase tracking-[0.16em] text-foreground/45"
                               >
                                 {locale === 'vi'
@@ -905,9 +917,9 @@ export function Header() {
                                 <motion.div
                                   key={`suggested-${product.id}-${resultBatchKey}`}
                                   variants={itemRise}
-                                  initial={{ opacity: 0, y: 8, filter: 'blur(8px)' }}
-                                  animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                                  transition={{ duration: 0.26, ease: cubicBezier }}
+                                  initial={{ opacity: 0 }}
+                                  animate={{ opacity: 1 }}
+                                  transition={{ duration: 0.12 }}
                                 >
                                   <SearchResultItem
                                     product={product}
@@ -938,7 +950,7 @@ export function Header() {
                       <motion.nav
                         variants={listStagger}
                         initial="hidden"
-                        animate={isPanelReady ? 'show' : 'hidden'}
+                        animate="show"
                         className="flex flex-wrap gap-2 md:flex-col md:gap-2.5"
                       >
                         {categories?.map((cat) => (
@@ -955,10 +967,10 @@ export function Header() {
                       </motion.nav>
                     </div>
                   </div>
-                </motion.div>
+                </div>
               </div>
             </motion.div>
-          </div>
+          </motion.div>
         )}
       </AnimatePresence>
 
@@ -970,29 +982,39 @@ export function Header() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.12 }}
+              transition={{ duration: 0.24, ease: 'easeOut' }}
               className="absolute inset-0 bg-black/30"
               onClick={closeMobileMenu}
             />
             <motion.div
-              initial={{ opacity: 0, x: -16 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -16 }}
-              transition={{ duration: 0.16, ease: cubicBezier }}
-              className="absolute bottom-0 left-0 top-0 flex w-[85vw] max-w-[380px] flex-col bg-white pt-16 shadow-2xl lg:pt-20"
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ duration: 0.38, ease: cubicBezier }}
+              className="absolute bottom-0 left-0 top-0 flex w-[85vw] max-w-[380px] flex-col bg-white pt-16 shadow-2xl will-change-transform lg:pt-20"
             >
               <div className="flex flex-1 flex-col justify-between px-8 py-12 lg:px-12">
-                <nav className="flex flex-col space-y-6">
-                  {navigation.map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={closeMobileMenu}
-                      className="text-3xl font-bold uppercase tracking-tighter transition-colors hover:text-primary"
-                    >
-                      {item.name}
-                    </Link>
-                  ))}
+                <nav aria-label={locale === 'vi' ? 'Điều hướng chính' : 'Primary navigation'}>
+                  <motion.ul
+                    variants={menuListStagger}
+                    initial="hidden"
+                    animate="show"
+                    exit="hidden"
+                    className="flex flex-col space-y-6"
+                  >
+                    {navigation.map((item) => (
+                      <motion.li key={item.href} variants={menuItemRise}>
+                        <Link
+                          href={item.href}
+                          title={item.name}
+                          onClick={closeMobileMenu}
+                          className="block text-3xl font-bold uppercase tracking-tighter transition-colors hover:text-primary"
+                        >
+                          {item.name}
+                        </Link>
+                      </motion.li>
+                    ))}
+                  </motion.ul>
                 </nav>
                 <div className="space-y-8">
                   <div className="flex gap-6 text-foreground/40">

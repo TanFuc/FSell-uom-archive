@@ -1,12 +1,34 @@
 import { type Metadata } from 'next'
 
 const DEFAULT_CANONICAL_BASE_URL = 'https://www.uomarchive.com'
-const DEFAULT_BRAND_NAME = 'ƯƠM. Archive'
+const DEFAULT_BRAND_NAME = 'ƯƠM.'
 const DEFAULT_LOGO_PATH = '/assets/logo.png'
 const DEFAULT_SITE_DESCRIPTION_VI =
-  'Gốm sứ thủ công Việt Nam được tuyển chọn kỹ lưỡng từ nghệ nhân và câu chuyện bản địa.'
+  'ƯƠM. tuyển chọn gốm sứ thủ công Việt Nam, lưu giữ vẻ đẹp mộc mạc, tinh tế và câu chuyện của nghệ nhân bản địa.'
 const DEFAULT_SITE_DESCRIPTION_EN =
-  'Discover timeless Vietnamese handcrafted ceramics curated with care.'
+  'Discover Vietnamese handcrafted ceramics curated for quiet beauty, refined living, and artisan stories.'
+
+const NAVIGATION_LABELS = [
+  'Trang chủ',
+  'Sản phẩm',
+  'Về chúng tôi',
+  'Tạp chí',
+  'Liên hệ',
+  'Home',
+  'Shop',
+  'Products',
+  'About Us',
+  'Journal',
+  'Contact',
+]
+
+const NAVIGATION_LABEL_PATTERN = NAVIGATION_LABELS.map((label) =>
+  label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+).join('|')
+const CONCATENATED_NAVIGATION_PATTERN = new RegExp(
+  `(${NAVIGATION_LABEL_PATTERN})(?=(${NAVIGATION_LABEL_PATTERN}))`,
+  'g',
+)
 
 export type SeoLocale = 'vi' | 'en'
 
@@ -73,16 +95,18 @@ export function getSeoSiteTitle(locale: string, branding?: SeoBranding | null): 
   return (
     normalizeSeoText(preferred) ||
     (locale === 'vi'
-      ? 'ƯƠM. Archive - Gốm sứ thủ công Việt Nam'
-      : 'ƯƠM. Archive - Handcrafted Ceramics from Vietnam')
+      ? 'ƯƠM. - Gốm sứ thủ công Việt Nam'
+      : 'ƯƠM. - Handcrafted Ceramics from Vietnam')
   )
 }
 
 export function getSeoSiteDescription(locale: string, branding?: SeoBranding | null): string {
   const preferred = locale === 'vi' ? branding?.siteDescriptionVi : branding?.siteDescriptionEn
+  const cleanPreferred = normalizeSeoText(preferred)
+  const fallback = locale === 'vi' ? DEFAULT_SITE_DESCRIPTION_VI : DEFAULT_SITE_DESCRIPTION_EN
+
   return truncateMetaDescription(
-    normalizeSeoText(preferred) ||
-      (locale === 'vi' ? DEFAULT_SITE_DESCRIPTION_VI : DEFAULT_SITE_DESCRIPTION_EN),
+    cleanPreferred && !looksLikeNavigationLeak(cleanPreferred) ? cleanPreferred : fallback,
   )
 }
 
@@ -91,8 +115,18 @@ export function normalizeSeoText(value: unknown): string {
   return value
     .replace(/<[^>]*>/g, ' ')
     .replace(/\[\[VARIANT_GROUPS\]\][^\n\r]*/g, ' ')
+    .replace(/[\u00a0\u200b-\u200d\ufeff]/g, ' ')
+    .replace(CONCATENATED_NAVIGATION_PATTERN, '$1 ')
     .replace(/\s+/g, ' ')
     .trim()
+}
+
+function looksLikeNavigationLeak(value: string): boolean {
+  const matches = NAVIGATION_LABELS.filter((label) =>
+    value.toLowerCase().includes(label.toLowerCase()),
+  )
+
+  return matches.length >= 3
 }
 
 export function truncateMetaDescription(value: string, maxLength = 155): string {
