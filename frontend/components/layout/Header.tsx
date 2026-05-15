@@ -681,8 +681,12 @@ export function Header() {
               exit={{ opacity: 0, y: -10, scale: 0.98 }}
               transition={{ duration: 0.3, ease: 'easeOut' }}
               className="absolute inset-x-0 bottom-0 top-16 overflow-y-auto px-3 pb-4 md:top-24 md:px-6 md:pb-6"
+              onClick={closeSearchPanel}
             >
-              <div className="relative mx-auto w-full max-w-[1160px] overflow-hidden rounded-2xl border border-black/10 bg-[#fcfcfa] shadow-[0_24px_70px_rgba(0,0,0,0.3)]">
+              <div 
+                className="relative mx-auto w-full max-w-[1160px] overflow-hidden rounded-2xl border border-black/10 bg-[#fcfcfa] shadow-[0_24px_70px_rgba(0,0,0,0.3)]"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <div className="pointer-events-none absolute -right-16 -top-20 hidden h-52 w-52 rounded-full bg-[#d7cab3]/45 blur-3xl md:block" />
                 <div className="pointer-events-none absolute -left-12 bottom-0 hidden h-40 w-40 rounded-full bg-[#e7dfcf]/55 blur-3xl md:block" />
                 <div className="relative min-h-[300px] px-5 py-6 md:px-8 md:py-8 lg:px-10 lg:py-9">
