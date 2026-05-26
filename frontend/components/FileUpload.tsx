@@ -31,7 +31,7 @@ export function FileUpload({
   onUploadError,
   maxFiles = 1,
   allowMultiple = false,
-  folder = 'products',
+  folder: _folder,
   acceptedFileTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
   maxFileSize = '10MB',
   className,
@@ -39,63 +39,6 @@ export function FileUpload({
   const [files, setFiles] = useState<any[]>([])
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888/api'
-
-  const processUpload = (
-    _fieldName: string,
-    file: Blob,
-    _metadata: Record<string, unknown>,
-    load: (serverFileReference: string) => void,
-    error: (errorText: string) => void,
-    progress: (computable: boolean, current: number, total: number) => void,
-    abort: () => void,
-  ) => {
-    const request = new XMLHttpRequest()
-    const formData = new FormData()
-
-    formData.append('file', file)
-    formData.append('folder', folder)
-
-    request.open('POST', `${API_URL}/upload/product-image`)
-
-    const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null
-    if (token) {
-      request.setRequestHeader('Authorization', `Bearer ${token}`)
-    }
-
-    request.upload.onprogress = (event) => {
-      progress(event.lengthComputable, event.loaded, event.total)
-    }
-
-    request.onload = () => {
-      if (request.status < 200 || request.status >= 300) {
-        const errorMessage = request.responseText || 'Upload failed'
-        onUploadError?.(errorMessage)
-        error(errorMessage)
-        return
-      }
-
-      const data = JSON.parse(request.responseText)
-      if (data.success && data.data) {
-        onUploadSuccess?.(data.data.url, data.data.publicId)
-      }
-      load(data.data?.publicId || data.data?.url || request.responseText)
-    }
-
-    request.onerror = () => {
-      const errorMessage = 'Upload failed'
-      onUploadError?.(errorMessage)
-      error(errorMessage)
-    }
-
-    request.send(formData)
-
-    return {
-      abort: () => {
-        request.abort()
-        abort()
-      },
-    }
-  }
 
   return (
     <div className={className}>
@@ -105,7 +48,25 @@ export function FileUpload({
         allowMultiple={allowMultiple}
         maxFiles={maxFiles}
         server={{
-          process: processUpload,
+          process: {
+            url: `${API_URL}/upload/product-image`,
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('accessToken') : ''}`,
+            },
+            onload: (response) => {
+              const data = JSON.parse(response)
+              if (data.success && data.data) {
+                onUploadSuccess?.(data.data.url, data.data.publicId)
+              }
+              return data.data?.publicId || response
+            },
+            onerror: (response) => {
+              const errorMessage = response || 'Upload failed'
+              onUploadError?.(errorMessage)
+              return errorMessage
+            },
+          },
         }}
         name="file"
         labelIdle='Kéo thả file hoặc <span class="filepond--label-action">Chọn file</span>'
@@ -135,7 +96,7 @@ export function MultipleFileUpload({
   onUploadSuccess,
   onUploadError,
   maxFiles = 10,
-  folder = 'products',
+  folder: _folder,
   acceptedFileTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
   maxFileSize = '10MB',
   className,
@@ -146,69 +107,6 @@ export function MultipleFileUpload({
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888/api'
 
-  const processUpload = (
-    _fieldName: string,
-    file: Blob,
-    _metadata: Record<string, unknown>,
-    load: (serverFileReference: string) => void,
-    error: (errorText: string) => void,
-    progress: (computable: boolean, current: number, total: number) => void,
-    abort: () => void,
-  ) => {
-    const request = new XMLHttpRequest()
-    const formData = new FormData()
-
-    formData.append('file', file)
-    formData.append('folder', folder)
-
-    request.open('POST', `${API_URL}/upload/product-image`)
-
-    const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null
-    if (token) {
-      request.setRequestHeader('Authorization', `Bearer ${token}`)
-    }
-
-    request.upload.onprogress = (event) => {
-      progress(event.lengthComputable, event.loaded, event.total)
-    }
-
-    request.onload = () => {
-      if (request.status < 200 || request.status >= 300) {
-        const errorMessage = request.responseText || 'Upload failed'
-        onUploadError?.(errorMessage)
-        error(errorMessage)
-        return
-      }
-
-      const data = JSON.parse(request.responseText)
-      if (data.success && data.data) {
-        const newUrls = [...uploadedUrls, data.data.url]
-        const newPublicIds = [...uploadedPublicIds, data.data.publicId]
-
-        setUploadedUrls(newUrls)
-        setUploadedPublicIds(newPublicIds)
-
-        onUploadSuccess?.(newUrls, newPublicIds)
-      }
-      load(data.data?.publicId || data.data?.url || request.responseText)
-    }
-
-    request.onerror = () => {
-      const errorMessage = 'Upload failed'
-      onUploadError?.(errorMessage)
-      error(errorMessage)
-    }
-
-    request.send(formData)
-
-    return {
-      abort: () => {
-        request.abort()
-        abort()
-      },
-    }
-  }
-
   return (
     <div className={className}>
       <FilePond
@@ -217,7 +115,31 @@ export function MultipleFileUpload({
         allowMultiple={true}
         maxFiles={maxFiles}
         server={{
-          process: processUpload,
+          process: {
+            url: `${API_URL}/upload/product-image`,
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('accessToken') : ''}`,
+            },
+            onload: (response) => {
+              const data = JSON.parse(response)
+              if (data.success && data.data) {
+                const newUrls = [...uploadedUrls, data.data.url]
+                const newPublicIds = [...uploadedPublicIds, data.data.publicId]
+
+                setUploadedUrls(newUrls)
+                setUploadedPublicIds(newPublicIds)
+
+                onUploadSuccess?.(newUrls, newPublicIds)
+              }
+              return data.data?.publicId || response
+            },
+            onerror: (response) => {
+              const errorMessage = response || 'Upload failed'
+              onUploadError?.(errorMessage)
+              return errorMessage
+            },
+          },
         }}
         name="file"
         labelIdle='Kéo thả file hoặc <span class="filepond--label-action">Chọn file</span>'
