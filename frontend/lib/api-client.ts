@@ -351,17 +351,45 @@ class ApiClient {
   async uploadImage(file: File): Promise<{ url: string }> {
     const formData = new FormData()
     formData.append('file', file)
-    return this.client.post('/upload/product-image', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+
+    const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null
+    const response = await fetch(`${API_BASE_URL}/upload/product-image`, {
+      method: 'POST',
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        'ngrok-skip-browser-warning': 'true',
+      },
+      body: formData,
     })
+
+    if (!response.ok) {
+      throw new Error('Upload failed')
+    }
+
+    const result = await response.json()
+    return result.data || result
   }
 
   async uploadImages(files: File[]): Promise<{ urls: string[] }> {
     const formData = new FormData()
     files.forEach((file) => formData.append('files', file))
-    return this.client.post('/upload/product-images', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+
+    const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null
+    const response = await fetch(`${API_BASE_URL}/upload/product-images`, {
+      method: 'POST',
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        'ngrok-skip-browser-warning': 'true',
+      },
+      body: formData,
     })
+
+    if (!response.ok) {
+      throw new Error('Upload failed')
+    }
+
+    const result = await response.json()
+    return result.data || result
   }
 
   async deleteFile(url: string): Promise<void> {
