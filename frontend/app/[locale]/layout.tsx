@@ -12,9 +12,9 @@ import { locales } from '@/i18n'
 import {
   getCanonicalBaseUrl,
   getSeoBrandName,
-  getSeoImageUrl,
   getSeoSiteDescription,
   getSeoSiteTitle,
+  getSeoSocialImageUrl,
 } from '@/lib/seo'
 import { fetchBranding } from '@/lib/server-utils'
 import '@/styles/globals.css'
@@ -61,7 +61,7 @@ export async function generateMetadata({
   const defaultTitle = getSeoSiteTitle(locale, branding)
   const brandName = getSeoBrandName(locale, branding)
   const description = getSeoSiteDescription(locale, branding)
-  const logoUrl = getSeoImageUrl(branding)
+  const previewImageUrl = getSeoSocialImageUrl(branding)
   const tabIconUrl = '/assets/logo.png'
 
   return {
@@ -105,13 +105,13 @@ export async function generateMetadata({
       title: defaultTitle,
       description,
       siteName: brandName,
-      images: [{ url: logoUrl, width: 1200, height: 630, alt: `${brandName} Logo` }],
+      images: [{ url: previewImageUrl, alt: `${brandName} Logo` }],
     },
     twitter: {
       card: 'summary_large_image',
       title: defaultTitle,
       description,
-      images: [logoUrl],
+      images: [previewImageUrl],
     },
     icons: {
       icon: [

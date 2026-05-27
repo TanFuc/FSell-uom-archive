@@ -1,5 +1,6 @@
 'use client'
 
+import { type UseQueryResult } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -11,7 +12,7 @@ import { useBanners } from '@/hooks/use-banners'
 import { useProducts } from '@/hooks/use-products'
 import { useSiteContent } from '@/hooks/use-settings'
 import { getStorySlug, parseStories, STORIES_CONTENT_KEY, type StoryItem } from '@/lib/stories'
-import { type Banner, type Product } from '@/lib/types'
+import { type Banner, type PaginatedResponse, type Product, type SiteContent } from '@/lib/types'
 import { cn, optimizeProductImage } from '@/lib/utils'
 
 function usePremiumSmoothScroll() {
@@ -161,14 +162,60 @@ export default function HomeClient({
   initialSiteContent,
   initialBanners,
 }: {
-  initialProducts?: any
-  initialSiteContent?: any
+  initialProducts?: PaginatedResponse<Product>
+  initialSiteContent?: SiteContent
   initialBanners?: Banner[]
 }) {
   const t = useTranslations('Home')
   const tNav = useTranslations('Navigation')
   const locale = useLocale() as 'vi' | 'en'
   const storyCta = locale === 'vi' ? 'Doc story' : 'Read story'
+  const homepageLinks =
+    locale === 'vi'
+      ? [
+          {
+            title: 'Sản phẩm',
+            description: 'Khám phá các món gốm thủ công đang có tại ƯƠM.',
+            href: `/${locale}/shop`,
+          },
+          {
+            title: 'Tạp chí',
+            description: 'Đọc câu chuyện về chất liệu, nghệ nhân và không gian sống.',
+            href: `/${locale}/journal`,
+          },
+          {
+            title: 'Về chúng tôi',
+            description: 'Tìm hiểu triết lý tuyển chọn và câu chuyện của ƯƠM.',
+            href: `/${locale}/about`,
+          },
+          {
+            title: 'Liên hệ',
+            description: 'Gửi yêu cầu tư vấn hoặc đặt hàng qua các kênh của ƯƠM.',
+            href: `/${locale}/about#contact`,
+          },
+        ]
+      : [
+          {
+            title: 'Shop',
+            description: 'Explore handcrafted ceramic pieces curated by UOM.',
+            href: `/${locale}/shop`,
+          },
+          {
+            title: 'Journal',
+            description: 'Read stories about materials, artisans, and living spaces.',
+            href: `/${locale}/journal`,
+          },
+          {
+            title: 'About Us',
+            description: 'Learn about the curation philosophy and story behind UOM.',
+            href: `/${locale}/about`,
+          },
+          {
+            title: 'Contact',
+            description: 'Send an inquiry or order request through UOM channels.',
+            href: `/${locale}/about#contact`,
+          },
+        ]
 
   const { data: latestProducts, isLoading: isLoadingLatest } = useProducts(
     {
@@ -179,13 +226,13 @@ export default function HomeClient({
       sortOrder: 'desc',
     },
     { initialData: initialProducts },
-  )
+  ) as UseQueryResult<PaginatedResponse<Product>>
 
   const { data: siteContent, isLoading: isLoadingStories } = useSiteContent({
     staleTime: 5 * 60 * 1000,
     refetchOnMount: false,
     initialData: initialSiteContent,
-  })
+  }) as UseQueryResult<SiteContent>
   const stories = parseStories(siteContent?.[STORIES_CONTENT_KEY]).filter(
     (story) => story.isVisible !== false,
   )
@@ -195,7 +242,7 @@ export default function HomeClient({
 
   const { data: banners, isLoading: isLoadingBanners } = useBanners(true, {
     initialData: initialBanners,
-  })
+  }) as UseQueryResult<Banner[]>
 
   return (
     <div className="safe-screen pt-0">
@@ -204,7 +251,7 @@ export default function HomeClient({
         {isLoadingBanners ? (
           <div className="aspect-[4/5] w-full animate-pulse bg-muted/20 md:aspect-[21/9] lg:aspect-[3/1]" />
         ) : (
-          <BannerCarousel banners={banners || []} locale={locale} />
+          <BannerCarousel banners={banners ?? []} locale={locale} />
         )}
       </section>
 
@@ -236,7 +283,7 @@ export default function HomeClient({
 
         {isLoadingLatest ? (
           <div className="flex gap-6 overflow-hidden px-4 sm:px-6 lg:px-12">
-            {[...Array(3)].map((_, i) => (
+            {Array.from({ length: 3 }).map((_, i) => (
               <div
                 key={i}
                 className="w-[calc(100vw-32px)] max-w-full shrink-0 space-y-6 sm:w-[calc(100vw-64px)] md:w-[45vw] lg:w-[31vw]"
@@ -303,7 +350,7 @@ export default function HomeClient({
 
         {isLoadingStories ? (
           <div className="flex gap-6 overflow-hidden px-4 sm:px-6 lg:px-12">
-            {[...Array(2)].map((_, i) => (
+            {Array.from({ length: 2 }).map((_, i) => (
               <div
                 key={i}
                 className="w-[calc(100vw-32px)] max-w-full shrink-0 space-y-6 sm:w-[calc(100vw-64px)] md:w-[45vw] lg:w-[calc(50vw-48px)]"
@@ -391,6 +438,43 @@ export default function HomeClient({
             </div>
           </div>
         )}
+      </section>
+
+      <section className="w-full border-t border-foreground/[0.04] bg-[#f8f6f2] px-4 py-16 sm:px-6 lg:px-12">
+        <div className="mx-auto max-w-6xl">
+          <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+            <div className="space-y-3">
+              <h2 className="text-mobile-safe text-[9px] font-bold uppercase tracking-[0.28em] text-foreground/40 sm:tracking-[0.35em] md:text-[10px]">
+                {locale === 'vi' ? 'KHÁM PHÁ ƯƠM' : 'EXPLORE UOM'}
+              </h2>
+              <p className="text-mobile-safe font-sans text-base font-bold uppercase tracking-[0.08em] md:text-lg md:tracking-[0.1em]">
+                {locale === 'vi' ? 'Các trang trong website' : 'Pages in this website'}
+              </p>
+            </div>
+          </div>
+
+          <nav aria-label={locale === 'vi' ? 'Các trang trong website' : 'Website pages'}>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {homepageLinks.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="group block rounded-md border border-foreground/10 bg-white p-5 transition duration-300 hover:-translate-y-1 hover:border-foreground/25 hover:shadow-sm"
+                >
+                  <span className="text-mobile-safe block font-sans text-xs font-bold uppercase tracking-[0.12em] text-foreground">
+                    {item.title}
+                  </span>
+                  <span className="mt-3 block text-xs leading-relaxed text-foreground/60">
+                    {item.description}
+                  </span>
+                  <span className="mt-5 inline-block text-[9px] font-semibold uppercase tracking-[0.24em] text-foreground/45 transition group-hover:text-foreground">
+                    {t('showMore')}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </nav>
+        </div>
       </section>
 
       <div className="py-20" />

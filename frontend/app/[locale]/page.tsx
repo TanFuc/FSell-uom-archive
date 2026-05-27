@@ -6,23 +6,27 @@ import {
   buildPageMetadata,
   getCanonicalBaseUrl,
   getSeoBrandName,
-  getSeoImageUrl,
+  getSeoLogoUrl,
   getSeoSiteDescription,
   getSeoSiteTitle,
+  getSeoSocialImageUrl,
 } from '@/lib/seo'
 import { fetchBranding } from '@/lib/server-utils'
-import { type Product } from '@/lib/sitemap-data'
 import { getStorySlug, parseStories, STORIES_CONTENT_KEY, type StoryItem } from '@/lib/stories'
-import { type Banner } from '@/lib/types'
+import { type Banner, type Product } from '@/lib/types'
 import HomeClient from './home-client'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8888/api'
 export const revalidate = 0
 
 type SiteContentResponse = Record<string, unknown>
+type HomeSiteContent = Record<string, string>
 type HomeSsrData = {
-  products: { data: Product[]; meta: { totalItems: number } }
-  siteContent: SiteContentResponse
+  products: {
+    data: Product[]
+    meta: { total: number; page: number; limit: number; totalPages: number; totalItems: number }
+  }
+  siteContent: HomeSiteContent
   banners: Banner[]
   stories: StoryItem[]
 }
@@ -46,6 +50,13 @@ function getProducts(payload: unknown): Product[] {
 function getBanners(payload: unknown): Banner[] {
   const root = getRecordData(payload)
   return Array.isArray(root.data) ? (root.data as Banner[]) : []
+}
+
+function getSiteContent(payload: unknown): HomeSiteContent {
+  const root = getRecordData(payload)
+  return Object.fromEntries(
+    Object.entries(root).filter((entry): entry is [string, string] => typeof entry[1] === 'string'),
+  )
 }
 
 async function fetchHomeSsrData(): Promise<HomeSsrData> {
@@ -77,7 +88,7 @@ async function fetchHomeSsrData(): Promise<HomeSsrData> {
         ? await bannersRes.value.json()
         : null
 
-    const siteContent = getRecordData(contentData)
+    const siteContent = getSiteContent(contentData)
     const products = getProducts(productsData)
     const banners = getBanners(bannersData)
     const stories = parseStories(siteContent[STORIES_CONTENT_KEY]).filter(
@@ -85,7 +96,16 @@ async function fetchHomeSsrData(): Promise<HomeSsrData> {
     )
 
     return {
-      products: { data: products.slice(0, 8), meta: { totalItems: products.length } },
+      products: {
+        data: products.slice(0, 8),
+        meta: {
+          total: products.length,
+          page: 1,
+          limit: 8,
+          totalPages: Math.max(1, Math.ceil(products.length / 8)),
+          totalItems: products.length,
+        },
+      },
       siteContent,
       banners: banners.slice(0, 10),
       stories: stories.slice(0, 4),
@@ -95,7 +115,16 @@ async function fetchHomeSsrData(): Promise<HomeSsrData> {
       console.error('[SEO] SSR fetch failed or timed out:', error)
     }
     return {
-      products: { data: [], meta: { totalItems: 0 } },
+      products: {
+        data: [],
+        meta: {
+          total: 0,
+          page: 1,
+          limit: 8,
+          totalPages: 1,
+          totalItems: 0,
+        },
+      },
       siteContent: {},
       banners: [],
       stories: [],
@@ -121,7 +150,7 @@ export async function generateMetadata({
       title: siteTitle,
       description: getSeoSiteDescription(locale, branding),
       branding,
-      image: getSeoImageUrl(branding),
+      image: getSeoSocialImageUrl(branding),
       alternates: { vi: '/vi', en: '/en', 'x-default': '/vi' },
     }),
     title: { absolute: siteTitle },
@@ -138,7 +167,7 @@ export default async function HomePage({ params }: { params: { locale: string } 
   const alternateBrandName = getSeoBrandName(isVi ? 'en' : 'vi', branding)
   const siteTitle = getSeoSiteTitle(locale, branding)
   const description = getSeoSiteDescription(locale, branding)
-  const logo = buildAbsoluteUrl(getSeoImageUrl(branding), baseUrl)
+  const logo = buildAbsoluteUrl(getSeoLogoUrl(branding), baseUrl)
   const socialProfiles = ['https://instagram.com/uomarchive', 'https://facebook.com/uomarchive']
   const navigationItems = [
     { name: isVi ? 'Trang chủ' : 'Home', url: `${baseUrl}/${locale}` },
@@ -193,6 +222,17 @@ export default async function HomePage({ params }: { params: { locale: string } 
                 name: item.name,
                 url: item.url,
               })),
+              {
+                '@type': 'ItemList',
+                '@id': `${baseUrl}/${locale}#homepage-pages`,
+                name: isVi ? 'Cac trang trong website' : 'Pages in this website',
+                itemListElement: navigationItems.map((item, index) => ({
+                  '@type': 'ListItem',
+                  position: index + 1,
+                  name: item.name,
+                  url: item.url,
+                })),
+              },
             ],
           }),
         }}

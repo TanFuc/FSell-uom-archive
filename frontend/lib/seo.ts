@@ -54,7 +54,7 @@ function isLocalHost(hostname: string): boolean {
 
 export function getCanonicalBaseUrl(rawUrl?: string): string {
   const raw =
-    rawUrl?.trim() || process.env.NEXT_PUBLIC_APP_URL?.trim() || DEFAULT_CANONICAL_BASE_URL
+    rawUrl?.trim() ?? process.env.NEXT_PUBLIC_APP_URL?.trim() ?? DEFAULT_CANONICAL_BASE_URL
 
   try {
     const url = new URL(raw)
@@ -71,7 +71,7 @@ export function getCanonicalBaseUrl(rawUrl?: string): string {
     url.search = ''
 
     const canonical = url.toString().replace(/\/$/, '')
-    return canonical || DEFAULT_CANONICAL_BASE_URL
+    return canonical.length > 0 ? canonical : DEFAULT_CANONICAL_BASE_URL
   } catch {
     return DEFAULT_CANONICAL_BASE_URL
   }
@@ -162,7 +162,18 @@ export function buildLocaleAlternates(
 }
 
 export function getSeoImageUrl(branding?: SeoBranding | null, imageUrl?: string | null): string {
-  return imageUrl || branding?.logoUrl || DEFAULT_LOGO_PATH
+  return getSeoSocialImageUrl(branding, imageUrl)
+}
+
+export function getSeoLogoUrl(branding?: SeoBranding | null): string {
+  return branding?.logoUrl ?? DEFAULT_LOGO_PATH
+}
+
+export function getSeoSocialImageUrl(
+  branding?: SeoBranding | null,
+  imageUrl?: string | null,
+): string {
+  return imageUrl ?? branding?.logoUrl ?? DEFAULT_LOGO_PATH
 }
 
 export function buildPageMetadata({
@@ -193,7 +204,7 @@ export function buildPageMetadata({
     description || getSeoSiteDescription(locale, branding),
   )
   const canonicalPath = path.startsWith('/') ? path : `/${path}`
-  const imageUrl = buildAbsoluteUrl(getSeoImageUrl(branding, image), baseUrl)
+  const imageUrl = buildAbsoluteUrl(getSeoSocialImageUrl(branding, image), baseUrl)
   const fullTitle = cleanTitle.includes(brandName) ? cleanTitle : `${cleanTitle} | ${brandName}`
 
   return {
@@ -221,7 +232,7 @@ export function buildPageMetadata({
       type,
       locale: locale === 'vi' ? 'vi_VN' : 'en_US',
       siteName: brandName,
-      images: [{ url: imageUrl, width: 1200, height: 630, alt: fullTitle }],
+      images: [{ url: imageUrl, alt: fullTitle }],
     },
     twitter: {
       card: 'summary_large_image',
