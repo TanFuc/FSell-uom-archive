@@ -667,7 +667,7 @@ export function Header() {
       {/* SEARCH PANEL */}
       <AnimatePresence>
         {showSearch && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -675,7 +675,7 @@ export function Header() {
             className="fixed inset-0 z-[90]"
           >
             <div className="absolute inset-0 bg-black/80" onClick={closeSearchPanel} />
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: -20, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -10, scale: 0.98 }}
@@ -683,7 +683,7 @@ export function Header() {
               className="absolute inset-x-0 bottom-0 top-16 overflow-y-auto px-3 pb-4 md:top-24 md:px-6 md:pb-6"
               onClick={closeSearchPanel}
             >
-              <div 
+              <div
                 className="relative mx-auto w-full max-w-[1160px] overflow-hidden rounded-2xl border border-black/10 bg-[#fcfcfa] shadow-[0_24px_70px_rgba(0,0,0,0.3)]"
                 onClick={(e) => e.stopPropagation()}
               >

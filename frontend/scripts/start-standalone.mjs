@@ -63,6 +63,7 @@ if (!existsSync(serverSrc) || !existsSync(staticSrc)) {
 
 copyDirIfExists(staticSrc, staticDest)
 copyDirIfExists(publicSrc, publicDest)
+copyDirIfExists(serverSrc, serverDest)
 
 const missingRequired = requiredServerFiles.filter((parts) => !ensureServerFile(parts))
 if (missingRequired.length > 0) {

@@ -1,5 +1,5 @@
-import { getStorySlug, parseStories, STORIES_CONTENT_KEY, type StoryItem } from '@/lib/stories'
 import { getCanonicalBaseUrl } from '@/lib/seo'
+import { getStorySlug, parseStories, STORIES_CONTENT_KEY, type StoryItem } from '@/lib/stories'
 
 export const BASE_URL = getCanonicalBaseUrl()
 export const LOCALES = ['vi', 'en'] as const
@@ -214,7 +214,7 @@ async function fetchAllProductsFromApi(apiUrl: string): Promise<Product[]> {
       `${apiUrl}/products?page=${page}&limit=${PAGE_SIZE}&isActive=true`,
       {
         next: {
-          revalidate: 0,
+          revalidate: SITEMAP_REVALIDATE,
           tags: [SITEMAP_PRODUCTS_TAG, SITEMAP_STATIC_TAG],
         },
       },
@@ -275,7 +275,7 @@ export async function fetchAllProducts(): Promise<Product[]> {
 async function fetchSiteContentFromApi(apiUrl: string): Promise<SiteContentResponse | null> {
   const res = await fetchWithTimeout(`${apiUrl}/settings/site-content`, {
     next: {
-      revalidate: 0,
+      revalidate: SITEMAP_REVALIDATE,
       tags: [SITEMAP_STORIES_TAG, SITEMAP_STATIC_TAG],
     },
   })

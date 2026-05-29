@@ -1,7 +1,16 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Package, Users, DollarSign, Eye, EyeOff, LayoutGrid, CheckCircle, Star } from 'lucide-react'
+import {
+  Package,
+  Users,
+  DollarSign,
+  Eye,
+  EyeOff,
+  LayoutGrid,
+  CheckCircle,
+  Star,
+} from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -344,14 +353,22 @@ export default function DashboardPage() {
                       <FormLabel>{t('currentPassword')}</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Input {...field} type={showCurrentPassword ? 'text' : 'password'} className="pr-10" />
+                          <Input
+                            {...field}
+                            type={showCurrentPassword ? 'text' : 'password'}
+                            className="pr-10"
+                          />
                           <button
                             type="button"
                             className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
                             onClick={() => setShowCurrentPassword((v) => !v)}
                             tabIndex={-1}
                           >
-                            {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            {showCurrentPassword ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
                           </button>
                         </div>
                       </FormControl>
@@ -368,14 +385,22 @@ export default function DashboardPage() {
                       <FormLabel>{t('newPassword')}</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Input {...field} type={showNewPassword ? 'text' : 'password'} className="pr-10" />
+                          <Input
+                            {...field}
+                            type={showNewPassword ? 'text' : 'password'}
+                            className="pr-10"
+                          />
                           <button
                             type="button"
                             className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
                             onClick={() => setShowNewPassword((v) => !v)}
                             tabIndex={-1}
                           >
-                            {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            {showNewPassword ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
                           </button>
                         </div>
                       </FormControl>
@@ -393,14 +418,22 @@ export default function DashboardPage() {
                     <FormLabel>{t('confirmNewPassword')}</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Input {...field} type={showConfirmPassword ? 'text' : 'password'} className="pr-10" />
+                        <Input
+                          {...field}
+                          type={showConfirmPassword ? 'text' : 'password'}
+                          className="pr-10"
+                        />
                         <button
                           type="button"
                           className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
                           onClick={() => setShowConfirmPassword((v) => !v)}
                           tabIndex={-1}
                         >
-                          {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          {showConfirmPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
                         </button>
                       </div>
                     </FormControl>

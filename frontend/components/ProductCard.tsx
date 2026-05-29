@@ -24,9 +24,7 @@ export function ProductCard({ product, locale, priority }: ProductCardProps) {
   const hoverImage = product.hoverImage
   const [shouldLoadHoverImage, setShouldLoadHoverImage] = useState(false)
   const anchorLabel =
-    locale === 'vi'
-      ? `San pham gom su thu cong: ${name}`
-      : `Handcrafted ceramic product: ${name}`
+    locale === 'vi' ? `San pham gom su thu cong: ${name}` : `Handcrafted ceramic product: ${name}`
 
   const priceDisplay = getDisplayPrice(product, locale, exchangeRate?.rate)
 

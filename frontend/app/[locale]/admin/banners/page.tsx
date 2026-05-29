@@ -87,15 +87,16 @@ export default function BannersPage() {
     // Optimistic update — flip the status immediately so the UI doesn't flash
     const newIsActive = !banner.isActive
     setBanners((prev) =>
-      prev.map((b) => (b.id === banner.id ? { ...b, isActive: newIsActive } : b))
+      prev.map((b) => (b.id === banner.id ? { ...b, isActive: newIsActive } : b)),
     )
 
     try {
-      const updated = await updateBanner.mutateAsync({ id: banner.id, data: { isActive: newIsActive } })
+      const updated = await updateBanner.mutateAsync({
+        id: banner.id,
+        data: { isActive: newIsActive },
+      })
       // Sync with server response to ensure consistency
-      setBanners((prev) =>
-        prev.map((b) => (b.id === banner.id ? { ...b, ...updated } : b))
-      )
+      setBanners((prev) => prev.map((b) => (b.id === banner.id ? { ...b, ...updated } : b)))
       toast({
         title: t('success'),
         description: newIsActive ? t('banners.activated') : t('banners.deactivated'),
@@ -103,7 +104,7 @@ export default function BannersPage() {
     } catch (error) {
       // Rollback on failure
       setBanners((prev) =>
-        prev.map((b) => (b.id === banner.id ? { ...b, isActive: banner.isActive } : b))
+        prev.map((b) => (b.id === banner.id ? { ...b, isActive: banner.isActive } : b)),
       )
       toast({
         title: t('error'),

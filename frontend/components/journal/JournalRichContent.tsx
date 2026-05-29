@@ -34,10 +34,10 @@ function hasMeaningfulText(element: HTMLElement): boolean {
 
 function isSmallStandaloneImageBlock(element: Element): element is HTMLElement {
   if (!(element instanceof HTMLElement)) return false
-  const frames = Array.from(element.querySelectorAll(':scope .journal-image-frame')) as HTMLElement[]
+  const frames = Array.from(element.querySelectorAll(':scope .journal-image-frame'))
   if (frames.length !== 1) return false
 
-  const frame = frames[0] as HTMLElement
+  const frame = frames[0]
   if (!frame.classList.contains('journal-image-frame-small')) return false
 
   if (hasMeaningfulText(element)) return false
@@ -45,7 +45,7 @@ function isSmallStandaloneImageBlock(element: Element): element is HTMLElement {
 }
 
 function unwrapSmallRows(container: HTMLElement) {
-  const rows = Array.from(container.querySelectorAll('.journal-small-image-row')) as HTMLElement[]
+  const rows = Array.from(container.querySelectorAll('.journal-small-image-row'))
   rows.forEach((row) => {
     const parent = row.parentElement
     if (!parent) return
@@ -125,7 +125,7 @@ function makeImageResizable(
   image.style.width = '100%'
   image.style.height = 'auto'
 
-  let handle = frame.querySelector('.journal-image-handle') as HTMLButtonElement | null
+  let handle = frame.querySelector('.journal-image-handle')
   if (!handle) {
     const btn = document.createElement('button')
     btn.type = 'button'
@@ -161,8 +161,8 @@ function makeImageResizable(
     window.addEventListener('pointerup', onUp)
   }
 
-  handle.onpointerdown = startResize
-  image.onpointerdown = startResize
+  ;(handle as HTMLElement).onpointerdown = startResize as any
+  image.onpointerdown = startResize as any
 
   const onImageLoaded = () => {
     updateSmallFrameState(container, frame)
@@ -185,11 +185,7 @@ function makeImageResizable(
   }
 }
 
-export function JournalRichContent({
-  content,
-  className,
-  fallbackAlt,
-}: JournalRichContentProps) {
+export function JournalRichContent({ content, className, fallbackAlt }: JournalRichContentProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const hasShownTooltipRef = useRef(true)
 
@@ -224,7 +220,7 @@ export function JournalRichContent({
       }, 1900)
     }
 
-    const images = Array.from(container.querySelectorAll('img')) as HTMLImageElement[]
+    const images = Array.from(container.querySelectorAll('img'))
     images.forEach((node, index) => {
       if (node instanceof HTMLImageElement) {
         if (fallbackAlt && (!node.alt || node.alt.trim().length === 0)) {
@@ -235,8 +231,8 @@ export function JournalRichContent({
     })
 
     const onResize = () => {
-      const frames = Array.from(container.querySelectorAll('.journal-image-frame')) as HTMLElement[]
-      frames.forEach((frame) => updateSmallFrameState(container, frame))
+      const frames = Array.from(container.querySelectorAll('.journal-image-frame'))
+      frames.forEach((frame) => updateSmallFrameState(container, frame as HTMLElement))
       regroupSmallRows(container)
     }
 

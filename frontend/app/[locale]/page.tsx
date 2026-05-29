@@ -17,7 +17,7 @@ import { type Banner, type Product } from '@/lib/types'
 import HomeClient from './home-client'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8888/api'
-export const revalidate = 0
+export const dynamic = 'force-dynamic'
 
 type SiteContentResponse = Record<string, unknown>
 type HomeSiteContent = Record<string, string>
@@ -65,7 +65,7 @@ async function fetchHomeSsrData(): Promise<HomeSsrData> {
 
   try {
     const fetchOptions = {
-      next: { revalidate: 0 },
+      cache: 'no-store' as const,
       signal: controller.signal,
     }
 
