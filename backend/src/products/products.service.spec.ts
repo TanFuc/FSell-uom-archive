@@ -92,7 +92,11 @@ describe('ProductsService', () => {
 
       expect(redisGetSpy).toHaveBeenCalledWith('product:slug:test-product')
       expect(findUniqueSpy).not.toHaveBeenCalled()
-      expect(result).toEqual(mockProduct)
+      expect(result).toEqual({
+        ...mockProduct,
+        createdAt: mockProduct.createdAt.toISOString(),
+        updatedAt: mockProduct.updatedAt.toISOString(),
+      })
     })
 
     it('should query DB and save to cache if not in cache', async () => {

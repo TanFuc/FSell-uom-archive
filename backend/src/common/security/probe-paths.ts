@@ -10,6 +10,9 @@ const HARD_BLOCK_PATTERNS: RegExp[] = [
 ]
 
 const PROBE_PATTERNS: RegExp[] = [
+  /\/(?:api\/)?env$/i,
+  /\/(?:api\/)?heapdump$/i,
+  /\/(?:api\/)?configprops$/i,
   /\/wp-admin(?:\/|$)/i,
   /\/wp-login\.php$/i,
   /\/wordpress(?:\/|$)/i,
@@ -26,6 +29,8 @@ const PROBE_PATTERNS: RegExp[] = [
   /\/\.aws(?:\/|$)/i,
   /\/\.svn(?:\/|$)/i,
   /\/\.DS_Store$/i,
+  /\/(?:api\/)?(?:v\d+\/)?(?:aws|config|credentials|keys|secrets|settings|appsettings)\.json$/i,
+  /\/(?:api\/)?application\.properties$/i,
   /\.(?:php|aspx?|jsp|cgi|env|bak|old|ini|sql|yml|yaml)(?:$|\?)/i,
 ]
 
