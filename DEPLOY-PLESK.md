@@ -13,7 +13,7 @@ The release package contains production build output but intentionally excludes 
 ## Frontend
 
 1. Upload the contents of `frontend/` to the frontend Node.js application root.
-2. Configure `NEXT_PUBLIC_API_BASE_URL`, `NEXT_PUBLIC_IMAGE_BASE_URL=https://images.uomarchive.com`, and the other variables from `frontend/.env.example`.
+2. Configure `NEXT_PUBLIC_API_BASE_URL=https://www.uomarchive.com/api`, `NEXT_PUBLIC_API_URL=https://www.uomarchive.com/api`, `NEXT_PUBLIC_IMAGE_BASE_URL=https://images.uomarchive.com`, and the other variables from `frontend/.env.example` before building.
 3. Start with `node server.js`.
 
 The frontend is built with Next.js standalone output. Do not upload the repository `node_modules`; install dependencies on the Linux server when the Plesk application requires them.
