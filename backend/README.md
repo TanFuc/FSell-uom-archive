@@ -85,7 +85,7 @@ cp .env.example .env
 Required:
 
 - `DATABASE_URL` - DB connection string (MariaDB/MySQL by default for Plesk; PostgreSQL remains available via `npm run prisma:switch:postgresql`)
-- `REDIS_URL` / `UPSTASH_REDIS_URL` - cache connection
+- `REDIS_URL` / `UPSTASH_REDIS_URL` - cache connection. Use Upstash `rediss://...` on Plesk when no local Redis service is available.
 - `JWT_ACCESS_SECRET` / `JWT_REFRESH_SECRET` - token signing
 - `FRONTEND_URL` / `FRONTEND_URLS` - CORS and app origin
 - `UPLOAD_PROVIDER`, `IMAGE_BASE_URL`, `R2_*` - file upload / CDN config
