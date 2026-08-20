@@ -8,18 +8,31 @@ import { fetchBranding } from '@/lib/server-utils'
 import { getStorySlug, parseStories, STORIES_CONTENT_KEY } from '@/lib/stories'
 
 const API_URL =
+  process.env.SERVER_API_URL ||
   process.env.NEXT_PUBLIC_API_BASE_URL ||
   process.env.NEXT_PUBLIC_API_URL ||
   'http://localhost:8888/api'
 const BASE_URL = getCanonicalBaseUrl()
+const SITE_CONTENT_FETCH_TIMEOUT_MS = Number.parseInt(
+  process.env.SERVER_FETCH_TIMEOUT_MS || '5000',
+  10,
+)
 export const revalidate = 3600
 
 type SiteContentResponse = Record<string, unknown>
 
 async function fetchSiteContent(): Promise<SiteContentResponse | null> {
+  const controller = new AbortController()
+  const timeout =
+    Number.isFinite(SITE_CONTENT_FETCH_TIMEOUT_MS) && SITE_CONTENT_FETCH_TIMEOUT_MS > 0
+      ? SITE_CONTENT_FETCH_TIMEOUT_MS
+      : 5000
+  const timer = setTimeout(() => controller.abort(), timeout)
+
   try {
     const response = await fetch(`${API_URL}/settings/site-content`, {
       next: { revalidate: 300 },
+      signal: controller.signal,
     })
 
     if (!response.ok) return null
@@ -35,6 +48,8 @@ async function fetchSiteContent(): Promise<SiteContentResponse | null> {
     return payload as SiteContentResponse
   } catch {
     return null
+  } finally {
+    clearTimeout(timer)
   }
 }
 

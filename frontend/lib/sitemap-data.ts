@@ -13,10 +13,10 @@ const FETCH_TIMEOUT_MS = Number.parseInt(process.env.SITEMAP_FETCH_TIMEOUT_MS ||
 const PAGE_SIZE = 200
 const API_CANDIDATES = [
   process.env.SITEMAP_API_URL,
+  process.env.SERVER_API_URL,
   process.env.NEXT_PUBLIC_API_BASE_URL,
   process.env.NEXT_PUBLIC_API_URL,
-  'https://www.uomarchive.com/api',
-  'https://uomarchive.com/api',
+  'https://api.uomarchive.com/api',
   'http://localhost:8888/api',
 ]
   .filter((value): value is string => Boolean(value))

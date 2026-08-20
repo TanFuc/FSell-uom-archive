@@ -8,7 +8,8 @@ LOG_DIR="${APP_ROOT}/logs"
 PID_FILE="${PID_FILE:-${RUNTIME_DIR}/${APP_NAME}.pid}"
 LOCK_DIR="${LOCK_DIR:-${RUNTIME_DIR}/${APP_NAME}.lock}"
 LOG_FILE="${LOG_FILE:-${LOG_DIR}/${APP_NAME}.log}"
-NODE_ENTRY="${NODE_ENTRY:-.next/standalone/server.js}"
+STANDALONE_DIR="${STANDALONE_DIR:-${APP_ROOT}/.next/standalone}"
+NODE_ENTRY="${NODE_ENTRY:-server.js}"
 RESTART_DELAY_SECONDS="${RESTART_DELAY_SECONDS:-3}"
 AUTO_RESTART="${AUTO_RESTART:-${UOM_AUTO_RESTART:-0}}"
 FORCE_RESTART="${FORCE_RESTART:-${UOM_RESTART:-0}}"
@@ -52,7 +53,7 @@ start_app() {
 
   prepare_standalone
 
-  if [ ! -f "${APP_ROOT}/${NODE_ENTRY}" ]; then
+  if [ ! -f "${STANDALONE_DIR}/${NODE_ENTRY}" ]; then
     echo "Missing ${NODE_ENTRY}. Run npm run build first." >&2
     exit 1
   fi
@@ -83,9 +84,9 @@ start_app() {
         echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) $3 exited with code $code" >&2
         sleep "$4"
       done
-    ' sh "$APP_ROOT" "$NODE_ENTRY" "$APP_NAME" "$RESTART_DELAY_SECONDS" >>"$LOG_FILE" 2>&1 &
+    ' sh "$STANDALONE_DIR" "$NODE_ENTRY" "$APP_NAME" "$RESTART_DELAY_SECONDS" >>"$LOG_FILE" 2>&1 &
   else
-    nohup sh -c 'cd "$1" && exec node "$2"' sh "$APP_ROOT" "$NODE_ENTRY" >>"$LOG_FILE" 2>&1 &
+    nohup sh -c 'cd "$1" && exec node "$2"' sh "$STANDALONE_DIR" "$NODE_ENTRY" >>"$LOG_FILE" 2>&1 &
   fi
 
   echo "$!" >"$PID_FILE"

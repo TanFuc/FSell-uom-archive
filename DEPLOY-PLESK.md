@@ -8,17 +8,17 @@ The release package contains production build output but intentionally excludes 
 2. Configure the Plesk environment variables from `backend/.env.example`, including a MariaDB `DATABASE_URL`.
 3. Run `npm ci`, `npm run prisma:switch:mariadb`, and `npm run prisma:generate`.
 4. Run `npm run prisma:push` against the new UOM MariaDB database, then run `npm prune --omit=dev`.
-5. Start with `npm run nohup:start`.
+5. In Plesk Node.js, use startup file `dist/src/main.js` and Restart App.
 
 ## Frontend
 
 1. Upload the contents of `frontend/` to the frontend Node.js application root.
-2. Configure `NEXT_PUBLIC_API_BASE_URL=https://www.uomarchive.com/api`, `NEXT_PUBLIC_API_URL=https://www.uomarchive.com/api`, `NEXT_PUBLIC_IMAGE_BASE_URL=https://images.uomarchive.com`, and the other variables from `frontend/.env.example` before building.
-3. Start with `npm run nohup:start`.
+2. Configure `NEXT_PUBLIC_API_BASE_URL=https://api.uomarchive.com/api`, `NEXT_PUBLIC_API_URL=https://api.uomarchive.com/api`, `SERVER_API_URL=https://api.uomarchive.com/api`, `SITEMAP_API_URL=https://api.uomarchive.com/api`, `NEXT_PUBLIC_IMAGE_BASE_URL=https://images.uomarchive.com`, and the other variables from `frontend/.env.example` before building.
+3. In Plesk Node.js, use startup file `scripts/start-standalone.mjs` and Restart App.
 
 ## Nohup process control
 
-Each app includes a lightweight `nohup` runner with PID files, stale PID cleanup, and duplicate-start protection:
+For the lowest process count, use the Plesk Node.js startup files above: one Node process for backend and one Node process for frontend. The `nohup` runner is only a SSH fallback when Plesk cannot supervise the app directly. It includes PID files, stale PID cleanup, and duplicate-start protection:
 
 ```sh
 npm run nohup:start
