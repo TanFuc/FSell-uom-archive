@@ -7,7 +7,10 @@ import { buildPageMetadata, getCanonicalBaseUrl } from '@/lib/seo'
 import { fetchBranding } from '@/lib/server-utils'
 import { getStorySlug, parseStories, STORIES_CONTENT_KEY } from '@/lib/stories'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888/api'
+const API_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  'http://localhost:8888/api'
 const BASE_URL = getCanonicalBaseUrl()
 export const revalidate = 3600
 

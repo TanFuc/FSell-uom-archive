@@ -38,7 +38,10 @@ export function FileUpload({
 }: FileUploadProps) {
   const [files, setFiles] = useState<any[]>([])
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888/api'
+  const API_URL =
+    process.env.NEXT_PUBLIC_API_BASE_URL ||
+    process.env.NEXT_PUBLIC_API_URL ||
+    'http://localhost:8888/api'
 
   return (
     <div className={className}>
@@ -105,7 +108,10 @@ export function MultipleFileUpload({
   const [uploadedUrls, setUploadedUrls] = useState<string[]>([])
   const [uploadedPublicIds, setUploadedPublicIds] = useState<string[]>([])
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888/api'
+  const API_URL =
+    process.env.NEXT_PUBLIC_API_BASE_URL ||
+    process.env.NEXT_PUBLIC_API_URL ||
+    'http://localhost:8888/api'
 
   return (
     <div className={className}>

@@ -1,6 +1,7 @@
 import axios, { type AxiosInstance, type AxiosError } from 'axios'
 import { pingProductSeo, pingSitewideSeo, pingStoriesSeo } from './seo-ping'
 import { parseStories, STORIES_CONTENT_KEY } from './stories'
+import { normalizePublicImageUrl } from './utils'
 import type {
   Product,
   CreateProductDto,
@@ -39,7 +40,10 @@ interface AuthResponse {
   user: User
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888/api'
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  'http://localhost:8888/api'
 
 class ApiClient {
   private client: AxiosInstance
@@ -348,20 +352,44 @@ class ApiClient {
     return result
   }
 
-  async uploadImage(file: File): Promise<{ url: string }> {
+  async uploadImage(
+    file: File,
+    folder: string = 'products',
+  ): Promise<{ url: string; publicId?: string }> {
     const formData = new FormData()
     formData.append('file', file)
-    return this.client.post('/upload/product-image', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    })
+    formData.append('folder', folder)
+    const upload = await this.client.post<any, { url: string; publicId?: string }>(
+      '/upload/product-image',
+      formData,
+      {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      },
+    )
+    return {
+      ...upload,
+      url: normalizePublicImageUrl(upload.url),
+    }
   }
 
-  async uploadImages(files: File[]): Promise<{ urls: string[] }> {
+  async uploadImages(
+    files: File[],
+    folder: string = 'products',
+  ): Promise<{ urls: string[]; publicIds?: string[] }> {
     const formData = new FormData()
     files.forEach((file) => formData.append('files', file))
-    return this.client.post('/upload/product-images', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    })
+    formData.append('folder', folder)
+    const upload = await this.client.post<any, { urls: string[]; publicIds?: string[] }>(
+      '/upload/product-images',
+      formData,
+      {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      },
+    )
+    return {
+      ...upload,
+      urls: upload.urls.map((url) => normalizePublicImageUrl(url)),
+    }
   }
 
   async deleteFile(url: string): Promise<void> {

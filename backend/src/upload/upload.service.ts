@@ -23,7 +23,12 @@ export class UploadService {
     this.uploadProvider = (this.configService.get<string>('UPLOAD_PROVIDER') ??
       'cloudinary') as UploadProvider
     this.r2Bucket = this.configService.get<string>('R2_BUCKET') ?? ''
-    this.r2PublicUrl = (this.configService.get<string>('R2_PUBLIC_URL') ?? '').replace(/\/$/, '')
+    this.r2PublicUrl = (
+      this.configService.get<string>('IMAGE_BASE_URL') ||
+      this.configService.get<string>('R2_PUBLIC_BASE_URL') ||
+      this.configService.get<string>('R2_PUBLIC_URL') ||
+      ''
+    ).replace(/\/$/, '')
     this.r2PublicBaseUrl = this.normalizeR2PublicBaseUrl(this.r2PublicUrl, this.r2Bucket)
 
     if (this.uploadProvider === 'r2') {
@@ -166,6 +171,7 @@ export class UploadService {
 
   async uploadMultipleImages(
     files: Express.Multer.File[],
+    folder: string = 'products',
   ): Promise<{ urls: string[]; publicIds: string[] }> {
     if (!files || files.length === 0) {
       throw new BadRequestException('Không có file được cung cấp')
@@ -175,7 +181,7 @@ export class UploadService {
       throw new BadRequestException('Chỉ cho phép tối đa 10 ảnh')
     }
 
-    const uploadPromises = files.map((file) => this.uploadProductImage(file))
+    const uploadPromises = files.map((file) => this.uploadProductImage(file, folder))
     const results = await Promise.all(uploadPromises)
 
     return {
@@ -242,6 +248,13 @@ export class UploadService {
 
   async deleteMultipleFiles(publicIds: string[]): Promise<{ success: boolean }> {
     try {
+      if (this.uploadProvider === 'r2') {
+        await Promise.all(publicIds.map((publicId) => this.deleteFile(publicId)))
+        this.logger.log(`${publicIds.length} files deleted from R2`)
+
+        return { success: true }
+      }
+
       await this.cloudinaryService.deleteMultipleFiles(publicIds)
       this.logger.log(`${publicIds.length} files deleted from Cloudinary`)
 

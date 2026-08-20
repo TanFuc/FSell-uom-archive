@@ -3,7 +3,10 @@ const createNextIntlPlugin = require('next-intl/plugin')
 const withNextIntl = createNextIntlPlugin()
 
 /** @type {import('next').NextConfig} */
-const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888/api'
+const apiUrl =
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  'http://localhost:8888/api'
 const apiUrlObj = new URL(apiUrl)
 const apiProtocol = apiUrlObj.protocol.replace(':', '')
 const apiPort = apiUrlObj.port
@@ -23,9 +26,7 @@ const nextConfig = {
       // Root URL that hits before intl middleware picks it up
       {
         source: '/',
-        missing: [
-          { type: 'header', key: 'x-locale-redirect-done' },
-        ],
+        missing: [{ type: 'header', key: 'x-locale-redirect-done' }],
         destination: '/vi',
         permanent: true, // 301 for permanent SEO authority transfer
       },
@@ -85,7 +86,15 @@ const nextConfig = {
       },
       {
         protocol: 'https',
-        hostname: '**',
+        hostname: 'images.uomarchive.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
       },
     ],
     formats: ['image/avif', 'image/webp'],

@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Build output
+dist/
+build/
+.next/
+out/
+coverage/
+*.tsbuildinfo
+
+# Local env
+.env
+.env.*
+!.env.example
+
+# Generated release artifacts
+release/
+*.tar.gz
+*.zip
+
+# Logs and temporary files
+logs/
+*.log
+*.tmp
+*.temp
+.cache/
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Codex / local agent notes
+.codex/
+AGENTS.md

@@ -12,7 +12,10 @@ import {
 import { fetchBranding } from '@/lib/server-utils'
 import ProductClient from './product-client'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888/api'
+const API_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  'http://localhost:8888/api'
 const BASE_URL = getCanonicalBaseUrl()
 
 type ProductDetail = {

@@ -16,7 +16,10 @@ import { getStorySlug, parseStories, STORIES_CONTENT_KEY, type StoryItem } from 
 import { type Banner, type Product } from '@/lib/types'
 import HomeClient from './home-client'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8888/api'
+const API_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  'http://localhost:8888/api'
 export const dynamic = 'force-dynamic'
 
 type SiteContentResponse = Record<string, unknown>

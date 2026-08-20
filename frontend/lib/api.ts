@@ -1,6 +1,7 @@
 import axios, { type AxiosInstance, type AxiosError } from 'axios'
 import { pingProductSeo, pingSitewideSeo, pingStoriesSeo } from './seo-ping'
 import { parseStories, STORIES_CONTENT_KEY } from './stories'
+import { normalizePublicImageUrl } from './utils'
 import type {
   Product,
   Category,
@@ -18,7 +19,10 @@ import type {
   UpdateMyProfileDto,
 } from './types'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888/api'
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  'http://localhost:8888/api'
 
 class ApiClient {
   private client: AxiosInstance
@@ -499,7 +503,11 @@ class ApiClient {
     }
 
     const result = await response.json()
-    return result.data || result
+    const upload = result.data || result
+    return {
+      ...upload,
+      url: upload.url ? normalizePublicImageUrl(upload.url) : upload.url,
+    }
   }
 
   async getCategories(params?: {

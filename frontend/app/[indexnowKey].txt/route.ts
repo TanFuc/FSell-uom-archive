@@ -1,6 +1,7 @@
 const INDEXNOW_KEY = process.env.INDEXNOW_KEY
 
 export const revalidate = 3600
+export const dynamic = 'force-dynamic'
 
 interface Params {
   params: {

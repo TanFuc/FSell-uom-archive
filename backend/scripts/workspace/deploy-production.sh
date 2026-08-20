@@ -78,11 +78,11 @@ if [ "$SKIP_BUILD" -eq 0 ]; then
   docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" build backend frontend
 fi
 
-step "Start postgres and redis first"
-docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d postgres redis
+step "Start mariadb and redis first"
+docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d mariadb redis
 
-step "Run database migrations"
-docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" run --rm backend npm run prisma:migrate:prod
+step "Push MariaDB schema"
+docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" run --rm backend npm run prisma:push
 
 step "Start backend and wait until healthy"
 docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d backend

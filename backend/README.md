@@ -27,6 +27,7 @@ docker-compose up -d
 ```
 
 This starts:
+
 - PostgreSQL on port 5432
 - Redis on port 6379
 
@@ -75,34 +76,40 @@ Swagger UI: `http://localhost:8888/api/docs`
 
 ## Environment Variables
 
-Copy `.env.example` to `.env` and configure:
+Copy `.env.example` to `.env` and set only the values required for runtime/deploy:
 
 ```bash
 cp .env.example .env
 ```
 
-Key variables:
-- `DATABASE_URL` - PostgreSQL connection string
-- `REDIS_URL` - Redis connection string
-- `JWT_ACCESS_SECRET` - Secret for access tokens
-- `JWT_REFRESH_SECRET` - Secret for refresh tokens
-- `FRONTEND_URL` - Frontend URL for CORS
+Required:
+
+- `DATABASE_URL` - DB connection string (MariaDB/MySQL by default for Plesk; PostgreSQL remains available via `npm run prisma:switch:postgresql`)
+- `REDIS_URL` / `UPSTASH_REDIS_URL` - cache connection
+- `JWT_ACCESS_SECRET` / `JWT_REFRESH_SECRET` - token signing
+- `FRONTEND_URL` / `FRONTEND_URLS` - CORS and app origin
+- `UPLOAD_PROVIDER`, `IMAGE_BASE_URL`, `R2_*` - file upload / CDN config
+
+Do not keep unused variables in production env files; only keep the ones used by the active runtime mode.
 
 ## Scripts
 
-| Command | Description |
-|---------|-------------|
-| `npm run start:dev` | Start development server |
-| `npm run build` | Build for production |
-| `npm run start:prod` | Start production server |
-| `npm run prisma:generate` | Generate Prisma client |
-| `npm run prisma:migrate` | Run database migrations |
-| `npm run prisma:studio` | Open Prisma Studio |
-| `npm run db:seed` | Seed database |
-| `npm run test` | Run tests |
-| `npm run lint` | Run ESLint |
-| `npm run monitoring:up` | Start Prometheus + Grafana |
-| `npm run monitoring:down` | Stop monitoring stack |
+| Command                            | Description                                            |
+| ---------------------------------- | ------------------------------------------------------ |
+| `npm run start:dev`                | Start development server                               |
+| `npm run build`                    | Build for production                                   |
+| `npm run start:prod`               | Start production server                                |
+| `npm run prisma:generate`          | Generate Prisma client                                 |
+| `npm run prisma:switch:mariadb`    | Switch Prisma schema to MariaDB/MySQL                  |
+| `npm run prisma:switch:postgresql` | Switch Prisma schema to PostgreSQL                     |
+| `npm run prisma:push`              | Push schema directly to MariaDB/MySQL, useful on Plesk |
+| `npm run prisma:migrate`           | Run database migrations                                |
+| `npm run prisma:studio`            | Open Prisma Studio                                     |
+| `npm run db:seed`                  | Seed database                                          |
+| `npm run test`                     | Run tests                                              |
+| `npm run lint`                     | Run ESLint                                             |
+| `npm run monitoring:up`            | Start Prometheus + Grafana                             |
+| `npm run monitoring:down`          | Stop monitoring stack                                  |
 
 ## Monitoring
 
@@ -131,14 +138,14 @@ Prometheus scrapes backend metrics from:
 ### Dashboard and Alerts
 
 - Grafana dashboard (auto-provisioned): `UOM Backend - API Overview`
-	- HTTP RPS
-	- p95 latency
-	- 5xx error rate
-	- in-flight requests
+  - HTTP RPS
+  - p95 latency
+  - 5xx error rate
+  - in-flight requests
 - Prometheus alert rules (auto-loaded from `monitoring/alerts.yml`):
-	- `UomBackendHealthDown`
-	- `UomHighHttpErrorRate`
-	- `UomHighP95Latency`
+  - `UomBackendHealthDown`
+  - `UomHighHttpErrorRate`
+  - `UomHighP95Latency`
 
 Grafana Alerting provisioning file:
 
@@ -164,7 +171,7 @@ Managed alert rules in Grafana (not dependent on Prometheus Alerts UI):
 - `UOM High P95 Latency`
 - `UOM Synthetic Notify Test` (fires for ~3 minutes after backend start, then auto-resolves)
 
-Set these environment variables before `npm run monitoring:up`:
+Optional monitoring variables before `npm run monitoring:up`:
 
 - `GF_ALERT_TELEGRAM_BOT_TOKEN`
 - `GF_ALERT_TELEGRAM_CHAT_ID`
@@ -173,6 +180,8 @@ Set these environment variables before `npm run monitoring:up`:
 - `GF_SMTP_ENABLED=true`
 - `GF_SMTP_HOST`, `GF_SMTP_USER`, `GF_SMTP_PASSWORD`
 - `GF_SMTP_FROM_ADDRESS`, `GF_SMTP_FROM_NAME`
+
+Only set these if you want notification integrations enabled.
 
 To inspect managed alert states:
 
@@ -203,6 +212,7 @@ src/
 ## API Endpoints
 
 ### Public Endpoints
+
 - `GET /api/products` - List products
 - `GET /api/products/:slug` - Get product by slug
 - `POST /api/orders` - Create order (guest checkout)
@@ -212,6 +222,7 @@ src/
 - `GET /api/settings/exchange-rate` - Get exchange rate
 
 ### Admin Endpoints (require JWT)
+
 - `POST /api/products` - Create product
 - `PUT /api/products/:id` - Update product
 - `DELETE /api/products/:id` - Delete product

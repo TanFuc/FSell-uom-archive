@@ -33,8 +33,8 @@ export class UsersService {
 
     if (search) {
       where.OR = [
-        { email: { contains: search, mode: 'insensitive' } },
-        { fullName: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search } },
+        { fullName: { contains: search } },
       ]
     }
 
