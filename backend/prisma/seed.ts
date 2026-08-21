@@ -85,7 +85,7 @@ async function main() {
         <p>When pieces leave the kiln, we inspect each one by hand: the base, rim balance, and glaze tone under natural light.</p>
       `,
       imageUrl:
-        'https://images.unsplash.com/photo-1601055903647-ddf1ee9701b1?q=80&w=1800&auto=format&fit=crop',
+        'https://images.uomarchive.com/seed/journal-hands.png',
       publishedAt: '2026-03-12',
     },
     {
@@ -124,7 +124,7 @@ async function main() {
         <p>A beautiful ceramic object is not only about form, but about how it lives with the light in your home.</p>
       `,
       imageUrl:
-        'https://images.unsplash.com/photo-1513694203232-719a280e022f?q=80&w=1800&auto=format&fit=crop',
+        'https://images.uomarchive.com/seed/journal-glaze.png',
       publishedAt: '2026-03-20',
     },
     {
@@ -163,7 +163,7 @@ async function main() {
         <p>At the end of the day, a cup of tea in a well-balanced handmade cup can be the simplest way back to calm.</p>
       `,
       imageUrl:
-        'https://images.unsplash.com/photo-1515823064-d6e0c04616a7?q=80&w=1800&auto=format&fit=crop',
+        'https://images.uomarchive.com/seed/journal-tea.png',
       publishedAt: '2026-03-28',
     },
     {
@@ -202,7 +202,7 @@ async function main() {
         <p>With this balance, your display stays elegant, cohesive, and true to a minimal handmade aesthetic.</p>
       `,
       imageUrl:
-        'https://images.unsplash.com/photo-1549187774-b4e9b0445b41?q=80&w=1800&auto=format&fit=crop',
+        'https://images.uomarchive.com/seed/about-story.png',
       publishedAt: '2026-04-02',
     },
     {
@@ -241,7 +241,7 @@ async function main() {
         <p>Our goal is simple: each piece should feel as good in real life as it looks in photos.</p>
       `,
       imageUrl:
-        'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?q=80&w=1800&auto=format&fit=crop',
+        'https://images.uomarchive.com/seed/product-dinner-1.png',
       publishedAt: '2026-04-04',
     },
   ]
@@ -266,12 +266,12 @@ async function main() {
     {
       key: 'hero.image.vi',
       value:
-        'https://images.unsplash.com/photo-1610701596007-11502861dcfa?q=80&w=2070&auto=format&fit=crop',
+        'https://images.uomarchive.com/seed/hero.png',
     },
     {
       key: 'hero.image.en',
       value:
-        'https://images.unsplash.com/photo-1610701596007-11502861dcfa?q=80&w=2070&auto=format&fit=crop',
+        'https://images.uomarchive.com/seed/hero.png',
     },
     {
       key: 'journal.stories',
@@ -346,7 +346,7 @@ async function main() {
       descriptionVi: 'Bình gốm thủ công dành cho trang trí không gian sống và cắm hoa.',
       descriptionEn: 'Handcrafted ceramic vases for floral styling and interior display.',
       image:
-        'https://images.unsplash.com/photo-1610701596007-11502861dcfa?q=80&w=1200&auto=format&fit=crop&sat=-100',
+        'https://images.uomarchive.com/seed/cat-vases.png',
       order: 1,
       isActive: true,
     },
@@ -357,7 +357,7 @@ async function main() {
       descriptionVi: 'Bộ chén đĩa và phụ kiện bàn ăn mang tinh thần thủ công tối giản.',
       descriptionEn: 'Dinnerware collections crafted for everyday rituals and minimal tables.',
       image:
-        'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?q=80&w=1200&auto=format&fit=crop&sat=-100',
+        'https://images.uomarchive.com/seed/cat-dinnerware.png',
       order: 2,
       isActive: true,
     },
@@ -368,7 +368,7 @@ async function main() {
       descriptionVi: 'Chén cốc gốm cầm tay vừa vặn, men mộc, phù hợp dùng hằng ngày.',
       descriptionEn: 'Tactile handcrafted cups made for daily tea rituals.',
       image:
-        'https://images.unsplash.com/photo-1515823064-d6e0c04616a7?q=80&w=1200&auto=format&fit=crop&sat=-100',
+        'https://images.uomarchive.com/seed/cat-tea.png',
       order: 3,
       isActive: true,
     },
@@ -379,7 +379,7 @@ async function main() {
       descriptionVi: 'Đĩa gốm men rạn và khay phục vụ có độ hoàn thiện cao.',
       descriptionEn: 'Glazed ceramic plates and trays with balanced handcrafted finishes.',
       image:
-        'https://images.unsplash.com/photo-1610701596061-2ecf227e85b2?q=80&w=1200&auto=format&fit=crop&sat=-100',
+        'https://images.uomarchive.com/seed/cat-trays.png',
       order: 4,
       isActive: true,
     },
@@ -415,23 +415,23 @@ async function main() {
 
   const monochromeImages = {
     vases: [
-      'https://images.unsplash.com/photo-1610701596007-11502861dcfa?q=80&w=1600&auto=format&fit=crop&sat=-100',
-      'https://images.unsplash.com/photo-1549187774-b4e9b0445b41?q=80&w=1600&auto=format&fit=crop&sat=-100',
-      'https://images.unsplash.com/photo-1513694203232-719a280e022f?q=80&w=1600&auto=format&fit=crop&sat=-100',
+      'https://images.uomarchive.com/seed/product-vase-3.png',
+      'https://images.uomarchive.com/seed/product-vase-4.png',
+      'https://images.uomarchive.com/seed/product-dinner-1.png',
     ],
     dinnerware: [
-      'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?q=80&w=1600&auto=format&fit=crop&sat=-100',
-      'https://images.unsplash.com/photo-1610701596061-2ecf227e85b2?q=80&w=1600&auto=format&fit=crop&sat=-100',
-      'https://images.unsplash.com/photo-1610701596007-11502861dcfa?q=80&w=1600&auto=format&fit=crop&sat=-100',
+      'https://images.uomarchive.com/seed/product-dinner-2.png',
+      'https://images.uomarchive.com/seed/product-tea-1.png',
+      'https://images.uomarchive.com/seed/product-tea-2.png',
     ],
     tea: [
-      'https://images.unsplash.com/photo-1515823064-d6e0c04616a7?q=80&w=1600&auto=format&fit=crop&sat=-100',
-      'https://images.unsplash.com/photo-1513694203232-719a280e022f?q=80&w=1600&auto=format&fit=crop&sat=-100',
-      'https://images.unsplash.com/photo-1515823064-d6e0c04616a7?q=80&w=1600&auto=format&fit=crop&sat=-100',
+      'https://images.uomarchive.com/seed/product-plate-1.png',
+      'https://images.uomarchive.com/seed/product-plate-2.png',
+      'https://images.uomarchive.com/seed/product-tray-1.png',
     ],
     trays: [
-      'https://images.unsplash.com/photo-1610701596061-2ecf227e85b2?q=80&w=1600&auto=format&fit=crop&sat=-100',
-      'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?q=80&w=1600&auto=format&fit=crop&sat=-100',
+      'https://images.uomarchive.com/seed/product-tray-2.png',
+      'https://images.uomarchive.com/seed/product-teapot-1.png',
     ],
   }
 
@@ -685,7 +685,7 @@ async function main() {
       subtitleVi: 'Gốm sứ thủ công từ Việt Nam',
       subtitleEn: 'Handcrafted ceramics from Vietnam',
       imageUrl:
-        'https://images.unsplash.com/photo-1610701596007-11502861dcfa?q=80&w=2070&auto=format&fit=crop',
+        'https://images.uomarchive.com/seed/banner-main.png',
       link: '/shop',
       order: 1,
       isActive: true,
@@ -699,7 +699,7 @@ async function main() {
       subtitleVi: 'Khám phá những mẫu thiết kế độc đáo',
       subtitleEn: 'Discover unique designs',
       imageUrl:
-        'https://images.unsplash.com/photo-1610701596061-2ecf227e85b2?q=80&w=2070&auto=format&fit=crop',
+        'https://images.uomarchive.com/seed/banner-collection.png',
       link: '/shop?sort=newest',
       order: 2,
       isActive: true,

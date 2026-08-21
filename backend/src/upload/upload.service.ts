@@ -20,8 +20,12 @@ export class UploadService {
     private configService: ConfigService,
     private cloudinaryService: CloudinaryService,
   ) {
+    const sharpConcurrency = Number(this.configService.get<string>('SHARP_CONCURRENCY') ?? '1')
+    sharp.concurrency(Number.isFinite(sharpConcurrency) && sharpConcurrency > 0 ? sharpConcurrency : 1)
+    sharp.cache(false)
+
     this.uploadProvider = (this.configService.get<string>('UPLOAD_PROVIDER') ??
-      'cloudinary') as UploadProvider
+      'r2') as UploadProvider
     this.r2Bucket = this.configService.get<string>('R2_BUCKET') ?? ''
     this.r2PublicUrl = (
       this.configService.get<string>('IMAGE_BASE_URL') ||
@@ -77,7 +81,7 @@ export class UploadService {
           kernel: sharp.kernel.lanczos3,
         })
         .sharpen({ sigma: 1.1, m1: 1, m2: 2, x1: 2, y2: 10, y3: 20 })
-        .webp({ quality: 88, effort: 6, smartSubsample: true })
+        .webp({ quality: 88, effort: 4, smartSubsample: true })
         .toBuffer()
 
       if (this.uploadProvider === 'r2') {
@@ -181,8 +185,10 @@ export class UploadService {
       throw new BadRequestException('Chỉ cho phép tối đa 10 ảnh')
     }
 
-    const uploadPromises = files.map((file) => this.uploadProductImage(file, folder))
-    const results = await Promise.all(uploadPromises)
+    const results: Array<{ url: string; publicId: string }> = []
+    for (const file of files) {
+      results.push(await this.uploadProductImage(file, folder))
+    }
 
     return {
       urls: results.map((result) => result.url),

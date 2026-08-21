@@ -69,7 +69,9 @@ export default function FileUploadTestPage() {
     <div className="container max-w-4xl space-y-8 py-8">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Test File Upload</h1>
-        <p className="mt-2 text-muted-foreground">Test FilePond integration với Cloudinary</p>
+        <p className="mt-2 text-muted-foreground">
+          Test FilePond integration với R2 / images.uomarchive.com
+        </p>
       </div>
 
       <Card>
@@ -166,7 +168,7 @@ export default function FileUploadTestPage() {
       <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
         <h4 className="mb-2 font-semibold text-blue-900 dark:text-blue-200">💡 Lưu ý</h4>
         <ul className="list-inside list-disc space-y-1 text-sm text-blue-800 dark:text-blue-300">
-          <li>File sẽ được upload lên Cloudinary</li>
+          <li>File sẽ được upload lên R2 và trả URL images.uomarchive.com</li>
           <li>Hình ảnh sẽ được tự động optimize và convert sang WebP</li>
           <li>Kích thước tối đa: 10MB</li>
           <li>Chỉ chấp nhận các file: JPEG, PNG, WebP, GIF</li>

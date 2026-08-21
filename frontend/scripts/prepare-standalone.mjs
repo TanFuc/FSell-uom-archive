@@ -12,6 +12,7 @@ const publicSrc = path.join(root, 'public')
 const publicDest = path.join(standaloneDir, 'public')
 const serverEntry = path.join(standaloneDir, 'server.js')
 const forcePrepare = process.env.FORCE_PREPARE_STANDALONE === '1'
+const envFiles = ['.env', '.env.local', '.env.production', '.env.production.local']
 const requiredServerFiles = [
   ['pages', '_error.js'],
   ['pages', '_error.js.nft.json'],
@@ -68,6 +69,13 @@ if (!existsSync(serverSrc) || !existsSync(staticSrc)) {
 copyDirIfNeeded(staticSrc, staticDest)
 copyDirIfNeeded(publicSrc, publicDest)
 copyDirIfNeeded(serverSrc, serverDest)
+
+for (const envFile of envFiles) {
+  const envPath = path.join(standaloneDir, envFile)
+  if (existsSync(envPath)) {
+    rmSync(envPath, { force: true })
+  }
+}
 
 const missingRequired = requiredServerFiles.filter((parts) => !ensureServerFile(parts))
 if (missingRequired.length > 0) {
