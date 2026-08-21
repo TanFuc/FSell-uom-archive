@@ -130,11 +130,6 @@ export function Header() {
   const locale = useLocale() as 'vi' | 'en'
   const router = useRouter()
   const t = useTranslations('Navigation')
-  const { data: branding } = useBranding()
-  const { data: exchangeRate } = useExchangeRate()
-  const { data: socialLinks } = useSocialLinks()
-  const { data: siteContent } = useSiteContent()
-
   const [showSearch, setShowSearch] = useState(false)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -146,6 +141,14 @@ export function Header() {
   const scrollbarPaddingRef = useRef('')
   const bodyOverflowRef = useRef('')
   const bodyScrollCompensationRef = useRef('')
+  const { data: branding } = useBranding()
+  const { data: exchangeRate } = useExchangeRate({ enabled: showSearch })
+  const { data: socialLinks } = useSocialLinks()
+  const { data: siteContent } = useSiteContent({
+    enabled: showSearch,
+    staleTime: 30 * 60 * 1000,
+    refetchOnMount: false,
+  })
 
   useEffect(() => {
     const handleScroll = () => {
@@ -321,7 +324,7 @@ export function Header() {
   const { data: latestSuggestions, isLoading: isLatestLoading } = useProducts(
     {
       page: 1,
-      limit: 40,
+      limit: 12,
       isActive: true,
       sortBy: 'updatedAt',
       sortOrder: 'desc',
@@ -969,7 +972,7 @@ export function Header() {
                         animate="show"
                         className="flex flex-wrap gap-2 md:flex-col md:gap-2.5"
                       >
-                        {categories?.map((cat) => (
+                        {categories?.map((cat: { id: string; nameVi: string; nameEn: string }) => (
                           <motion.div key={cat.id} variants={itemRise}>
                             <Link
                               href={`/${locale}/shop?categoryId=${cat.id}`}

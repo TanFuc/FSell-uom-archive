@@ -55,6 +55,14 @@ type SiteContentQueryOptions = {
   staleTime?: number
   refetchOnMount?: boolean | 'always'
   initialData?: any
+  enabled?: boolean
+}
+
+type SettingsQueryOptions<TData = any> = {
+  enabled?: boolean
+  initialData?: TData
+  staleTime?: number
+  refetchOnMount?: boolean | 'always'
 }
 
 export function useSettings() {
@@ -73,19 +81,25 @@ export function useTheme() {
   })
 }
 
-export function useSocialLinks() {
+export function useSocialLinks(options?: SettingsQueryOptions<SocialLinks>) {
   return useQuery({
     queryKey: settingsKeys.social(),
     queryFn: () => apiClient.getSocialLinks(),
-    staleTime: 10 * 60 * 1000,
+    enabled: options?.enabled ?? true,
+    initialData: options?.initialData,
+    staleTime: options?.staleTime ?? 10 * 60 * 1000,
+    refetchOnMount: options?.refetchOnMount,
   })
 }
 
-export function useExchangeRate() {
+export function useExchangeRate(options?: SettingsQueryOptions) {
   return useQuery({
     queryKey: settingsKeys.exchange(),
     queryFn: () => apiClient.getExchangeRate(),
-    staleTime: 5 * 60 * 1000, // 5 minutes (more frequent)
+    enabled: options?.enabled ?? true,
+    initialData: options?.initialData,
+    staleTime: options?.staleTime ?? 30 * 60 * 1000,
+    refetchOnMount: options?.refetchOnMount,
   })
 }
 
@@ -93,6 +107,7 @@ export function useSiteContent(options?: SiteContentQueryOptions) {
   return useQuery({
     queryKey: settingsKeys.content(),
     queryFn: () => apiClient.getSiteContent(),
+    enabled: options?.enabled ?? true,
     staleTime: options?.staleTime ?? 10 * 60 * 1000,
     refetchOnMount: options?.refetchOnMount,
     initialData: options?.initialData,

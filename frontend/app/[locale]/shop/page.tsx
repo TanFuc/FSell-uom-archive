@@ -3,10 +3,25 @@ import Script from 'next/script'
 import { Suspense } from 'react'
 import { buildPageMetadata, getCanonicalBaseUrl, getSeoBrandName } from '@/lib/seo'
 import { fetchBranding } from '@/lib/server-utils'
+import { type Category, type PaginatedResponse, type Product } from '@/lib/types'
 import ShopClient from './shop-client'
 
 const BASE_URL = getCanonicalBaseUrl()
+const API_URL =
+  process.env.SERVER_API_URL ||
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  'http://localhost:8888'
 export const revalidate = 3600
+const SHOP_FETCH_TIMEOUT_MS = Number.parseInt(
+  process.env.SHOP_FETCH_TIMEOUT_MS || process.env.SERVER_FETCH_TIMEOUT_MS || '1800',
+  10,
+)
+
+type ShopSsrData = {
+  products?: PaginatedResponse<Product>
+  categories?: Category[]
+}
 
 function getShopSeo(locale: string) {
   return locale === 'vi'
@@ -20,6 +35,56 @@ function getShopSeo(locale: string) {
         description:
           'Discover our curated collection of handcrafted ceramics from Vietnamese artisans.',
       }
+}
+
+function unwrapData<T>(payload: unknown): T | null {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    return null
+  }
+
+  const root = payload as { data?: unknown }
+  const value = root.data ?? payload
+
+  if (value && typeof value === 'object') {
+    return value as T
+  }
+
+  return null
+}
+
+async function fetchJson(url: string): Promise<unknown> {
+  const timeout =
+    Number.isFinite(SHOP_FETCH_TIMEOUT_MS) && SHOP_FETCH_TIMEOUT_MS > 0
+      ? SHOP_FETCH_TIMEOUT_MS
+      : 1800
+  const res = await fetch(url, {
+    next: { revalidate: 300 },
+    signal: AbortSignal.timeout(timeout),
+  })
+
+  if (!res.ok) {
+    throw new Error(`Fetch failed: ${res.status}`)
+  }
+
+  return res.json()
+}
+
+async function fetchShopSsrData(): Promise<ShopSsrData> {
+  const [productsResult, categoriesResult] = await Promise.allSettled([
+    fetchJson(`${API_URL}/products?page=1&limit=12&isActive=true`),
+    fetchJson(`${API_URL}/categories?includeInactive=false`),
+  ])
+
+  return {
+    products:
+      productsResult.status === 'fulfilled'
+        ? unwrapData<PaginatedResponse<Product>>(productsResult.value) ?? undefined
+        : undefined,
+    categories:
+      categoriesResult.status === 'fulfilled'
+        ? unwrapData<Category[]>(categoriesResult.value) ?? undefined
+        : undefined,
+  }
 }
 
 export async function generateMetadata({
@@ -46,6 +111,7 @@ export default async function ShopPage({ params }: { params: { locale: string } 
   const branding = await fetchBranding()
   const brandName = getSeoBrandName(locale, branding)
   const seo = getShopSeo(locale)
+  const ssrData = await fetchShopSsrData()
 
   return (
     <>
@@ -89,7 +155,7 @@ export default async function ShopPage({ params }: { params: { locale: string } 
         }}
       />
       <Suspense fallback={null}>
-        <ShopClient />
+        <ShopClient initialProducts={ssrData.products} initialCategories={ssrData.categories} />
       </Suspense>
     </>
   )

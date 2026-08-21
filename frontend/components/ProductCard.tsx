@@ -17,7 +17,7 @@ interface ProductCardProps {
 
 export function ProductCard({ product, locale, priority }: ProductCardProps) {
   const t = useTranslations('admin')
-  const { data: exchangeRate } = useExchangeRate()
+  const { data: exchangeRate } = useExchangeRate({ enabled: locale === 'en' })
   const name = locale === 'vi' ? product.nameVi : product.nameEn
   const hasImages = product.images && product.images.length > 0
   const mainImage = hasImages ? product.images[0] : null

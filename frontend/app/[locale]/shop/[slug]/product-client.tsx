@@ -237,7 +237,7 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
   const { data: product, isLoading, error } = useProduct(params.slug, {
     initialData: initialProduct ?? undefined,
   })
-  const { data: exchangeRate } = useExchangeRate()
+  const { data: exchangeRate } = useExchangeRate({ enabled: locale === 'en' })
   const { data: socialLinks } = useSocialLinks()
 
   const { data: relatedProducts } = useProducts({
