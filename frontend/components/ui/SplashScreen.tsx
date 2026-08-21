@@ -4,8 +4,15 @@ import { useEffect, useState } from 'react'
 import { useBranding } from '@/hooks/use-settings'
 
 const BRANDING_CACHE_KEY = 'uom_branding_cache'
-const DEFAULT_LOADING_TEXT = 'ƯƠM.'
+const DEFAULT_LOADING_TEXT = 'UOM.'
 const DISPLAY_DURATION_MS = 1500
+
+function normalizeLoadingText(value?: string) {
+  const normalized = value?.trim()
+  if (!normalized) return DEFAULT_LOADING_TEXT
+  if (normalized.length > 24 || normalized.split(/\s+/).length > 3) return DEFAULT_LOADING_TEXT
+  return normalized
+}
 
 function getCachedLoadingText() {
   if (typeof window === 'undefined') return undefined
@@ -114,9 +121,8 @@ export function SplashScreen({ initialLoadingText }: { initialLoadingText?: stri
     }
   }, [branding?.loadingText, mounted])
 
-  const displayText =
-    initialLoadingText || branding?.loadingText || cachedLoadingText || DEFAULT_LOADING_TEXT
-  const normalizedDisplayText = (displayText || '').trim()
+  const displayText = initialLoadingText || branding?.loadingText || cachedLoadingText
+  const normalizedDisplayText = normalizeLoadingText(displayText)
 
   return (
     <div

@@ -10,6 +10,14 @@ import {
 } from './dto'
 
 const CACHE_TTL = 3600 // 1 hour in seconds
+const DEFAULT_LOADING_TEXT = 'UOM.'
+
+function normalizeLoadingText(value?: string): string {
+  const normalized = value?.trim()
+  if (!normalized) return DEFAULT_LOADING_TEXT
+  if (normalized.length > 24 || normalized.split(/\s+/).length > 3) return DEFAULT_LOADING_TEXT
+  return normalized
+}
 
 type SocialLinks = {
   facebookPageUrl: string
@@ -367,7 +375,7 @@ export class SettingsService {
         map['site.description.en'] ??
         'Discover Vietnamese handcrafted ceramics curated for quiet beauty, refined living, and artisan stories.',
       logoUrl: map['site.logoUrl'] ?? '',
-      loadingText: map['site.loadingText'] ?? 'ƯƠM.',
+      loadingText: normalizeLoadingText(map['site.loadingText']),
     }
 
     await this.redis.set('branding_settings', JSON.stringify(branding), CACHE_TTL)

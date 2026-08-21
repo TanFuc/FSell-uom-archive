@@ -8,7 +8,14 @@ interface LoadingScreenProps {
   fullscreen?: boolean
 }
 
-const DEFAULT_LOADING_TEXT = ''
+const DEFAULT_LOADING_TEXT = 'UOM.'
+
+function normalizeLoadingText(value?: string) {
+  const normalized = value?.trim()
+  if (!normalized) return ''
+  if (normalized.length > 24 || normalized.split(/\s+/).length > 3) return DEFAULT_LOADING_TEXT
+  return normalized
+}
 
 export function LoadingScreen({ text, fullscreen = false }: LoadingScreenProps) {
   const { data: branding } = useBranding()
@@ -16,7 +23,7 @@ export function LoadingScreen({ text, fullscreen = false }: LoadingScreenProps) 
     () => text ?? branding?.loadingText ?? DEFAULT_LOADING_TEXT,
     [text, branding?.loadingText],
   )
-  const normalizedDisplayText = displayText.trim()
+  const normalizedDisplayText = normalizeLoadingText(displayText)
 
   return (
     <div
