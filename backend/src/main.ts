@@ -110,10 +110,10 @@ async function bootstrap() {
     new TransformInterceptor(),
   )
 
-  app.setGlobalPrefix('api')
+  // app.setGlobalPrefix('api')
 
-  app.use('/api/auth/login', express.text({ type: '*/*', limit: '1mb' }))
-  app.use('/api/auth/login', loginPayloadNormalizerMiddleware)
+  app.use('/auth/login', express.text({ type: '*/*', limit: '1mb' }))
+  app.use('/auth/login', loginPayloadNormalizerMiddleware)
 
   app.useStaticAssets(join(__dirname, '..', 'uploads'), {
     prefix: '/uploads/',

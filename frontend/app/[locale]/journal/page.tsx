@@ -11,7 +11,7 @@ const API_URL =
   process.env.SERVER_API_URL ||
   process.env.NEXT_PUBLIC_API_BASE_URL ||
   process.env.NEXT_PUBLIC_API_URL ||
-  'http://localhost:8888/api'
+  'http://localhost:8888'
 const BASE_URL = getCanonicalBaseUrl()
 const SITE_CONTENT_FETCH_TIMEOUT_MS = Number.parseInt(
   process.env.SERVER_FETCH_TIMEOUT_MS || '5000',

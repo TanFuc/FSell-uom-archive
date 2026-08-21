@@ -13,7 +13,7 @@ The release package contains production build output but intentionally excludes 
 ## Frontend
 
 1. Upload the contents of `frontend/` to the frontend Node.js application root.
-2. Configure `NEXT_PUBLIC_API_BASE_URL=https://api.uomarchive.com/api`, `NEXT_PUBLIC_API_URL=https://api.uomarchive.com/api`, `SERVER_API_URL=https://api.uomarchive.com/api`, `SITEMAP_API_URL=https://api.uomarchive.com/api`, `NEXT_PUBLIC_IMAGE_BASE_URL=https://images.uomarchive.com`, and the other variables from `frontend/.env.example` before building.
+2. Configure `NEXT_PUBLIC_API_BASE_URL=https://api.uomarchive.com`, `NEXT_PUBLIC_API_URL=https://api.uomarchive.com`, `SERVER_API_URL=https://api.uomarchive.com`, `SITEMAP_API_URL=https://api.uomarchive.com`, `NEXT_PUBLIC_IMAGE_BASE_URL=https://images.uomarchive.com`, and the other variables from `frontend/.env.example` before building.
 3. In Plesk Node.js, use startup file `scripts/start-standalone.mjs` and Restart App.
 
 ## Nohup process control

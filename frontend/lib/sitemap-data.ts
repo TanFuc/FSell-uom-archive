@@ -16,19 +16,14 @@ const API_CANDIDATES = [
   process.env.SERVER_API_URL,
   process.env.NEXT_PUBLIC_API_BASE_URL,
   process.env.NEXT_PUBLIC_API_URL,
-  'https://api.uomarchive.com/api',
-  'http://localhost:8888/api',
+  'https://api.uomarchive.com',
+  'http://localhost:8888',
 ]
   .filter((value): value is string => Boolean(value))
   .map((value) => value.replace(/\/$/, ''))
 
 const API_URLS = Array.from(
-  new Set(
-    API_CANDIDATES.map((value) => value.replace(/\/$/, '')).flatMap((value) => [
-      value,
-      value.endsWith('/api') ? value.replace(/\/api$/, '') : `${value}/api`,
-    ]),
-  ),
+  new Set(API_CANDIDATES.map((value) => value.replace(/\/api$/, '').replace(/\/$/, ''))),
 )
 
 export type Product = {

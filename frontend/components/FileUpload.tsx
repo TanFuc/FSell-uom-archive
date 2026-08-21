@@ -41,7 +41,7 @@ export function FileUpload({
   const API_URL =
     process.env.NEXT_PUBLIC_API_BASE_URL ||
     process.env.NEXT_PUBLIC_API_URL ||
-    'http://localhost:8888/api'
+    'http://localhost:8888'
 
   return (
     <div className={className}>
@@ -111,7 +111,7 @@ export function MultipleFileUpload({
   const API_URL =
     process.env.NEXT_PUBLIC_API_BASE_URL ||
     process.env.NEXT_PUBLIC_API_URL ||
-    'http://localhost:8888/api'
+    'http://localhost:8888'
 
   return (
     <div className={className}>
