@@ -7,11 +7,27 @@ import type { ThemeSettings, SocialLinks, SiteContent, BrandingSettings } from '
 
 const BRANDING_CACHE_KEY = 'uom_branding_cache'
 
+function isLegacyBrandingCache(data: Partial<BrandingSettings>): boolean {
+  return [
+    data.brandNameVi,
+    data.brandNameEn,
+    data.loadingText,
+    data.brandTaglineVi,
+    data.brandTaglineEn,
+  ].some((value) => typeof value === 'string' && (value.includes('UOM.') || value.includes('Æ')))
+}
+
 function getBrandingFromStorage(): BrandingSettings | undefined {
   if (typeof window === 'undefined') return undefined
   try {
     const stored = localStorage.getItem(BRANDING_CACHE_KEY)
-    return stored ? (JSON.parse(stored) as BrandingSettings) : undefined
+    if (!stored) return undefined
+    const parsed = JSON.parse(stored) as BrandingSettings
+    if (isLegacyBrandingCache(parsed)) {
+      localStorage.removeItem(BRANDING_CACHE_KEY)
+      return undefined
+    }
+    return parsed
   } catch {
     return undefined
   }

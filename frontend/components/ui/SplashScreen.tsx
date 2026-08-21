@@ -20,6 +20,10 @@ function getCachedLoadingText() {
     const stored = localStorage.getItem(BRANDING_CACHE_KEY)
     if (!stored) return undefined
     const parsed = JSON.parse(stored) as { loadingText?: string }
+    if (parsed.loadingText?.includes('UOM.') || parsed.loadingText?.includes('Æ')) {
+      localStorage.removeItem(BRANDING_CACHE_KEY)
+      return undefined
+    }
     return parsed.loadingText
   } catch {
     return undefined

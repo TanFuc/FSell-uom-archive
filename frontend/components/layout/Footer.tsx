@@ -16,14 +16,22 @@ export function Footer() {
     if (typeof window === 'undefined') return undefined
     try {
       const stored = localStorage.getItem(BRANDING_CACHE_KEY)
-      return stored
-        ? (JSON.parse(stored) as {
-            brandNameVi?: string
-            brandNameEn?: string
-            brandTaglineVi?: string
-            brandTaglineEn?: string
-          })
-        : undefined
+      if (!stored) return undefined
+      const parsed = JSON.parse(stored) as {
+        brandNameVi?: string
+        brandNameEn?: string
+        brandTaglineVi?: string
+        brandTaglineEn?: string
+      }
+      if (
+        [parsed.brandNameVi, parsed.brandNameEn, parsed.brandTaglineVi, parsed.brandTaglineEn].some(
+          (value) => typeof value === 'string' && (value.includes('UOM.') || value.includes('Æ')),
+        )
+      ) {
+        localStorage.removeItem(BRANDING_CACHE_KEY)
+        return undefined
+      }
+      return parsed
     } catch {
       return undefined
     }

@@ -186,11 +186,20 @@ export function Header() {
     try {
       const stored = localStorage.getItem(BRANDING_CACHE_KEY)
       if (!stored) return undefined
-      return JSON.parse(stored) as {
+      const parsed = JSON.parse(stored) as {
         brandNameVi?: string
         brandNameEn?: string
         loadingText?: string
       }
+      if (
+        [parsed.brandNameVi, parsed.brandNameEn, parsed.loadingText].some(
+          (value) => typeof value === 'string' && (value.includes('UOM.') || value.includes('Æ')),
+        )
+      ) {
+        localStorage.removeItem(BRANDING_CACHE_KEY)
+        return undefined
+      }
+      return parsed
     } catch {
       return undefined
     }
