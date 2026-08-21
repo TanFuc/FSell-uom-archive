@@ -33,6 +33,8 @@ function getBrandingFromStorage(): BrandingSettings | undefined {
   }
 }
 
+void getBrandingFromStorage
+
 function saveBrandingToStorage(data: BrandingSettings): void {
   if (typeof window === 'undefined') return
   try {
@@ -171,8 +173,6 @@ export function useBranding() {
     },
     staleTime: 10 * 60 * 1000,
     refetchOnMount: false,
-
-    placeholderData: getBrandingFromStorage,
   })
 }
 

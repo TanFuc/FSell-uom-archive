@@ -13,6 +13,11 @@ const nextConfig = {
   output: 'standalone',
   async redirects() {
     return [
+      {
+        source: '/favicon.ico',
+        destination: '/icon.svg',
+        permanent: false,
+      },
       // 1. Non-www → www (canonical domain)
       {
         source: '/:path*',
@@ -75,6 +80,7 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   images: {
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: apiProtocol,
