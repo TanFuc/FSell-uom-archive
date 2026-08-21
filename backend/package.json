@@ -118,5 +118,6 @@
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
-  }
+  },
+  "main": "main.js"
 }

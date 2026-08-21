@@ -12,6 +12,10 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     const upstashToken = this.configService.get<string>('UPSTASH_REDIS_TOKEN')?.trim()
     const redisUrl = this.configService.get<string>('REDIS_URL')?.trim()
     const redisPassword = this.configService.get<string>('REDIS_PASSWORD')?.trim()
+    const connectTimeoutMs = Number(
+      this.configService.get<string>('REDIS_CONNECT_TIMEOUT_MS') ?? '5000',
+    )
+    const maxRetries = Number(this.configService.get<string>('REDIS_MAX_RETRIES') ?? '3')
 
     const url = upstashUrl || redisUrl || 'redis://localhost:6379'
     const password = upstashToken || redisPassword || undefined
@@ -23,12 +27,26 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     this.client = createClient({
       url,
       password,
-      socket: isTlsRedis
-        ? {
-            tls: true,
-            rejectUnauthorized: true,
+      disableOfflineQueue: true,
+      socket: {
+        connectTimeout:
+          Number.isFinite(connectTimeoutMs) && connectTimeoutMs > 0 ? connectTimeoutMs : 5000,
+        keepAlive: 30000,
+        reconnectStrategy: (retries) => {
+          const retryLimit = Number.isFinite(maxRetries) && maxRetries >= 0 ? maxRetries : 3
+          if (retries > retryLimit) {
+            return false
           }
-        : undefined,
+
+          return Math.min(100 * retries, 1000)
+        },
+        ...(isTlsRedis
+          ? {
+              tls: true,
+              rejectUnauthorized: true,
+            }
+          : {}),
+      },
     })
 
     this.client.on('error', (err) => {

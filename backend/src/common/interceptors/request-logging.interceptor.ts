@@ -19,11 +19,24 @@ type ErrorWithStatus = {
   message?: string
 }
 
+type RequestLoggingOptions = {
+  logRequests?: boolean
+  slowRequestMs?: number
+}
+
 @Injectable()
 export class RequestLoggingInterceptor implements NestInterceptor {
   private readonly logger = new Logger('API')
+  private readonly logRequests: boolean
+  private readonly slowRequestMs: number
 
-  constructor(private readonly monitoringService?: MonitoringService) {}
+  constructor(
+    private readonly monitoringService?: MonitoringService,
+    options: RequestLoggingOptions = {},
+  ) {
+    this.logRequests = options.logRequests ?? true
+    this.slowRequestMs = options.slowRequestMs ?? 1500
+  }
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const now = Date.now()
@@ -43,7 +56,9 @@ export class RequestLoggingInterceptor implements NestInterceptor {
 
     this.monitoringService?.incrementInFlight(method, metricRoute)
 
-    if (scanProbeRequest) {
+    if (!this.logRequests) {
+      // Metrics stay active while production access logs stay quiet on small Plesk plans.
+    } else if (scanProbeRequest) {
       this.logger.debug(`[REQ] ${method} ${url} ip=${ip} user=${userId}`)
     } else {
       this.logger.log(`[REQ] ${method} ${url} ip=${ip} user=${userId}`)
@@ -56,6 +71,13 @@ export class RequestLoggingInterceptor implements NestInterceptor {
           const statusCode = response?.statusCode ?? 200
           this.monitoringService?.observeRequest(method, metricRoute, statusCode, duration / 1000)
           this.monitoringService?.decrementInFlight(method, metricRoute)
+          const shouldLogResponse =
+            this.logRequests || statusCode >= 500 || duration >= this.slowRequestMs
+
+          if (!shouldLogResponse) {
+            return
+          }
+
           if (scanProbeRequest && [403, 404, 429].includes(statusCode)) {
             this.logger.debug(
               `[RES] ${method} ${url} status=${statusCode} duration=${duration}ms ua="${userAgent}"`,
@@ -73,6 +95,13 @@ export class RequestLoggingInterceptor implements NestInterceptor {
           const message = requestError.message ?? 'Unknown error'
           this.monitoringService?.observeRequest(method, metricRoute, statusCode, duration / 1000)
           this.monitoringService?.decrementInFlight(method, metricRoute)
+          const shouldLogError =
+            this.logRequests || statusCode >= 500 || duration >= this.slowRequestMs
+
+          if (!shouldLogError) {
+            return
+          }
+
           if (scanProbeRequest && [403, 404, 429].includes(statusCode)) {
             this.logger.debug(
               `[ERR] ${method} ${url} status=${statusCode} duration=${duration}ms message="${message}"`,

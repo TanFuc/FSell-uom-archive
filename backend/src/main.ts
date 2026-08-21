@@ -28,6 +28,11 @@ async function bootstrap() {
   const port = configService.get<number>('PORT') ?? 3001
   const frontendUrl = configService.get<string>('FRONTEND_URL') ?? 'http://localhost:3000'
   const nodeEnv = configService.get<string>('NODE_ENV') ?? 'development'
+  const requestLoggingEnabled =
+    configService.get<string>('REQUEST_LOGGING_ENABLED') === 'true' || nodeEnv !== 'production'
+  const slowRequestLoggingMs = Number(
+    configService.get<string>('SLOW_REQUEST_LOGGING_MS') ?? '1500',
+  )
   const frontendUrls = (configService.get<string>('FRONTEND_URLS') ?? frontendUrl)
     .split(',')
     .map((url) => url.trim())
@@ -106,7 +111,13 @@ async function bootstrap() {
 
   const monitoringService = app.get(MonitoringService)
   app.useGlobalInterceptors(
-    new RequestLoggingInterceptor(monitoringService),
+    new RequestLoggingInterceptor(monitoringService, {
+      logRequests: requestLoggingEnabled,
+      slowRequestMs:
+        Number.isFinite(slowRequestLoggingMs) && slowRequestLoggingMs > 0
+          ? slowRequestLoggingMs
+          : 1500,
+    }),
     new TransformInterceptor(),
   )
 

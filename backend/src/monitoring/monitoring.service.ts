@@ -1,4 +1,5 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import { Counter, Gauge, Histogram, Registry, collectDefaultMetrics } from 'prom-client'
 import { PrismaService } from '../prisma'
 import { RedisService } from '../redis'
@@ -35,15 +36,24 @@ export class MonitoringService implements OnModuleInit {
   constructor(
     private readonly prisma: PrismaService,
     private readonly redis: RedisService,
+    private readonly configService: ConfigService,
   ) {}
 
   onModuleInit() {
-    collectDefaultMetrics({
-      prefix: 'uom_',
-      register: this.registry,
-    })
+    const defaultMetricsEnabled = this.configService.get<string>('METRICS_ENABLED') === 'true'
 
-    this.logger.log('Prometheus metrics initialized')
+    if (defaultMetricsEnabled) {
+      collectDefaultMetrics({
+        prefix: 'uom_',
+        register: this.registry,
+      })
+    }
+
+    this.logger.log(
+      defaultMetricsEnabled
+        ? 'Prometheus metrics initialized with default runtime collectors'
+        : 'Prometheus HTTP metrics initialized',
+    )
   }
 
   incrementInFlight(method: string, route: string) {
