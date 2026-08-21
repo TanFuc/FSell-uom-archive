@@ -742,7 +742,10 @@ export function Header() {
                     </div>
                     {isSearching && searchQuery && globalLoadingText && (
                       <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                        <span className="animate-pulse text-[10px] font-bold uppercase tracking-[0.25em] text-foreground/40">
+                        <span
+                          className="animate-pulse text-[10px] font-bold uppercase tracking-[0.25em] text-foreground/40"
+                          suppressHydrationWarning
+                        >
                           {globalLoadingText}
                         </span>
                       </div>
