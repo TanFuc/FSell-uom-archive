@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useBranding } from '@/hooks/use-settings'
 
 const BRANDING_CACHE_KEY = 'uom_branding_cache'
-const DEFAULT_LOADING_TEXT = 'UOM.'
+const DEFAULT_LOADING_TEXT = 'ƯƠM.'
 const DISPLAY_DURATION_MS = 1500
 
 function normalizeLoadingText(value?: string) {

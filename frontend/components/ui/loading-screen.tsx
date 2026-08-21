@@ -8,7 +8,7 @@ interface LoadingScreenProps {
   fullscreen?: boolean
 }
 
-const DEFAULT_LOADING_TEXT = 'UOM.'
+const DEFAULT_LOADING_TEXT = 'ƯƠM.'
 
 function normalizeLoadingText(value?: string) {
   const normalized = value?.trim()

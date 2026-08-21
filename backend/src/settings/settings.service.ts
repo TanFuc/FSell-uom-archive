@@ -10,7 +10,7 @@ import {
 } from './dto'
 
 const CACHE_TTL = 3600 // 1 hour in seconds
-const DEFAULT_LOADING_TEXT = 'UOM.'
+const DEFAULT_LOADING_TEXT = 'ƯƠM.'
 
 function normalizeLoadingText(value?: string): string {
   const normalized = value?.trim()

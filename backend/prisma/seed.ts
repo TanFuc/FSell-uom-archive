@@ -78,7 +78,7 @@ async function main() {
       contentEn: `
         <h2>It starts with a handful of clay</h2>
         <p>Every vase begins with a small handful of clay, kneaded until the surface feels silky. The artisan never rushes. They read moisture, elasticity, and the unique "temperament" of each clay batch.</p>
-        <p>At UOM., we believe timeless beauty does not come from absolute perfection, but from honesty in every fingerprint left by the making process.</p>
+        <p>At ƯƠM., we believe timeless beauty does not come from absolute perfection, but from honesty in every fingerprint left by the making process.</p>
         <h3>Keeping the fire for quality</h3>
         <p>Firing takes hours and demands precise temperature control. A subtle shift in flame can produce a completely different glaze transition.</p>
         <blockquote>"Each firing teaches us humility in front of material."</blockquote>
