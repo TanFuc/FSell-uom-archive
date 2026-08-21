@@ -6,7 +6,7 @@ import {
   Logger,
 } from '@nestjs/common'
 import { Prisma } from '@prisma/client'
-import * as bcrypt from 'bcrypt'
+import * as bcrypt from 'bcryptjs'
 import { PrismaService } from '../prisma/prisma.service'
 import { RedisService } from '../redis/redis.service'
 import { CreateUserDto, UpdateUserDto, QueryUsersDto } from './dto'
