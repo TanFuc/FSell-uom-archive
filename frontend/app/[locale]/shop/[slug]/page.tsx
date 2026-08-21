@@ -23,6 +23,7 @@ const PRODUCT_FETCH_TIMEOUT_MS = Number.parseInt(
   process.env.PRODUCT_FETCH_TIMEOUT_MS || process.env.SERVER_FETCH_TIMEOUT_MS || '1800',
   10,
 )
+export const revalidate = 300
 
 type ProductDetail = Product
 

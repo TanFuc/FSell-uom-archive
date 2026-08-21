@@ -446,7 +446,8 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                           src={optimizeProductImage(image, { width: 1200, height: 1600 })}
                           alt={`${name} - Ceramic Archive Piece ${index + 1} - ƯƠM. Archive`}
                           fill
-                          sizes="(max-width: 768px) 100vw, 60vw"
+                          sizes="(max-width: 768px) 100vw, 700px"
+                          quality={index === 0 ? 78 : 70}
                           className="object-cover object-center md:h-full md:w-full"
                           priority={index === 0}
                           fetchPriority={index === 0 ? 'high' : 'auto'}

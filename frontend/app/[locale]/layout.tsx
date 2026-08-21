@@ -148,6 +148,12 @@ export default async function RootLayout({ children, params: { locale } }: RootL
 
   return (
     <html lang={locale} suppressHydrationWarning>
+      <head>
+        <link rel="preconnect" href="https://images.uomarchive.com" crossOrigin="" />
+        <link rel="dns-prefetch" href="https://images.uomarchive.com" />
+        <link rel="preconnect" href="https://api.uomarchive.com" crossOrigin="" />
+        <link rel="dns-prefetch" href="https://api.uomarchive.com" />
+      </head>
       <body
         className={`${lora.variable} ${montserrat.variable} ${playfair.variable} flex min-h-screen flex-col bg-background font-serif antialiased`}
       >

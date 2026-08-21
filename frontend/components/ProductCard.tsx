@@ -2,6 +2,7 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { useExchangeRate } from '@/hooks/use-settings'
@@ -17,8 +18,10 @@ interface ProductCardProps {
 
 export function ProductCard({ product, locale, priority }: ProductCardProps) {
   const t = useTranslations('admin')
+  const router = useRouter()
   const { data: exchangeRate } = useExchangeRate({ enabled: locale === 'en' })
   const name = locale === 'vi' ? product.nameVi : product.nameEn
+  const productHref = `/${locale}/shop/${product.slug}`
   const hasImages = product.images && product.images.length > 0
   const mainImage = hasImages ? product.images[0] : null
   const hoverImage = product.hoverImage
@@ -30,12 +33,18 @@ export function ProductCard({ product, locale, priority }: ProductCardProps) {
 
   return (
     <Link
-      href={`/${locale}/shop/${product.slug}`}
+      href={productHref}
       className="animate-fade-in group block"
-      prefetch={false}
       draggable="false"
-      onMouseEnter={() => setShouldLoadHoverImage(true)}
-      onTouchStart={() => setShouldLoadHoverImage(true)}
+      onMouseEnter={() => {
+        setShouldLoadHoverImage(true)
+        router.prefetch(productHref)
+      }}
+      onFocus={() => router.prefetch(productHref)}
+      onTouchStart={() => {
+        setShouldLoadHoverImage(true)
+        router.prefetch(productHref)
+      }}
     >
       <span className="sr-only">{anchorLabel}</span>
       <div
@@ -52,7 +61,8 @@ export function ProductCard({ product, locale, priority }: ProductCardProps) {
                   : `${name} - Handcrafted Art Ceramics by ƯƠM. Archive`
               }
               fill
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 45vw, 31vw"
+              quality={priority ? 76 : 68}
               className="z-0 object-cover object-center transition-transform duration-500 group-hover:scale-105"
               style={{ objectFit: 'cover', objectPosition: 'center' }}
               priority={priority}
@@ -68,7 +78,8 @@ export function ProductCard({ product, locale, priority }: ProductCardProps) {
                     : `${name} (Details) - Vietnamese Ceramics by ƯƠM. Archive`
                 }
                 fill
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 45vw, 31vw"
+                quality={64}
                 className="z-10 object-cover object-center opacity-0 transition-all duration-500 group-hover:scale-105 group-hover:opacity-100"
                 style={{ objectFit: 'cover', objectPosition: 'center' }}
                 loading="lazy"
