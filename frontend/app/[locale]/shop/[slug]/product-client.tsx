@@ -19,6 +19,7 @@ interface ProductPageProps {
   params: {
     slug: string
   }
+  initialProduct?: Product | null
 }
 
 type VariantInfo = {
@@ -229,11 +230,13 @@ function useDragScroll() {
   }
 }
 
-export default function ProductClient({ params }: ProductPageProps) {
+export default function ProductClient({ params, initialProduct }: ProductPageProps) {
   const locale = useLocale() as 'vi' | 'en'
   const t = useTranslations('product')
   const tHome = useTranslations('Home')
-  const { data: product, isLoading, error } = useProduct(params.slug)
+  const { data: product, isLoading, error } = useProduct(params.slug, {
+    initialData: initialProduct ?? undefined,
+  })
   const { data: exchangeRate } = useExchangeRate()
   const { data: socialLinks } = useSocialLinks()
 
@@ -446,6 +449,7 @@ export default function ProductClient({ params }: ProductPageProps) {
                           sizes="(max-width: 768px) 100vw, 60vw"
                           className="object-cover object-center md:h-full md:w-full"
                           priority={index === 0}
+                          fetchPriority={index === 0 ? 'high' : 'auto'}
                           draggable="false"
                         />
                       </div>

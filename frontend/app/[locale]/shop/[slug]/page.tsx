@@ -10,6 +10,7 @@ import {
   truncateMetaDescription,
 } from '@/lib/seo'
 import { fetchBranding } from '@/lib/server-utils'
+import { type Product } from '@/lib/types'
 import ProductClient from './product-client'
 
 const API_URL =
@@ -23,26 +24,7 @@ const PRODUCT_FETCH_TIMEOUT_MS = Number.parseInt(
   10,
 )
 
-type ProductDetail = {
-  slug: string
-  nameVi?: string
-  nameEn?: string
-  shortDescriptionVi?: string
-  shortDescriptionEn?: string
-  descriptionVi?: string
-  descriptionEn?: string
-  images?: string[]
-  priceVND?: number
-  salePriceVND?: number | null
-  stock?: number
-  material?: string
-  dimensions?: string
-  updatedAt?: string
-  category?: {
-    nameVi?: string
-    nameEn?: string
-  } | null
-}
+type ProductDetail = Product
 
 type ProductResponse = {
   data?: ProductDetail
@@ -353,7 +335,7 @@ export default async function ProductPage({ params }: Props) {
           }}
         />
       )}
-      <ProductClient params={params} />
+      <ProductClient params={params} initialProduct={product} />
     </>
   )
 }
