@@ -415,23 +415,28 @@ async function main() {
 
   const monochromeImages = {
     vases: [
+      'https://images.uomarchive.com/seed/product-vase-1.png',
+      'https://images.uomarchive.com/seed/product-vase-2.png',
       'https://images.uomarchive.com/seed/product-vase-3.png',
       'https://images.uomarchive.com/seed/product-vase-4.png',
-      'https://images.uomarchive.com/seed/product-dinner-1.png',
     ],
     dinnerware: [
+      'https://images.uomarchive.com/seed/product-dinner-1.png',
       'https://images.uomarchive.com/seed/product-dinner-2.png',
-      'https://images.uomarchive.com/seed/product-tea-1.png',
-      'https://images.uomarchive.com/seed/product-tea-2.png',
+      'https://images.uomarchive.com/seed/product-dinner-3.png',
+      'https://images.uomarchive.com/seed/product-dinner-4.png',
     ],
     tea: [
+      'https://images.uomarchive.com/seed/product-tea-1.png',
+      'https://images.uomarchive.com/seed/product-tea-2.png',
+      'https://images.uomarchive.com/seed/product-teapot-1.png',
+      'https://images.uomarchive.com/seed/product-teapot-2.png',
+    ],
+    trays: [
       'https://images.uomarchive.com/seed/product-plate-1.png',
       'https://images.uomarchive.com/seed/product-plate-2.png',
       'https://images.uomarchive.com/seed/product-tray-1.png',
-    ],
-    trays: [
       'https://images.uomarchive.com/seed/product-tray-2.png',
-      'https://images.uomarchive.com/seed/product-teapot-1.png',
     ],
   }
 
@@ -450,7 +455,7 @@ async function main() {
         '<p>The Lieng vase brings tranquility and rustic charm to any space. Handcrafted from pure white clay and fired at 1200°C for exceptional durability.</p><p>The matte ivory glaze offers a warm tactile feel. Its elegant tall silhouette is ideal for dried botanicals like pampas or eucalyptus, or standing alone as an art piece.</p><ul><li>Matte ivory glaze</li><li>Minimalist, Nordic-friendly</li><li>Styled with neutral florals</li></ul>',
       priceVND: 1850000,
       salePriceVND: 1690000,
-      images: [monochromeImages.vases[0], monochromeImages.vases[1], monochromeImages.vases[2]],
+      images: [monochromeImages.vases[0], monochromeImages.vases[1]],
       hoverImage: monochromeImages.vases[1],
       categorySlug: 'binh-hoa-loc',
       material: 'Đất sét trắng nung cao độ / High-fire white clay',
@@ -475,8 +480,8 @@ async function main() {
       descriptionEn:
         '<p>The Abstract vase breaks away from traditional geometric norms. Each piece is unique with fluid, hand-molded curves.</p><p>Finished with an iron oxide glaze for a naturally weathered surface. Perfect for those seeking bold individuality in home decor.</p><ul><li>Sculptural asymmetry</li><li>Organic iron glaze</li><li>Statement decor piece</li></ul>',
       priceVND: 2100000,
-      images: [monochromeImages.vases[1], monochromeImages.vases[2]],
-      hoverImage: monochromeImages.vases[2],
+      images: [monochromeImages.vases[2], monochromeImages.vases[3]],
+      hoverImage: monochromeImages.vases[3],
       categorySlug: 'binh-hoa-loc',
       material: 'Đất cao lanh nguyên bản / Raw kaolin clay',
       dimensions: '30cm x 18cm',
@@ -576,8 +581,8 @@ async function main() {
       descriptionEn:
         '<p>Rectangular tea tray featuring a heat-resistant ceramic base that is easy to clean. The rim is crafted from treated, moisture-resistant natural acacia wood.</p><p>Brings a contemporary look while retaining the organic warmth of natural materials.</p><ul><li>Natural acacia rim</li><li>Heat-resistant ceramic base</li><li>Minimal tea-table styling</li></ul>',
       priceVND: 850000,
-      images: [monochromeImages.trays[1], monochromeImages.trays[0]],
-      hoverImage: monochromeImages.trays[0],
+      images: [monochromeImages.trays[2], monochromeImages.trays[3]],
+      hoverImage: monochromeImages.trays[3],
       categorySlug: 'dia-khay',
       material: 'Gốm mộc & Gỗ tràm / Raw ceramic & Acacia wood',
       dimensions: '35cm x 20cm x 3cm',
@@ -601,8 +606,8 @@ async function main() {
       descriptionEn:
         '<p>Includes 1 teapot (350ml) and 4 small cups. The ash glaze, made from natural plant ash, offers soft, rustic tones.</p><p>Round, balanced pot design with a smooth, drip-free spout. Perfect for deep conversations or quiet solitary tea moments.</p><ul><li>Natural ash glaze</li><li>Drip-free spout</li><li>1 teapot + 4 cups</li></ul>',
       priceVND: 1550000,
-      images: [monochromeImages.tea[1], monochromeImages.tea[0]],
-      hoverImage: monochromeImages.tea[0],
+      images: [monochromeImages.tea[2], monochromeImages.tea[3]],
+      hoverImage: monochromeImages.tea[3],
       categorySlug: 'chen-coc-tra',
       material: 'Gốm nung men tro / Ash-glazed stoneware',
       dimensions: 'Ấm 350ml, Chén 50ml',
@@ -626,8 +631,8 @@ async function main() {
       descriptionEn:
         '<p>Each piece in this dinnerware set is like a miniature ocean painting. The reactive glaze creates natural tonal shifts.</p><p>The 10-piece set is perfect for family gatherings or as a meaningful housewarming gift.</p><ul><li>Handmade reactive glaze</li><li>10-piece set</li><li>Gift-ready</li></ul>',
       priceVND: 4500000,
-      images: [monochromeImages.dinnerware[2], monochromeImages.dinnerware[0]],
-      hoverImage: monochromeImages.dinnerware[0],
+      images: [monochromeImages.dinnerware[2], monochromeImages.dinnerware[3]],
+      hoverImage: monochromeImages.dinnerware[3],
       categorySlug: 'bo-ban-an',
       material: 'Gốm sứ cao cấp / Premium porcelain',
       dimensions: 'Đa dạng / Assorted sizes',
