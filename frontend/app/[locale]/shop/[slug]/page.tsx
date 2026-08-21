@@ -18,6 +18,10 @@ const API_URL =
   process.env.NEXT_PUBLIC_API_URL ||
   'http://localhost:8888'
 const BASE_URL = getCanonicalBaseUrl()
+const PRODUCT_FETCH_TIMEOUT_MS = Number.parseInt(
+  process.env.PRODUCT_FETCH_TIMEOUT_MS || process.env.SERVER_FETCH_TIMEOUT_MS || '1800',
+  10,
+)
 
 type ProductDetail = {
   slug: string
@@ -79,7 +83,14 @@ function unwrapProductResponse(payload: unknown): ProductDetail | null {
 
 async function fetchProduct(slug: string): Promise<FetchProductResult> {
   try {
-    const res = await fetch(`${API_URL}/products/${slug}`, { next: { revalidate: 300 } })
+    const timeout =
+      Number.isFinite(PRODUCT_FETCH_TIMEOUT_MS) && PRODUCT_FETCH_TIMEOUT_MS > 0
+        ? PRODUCT_FETCH_TIMEOUT_MS
+        : 1800
+    const res = await fetch(`${API_URL}/products/${slug}`, {
+      next: { revalidate: 300 },
+      signal: AbortSignal.timeout(timeout),
+    })
     if (res.status === 404) {
       return { status: 'not-found' }
     }

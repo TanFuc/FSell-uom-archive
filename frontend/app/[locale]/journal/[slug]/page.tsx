@@ -27,6 +27,10 @@ const API_URL =
   process.env.NEXT_PUBLIC_API_URL ||
   'http://localhost:8888'
 const BASE_URL = getCanonicalBaseUrl()
+const STORY_FETCH_TIMEOUT_MS = Number.parseInt(
+  process.env.STORY_FETCH_TIMEOUT_MS || process.env.SERVER_FETCH_TIMEOUT_MS || '1800',
+  10,
+)
 
 type SiteContentResponse = Record<string, unknown>
 
@@ -37,8 +41,13 @@ type FetchSiteContentResult =
 
 async function fetchSiteContent(): Promise<FetchSiteContentResult> {
   try {
+    const timeout =
+      Number.isFinite(STORY_FETCH_TIMEOUT_MS) && STORY_FETCH_TIMEOUT_MS > 0
+        ? STORY_FETCH_TIMEOUT_MS
+        : 1800
     const response = await fetch(`${API_URL}/settings/site-content`, {
       next: { revalidate: 300 },
+      signal: AbortSignal.timeout(timeout),
     })
 
     if (response.status === 404) return { status: 'not-found' }

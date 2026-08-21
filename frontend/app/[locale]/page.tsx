@@ -22,6 +22,10 @@ const API_URL =
   process.env.NEXT_PUBLIC_API_URL ||
   'http://localhost:8888'
 export const revalidate = 60
+const HOME_FETCH_TIMEOUT_MS = Number.parseInt(
+  process.env.HOME_FETCH_TIMEOUT_MS || process.env.SERVER_FETCH_TIMEOUT_MS || '1800',
+  10,
+)
 
 type SiteContentResponse = Record<string, unknown>
 type HomeSiteContent = Record<string, string>
@@ -65,7 +69,11 @@ function getSiteContent(payload: unknown): HomeSiteContent {
 
 async function fetchHomeSsrData(): Promise<HomeSsrData> {
   const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), 5000)
+  const timeout =
+    Number.isFinite(HOME_FETCH_TIMEOUT_MS) && HOME_FETCH_TIMEOUT_MS > 0
+      ? HOME_FETCH_TIMEOUT_MS
+      : 1800
+  const timeoutId = setTimeout(() => controller.abort(), timeout)
 
   try {
     const fetchOptions = {

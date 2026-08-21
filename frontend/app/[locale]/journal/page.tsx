@@ -14,7 +14,7 @@ const API_URL =
   'http://localhost:8888'
 const BASE_URL = getCanonicalBaseUrl()
 const SITE_CONTENT_FETCH_TIMEOUT_MS = Number.parseInt(
-  process.env.SERVER_FETCH_TIMEOUT_MS || '5000',
+  process.env.SERVER_FETCH_TIMEOUT_MS || '1800',
   10,
 )
 export const revalidate = 3600
@@ -26,7 +26,7 @@ async function fetchSiteContent(): Promise<SiteContentResponse | null> {
   const timeout =
     Number.isFinite(SITE_CONTENT_FETCH_TIMEOUT_MS) && SITE_CONTENT_FETCH_TIMEOUT_MS > 0
       ? SITE_CONTENT_FETCH_TIMEOUT_MS
-      : 5000
+      : 1800
   const timer = setTimeout(() => controller.abort(), timeout)
 
   try {
