@@ -37,7 +37,7 @@ const montserrat = Montserrat({
 const playfair = Playfair_Display({
   subsets: ['latin', 'vietnamese'],
   variable: '--font-playfair',
-  display: 'swap',
+  display: 'block',
   weight: ['400', '500', '600', '700'],
 })
 
