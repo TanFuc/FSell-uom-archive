@@ -11,6 +11,7 @@ LOG_FILE="${LOG_FILE:-${LOG_DIR}/${APP_NAME}.log}"
 STANDALONE_DIR="${STANDALONE_DIR:-${APP_ROOT}/.next/standalone}"
 NODE_ENTRY="${NODE_ENTRY:-server.js}"
 RESTART_DELAY_SECONDS="${RESTART_DELAY_SECONDS:-3}"
+LOCK_TTL_SECONDS="${LOCK_TTL_SECONDS:-60}"
 AUTO_RESTART="${AUTO_RESTART:-${UOM_AUTO_RESTART:-0}}"
 FORCE_RESTART="${FORCE_RESTART:-${UOM_RESTART:-0}}"
 
@@ -23,16 +24,37 @@ usage() {
 is_running() {
   [ -f "$PID_FILE" ] || return 1
   pid="$(cat "$PID_FILE" 2>/dev/null || true)"
-  [ -n "$pid" ] || return 1
+  case "$pid" in
+    ''|*[!0-9]*)
+      rm -f "$PID_FILE"
+      return 1
+      ;;
+  esac
   kill -0 "$pid" 2>/dev/null
 }
 
 with_lock() {
   if ! mkdir "$LOCK_DIR" 2>/dev/null; then
-    echo "$APP_NAME lock exists. Another operation may be running: $LOCK_DIR" >&2
-    exit 1
+    created_at="$(cat "${LOCK_DIR}/created_at" 2>/dev/null || echo 0)"
+    now="$(date +%s 2>/dev/null || echo 0)"
+    age=$((now - created_at))
+    if [ "$created_at" -gt 0 ] 2>/dev/null && [ "$age" -gt "$LOCK_TTL_SECONDS" ]; then
+      rm -f "${LOCK_DIR}/created_at" 2>/dev/null || true
+      rmdir "$LOCK_DIR" 2>/dev/null || true
+      mkdir "$LOCK_DIR" 2>/dev/null || {
+        echo "$APP_NAME lock exists. Another operation may be running: $LOCK_DIR" >&2
+        exit 1
+      }
+    else
+      echo "$APP_NAME lock exists. Another operation may be running: $LOCK_DIR" >&2
+      exit 1
+    fi
   fi
-  trap 'rmdir "$LOCK_DIR" 2>/dev/null || true' EXIT INT TERM
+  date +%s >"${LOCK_DIR}/created_at" 2>/dev/null || true
+  if [ -f "$PID_FILE" ] && ! is_running; then
+    rm -f "$PID_FILE"
+  fi
+  trap 'rm -f "${LOCK_DIR}/created_at" 2>/dev/null || true; rmdir "$LOCK_DIR" 2>/dev/null || true' EXIT INT TERM
 }
 
 prepare_standalone() {
