@@ -74,8 +74,8 @@ start_app() {
   fi
 
   export NODE_ENV="${NODE_ENV:-production}"
-  export NODE_OPTIONS="${NODE_OPTIONS:---max-old-space-size=256}"
-  export UV_THREADPOOL_SIZE="${UV_THREADPOOL_SIZE:-4}"
+  export NODE_OPTIONS="${NODE_OPTIONS:---max-old-space-size=256 --v8-pool-size=1}"
+  export UV_THREADPOOL_SIZE="${UV_THREADPOOL_SIZE:-1}"
 
   if [ "$AUTO_RESTART" = "1" ]; then
     nohup sh -c '
