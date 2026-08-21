@@ -95,6 +95,10 @@ const nextConfig = {
     ],
     formats: ['image/avif', 'image/webp'],
   },
+  experimental: {
+    cpus: 1,
+    workerThreads: false,
+  },
 
   poweredByHeader: false,
   compress: true,

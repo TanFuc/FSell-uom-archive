@@ -5,8 +5,7 @@ process.env.NODE_ENV ||= 'production'
 process.env.UV_THREADPOOL_SIZE ||= '1'
 process.env.NEXT_TELEMETRY_DISABLED ||= '1'
 process.env.NEXT_PRIVATE_WORKER_THREADS ||= '0'
-
-await import('./prepare-standalone.mjs')
+process.env.NODE_OPTIONS ||= '--v8-pool-size=1'
 
 const root = process.cwd()
 const standaloneDir = path.join(root, '.next', 'standalone')
