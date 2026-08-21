@@ -11,6 +11,7 @@ const staticDest = path.join(standaloneDir, '.next', 'static')
 const publicSrc = path.join(root, 'public')
 const publicDest = path.join(standaloneDir, 'public')
 const serverEntry = path.join(standaloneDir, 'server.js')
+const forcePrepare = process.env.FORCE_PREPARE_STANDALONE === '1'
 const requiredServerFiles = [
   ['pages', '_error.js'],
   ['pages', '_error.js.nft.json'],
@@ -18,8 +19,12 @@ const requiredServerFiles = [
   ['app', '[locale]', 'shop', '[slug]', 'page.js.nft.json'],
 ]
 
-function copyDirIfExists(src, dest) {
+function copyDirIfNeeded(src, dest) {
   if (!existsSync(src)) {
+    return
+  }
+
+  if (existsSync(dest) && !forcePrepare) {
     return
   }
 
@@ -60,9 +65,9 @@ if (!existsSync(serverSrc) || !existsSync(staticSrc)) {
   process.exit(1)
 }
 
-copyDirIfExists(staticSrc, staticDest)
-copyDirIfExists(publicSrc, publicDest)
-copyDirIfExists(serverSrc, serverDest)
+copyDirIfNeeded(staticSrc, staticDest)
+copyDirIfNeeded(publicSrc, publicDest)
+copyDirIfNeeded(serverSrc, serverDest)
 
 const missingRequired = requiredServerFiles.filter((parts) => !ensureServerFile(parts))
 if (missingRequired.length > 0) {

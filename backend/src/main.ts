@@ -148,7 +148,10 @@ async function bootstrap() {
     logger.log(`Swagger documentation available at http://localhost:${port}/api/docs`)
   }
 
-  await app.listen(port, '0.0.0.0')
+  const server = await app.listen(port, '0.0.0.0')
+  server.keepAliveTimeout = 5000
+  server.headersTimeout = 6000
+  server.requestTimeout = 15000
   logger.log(`Application running on http://localhost:${port}`)
   logger.log(`Environment: ${nodeEnv}`)
 }
