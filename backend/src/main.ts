@@ -20,18 +20,80 @@ import {
 } from './common/security/probe-paths'
 import { MonitoringService } from './monitoring/monitoring.service'
 
-async function bootstrap() {
+const DEFAULT_PUBLIC_CACHE_MAX_AGE_SECONDS = 300
+const DEFAULT_PUBLIC_CACHE_S_MAXAGE_SECONDS = 3600
+const DEFAULT_PUBLIC_CACHE_STALE_WHILE_REVALIDATE_SECONDS = 86400
+
+function readPositiveInt(value: string | undefined, fallback: number): number {
+  const parsed = Number(value)
+  return Number.isFinite(parsed) && parsed >= 0 ? Math.floor(parsed) : fallback
+}
+
+function isPublicCacheableApiRequest(req: Request): boolean {
+  if (!['GET', 'HEAD'].includes(req.method)) return false
+  if (req.headers.authorization ?? req.headers.cookie) return false
+
+  const path = extractRequestPath(req)
+
+  if (
+    path.startsWith('/auth') ||
+    path.startsWith('/upload') ||
+    path.includes('/admin') ||
+    path.includes('/bulk')
+  ) {
+    return false
+  }
+
+  if (path === '/products' || path.startsWith('/products/')) {
+    return true
+  }
+
+  if (path === '/categories' || path.startsWith('/categories/slug/')) {
+    return req.query.includeDeleted !== 'true' && req.query.includeInactive !== 'true'
+  }
+
+  if (path === '/banners' || path.startsWith('/banners/')) {
+    return true
+  }
+
+  if (path === '/settings' || path.startsWith('/settings/')) {
+    return true
+  }
+
+  return false
+}
+
+let bootstrapPromise: Promise<void> | undefined
+
+async function startApplication(): Promise<void> {
   const logger = new Logger('Bootstrap')
   const app = await NestFactory.create<NestExpressApplication>(AppModule)
 
   const configService = app.get(ConfigService)
-  const port = configService.get<number>('PORT') ?? 3001
+  const rawPort = process.env.PORT ?? '3001'
+  const port = Number(rawPort)
+
+  if (!Number.isInteger(port) || port <= 0 || port > 65535) {
+    throw new Error(`Invalid PORT: ${rawPort}`)
+  }
   const frontendUrl = configService.get<string>('FRONTEND_URL') ?? 'http://localhost:3000'
   const nodeEnv = configService.get<string>('NODE_ENV') ?? 'development'
   const requestLoggingEnabled =
     configService.get<string>('REQUEST_LOGGING_ENABLED') === 'true' || nodeEnv !== 'production'
   const slowRequestLoggingMs = Number(
     configService.get<string>('SLOW_REQUEST_LOGGING_MS') ?? '1500',
+  )
+  const publicCacheMaxAgeSeconds = readPositiveInt(
+    configService.get<string>('PUBLIC_CACHE_MAX_AGE_SECONDS'),
+    DEFAULT_PUBLIC_CACHE_MAX_AGE_SECONDS,
+  )
+  const publicCacheSMaxAgeSeconds = readPositiveInt(
+    configService.get<string>('PUBLIC_CACHE_S_MAXAGE_SECONDS'),
+    DEFAULT_PUBLIC_CACHE_S_MAXAGE_SECONDS,
+  )
+  const publicCacheStaleWhileRevalidateSeconds = readPositiveInt(
+    configService.get<string>('PUBLIC_CACHE_STALE_WHILE_REVALIDATE_SECONDS'),
+    DEFAULT_PUBLIC_CACHE_STALE_WHILE_REVALIDATE_SECONDS,
   )
   const frontendUrls = Array.from(
     new Set(
@@ -49,12 +111,39 @@ async function bootstrap() {
         .filter(Boolean) as string[],
     ),
   )
+  const publicCacheControlHeader = [
+    'public',
+    `max-age=${publicCacheMaxAgeSeconds}`,
+    `s-maxage=${publicCacheSMaxAgeSeconds}`,
+    `stale-while-revalidate=${publicCacheStaleWhileRevalidateSeconds}`,
+  ].join(', ')
+
+  app.set('etag', 'weak')
 
   app.use(
     helmet({
       crossOriginResourcePolicy: { policy: 'cross-origin' },
     }),
   )
+
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    const requestPath = extractRequestPath(req)
+
+    if (['GET', 'HEAD'].includes(req.method) && (requestPath === '/' || requestPath === '')) {
+      res.setHeader('Cache-Control', 'no-store')
+      return res.status(200).json({
+        status: 'ok',
+        service: 'uom-archive-api',
+      })
+    }
+
+    if (['GET', 'HEAD'].includes(req.method) && requestPath === '/favicon.ico') {
+      res.setHeader('Cache-Control', 'public, max-age=86400')
+      return res.status(204).send()
+    }
+
+    return next()
+  })
 
   app.use((req: Request, res: Response, next: NextFunction) => {
     const requestPath = extractRequestPath(req)
@@ -78,6 +167,15 @@ async function bootstrap() {
         statusCode: 404,
         message: 'Not Found',
       })
+    }
+
+    return next()
+  })
+
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    if (isPublicCacheableApiRequest(req)) {
+      res.setHeader('Cache-Control', publicCacheControlHeader)
+      res.setHeader('Vary', 'Accept-Encoding')
     }
 
     return next()
@@ -177,6 +275,11 @@ async function bootstrap() {
   server.requestTimeout = 15000
   logger.log(`Application running on http://localhost:${port}`)
   logger.log(`Environment: ${nodeEnv}`)
+}
+
+export function bootstrap(): Promise<void> {
+  bootstrapPromise ??= startApplication()
+  return bootstrapPromise
 }
 
 void bootstrap()

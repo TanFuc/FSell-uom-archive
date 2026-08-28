@@ -110,6 +110,10 @@ export class MonitoringService implements OnModuleInit {
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
       responseTimeMs: Date.now() - startedAt,
+      runtime: {
+        node: process.version,
+        prismaEngine: process.env.PRISMA_CLIENT_ENGINE_TYPE || 'library',
+      },
       services: {
         api: 'up' as HealthStatus,
         database: dbStatus,
