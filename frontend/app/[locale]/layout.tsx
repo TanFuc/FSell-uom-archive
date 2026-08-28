@@ -155,6 +155,7 @@ export default async function RootLayout({ children, params: { locale } }: RootL
         <link rel="dns-prefetch" href="https://api.uomarchive.com" />
       </head>
       <body
+        suppressHydrationWarning
         className={`${lora.variable} ${montserrat.variable} ${playfair.variable} flex min-h-screen flex-col bg-background font-serif antialiased`}
       >
         <DisableRightClick />

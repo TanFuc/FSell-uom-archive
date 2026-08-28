@@ -138,11 +138,11 @@ export default function BannerForm({ initialData }: BannerFormProps) {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Link href={`/${locale}/admin/banners`}>
-          <Button variant="ghost" size="icon">
+        <Button asChild variant="ghost" size="icon">
+          <Link href={`/${locale}/admin/banners`}>
             <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
+          </Link>
+        </Button>
         <div>
           <h1 className="font-serif text-2xl">{initialData ? 'Edit Banner' : 'Create Banner'}</h1>
         </div>

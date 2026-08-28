@@ -126,12 +126,12 @@ export default function TrashPage() {
             {deletedProducts.length} {t('inTrash')}
           </p>
         </div>
-        <Link href={`/${locale}/admin/products`}>
-          <Button variant="outline">
+        <Button asChild variant="outline">
+          <Link href={`/${locale}/admin/products`}>
             <X className="mr-2 h-4 w-4" />
             Đóng
-          </Button>
-        </Link>
+          </Link>
+        </Button>
       </div>
 
       {/* Bulk Actions */}

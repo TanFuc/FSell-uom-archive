@@ -4,11 +4,11 @@ import { motion, AnimatePresence, useMotionValue, useSpring } from 'framer-motio
 import { Instagram, Facebook, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { ProductCard } from '@/components/ProductCard'
 import { LoadingScreen } from '@/components/ui/loading-screen'
+import { NetworkErrorState } from '@/components/ui/network-error-state'
 import { useProduct, useProducts } from '@/hooks/use-products'
 import { useExchangeRate, useSocialLinks } from '@/hooks/use-settings'
 import { getDisplayPrice } from '@/lib/currency'
@@ -234,7 +234,13 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
   const locale = useLocale() as 'vi' | 'en'
   const t = useTranslations('product')
   const tHome = useTranslations('Home')
-  const { data: product, isLoading, error } = useProduct(params.slug, {
+  const {
+    data: product,
+    isLoading,
+    isFetching,
+    error,
+    refetch,
+  } = useProduct(params.slug, {
     initialData: initialProduct ?? undefined,
   })
   const { data: exchangeRate } = useExchangeRate({ enabled: locale === 'en' })
@@ -291,7 +297,7 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
   }
 
   if (error || !product) {
-    notFound()
+    return <NetworkErrorState compact isRetrying={isFetching} onRetry={() => refetch()} />
   }
 
   const description = locale === 'vi' ? product.descriptionVi : product.descriptionEn
@@ -466,7 +472,7 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
 
             {/* 2. Right Column: Sticky Product Details */}
             <div className="relative min-w-0 px-0 md:px-0">
-              <div className="space-y-4 pb-12 pt-10 md:sticky md:top-32 md:space-y-12 md:pb-24 md:pt-0">
+              <div className="space-y-4 pb-12 pt-10 md:sticky md:top-[50vh] md:max-h-[calc(100vh-96px)] md:-translate-y-1/2 md:space-y-12 md:overflow-y-auto md:pb-0 md:pt-0">
                 {/* Info Header */}
                 <div className="mb-8 space-y-2">
                   <h1 className="text-mobile-safe font-sans text-[13px] font-bold leading-tight tracking-[0.08em] text-foreground sm:tracking-[0.1em]">

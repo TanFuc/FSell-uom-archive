@@ -6,6 +6,7 @@ import { getTranslations } from 'next-intl/server'
 import { buildPageMetadata, getCanonicalBaseUrl } from '@/lib/seo'
 import { fetchBranding } from '@/lib/server-utils'
 import { getStorySlug, parseStories, STORIES_CONTENT_KEY } from '@/lib/stories'
+import { DATA_REVALIDATE_SECONDS, PAGE_REVALIDATE_SECONDS } from '@/lib/cache-config'
 
 const API_URL =
   process.env.SERVER_API_URL ||
@@ -17,7 +18,7 @@ const SITE_CONTENT_FETCH_TIMEOUT_MS = Number.parseInt(
   process.env.SERVER_FETCH_TIMEOUT_MS || '1800',
   10,
 )
-export const revalidate = 3600
+export const revalidate = PAGE_REVALIDATE_SECONDS
 
 type SiteContentResponse = Record<string, unknown>
 
@@ -31,7 +32,7 @@ async function fetchSiteContent(): Promise<SiteContentResponse | null> {
 
   try {
     const response = await fetch(`${API_URL}/settings/site-content`, {
-      next: { revalidate: 300 },
+      next: { revalidate: DATA_REVALIDATE_SECONDS },
       signal: controller.signal,
     })
 

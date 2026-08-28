@@ -2,7 +2,6 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { useExchangeRate } from '@/hooks/use-settings'
@@ -18,7 +17,6 @@ interface ProductCardProps {
 
 export function ProductCard({ product, locale, priority }: ProductCardProps) {
   const t = useTranslations('admin')
-  const router = useRouter()
   const { data: exchangeRate } = useExchangeRate({ enabled: locale === 'en' })
   const name = locale === 'vi' ? product.nameVi : product.nameEn
   const productHref = `/${locale}/shop/${product.slug}`
@@ -34,16 +32,14 @@ export function ProductCard({ product, locale, priority }: ProductCardProps) {
   return (
     <Link
       href={productHref}
+      prefetch={false}
       className="animate-fade-in group block"
       draggable="false"
       onMouseEnter={() => {
         setShouldLoadHoverImage(true)
-        router.prefetch(productHref)
       }}
-      onFocus={() => router.prefetch(productHref)}
       onTouchStart={() => {
         setShouldLoadHoverImage(true)
-        router.prefetch(productHref)
       }}
     >
       <span className="sr-only">{anchorLabel}</span>

@@ -4,6 +4,7 @@ import { Suspense } from 'react'
 import { buildPageMetadata, getCanonicalBaseUrl, getSeoBrandName } from '@/lib/seo'
 import { fetchBranding } from '@/lib/server-utils'
 import { type Category, type PaginatedResponse, type Product } from '@/lib/types'
+import { DATA_REVALIDATE_SECONDS, PAGE_REVALIDATE_SECONDS } from '@/lib/cache-config'
 import ShopClient from './shop-client'
 
 const BASE_URL = getCanonicalBaseUrl()
@@ -12,7 +13,7 @@ const API_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ||
   process.env.NEXT_PUBLIC_API_URL ||
   'http://localhost:8888'
-export const revalidate = 3600
+export const revalidate = PAGE_REVALIDATE_SECONDS
 const SHOP_FETCH_TIMEOUT_MS = Number.parseInt(
   process.env.SHOP_FETCH_TIMEOUT_MS || process.env.SERVER_FETCH_TIMEOUT_MS || '1800',
   10,
@@ -58,7 +59,7 @@ async function fetchJson(url: string): Promise<unknown> {
       ? SHOP_FETCH_TIMEOUT_MS
       : 1800
   const res = await fetch(url, {
-    next: { revalidate: 300 },
+    next: { revalidate: DATA_REVALIDATE_SECONDS },
     signal: AbortSignal.timeout(timeout),
   })
 

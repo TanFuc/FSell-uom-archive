@@ -12,6 +12,7 @@ import {
   truncateMetaDescription,
 } from '@/lib/seo'
 import { fetchBranding } from '@/lib/server-utils'
+import { DATA_REVALIDATE_SECONDS, PAGE_REVALIDATE_SECONDS } from '@/lib/cache-config'
 import {
   getStoryBySlug,
   getStorySlug,
@@ -31,6 +32,7 @@ const STORY_FETCH_TIMEOUT_MS = Number.parseInt(
   process.env.STORY_FETCH_TIMEOUT_MS || process.env.SERVER_FETCH_TIMEOUT_MS || '1800',
   10,
 )
+export const revalidate = PAGE_REVALIDATE_SECONDS
 
 type SiteContentResponse = Record<string, unknown>
 
@@ -46,7 +48,7 @@ async function fetchSiteContent(): Promise<FetchSiteContentResult> {
         ? STORY_FETCH_TIMEOUT_MS
         : 1800
     const response = await fetch(`${API_URL}/settings/site-content`, {
-      next: { revalidate: 300 },
+      next: { revalidate: DATA_REVALIDATE_SECONDS },
       signal: AbortSignal.timeout(timeout),
     })
 

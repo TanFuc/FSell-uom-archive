@@ -519,5 +519,19 @@
     "back": "Back",
     "next": "Next",
     "previous": "Previous"
+  },
+  "networkError": {
+    "serviceLabel": "Connection interrupted",
+    "offlineLabel": "You are offline",
+    "serviceTitle": "A quiet pause.",
+    "offlineTitle": "Connection lost.",
+    "serviceDescription": "We could not reach UOM just now. Your visit is still here — please try again in a moment.",
+    "offlineDescription": "It looks like your device is offline. Check your Wi-Fi or mobile connection, then try again.",
+    "retry": "Try again",
+    "retrying": "Trying again",
+    "backHome": "Return home",
+    "hint": "If this continues, wait a moment before refreshing the page.",
+    "offlineStatus": "Offline",
+    "checkingStatus": "Service unavailable"
   }
 }

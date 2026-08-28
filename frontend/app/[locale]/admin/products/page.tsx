@@ -314,12 +314,12 @@ export default function ProductsPage() {
           <p className="text-muted-foreground">{t('manageProductCatalog')}</p>
         </div>
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-          <Link href={`/${locale}/admin/products/trash`}>
-            <Button variant="outline" className="w-full sm:w-auto">
+          <Button asChild variant="outline" className="w-full sm:w-auto">
+            <Link href={`/${locale}/admin/products/trash`}>
               <Trash className="mr-2 h-4 w-4" />
               {t('trash')}
-            </Button>
-          </Link>
+            </Link>
+          </Button>
           <Button
             onClick={() => router.push(`/${locale}/admin/products/new`)}
             className="w-full sm:w-auto"

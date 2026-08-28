@@ -99,8 +99,7 @@ export function SplashScreen({ initialLoadingText }: { initialLoadingText?: stri
       }, FONT_READY_TIMEOUT_MS)
 
       Promise.allSettled([
-        document.fonts.load(`400 1em "${fontName}"`),
-        document.fonts.load(`500 1em "${fontName}"`),
+        document.fonts.load(`700 1em "${fontName}"`),
         document.fonts.ready,
       ])
         .then(() => {
@@ -139,7 +138,7 @@ export function SplashScreen({ initialLoadingText }: { initialLoadingText?: stri
       <div className="relative mx-auto w-full max-w-[90vw] px-4 text-center">
         {normalizedDisplayText && fontReady && (
           <h1
-            className="animate-pulse break-words font-playfair text-[clamp(2rem,12vw,5rem)] font-medium leading-[0.95] tracking-[0.08em] text-foreground [overflow-wrap:anywhere] md:tracking-[0.12em]"
+            className="animate-pulse break-words font-playfair text-[clamp(2rem,12vw,5rem)] font-bold leading-[0.95] tracking-[0.08em] text-foreground [overflow-wrap:anywhere] md:tracking-[0.12em]"
             style={{
               animation: 'fadeIn 220ms ease-out, pulse 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
             }}

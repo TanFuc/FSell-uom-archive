@@ -17,7 +17,7 @@ const API_CANDIDATES = [
   process.env.NEXT_PUBLIC_API_BASE_URL,
   process.env.NEXT_PUBLIC_API_URL,
   'https://api.uomarchive.com',
-  'http://localhost:8888',
+  ...(process.env.NODE_ENV === 'production' ? [] : ['http://localhost:8888']),
 ]
   .filter((value): value is string => Boolean(value))
   .map((value) => value.replace(/\/$/, ''))
@@ -38,14 +38,23 @@ export type Product = {
   priceVND: number
 }
 
+type SitemapProductPayload = {
+  id?: string
+  _id?: string
+  slug?: string
+  nameVi?: string
+  nameEn?: string
+  shortDescriptionVi?: string
+  shortDescriptionEn?: string
+  updatedAt?: string | null
+  image?: string
+  images?: string[]
+  hoverImage?: string
+  priceVND?: number
+}
+
 type ProductsResponse = {
-  data?: Array<{
-    slug?: string
-    updatedAt?: string
-    image?: string
-    images?: string[]
-    hoverImage?: string
-  }>
+  data?: SitemapProductPayload[]
   meta?: {
     page?: number
     limit?: number
@@ -63,6 +72,11 @@ export type SitemapUrlEntry = {
   images?: string[]
   alternates?: Record<string, string>
 }
+
+let productsRequest: Promise<Product[]> | null = null
+let storiesRequest: Promise<StoryItem[]> | null = null
+let lastProductsSnapshot: Product[] | null = null
+let lastStoriesSnapshot: StoryItem[] | null = null
 
 async function fetchWithTimeout(input: string, init?: RequestInit): Promise<Response> {
   const controller = new AbortController()
@@ -144,7 +158,7 @@ function toAbsoluteUrl(value: string): string {
   return `${BASE_URL}${encodedPath}`
 }
 
-function parseProduct(product: any): Product | null {
+function parseProduct(product: SitemapProductPayload): Product | null {
   if (!product?.slug) {
     return null
   }
@@ -250,17 +264,12 @@ async function fetchAllProductsFromApi(apiUrl: string): Promise<Product[]> {
   return products
 }
 
-export async function fetchAllProducts(): Promise<Product[]> {
-  let bestProducts: Product[] = []
-  let hasSuccessfulSource = false
-
+async function fetchAllProductsFromConfiguredSources(): Promise<Product[]> {
   for (const apiUrl of API_URLS) {
     try {
       const products = dedupeProducts(await fetchAllProductsFromApi(apiUrl))
-      hasSuccessfulSource = true
-      if (products.length > bestProducts.length) {
-        bestProducts = products
-      }
+      lastProductsSnapshot = products
+      return products
     } catch (error) {
       console.warn(
         `[sitemap] products source failed: ${apiUrl}`,
@@ -270,11 +279,29 @@ export async function fetchAllProducts(): Promise<Product[]> {
     }
   }
 
-  if (!hasSuccessfulSource) {
-    throw new Error('[sitemap] failed to fetch products from all configured API sources')
+  if (lastProductsSnapshot) {
+    console.warn('[sitemap] all product API sources failed — serving the in-memory snapshot')
+    return lastProductsSnapshot
   }
 
-  return bestProducts
+  throw new Error('[sitemap] failed to fetch products from all configured API sources')
+}
+
+export async function fetchAllProducts(): Promise<Product[]> {
+  if (productsRequest) {
+    return productsRequest
+  }
+
+  const request = fetchAllProductsFromConfiguredSources()
+  productsRequest = request
+
+  try {
+    return await request
+  } finally {
+    if (productsRequest === request) {
+      productsRequest = null
+    }
+  }
 }
 
 async function fetchSiteContentFromApi(apiUrl: string): Promise<SiteContentResponse | null> {
@@ -319,20 +346,15 @@ export function safeEncodePathSegment(value: string): string {
     return encodeURIComponent(stripLoneSurrogates(value))
   }
 }
-export async function fetchStories(): Promise<StoryItem[]> {
-  let bestStories = parseStories(undefined)
-  let hasSuccessfulSource = false
-
+async function fetchStoriesFromConfiguredSources(): Promise<StoryItem[]> {
   for (const apiUrl of API_URLS) {
     try {
       const siteContent = await fetchSiteContentFromApi(apiUrl)
-      hasSuccessfulSource = true
       const stories = parseStories(siteContent?.[STORIES_CONTENT_KEY]).filter(
         (story) => story.isVisible !== false,
       )
-      if (stories.length > bestStories.length) {
-        bestStories = stories
-      }
+      lastStoriesSnapshot = stories
+      return stories
     } catch (error) {
       console.warn(
         `[sitemap] stories source failed: ${apiUrl}`,
@@ -342,14 +364,30 @@ export async function fetchStories(): Promise<StoryItem[]> {
     }
   }
 
-  if (!hasSuccessfulSource) {
-    // Return empty array instead of throwing — the unified sitemap.xml uses Promise.allSettled
-    // and degrades gracefully. Throwing here would crash static page lastmod calculations too.
-    console.warn('[sitemap] all story API sources failed — returning empty story list')
-    return []
+  if (lastStoriesSnapshot) {
+    console.warn('[sitemap] all story API sources failed — serving the in-memory snapshot')
+    return lastStoriesSnapshot
   }
 
-  return bestStories
+  console.warn('[sitemap] all story API sources failed — returning empty story list')
+  return parseStories(undefined)
+}
+
+export async function fetchStories(): Promise<StoryItem[]> {
+  if (storiesRequest) {
+    return storiesRequest
+  }
+
+  const request = fetchStoriesFromConfiguredSources()
+  storiesRequest = request
+
+  try {
+    return await request
+  } finally {
+    if (storiesRequest === request) {
+      storiesRequest = null
+    }
+  }
 }
 
 function getLatestDate(values: Array<string | null | undefined>, fallback: Date): Date {

@@ -72,6 +72,7 @@ const SearchResultItem = memo(
     return (
       <Link
         href={`/${locale}/shop/${product.slug}`}
+        prefetch={false}
         onClick={onClick}
         className={cn(
           'group block rounded-2xl border border-foreground/[0.08] bg-[linear-gradient(160deg,#ffffff_0%,#faf8f2_100%)] p-3 text-center shadow-[0_8px_20px_rgba(0,0,0,0.05)] transition-all duration-300 hover:-translate-y-1 hover:border-foreground/20 hover:shadow-[0_18px_34px_rgba(0,0,0,0.15)]',

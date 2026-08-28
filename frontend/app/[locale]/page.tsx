@@ -14,6 +14,7 @@ import {
 import { fetchBranding } from '@/lib/server-utils'
 import { getStorySlug, parseStories, STORIES_CONTENT_KEY, type StoryItem } from '@/lib/stories'
 import { type Banner, type Product } from '@/lib/types'
+import { DATA_REVALIDATE_SECONDS, PAGE_REVALIDATE_SECONDS } from '@/lib/cache-config'
 import HomeClient from './home-client'
 
 const API_URL =
@@ -21,7 +22,7 @@ const API_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ||
   process.env.NEXT_PUBLIC_API_URL ||
   'http://localhost:8888'
-export const revalidate = 60
+export const revalidate = PAGE_REVALIDATE_SECONDS
 const HOME_FETCH_TIMEOUT_MS = Number.parseInt(
   process.env.HOME_FETCH_TIMEOUT_MS || process.env.SERVER_FETCH_TIMEOUT_MS || '1800',
   10,
@@ -77,7 +78,7 @@ async function fetchHomeSsrData(): Promise<HomeSsrData> {
 
   try {
     const fetchOptions = {
-      next: { revalidate: 60 },
+      next: { revalidate: DATA_REVALIDATE_SECONDS },
       signal: controller.signal,
     }
 

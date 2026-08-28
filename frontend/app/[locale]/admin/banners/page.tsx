@@ -121,12 +121,12 @@ export default function BannersPage() {
           <h1 className="font-serif text-2xl">{t('banners.pageTitle')}</h1>
           <p className="text-muted-foreground">{t('banners.pageDesc')}</p>
         </div>
-        <Link href={`/${locale}/admin/banners/new`}>
-          <Button className="w-full sm:w-auto">
+        <Button asChild className="w-full sm:w-auto">
+          <Link href={`/${locale}/admin/banners/new`}>
             <Plus className="mr-2 h-4 w-4" />
             {t('banners.create')}
-          </Button>
-        </Link>
+          </Link>
+        </Button>
       </div>
 
       <div className="rounded-md border">
