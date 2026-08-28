@@ -1,0 +1,8 @@
+<IfModule Litespeed>
+    SetEnv LSAPI_CHILDREN 1
+    SetEnv LSAPI_AVOID_FORK 1
+    SetEnv LSAPI_MAX_IDLE 0
+    SetEnv NODE_OPTIONS "--max-old-space-size=256 --v8-pool-size=1"
+    SetEnv UV_THREADPOOL_SIZE 1
+    SetEnv PRISMA_CLIENT_ENGINE_TYPE library
+</IfModule>

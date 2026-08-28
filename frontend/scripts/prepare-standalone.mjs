@@ -10,6 +10,8 @@ const staticSrc = path.join(nextDir, 'static')
 const staticDest = path.join(standaloneDir, '.next', 'static')
 const publicSrc = path.join(root, 'public')
 const publicDest = path.join(standaloneDir, 'public')
+const publicNextStaticDest = path.join(publicSrc, '_next', 'static')
+const standalonePublicNextStaticDest = path.join(publicDest, '_next', 'static')
 const serverEntry = path.join(standaloneDir, 'server.js')
 const forcePrepare = process.env.FORCE_PREPARE_STANDALONE === '1'
 const envFiles = ['.env', '.env.local', '.env.production', '.env.production.local']
@@ -67,7 +69,9 @@ if (!existsSync(serverSrc) || !existsSync(staticSrc)) {
 }
 
 copyDirIfNeeded(staticSrc, staticDest)
+copyDirIfNeeded(staticSrc, publicNextStaticDest)
 copyDirIfNeeded(publicSrc, publicDest)
+copyDirIfNeeded(staticSrc, standalonePublicNextStaticDest)
 copyDirIfNeeded(serverSrc, serverDest)
 
 for (const envFile of envFiles) {

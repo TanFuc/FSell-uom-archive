@@ -1,0 +1,12 @@
+PassengerEnabled on
+PassengerAppType node
+PassengerStartupFile passenger-frontend.js
+PassengerMinInstances 1
+PassengerMaxInstances 1
+PassengerForceMaxConcurrentRequestsPerProcess 0
+
+# PassengerMaxPoolSize and PassengerPoolIdleTime are server-only. For these two
+# apps the provider should set PassengerMaxPoolSize 2 and PassengerPoolIdleTime 0.
+
+Options -MultiViews
+RewriteEngine On

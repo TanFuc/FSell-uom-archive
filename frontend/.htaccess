@@ -1,0 +1,26 @@
+<IfModule mod_passenger.c>
+  PassengerEnabled on
+  PassengerAppType node
+  PassengerStartupFile litespeed-entry.js
+  PassengerMinInstances 1
+  PassengerMaxInstances 1
+  PassengerMaxPoolSize 1
+  PassengerPoolIdleTime 0
+  PassengerMaxRequests 0
+</IfModule>
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [END]
+</IfModule>
+
+<IfModule Litespeed>
+    SetEnv LSAPI_CHILDREN 1
+    SetEnv LSAPI_AVOID_FORK 1
+    SetEnv LSAPI_MAX_IDLE 0
+    SetEnv NODE_OPTIONS "--max-old-space-size=256 --v8-pool-size=1"
+    SetEnv UV_THREADPOOL_SIZE 1
+    SetEnv NEXT_TELEMETRY_DISABLED 1
+</IfModule>

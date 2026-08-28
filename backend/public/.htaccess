@@ -1,0 +1,8 @@
+PassengerEnabled on
+PassengerAppType node
+PassengerStartupFile passenger-backend.js
+PassengerMinInstances 1
+PassengerMaxInstances 1
+PassengerForceMaxConcurrentRequestsPerProcess 0
+
+# PassengerPoolIdleTime 0 is server-only; the hosting provider must set it.
