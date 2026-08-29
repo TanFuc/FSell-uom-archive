@@ -1,3 +1,13 @@
+<IfModule mod_env.c>
+    SetEnv NODE_ENV production
+    SetEnv NODE_OPTIONS "--max-old-space-size=256 --v8-pool-size=1"
+    SetEnv UV_THREADPOOL_SIZE 1
+    SetEnv PRISMA_CLIENT_ENGINE_TYPE library
+    SetEnv SHARP_CONCURRENCY 1
+    SetEnv REQUEST_LOGGING_ENABLED false
+    SetEnv METRICS_ENABLED false
+</IfModule>
+
 PassengerEnabled on
 PassengerAppType node
 PassengerStartupFile passenger-backend.js
