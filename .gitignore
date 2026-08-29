@@ -25,9 +25,13 @@ logs/
 *.log
 *.tmp
 *.temp
+tmp/
+*/tmp/
 .cache/
 .runtime/
 */.runtime/
+public/_next/
+*/public/_next/
 
 # OS / editors
 .DS_Store

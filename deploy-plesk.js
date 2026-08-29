@@ -10,12 +10,21 @@ const frontendRoot = path.join(workspace, 'frontend')
 const npmFilename = process.platform === 'win32' ? 'npm.cmd' : 'npm'
 const bundledNpm = path.join(path.dirname(process.execPath), npmFilename)
 const npmCommand = existsSync(bundledNpm) ? bundledNpm : npmFilename
+const npmCli = path.join(path.dirname(process.execPath), 'node_modules', 'npm', 'bin', 'npm-cli.js')
 
 function runBuild(projectRoot, label) {
   console.log(`Building ${label}...`)
-  const result = spawnSync(npmCommand, ['run', 'build'], {
+  const command = existsSync(npmCli) ? process.execPath : npmCommand
+  const args = existsSync(npmCli) ? [npmCli, 'run', 'build'] : ['run', 'build']
+  const result = spawnSync(command, args, {
     cwd: projectRoot,
-    env: { ...process.env, NODE_ENV: 'production' },
+    env: {
+      ...process.env,
+      NODE_ENV: 'production',
+      NODE_OPTIONS: process.env.BUILD_NODE_OPTIONS || '--max-old-space-size=1024 --v8-pool-size=1',
+      UV_THREADPOOL_SIZE: '1',
+      NEXT_TELEMETRY_DISABLED: '1',
+    },
     stdio: 'inherit',
   })
 
