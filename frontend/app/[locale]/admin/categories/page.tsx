@@ -46,19 +46,21 @@ export default function CategoriesPage() {
   const handleDelete = async (id: string, name: string) => {
     if (!confirm(`${t('confirmDelete')} "${name}"?`)) return
 
+    setCategories((prev) => prev.filter((c) => c.id !== id))
+
     try {
       await api.deleteCategory(id)
       toast({
         title: t('success'),
         description: t('categoryDeleted'),
       })
-      fetchCategories()
     } catch (error) {
       toast({
         title: t('error'),
         description: t('failedToDelete'),
         variant: 'destructive',
       })
+      fetchCategories()
     }
   }
 

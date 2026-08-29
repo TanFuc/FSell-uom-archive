@@ -19,7 +19,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
@@ -65,15 +65,20 @@ export default function ProductsPage() {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [isPinging, setIsPinging] = useState<string | null>(null)
   const [search, setSearch] = useState('')
+  const [busyProductIds, setBusyProductIds] = useState<Set<string>>(new Set())
   const [selectedProducts, setSelectedProducts] = useState<string[]>([])
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; product: Product | null }>({
     open: false,
     product: null,
   })
 
+  const searchRef = useRef(search)
+  searchRef.current = search
+
   const fetchProducts = useCallback(
-    async (options?: { withLoading?: boolean }) => {
+    async (options?: { withLoading?: boolean; query?: string }) => {
       const withLoading = options?.withLoading ?? false
+      const query = options?.query !== undefined ? options.query : searchRef.current
 
       try {
         if (withLoading) {
@@ -83,11 +88,11 @@ export default function ProductsPage() {
         }
 
         const response = await api.getAdminProducts({
-          search: search || undefined,
-          includeDeleted: false, // Don't show deleted products
+          search: query || undefined,
+          includeDeleted: false,
           limit: 100,
         })
-        setProducts(response.data.filter((p: Product) => !p.deletedAt)) // Extra filter
+        setProducts(response.data.filter((p: Product) => !p.deletedAt))
       } catch (error) {
         console.error('Failed to fetch products:', error)
         toast({
@@ -102,19 +107,24 @@ export default function ProductsPage() {
         setIsRefreshing(false)
       }
     },
-    [search, t, toast],
+    [t, toast],
   )
 
   useEffect(() => {
+    fetchProducts({ withLoading: true, query: '' })
+  }, [fetchProducts])
+
+  const isInitialSearch = useRef(true)
+  useEffect(() => {
+    if (isInitialSearch.current) {
+      isInitialSearch.current = false
+      return
+    }
     const delayDebounce = setTimeout(() => {
-      fetchProducts({ withLoading: false })
+      fetchProducts({ withLoading: false, query: search })
     }, 300)
     return () => clearTimeout(delayDebounce)
   }, [search, fetchProducts])
-
-  useEffect(() => {
-    fetchProducts({ withLoading: true })
-  }, [fetchProducts])
 
   const handleDelete = async () => {
     if (!deleteDialog.product) return
@@ -126,7 +136,6 @@ export default function ProductsPage() {
       setProducts((prev) => prev.filter((item) => item.id !== productToDelete.id))
       setSelectedProducts((prev) => prev.filter((id) => id !== productToDelete.id))
       toast({ title: t('success'), description: 'Đã chuyển vào thùng rác' })
-      fetchProducts({ withLoading: false })
     } catch (error) {
       toast({ title: t('error'), description: t('failedToDelete'), variant: 'destructive' })
     } finally {
@@ -136,9 +145,9 @@ export default function ProductsPage() {
 
   const handleDuplicate = async (product: Product) => {
     try {
-      await api.duplicateProduct(product.id)
+      const duplicated = await api.duplicateProduct(product.id)
       toast({ title: t('success'), description: t('productDuplicated') })
-      fetchProducts({ withLoading: false })
+      setProducts((prev) => [duplicated, ...prev])
     } catch (error) {
       toast({ title: t('error'), description: t('failedToUpdate'), variant: 'destructive' })
     }
@@ -146,8 +155,10 @@ export default function ProductsPage() {
 
   const handleToggleActive = async (product: Product, e: React.MouseEvent) => {
     e.stopPropagation()
-    const nextValue = !product.isActive
+    if (busyProductIds.has(product.id)) return
 
+    const nextValue = !product.isActive
+    setBusyProductIds((prev) => new Set(prev).add(product.id))
     setProducts((prev) =>
       prev.map((item) => (item.id === product.id ? { ...item, isActive: nextValue } : item)),
     )
@@ -165,16 +176,21 @@ export default function ProductsPage() {
         ),
       )
       toast({ title: t('error'), description: t('failedToUpdate'), variant: 'destructive' })
-      return
+    } finally {
+      setBusyProductIds((prev) => {
+        const next = new Set(prev)
+        next.delete(product.id)
+        return next
+      })
     }
-
-    fetchProducts({ withLoading: false })
   }
 
   const handleToggleFeatured = async (product: Product, e: React.MouseEvent) => {
     e.stopPropagation()
-    const nextValue = !product.isFeatured
+    if (busyProductIds.has(product.id)) return
 
+    const nextValue = !product.isFeatured
+    setBusyProductIds((prev) => new Set(prev).add(product.id))
     setProducts((prev) =>
       prev.map((item) => (item.id === product.id ? { ...item, isFeatured: nextValue } : item)),
     )
@@ -192,10 +208,13 @@ export default function ProductsPage() {
         ),
       )
       toast({ title: t('error'), description: t('failedToUpdate'), variant: 'destructive' })
-      return
+    } finally {
+      setBusyProductIds((prev) => {
+        const next = new Set(prev)
+        next.delete(product.id)
+        return next
+      })
     }
-
-    fetchProducts({ withLoading: false })
   }
 
   const handleBulkDelete = async () => {

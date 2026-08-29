@@ -1,4 +1,5 @@
 import axios, { type AxiosInstance, type AxiosError } from 'axios'
+import { triggerPublicRevalidation } from './revalidate'
 import { pingProductSeo, pingSitewideSeo, pingStoriesSeo } from './seo-ping'
 import { parseStories, STORIES_CONTENT_KEY } from './stories'
 import { normalizePublicImageUrl } from './utils'
@@ -161,8 +162,10 @@ class ApiClient {
     const product = await this.client.post<any, Product>('/products', data)
     if (product?.slug) {
       void pingProductSeo(product.slug)
+      void triggerPublicRevalidation(['/', '/shop', `/shop/${product.slug}`])
     } else {
       void pingSitewideSeo()
+      void triggerPublicRevalidation(['/', '/shop'])
     }
     return product
   }
@@ -171,8 +174,10 @@ class ApiClient {
     const product = await this.client.put<any, Product>(`/products/${id}`, data)
     if (product?.slug) {
       void pingProductSeo(product.slug)
+      void triggerPublicRevalidation(['/', '/shop', `/shop/${product.slug}`])
     } else {
       void pingSitewideSeo()
+      void triggerPublicRevalidation(['/', '/shop'])
     }
     return product
   }
@@ -180,12 +185,14 @@ class ApiClient {
   async softDeleteProduct(id: string): Promise<void> {
     const result = await this.client.delete<any, void>(`/products/${id}`)
     void pingSitewideSeo()
+    void triggerPublicRevalidation(['/', '/shop'])
     return result
   }
 
   async hardDeleteProduct(id: string): Promise<void> {
     const result = await this.client.delete<any, void>(`/products/${id}/permanent`)
     void pingSitewideSeo()
+    void triggerPublicRevalidation(['/', '/shop'])
     return result
   }
 
@@ -193,8 +200,10 @@ class ApiClient {
     const product = await this.client.post<any, Product>(`/products/${id}/restore`)
     if (product?.slug) {
       void pingProductSeo(product.slug)
+      void triggerPublicRevalidation(['/', '/shop', `/shop/${product.slug}`])
     } else {
       void pingSitewideSeo()
+      void triggerPublicRevalidation(['/', '/shop'])
     }
     return product
   }
@@ -203,8 +212,10 @@ class ApiClient {
     const product = await this.client.post<any, Product>(`/products/${id}/duplicate`)
     if (product?.slug) {
       void pingProductSeo(product.slug)
+      void triggerPublicRevalidation(['/', '/shop', `/shop/${product.slug}`])
     } else {
       void pingSitewideSeo()
+      void triggerPublicRevalidation(['/', '/shop'])
     }
     return product
   }
@@ -215,6 +226,7 @@ class ApiClient {
       data,
     )
     void pingSitewideSeo()
+    void triggerPublicRevalidation(['/', '/shop'])
     return result
   }
 
@@ -224,6 +236,7 @@ class ApiClient {
       data,
     )
     void pingSitewideSeo()
+    void triggerPublicRevalidation(['/', '/shop'])
     return result
   }
 
@@ -233,6 +246,7 @@ class ApiClient {
       { ids },
     )
     void pingSitewideSeo()
+    void triggerPublicRevalidation(['/', '/shop'])
     return result
   }
 
@@ -247,6 +261,7 @@ class ApiClient {
   async updateTheme(data: Partial<ThemeSettings>): Promise<ThemeSettings> {
     const theme = await this.client.put<any, ThemeSettings>('/settings/theme', data)
     void pingSitewideSeo()
+    void triggerPublicRevalidation(['/', '/shop', '/journal', '/about'])
     return theme
   }
 
@@ -258,8 +273,10 @@ class ApiClient {
     const siteContent = await this.client.put<any, SiteContent>('/settings/site-content', data)
     if (typeof data[STORIES_CONTENT_KEY] === 'string') {
       void pingStoriesSeo(parseStories(data[STORIES_CONTENT_KEY]))
+      void triggerPublicRevalidation(['/', '/journal', '/about'])
     } else {
       void pingSitewideSeo()
+      void triggerPublicRevalidation(['/', '/shop', '/journal', '/about'])
     }
     return siteContent
   }
@@ -271,6 +288,7 @@ class ApiClient {
   async updateSocialLinks(data: Partial<SocialLinks>): Promise<SocialLinks> {
     const socialLinks = await this.client.put<any, SocialLinks>('/settings/social-links', data)
     void pingSitewideSeo()
+    void triggerPublicRevalidation(['/', '/shop', '/journal', '/about'])
     return socialLinks
   }
 
@@ -283,6 +301,7 @@ class ApiClient {
       rate,
     })
     void pingSitewideSeo()
+    void triggerPublicRevalidation(['/', '/shop'])
     return exchangeRate
   }
 
@@ -297,6 +316,7 @@ class ApiClient {
   async updateBranding(data: Partial<BrandingSettings>): Promise<BrandingSettings> {
     const branding = await this.client.put<any, BrandingSettings>('/settings/branding', data)
     void pingSitewideSeo()
+    void triggerPublicRevalidation(['/', '/shop', '/journal', '/about'])
     return branding
   }
 
@@ -325,7 +345,8 @@ class ApiClient {
   }
 
   async getBanners(activeOnly = true): Promise<Banner[]> {
-    return this.client.get('/banners', { params: { activeOnly: activeOnly.toString() } })
+    const params = activeOnly ? { activeOnly: true } : {}
+    return this.client.get('/banners', { params })
   }
 
   async getBannerById(id: string): Promise<Banner> {
@@ -335,18 +356,21 @@ class ApiClient {
   async createBanner(data: any): Promise<Banner> {
     const banner = await this.client.post<any, Banner>('/banners', data)
     void pingSitewideSeo()
+    void triggerPublicRevalidation(['/'])
     return banner
   }
 
   async updateBanner(id: string, data: any): Promise<Banner> {
     const banner = await this.client.patch<any, Banner>(`/banners/${id}`, data)
     void pingSitewideSeo()
+    void triggerPublicRevalidation(['/'])
     return banner
   }
 
   async deleteBanner(id: string): Promise<void> {
     const result = await this.client.delete<any, void>(`/banners/${id}`)
     void pingSitewideSeo()
+    void triggerPublicRevalidation(['/'])
     return result
   }
 

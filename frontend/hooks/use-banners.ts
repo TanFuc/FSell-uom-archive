@@ -20,7 +20,9 @@ export function useBanners(activeOnly = true, options?: BannerQueryOptions) {
     queryKey: bannerKeys.list(activeOnly),
     queryFn: () => apiClient.getBanners(activeOnly),
     initialData: options?.initialData,
-    staleTime: 10 * 60 * 1000, // 10 minutes - banners don't change often
+    initialDataUpdatedAt: options?.initialData ? 0 : undefined,
+    staleTime: 15 * 1000,
+    refetchOnMount: true,
   })
 }
 
@@ -29,7 +31,8 @@ export function useBanner(id: string) {
     queryKey: bannerKeys.detail(id),
     queryFn: () => apiClient.getBannerById(id),
     enabled: !!id,
-    staleTime: 10 * 60 * 1000,
+    staleTime: 15 * 1000,
+    refetchOnMount: true,
   })
 }
 

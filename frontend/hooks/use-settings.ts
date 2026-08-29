@@ -87,8 +87,9 @@ export function useSocialLinks(options?: SettingsQueryOptions<SocialLinks>) {
     queryFn: () => apiClient.getSocialLinks(),
     enabled: options?.enabled ?? true,
     initialData: options?.initialData,
-    staleTime: options?.staleTime ?? 10 * 60 * 1000,
-    refetchOnMount: options?.refetchOnMount,
+    initialDataUpdatedAt: options?.initialData ? 0 : undefined,
+    staleTime: options?.staleTime ?? 15 * 1000,
+    refetchOnMount: options?.refetchOnMount ?? true,
   })
 }
 
@@ -98,8 +99,9 @@ export function useExchangeRate(options?: SettingsQueryOptions) {
     queryFn: () => apiClient.getExchangeRate(),
     enabled: options?.enabled ?? true,
     initialData: options?.initialData,
-    staleTime: options?.staleTime ?? 30 * 60 * 1000,
-    refetchOnMount: options?.refetchOnMount,
+    initialDataUpdatedAt: options?.initialData ? 0 : undefined,
+    staleTime: options?.staleTime ?? 15 * 1000,
+    refetchOnMount: options?.refetchOnMount ?? true,
   })
 }
 
@@ -108,9 +110,10 @@ export function useSiteContent(options?: SiteContentQueryOptions) {
     queryKey: settingsKeys.content(),
     queryFn: () => apiClient.getSiteContent(),
     enabled: options?.enabled ?? true,
-    staleTime: options?.staleTime ?? 10 * 60 * 1000,
-    refetchOnMount: options?.refetchOnMount,
     initialData: options?.initialData,
+    initialDataUpdatedAt: options?.initialData ? 0 : undefined,
+    staleTime: options?.staleTime ?? 15 * 1000,
+    refetchOnMount: options?.refetchOnMount ?? true,
   })
 }
 
@@ -186,8 +189,8 @@ export function useBranding() {
       saveBrandingToStorage(data)
       return data
     },
-    staleTime: 10 * 60 * 1000,
-    refetchOnMount: false,
+    staleTime: 15 * 1000,
+    refetchOnMount: true,
   })
 }
 

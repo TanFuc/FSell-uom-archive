@@ -229,8 +229,6 @@ export default function HomeClient({
   ) as UseQueryResult<PaginatedResponse<Product>>
 
   const { data: siteContent, isLoading: isLoadingStories } = useSiteContent({
-    staleTime: 5 * 60 * 1000,
-    refetchOnMount: false,
     initialData: initialSiteContent,
   }) as UseQueryResult<SiteContent>
   const stories = parseStories(siteContent?.[STORIES_CONTENT_KEY]).filter(
