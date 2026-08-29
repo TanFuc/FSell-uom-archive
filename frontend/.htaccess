@@ -1,3 +1,10 @@
+<IfModule mod_env.c>
+  SetEnv NODE_ENV production
+  SetEnv NODE_OPTIONS "--max-old-space-size=256 --v8-pool-size=1"
+  SetEnv UV_THREADPOOL_SIZE 1
+  SetEnv NEXT_TELEMETRY_DISABLED 1
+</IfModule>
+
 <IfModule mod_passenger.c>
   PassengerEnabled on
   PassengerAppType node
