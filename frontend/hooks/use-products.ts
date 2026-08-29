@@ -1,6 +1,6 @@
 'use client'
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { apiClient } from '@/lib/api-client'
 import type {
@@ -23,7 +23,7 @@ export const productKeys = {
 
 export function useProducts(
   params?: QueryProductsDto,
-  options?: { enabled?: boolean; initialData?: any },
+  options?: { enabled?: boolean; initialData?: any; placeholderData?: any },
 ) {
   return useQuery({
     queryKey: productKeys.list(params || {}),
@@ -35,6 +35,7 @@ export function useProducts(
     },
     enabled: options?.enabled ?? true,
     initialData: options?.initialData,
+    placeholderData: options?.placeholderData ?? keepPreviousData,
     staleTime: 5 * 60 * 1000, // 5 minutes
   })
 }

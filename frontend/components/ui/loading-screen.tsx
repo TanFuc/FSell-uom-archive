@@ -23,13 +23,21 @@ export function LoadingScreen({ text, fullscreen = false }: LoadingScreenProps) 
     () => text ?? branding?.loadingText ?? DEFAULT_LOADING_TEXT,
     [text, branding?.loadingText],
   )
-  const normalizedDisplayText = normalizeLoadingText(displayText)
+
+  return <LoadingScreenView text={displayText} fullscreen={fullscreen} />
+}
+
+export function LoadingScreenView({ text, fullscreen = false }: LoadingScreenProps) {
+  const normalizedDisplayText = normalizeLoadingText(text ?? DEFAULT_LOADING_TEXT)
 
   return (
     <div
+      role="status"
+      aria-live="polite"
+      aria-label="Loading"
       className={
         fullscreen
-          ? 'fixed inset-0 z-[120] flex items-center justify-center bg-background'
+          ? 'fixed inset-0 z-[200] flex items-center justify-center bg-background'
           : 'flex min-h-screen items-center justify-center bg-background'
       }
     >

@@ -1,6 +1,6 @@
 'use client'
 
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { Search, X } from 'lucide-react'
 import Link from 'next/link'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
@@ -28,6 +28,7 @@ export default function ShopClient({ initialProducts, initialCategories }: ShopC
   const pathname = usePathname()
 
   const [search, setSearch] = useState(searchParams.get('search') || '')
+  const [inputValue, setInputValue] = useState(searchParams.get('search') || '')
   const [page, setPage] = useState(1)
   const [categoryId, setCategoryId] = useState<string | undefined>(
     searchParams.get('categoryId') || undefined,
@@ -45,6 +46,18 @@ export default function ShopClient({ initialProducts, initialCategories }: ShopC
     },
     [pathname, router, searchParams],
   )
+
+  // Debounce search input to avoid spamming URL updates and RSC requests
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (inputValue !== search) {
+        setSearch(inputValue)
+        setPage(1)
+        updateURL(inputValue)
+      }
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [inputValue, search, updateURL])
 
   const buildCategoryHref = useCallback(
     (nextCategoryId?: string) => {
@@ -69,6 +82,7 @@ export default function ShopClient({ initialProducts, initialCategories }: ShopC
     }
     if (searchVal !== null) {
       setSearch(searchVal)
+      setInputValue(searchVal)
     }
   }, [searchParams])
 
@@ -89,7 +103,7 @@ export default function ShopClient({ initialProducts, initialCategories }: ShopC
   }
   const canUseInitialProducts = page === 1 && !search && !categoryId
 
-  const { data, isLoading } = useProducts(baseProductQuery, {
+  const { data, isLoading, isFetching } = useProducts(baseProductQuery, {
     initialData: canUseInitialProducts ? initialProducts : undefined,
   })
 
@@ -139,20 +153,19 @@ export default function ShopClient({ initialProducts, initialCategories }: ShopC
             <input
               type="text"
               placeholder={t('searchPlaceholder')}
-              value={search}
+              value={inputValue}
               onChange={(e) => {
-                const val = e.target.value
-                setSearch(val)
-                setPage(1)
-                updateURL(val)
+                setInputValue(e.target.value)
               }}
               className="w-full border-b border-foreground/10 bg-transparent py-5 pl-10 pr-10 text-xl font-bold uppercase tracking-tight text-foreground transition-all placeholder:text-foreground/10 focus:border-foreground/30 focus:outline-none"
               aria-label={t('searchPlaceholder')}
             />
-            {search && (
+            {inputValue && (
               <button
                 onClick={() => {
+                  setInputValue('')
                   setSearch('')
+                  setPage(1)
                   updateURL('')
                 }}
                 className="absolute right-0 top-1/2 -translate-y-1/2 p-2 text-foreground/20 transition-colors hover:text-foreground"
@@ -204,7 +217,7 @@ export default function ShopClient({ initialProducts, initialCategories }: ShopC
 
         {/* Products Grid */}
         <div className="min-h-[40vh]">
-          {isLoading ? (
+          {isLoading && !data ? (
             <div className="grid grid-cols-2 gap-5 sm:gap-8 lg:grid-cols-4 lg:gap-12">
               {[...Array(8)].map((_, i) => (
                 <div key={i} className="space-y-6">
@@ -215,20 +228,21 @@ export default function ShopClient({ initialProducts, initialCategories }: ShopC
             </div>
           ) : data && data.data.length > 0 ? (
             <>
-              <AnimatePresence mode="popLayout">
-                <div className="grid grid-cols-2 gap-5 sm:gap-8 lg:grid-cols-4 lg:gap-12">
-                  {data.data.map((product: Product, idx: number) => (
-                    <motion.div
-                      key={product.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: (idx % 4) * 0.1 }}
-                    >
-                      <ProductCard product={product} locale={locale} priority={idx === 0} />
-                    </motion.div>
-                  ))}
-                </div>
-              </AnimatePresence>
+              <div
+                className={cn(
+                  'grid grid-cols-2 gap-5 transition-opacity duration-200 sm:gap-8 lg:grid-cols-4 lg:gap-12',
+                  isFetching && 'opacity-60',
+                )}
+              >
+                {data.data.map((product: Product, idx: number) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    locale={locale}
+                    priority={idx === 0}
+                  />
+                ))}
+              </div>
 
               {/* Pagination - Minimalist */}
               {data.meta.totalPages > 1 && (

@@ -346,7 +346,7 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
           },
         ]
   return (
-    <div className="safe-screen">
+    <div className="w-full max-w-full overflow-x-clip">
       {/* Header padding for fixed header */}
       <div className="h-24 lg:h-28" />
 
@@ -472,102 +472,104 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
 
             {/* 2. Right Column: Sticky Product Details */}
             <div className="relative min-w-0 px-0 md:px-0">
-              <div className="space-y-4 pb-12 pt-10 md:sticky md:top-[50vh] md:max-h-[calc(100vh-96px)] md:-translate-y-1/2 md:space-y-12 md:overflow-y-auto md:pb-0 md:pt-0">
-                {/* Info Header */}
-                <div className="mb-8 space-y-2">
-                  <h1 className="text-mobile-safe font-sans text-[13px] font-bold leading-tight tracking-[0.08em] text-foreground sm:tracking-[0.1em]">
-                    {name}
-                  </h1>
-                  <div className="flex items-center gap-4">
-                    <p className="font-sans text-[11px] font-semibold tracking-[0.05em] text-foreground">
-                      {priceDisplay.currentPrice}
-                    </p>
-                    {priceDisplay.hasDiscount && priceDisplay.originalPrice && (
-                      <p className="text-[11px] font-light text-foreground/30 line-through">
-                        {priceDisplay.originalPrice}
+              <div className="md:sticky md:top-16 md:flex md:h-[calc(100vh-4rem)] md:items-center lg:top-20 lg:h-[calc(100vh-5rem)]">
+                <div className="w-full space-y-4 pb-12 pt-10 md:max-h-[calc(100vh-6rem)] md:space-y-12 md:overflow-y-auto md:overscroll-contain md:pb-0 md:pt-0 lg:max-h-[calc(100vh-7rem)]">
+                  {/* Info Header */}
+                  <div className="mb-8 space-y-2">
+                    <h1 className="text-mobile-safe font-sans text-[13px] font-bold leading-tight tracking-[0.08em] text-foreground sm:tracking-[0.1em]">
+                      {name}
+                    </h1>
+                    <div className="flex items-center gap-4">
+                      <p className="font-sans text-[11px] font-semibold tracking-[0.05em] text-foreground">
+                        {priceDisplay.currentPrice}
                       </p>
-                    )}
+                      {priceDisplay.hasDiscount && priceDisplay.originalPrice && (
+                        <p className="text-[11px] font-light text-foreground/30 line-through">
+                          {priceDisplay.originalPrice}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                </div>
 
-                {/* Details Section */}
-                <div className="space-y-4">
-                  <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-foreground">
-                    {t('details')}
-                  </h4>
+                  {/* Details Section */}
+                  <div className="space-y-5">
+                    <h4 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-foreground">
+                      {t('details')}
+                    </h4>
 
-                  {shortDescription ? (
-                    <p className="text-[11px] font-normal leading-relaxed tracking-[0.05em] text-foreground/80">
-                      {shortDescription}
-                    </p>
-                  ) : null}
-
-                  {/* Combined Description & Technical Specs */}
-                  <div className="flex flex-col gap-1 text-[11px] font-normal leading-relaxed tracking-[0.05em] text-foreground">
-                    {variants.groups.map((group) => (
-                      <p key={group.label}>
-                        <span className="font-bold uppercase">{group.label}: </span>
-                        <span className="text-foreground/80">{group.values.join(', ')}</span>
+                    {shortDescription ? (
+                      <p className="text-[12px] font-medium leading-[1.75] tracking-[0.02em] text-foreground/90">
+                        {shortDescription}
                       </p>
-                    ))}
+                    ) : null}
+
+                    {/* Combined Description & Technical Specs */}
+                    <div className="flex flex-col gap-1.5 text-[12px] font-normal leading-[1.7] tracking-[0.02em] text-foreground/90">
+                      {variants.groups.map((group) => (
+                        <p key={group.label}>
+                          <span className="font-semibold uppercase">{group.label}: </span>
+                          <span>{group.values.join(', ')}</span>
+                        </p>
+                      ))}
+                    </div>
+
+                    {/* HTML Description */}
+                    <div
+                      className="prose prose-sm max-w-none overflow-hidden font-sans text-[12px] font-normal tracking-[0.02em] text-foreground/90 [overflow-wrap:anywhere] [&_a]:underline [&_a]:underline-offset-2 [&_blockquote]:border-l [&_blockquote]:border-foreground/30 [&_blockquote]:pl-4 [&_h1]:text-lg [&_h1]:font-bold [&_h2]:text-base [&_h2]:font-bold [&_h3]:text-sm [&_h3]:font-semibold [&_img]:my-4 [&_img]:h-auto [&_img]:max-w-full [&_img]:rounded-lg [&_li]:leading-[1.7] [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:leading-[1.75] [&_ul]:list-disc [&_ul]:pl-5"
+                      dangerouslySetInnerHTML={{ __html: description || '' }}
+                    />
+
+                    <div className="flex flex-wrap gap-4 pt-4">
+                      <Link
+                        href={`/${locale}/journal`}
+                        className="text-[9px] font-bold uppercase tracking-[0.3em] text-foreground underline decoration-foreground/15 underline-offset-8 transition hover:opacity-70"
+                      >
+                        {journalCta}
+                      </Link>
+                      <Link
+                        href={`/${locale}/shop`}
+                        className="text-[9px] font-bold uppercase tracking-[0.3em] text-foreground underline decoration-foreground/15 underline-offset-8 transition hover:opacity-70"
+                      >
+                        {shopCta}
+                      </Link>
+                    </div>
                   </div>
 
-                  {/* HTML Description */}
-                  <div
-                    className="prose prose-sm max-w-none overflow-hidden font-sans text-[11px] font-medium tracking-[0.05em] text-foreground [overflow-wrap:anywhere] [&_a]:underline [&_a]:underline-offset-2 [&_blockquote]:border-l [&_blockquote]:border-foreground/30 [&_blockquote]:pl-4 [&_h1]:text-lg [&_h1]:font-bold [&_h2]:text-base [&_h2]:font-bold [&_h3]:text-sm [&_h3]:font-semibold [&_img]:my-4 [&_img]:h-auto [&_img]:max-w-full [&_img]:rounded-lg [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:leading-relaxed [&_ul]:list-disc [&_ul]:pl-5"
-                    dangerouslySetInnerHTML={{ __html: description || '' }}
-                  />
-
-                  <div className="flex flex-wrap gap-4 pt-4">
-                    <Link
-                      href={`/${locale}/journal`}
-                      className="text-[9px] font-bold uppercase tracking-[0.3em] text-foreground underline decoration-foreground/15 underline-offset-8 transition hover:opacity-70"
-                    >
-                      {journalCta}
-                    </Link>
-                    <Link
-                      href={`/${locale}/shop`}
-                      className="text-[9px] font-bold uppercase tracking-[0.3em] text-foreground underline decoration-foreground/15 underline-offset-8 transition hover:opacity-70"
-                    >
-                      {shopCta}
-                    </Link>
-                  </div>
-                </div>
-
-                {/* Inquiry Buttons */}
-                <div className="space-y-8 pt-8">
-                  <h4 className="text-[9px] font-bold uppercase tracking-[0.3em] text-foreground/30">
-                    {t('orderInquiry')}
-                  </h4>
-                  <div className="flex flex-col gap-3">
-                    {socialLinks?.instagramUsername && (
-                      <a
-                        href={`https://instagram.com/${socialLinks.instagramUsername}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="group flex max-w-full items-center justify-between gap-4 border border-foreground/10 px-4 py-4 transition-all duration-300 hover:bg-foreground hover:text-white sm:px-6"
-                        aria-label="Instagram Inquiry"
-                      >
-                        <span className="min-w-0 text-[10px] font-bold uppercase tracking-[0.2em] sm:tracking-[0.3em]">
-                          Instagram
-                        </span>
-                        <Instagram className="h-4 w-4" />
-                      </a>
-                    )}
-                    {socialLinks?.facebookPageUrl && (
-                      <a
-                        href={socialLinks.facebookPageUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="group flex max-w-full items-center justify-between gap-4 border border-foreground/10 px-4 py-4 transition-all duration-300 hover:bg-foreground hover:text-white sm:px-6"
-                        aria-label="Facebook Inquiry"
-                      >
-                        <span className="min-w-0 text-[10px] font-bold uppercase tracking-[0.2em] sm:tracking-[0.3em]">
-                          Facebook
-                        </span>
-                        <Facebook className="h-4 w-4" />
-                      </a>
-                    )}
+                  {/* Inquiry Buttons */}
+                  <div className="space-y-8 pt-8">
+                    <h4 className="text-[9px] font-bold uppercase tracking-[0.3em] text-foreground/30">
+                      {t('orderInquiry')}
+                    </h4>
+                    <div className="flex flex-col gap-3">
+                      {socialLinks?.instagramUsername && (
+                        <a
+                          href={`https://instagram.com/${socialLinks.instagramUsername}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="group flex max-w-full items-center justify-between gap-4 border border-foreground/10 px-4 py-4 transition-all duration-300 hover:bg-foreground hover:text-white sm:px-6"
+                          aria-label="Instagram Inquiry"
+                        >
+                          <span className="min-w-0 text-[10px] font-bold uppercase tracking-[0.2em] sm:tracking-[0.3em]">
+                            Instagram
+                          </span>
+                          <Instagram className="h-4 w-4" />
+                        </a>
+                      )}
+                      {socialLinks?.facebookPageUrl && (
+                        <a
+                          href={socialLinks.facebookPageUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="group flex max-w-full items-center justify-between gap-4 border border-foreground/10 px-4 py-4 transition-all duration-300 hover:bg-foreground hover:text-white sm:px-6"
+                          aria-label="Facebook Inquiry"
+                        >
+                          <span className="min-w-0 text-[10px] font-bold uppercase tracking-[0.2em] sm:tracking-[0.3em]">
+                            Facebook
+                          </span>
+                          <Facebook className="h-4 w-4" />
+                        </a>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>

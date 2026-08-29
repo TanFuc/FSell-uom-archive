@@ -207,6 +207,7 @@ export default async function JournalPage({ params }: PageProps) {
               <Link
                 key={story.id}
                 href={`/${locale}/journal/${encodeURIComponent(getStorySlug(story, locale))}`}
+                prefetch={false}
                 className="group overflow-hidden rounded-2xl border border-black/10 bg-white/95 shadow-sm transition duration-300 hover:-translate-y-1.5 hover:shadow-xl"
               >
                 <div className="relative aspect-[4/3] overflow-hidden bg-foreground/[0.03]">
