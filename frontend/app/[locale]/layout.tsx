@@ -144,7 +144,14 @@ export default async function RootLayout({ children, params: { locale } }: RootL
   }
 
   unstable_setRequestLocale(locale)
-  const messages = await getMessages()
+  let messages: any = {}
+  try {
+    messages = await getMessages({ locale })
+  } catch {
+    try {
+      messages = (await import(`@/messages/${locale}.json`)).default
+    } catch {}
+  }
 
   return (
     <html lang={locale} suppressHydrationWarning>
