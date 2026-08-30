@@ -1,9 +1,13 @@
 'use strict'
 
+process.env.UV_THREADPOOL_SIZE = '1'
+process.env.NODE_ENV = process.env.NODE_ENV || 'production'
+process.env.NEXT_TELEMETRY_DISABLED = '1'
+process.env.PORT = process.env.PORT || '3000'
+process.env.HOSTNAME = '0.0.0.0'
+
 const fs = require('node:fs')
 const path = require('node:path')
-
-process.env.NODE_ENV ||= 'production'
 
 const appRoot = __dirname
 const standaloneRoot = path.join(appRoot, '.next', 'standalone')
