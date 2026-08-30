@@ -129,7 +129,10 @@ async function startApplication(): Promise<void> {
   app.use((req: Request, res: Response, next: NextFunction) => {
     const requestPath = extractRequestPath(req)
 
-    if (['GET', 'HEAD'].includes(req.method) && (requestPath === '/' || requestPath === '')) {
+    if (
+      ['GET', 'HEAD'].includes(req.method) &&
+      (requestPath === '/' || requestPath === '' || requestPath === '/health')
+    ) {
       res.setHeader('Cache-Control', 'no-store')
       return res.status(200).json({
         status: 'ok',
