@@ -103,6 +103,12 @@ async function fetchHomeSsrData(): Promise<HomeSsrData> {
 
     const siteContent = getSiteContent(contentData)
     const products = getProducts(productsData)
+    const sortedProducts = [...products].sort((a, b) => {
+      const aFeatured = a.isFeatured ? 1 : 0
+      const bFeatured = b.isFeatured ? 1 : 0
+      if (aFeatured !== bFeatured) return bFeatured - aFeatured
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    })
     const banners = getBanners(bannersData)
     const stories = parseStories(siteContent[STORIES_CONTENT_KEY]).filter(
       (story) => story.isVisible !== false,
@@ -110,13 +116,13 @@ async function fetchHomeSsrData(): Promise<HomeSsrData> {
 
     return {
       products: {
-        data: products.slice(0, 8),
+        data: sortedProducts.slice(0, 8),
         meta: {
-          total: products.length,
+          total: sortedProducts.length,
           page: 1,
           limit: 8,
-          totalPages: Math.max(1, Math.ceil(products.length / 8)),
-          totalItems: products.length,
+          totalPages: Math.max(1, Math.ceil(sortedProducts.length / 8)),
+          totalItems: sortedProducts.length,
         },
       },
       siteContent,

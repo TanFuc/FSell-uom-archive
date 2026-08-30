@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useLocale, useTranslations } from 'next-intl'
-import { useRef, useState, useEffect, useCallback } from 'react'
+import { useRef, useState, useEffect, useCallback, useMemo } from 'react'
 import { BannerCarousel } from '@/components/BannerCarousel'
 import { ProductCard } from '@/components/ProductCard'
 import { useBanners } from '@/hooks/use-banners'
@@ -235,6 +235,16 @@ export default function HomeClient({
     (story) => story.isVisible !== false,
   )
 
+  const homeProducts = useMemo(() => {
+    if (!latestProducts?.data) return []
+    return [...latestProducts.data].sort((a, b) => {
+      const aFeatured = a.isFeatured ? 1 : 0
+      const bFeatured = b.isFeatured ? 1 : 0
+      if (aFeatured !== bFeatured) return bFeatured - aFeatured
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    })
+  }, [latestProducts?.data])
+
   const latestDrag = usePremiumSmoothScroll()
   const featuredDrag = usePremiumSmoothScroll()
 
@@ -307,7 +317,7 @@ export default function HomeClient({
               )}
             >
               <AnimatePresence mode="popLayout">
-                {latestProducts?.data.map((product: Product, idx: number) => (
+                {homeProducts.map((product: Product, idx: number) => (
                   <motion.div
                     key={product.id}
                     initial={{ opacity: 0, y: 20 }}
