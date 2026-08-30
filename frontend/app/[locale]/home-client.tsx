@@ -257,7 +257,7 @@ export default function HomeClient({
       {/* Hero Banner Section */}
       <section className="w-full">
         {isLoadingBanners ? (
-          <div className="aspect-[4/5] w-full animate-pulse bg-muted/20 md:aspect-[21/9] lg:aspect-[3/1]" />
+          <div className="h-[82vh] w-full animate-pulse bg-muted/20 sm:h-[88vh] md:h-[92vh] lg:h-[96vh] xl:h-screen" />
         ) : (
           <BannerCarousel banners={banners ?? []} locale={locale} />
         )}
