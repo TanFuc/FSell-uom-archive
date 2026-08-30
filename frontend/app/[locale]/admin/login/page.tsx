@@ -2,9 +2,9 @@
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Eye, EyeOff } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
 import Logo from '@/components/Logo'
@@ -29,8 +29,10 @@ type LoginFormValues = {
   password: string
 }
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirectPath = searchParams?.get('redirect')
   const locale = useLocale()
   const t = useTranslations('admin')
   const tAuth = useTranslations('auth')
@@ -58,7 +60,8 @@ export default function LoginPage() {
     try {
       const response = await api.login(data.email, data.password)
 
-      document.cookie = `accessToken=${response.accessToken}; path=/; secure; samesite=strict`
+      const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:'
+      document.cookie = `accessToken=${response.accessToken}; path=/; samesite=lax${isHttps ? '; secure' : ''}`
 
       if (response.user) {
         setUser(response.user)
@@ -69,7 +72,12 @@ export default function LoginPage() {
         description: tAuth('loginSuccess'),
       })
 
-      router.push(`/${locale}/admin/dashboard`)
+      const targetUrl =
+        redirectPath && redirectPath.startsWith(`/${locale}/admin`)
+          ? redirectPath
+          : `/${locale}/admin/dashboard`
+
+      router.push(targetUrl)
     } catch (error: any) {
       let errorTitle = tAuth('loginError')
       let errorMessage = tAuth('genericError')
@@ -194,3 +202,12 @@ export default function LoginPage() {
     </div>
   )
 }
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-background" />}>
+      <LoginForm />
+    </Suspense>
+  )
+}
+

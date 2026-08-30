@@ -127,16 +127,19 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const [statsRes, usersRes] = await Promise.all([
+        const [statsResult, usersResult] = await Promise.allSettled([
           api.getAdminProductStats(),
           api.getUsers({ limit: 1 }),
         ])
 
+        const statsRes = statsResult.status === 'fulfilled' ? statsResult.value : null
+        const usersRes = usersResult.status === 'fulfilled' ? usersResult.value : null
+
         setStats({
-          totalProducts: statsRes.totalProducts,
-          activeProducts: statsRes.activeProducts,
-          featuredProducts: statsRes.featuredProducts,
-          totalUsers: usersRes.meta.total,
+          totalProducts: statsRes?.totalProducts ?? 0,
+          activeProducts: statsRes?.activeProducts ?? 0,
+          featuredProducts: statsRes?.featuredProducts ?? 0,
+          totalUsers: usersRes?.meta?.total ?? 0,
         })
       } catch (error) {
         console.error('Failed to fetch stats:', error)

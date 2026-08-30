@@ -37,45 +37,75 @@ export default function AdminLayoutClient({ children }: AdminLayoutProps) {
   const t = useTranslations('admin')
   const { user, setUser, logout } = useAuthStore()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
+  const isLoginPage = pathname.includes('/admin/login')
+  const [isAuthorized, setIsAuthorized] = useState(isLoginPage || !!user)
 
   const switchLocale = locale === 'vi' ? 'en' : 'vi'
   const newPath = pathname.replace(`/${locale}`, `/${switchLocale}`)
 
-  const isLoginPage = pathname.includes('/admin/login')
-
   useEffect(() => {
-    const checkAuth = async () => {
-      if (isLoginPage) {
-        setIsLoading(false)
-        return
-      }
+    if (isLoginPage) {
+      setIsAuthorized(true)
+      return
+    }
 
+    const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null
+    if (!token) {
+      setIsAuthorized(false)
+      router.replace(`/${locale}/admin/login?redirect=${encodeURIComponent(pathname)}`)
+      return
+    }
+
+    let isMounted = true
+    const checkAuth = async () => {
       try {
         const userData = await api.getMe()
-        setUser(userData)
+        if (isMounted) {
+          setUser(userData)
+          setIsAuthorized(true)
+        }
       } catch (error) {
         console.error('Auth check failed:', error)
-        router.push(`/${locale}/admin/login`)
-      } finally {
-        setIsLoading(false)
+        if (isMounted) {
+          setIsAuthorized(false)
+          localStorage.removeItem('accessToken')
+          localStorage.removeItem('refreshToken')
+          if (typeof document !== 'undefined') {
+            document.cookie = 'accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+          }
+          router.replace(`/${locale}/admin/login?redirect=${encodeURIComponent(pathname)}`)
+        }
       }
     }
 
-    checkAuth()
-  }, [isLoginPage, locale, router, setUser])
+    if (!user) {
+      checkAuth()
+    } else {
+      setIsAuthorized(true)
+    }
+
+    return () => {
+      isMounted = false
+    }
+  }, [isLoginPage, locale, pathname, router, setUser, user])
 
   const handleLogout = async () => {
-    await api.logout()
+    try {
+      await api.logout()
+    } catch {}
+    if (typeof document !== 'undefined') {
+      document.cookie = 'accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+    }
     logout()
-    router.push(`/${locale}/admin/login`)
+    setIsAuthorized(false)
+    router.replace(`/${locale}/admin/login`)
   }
 
   if (isLoginPage) {
     return <>{children}</>
   }
 
-  if (isLoading) {
+  if (!isAuthorized || !user) {
     return <LoadingScreen />
   }
 
