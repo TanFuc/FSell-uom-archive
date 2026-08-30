@@ -1,15 +1,12 @@
 'use strict'
 
-// Passenger intercepts the first listen() call. LiteSpeed's lsnode.js does the
-// same but does not inject PORT, so provide a harmless fallback for that host.
-process.env.PORT ||= '3001'
-
-process.env.NODE_ENV ||= 'production'
+process.env.UV_THREADPOOL_SIZE = '1'
+process.env.NODE_ENV = process.env.NODE_ENV || 'production'
 process.env.PRISMA_CLIENT_ENGINE_TYPE = 'library'
-process.env.UV_THREADPOOL_SIZE ||= '1'
-process.env.SHARP_CONCURRENCY ||= '1'
-process.env.REQUEST_LOGGING_ENABLED ||= 'false'
-process.env.METRICS_ENABLED ||= 'false'
+process.env.SHARP_CONCURRENCY = '1'
+process.env.REQUEST_LOGGING_ENABLED = 'false'
+process.env.METRICS_ENABLED = 'false'
+process.env.PORT = process.env.PORT || '3001'
 
 let entry
 
