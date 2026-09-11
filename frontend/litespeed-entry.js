@@ -18,4 +18,11 @@ process.env.HOSTNAME = '0.0.0.0'
 delete process.env.NEXT_PRIVATE_MINIMAL_MODE
 delete process.env.NEXT_PRIVATE_WORKER_THREADS
 
+process.on('SIGTERM', () => {
+  process.exit(0)
+})
+process.on('SIGINT', () => {
+  process.exit(0)
+})
+
 require('./.next/standalone/server.js')

@@ -18,4 +18,11 @@ if (!mainFile) {
   throw new Error('NestJS build not found: expected dist/main.js or dist/src/main.js')
 }
 
+process.on('SIGTERM', () => {
+  process.exit(0)
+})
+process.on('SIGINT', () => {
+  process.exit(0)
+})
+
 require(mainFile)

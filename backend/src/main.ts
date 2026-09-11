@@ -68,6 +68,7 @@ let bootstrapPromise: Promise<void> | undefined
 async function startApplication(): Promise<void> {
   const logger = new Logger('Bootstrap')
   const app = await NestFactory.create<NestExpressApplication>(AppModule)
+  app.enableShutdownHooks()
 
   const configService = app.get(ConfigService)
   const rawPort = process.env.PORT ?? '3001'
