@@ -18,10 +18,26 @@ if (!mainFile) {
   throw new Error('NestJS build not found: expected dist/main.js or dist/src/main.js')
 }
 
+// Single-instance enforcement: kill any previous orphaned backend process
+const PID_FILE = path.join(__dirname, '.backend.pid')
+try {
+  if (fs.existsSync(PID_FILE)) {
+    const oldPid = parseInt(fs.readFileSync(PID_FILE, 'utf8').trim(), 10)
+    if (oldPid && oldPid !== process.pid) {
+      try {
+        process.kill(oldPid, 'SIGKILL')
+      } catch (e) {}
+    }
+  }
+  fs.writeFileSync(PID_FILE, String(process.pid))
+} catch (e) {}
+
 process.on('SIGTERM', () => {
+  try { if (fs.existsSync(PID_FILE)) fs.unlinkSync(PID_FILE) } catch (e) {}
   process.exit(0)
 })
 process.on('SIGINT', () => {
+  try { if (fs.existsSync(PID_FILE)) fs.unlinkSync(PID_FILE) } catch (e) {}
   process.exit(0)
 })
 
