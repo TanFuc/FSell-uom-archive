@@ -18,10 +18,28 @@ process.env.HOSTNAME = '0.0.0.0'
 delete process.env.NEXT_PRIVATE_MINIMAL_MODE
 delete process.env.NEXT_PRIVATE_WORKER_THREADS
 
+// Single-instance enforcement: kill any previous orphaned frontend process
+const path = require('node:path')
+const fs = require('node:fs')
+const PID_FILE = path.join(__dirname, '.frontend.pid')
+try {
+  if (fs.existsSync(PID_FILE)) {
+    const oldPid = parseInt(fs.readFileSync(PID_FILE, 'utf8').trim(), 10)
+    if (oldPid && oldPid !== process.pid) {
+      try {
+        process.kill(oldPid, 'SIGKILL')
+      } catch (e) {}
+    }
+  }
+  fs.writeFileSync(PID_FILE, String(process.pid))
+} catch (e) {}
+
 process.on('SIGTERM', () => {
+  try { if (fs.existsSync(PID_FILE)) fs.unlinkSync(PID_FILE) } catch (e) {}
   process.exit(0)
 })
 process.on('SIGINT', () => {
+  try { if (fs.existsSync(PID_FILE)) fs.unlinkSync(PID_FILE) } catch (e) {}
   process.exit(0)
 })
 

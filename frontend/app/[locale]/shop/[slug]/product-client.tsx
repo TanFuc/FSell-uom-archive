@@ -14,6 +14,7 @@ import { useExchangeRate, useSocialLinks } from '@/hooks/use-settings'
 import { getDisplayPrice } from '@/lib/currency'
 import { type Product } from '@/lib/types'
 import { optimizeProductImage, cn } from '@/lib/utils'
+import ProductImageLightbox from '@/components/ProductImageLightbox'
 
 interface ProductPageProps {
   params: {
@@ -264,6 +265,7 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
   const cursorXSpring = useSpring(cursorX, springConfig)
   const cursorYSpring = useSpring(cursorY, springConfig)
   const [isHoveringImage, setIsHoveringImage] = useState(false)
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
 
   const handleMouseMoveCursor = useCallback(
     (e: React.MouseEvent) => {
@@ -348,7 +350,7 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
   return (
     <div className="w-full max-w-full overflow-x-clip">
       {/* Header padding for fixed header */}
-      <div className="h-24 lg:h-28" />
+      <div className="h-20 lg:h-28" />
 
       {/* Floating Left-Side Back Navigation (Desktop Only) */}
       <Link
@@ -364,7 +366,7 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
 
       {/* Custom Cursor Overlay */}
       <AnimatePresence>
-        {isHoveringImage && (
+        {isHoveringImage && lightboxIndex === null && (
           <motion.div
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -388,7 +390,7 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
           {/* Back Button (Mobile/Tablet Only) */}
           <Link
             href={`/${locale}/shop`}
-            className="mb-6 inline-flex items-center pt-8 transition-all hover:translate-x-[-4px] lg:hidden"
+            className="mb-4 inline-flex items-center pt-2 transition-all hover:translate-x-[-4px] lg:hidden"
             aria-label={t('back')}
           >
             <ArrowLeft className="h-4 w-4" />
@@ -446,7 +448,12 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                     {product.images.map((image, index) => (
                       <div
                         key={index}
-                        className="relative aspect-[3/4] h-auto w-full shrink-0 snap-center overflow-hidden rounded-sm bg-muted/10 md:h-auto md:w-full md:hover:shadow-xl"
+                        onClick={() => {
+                          if (!imageDrag.isDragging) {
+                            setLightboxIndex(index)
+                          }
+                        }}
+                        className="relative aspect-[3/4] h-auto w-full shrink-0 snap-center overflow-hidden rounded-sm bg-muted/10 md:h-auto md:w-full md:hover:shadow-xl cursor-pointer"
                       >
                         <Image
                           src={optimizeProductImage(image, { width: 1200, height: 1600 })}
@@ -472,19 +479,19 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
 
             {/* 2. Right Column: Sticky Product Details */}
             <div className="relative min-w-0 px-0 md:px-0">
-              <div className="md:sticky md:top-16 md:flex md:h-[calc(100vh-4rem)] md:items-center lg:top-20 lg:h-[calc(100vh-5rem)]">
-                <div className="w-full space-y-4 pb-12 pt-10 md:max-h-[calc(100vh-6rem)] md:space-y-12 md:overflow-y-auto md:overscroll-contain md:pb-0 md:pt-0 lg:max-h-[calc(100vh-7rem)]">
+              <div className="md:sticky md:top-24 md:self-start lg:top-28">
+                <div className="w-full space-y-6 pb-12 pt-6 md:space-y-8 md:pb-0 md:pt-0">
                   {/* Info Header */}
-                  <div className="mb-8 space-y-2">
-                    <h1 className="text-mobile-safe font-sans text-[13px] font-bold leading-tight tracking-[0.08em] text-foreground sm:tracking-[0.1em]">
+                  <div className="space-y-2">
+                    <h1 className="text-mobile-safe font-sans text-sm font-bold leading-tight tracking-[0.08em] text-foreground sm:text-base sm:tracking-[0.1em]">
                       {name}
                     </h1>
                     <div className="flex items-center gap-4">
-                      <p className="font-sans text-[11px] font-semibold tracking-[0.05em] text-foreground">
+                      <p className="font-sans text-xs font-semibold tracking-[0.05em] text-foreground sm:text-sm">
                         {priceDisplay.currentPrice}
                       </p>
                       {priceDisplay.hasDiscount && priceDisplay.originalPrice && (
-                        <p className="text-[11px] font-light text-foreground/30 line-through">
+                        <p className="text-xs font-light text-foreground/30 line-through">
                           {priceDisplay.originalPrice}
                         </p>
                       )}
@@ -492,7 +499,7 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                   </div>
 
                   {/* Details Section */}
-                  <div className="space-y-5">
+                  <div className="space-y-4">
                     <h4 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-foreground">
                       {t('details')}
                     </h4>
@@ -504,22 +511,26 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                     ) : null}
 
                     {/* Combined Description & Technical Specs */}
-                    <div className="flex flex-col gap-1.5 text-[12px] font-normal leading-[1.7] tracking-[0.02em] text-foreground/90">
-                      {variants.groups.map((group) => (
-                        <p key={group.label}>
-                          <span className="font-semibold uppercase">{group.label}: </span>
-                          <span>{group.values.join(', ')}</span>
-                        </p>
-                      ))}
-                    </div>
+                    {variants.groups.length > 0 && (
+                      <div className="flex flex-col gap-1.5 text-[12px] font-normal leading-[1.7] tracking-[0.02em] text-foreground/90">
+                        {variants.groups.map((group) => (
+                          <p key={group.label}>
+                            <span className="font-semibold uppercase">{group.label}: </span>
+                            <span>{group.values.join(', ')}</span>
+                          </p>
+                        ))}
+                      </div>
+                    )}
 
                     {/* HTML Description */}
-                    <div
-                      className="prose prose-sm max-w-none overflow-hidden font-sans text-[12px] font-normal tracking-[0.02em] text-foreground/90 [overflow-wrap:anywhere] [&_a]:underline [&_a]:underline-offset-2 [&_blockquote]:border-l [&_blockquote]:border-foreground/30 [&_blockquote]:pl-4 [&_h1]:text-lg [&_h1]:font-bold [&_h2]:text-base [&_h2]:font-bold [&_h3]:text-sm [&_h3]:font-semibold [&_img]:my-4 [&_img]:h-auto [&_img]:max-w-full [&_img]:rounded-lg [&_li]:leading-[1.7] [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:leading-[1.75] [&_ul]:list-disc [&_ul]:pl-5"
-                      dangerouslySetInnerHTML={{ __html: description || '' }}
-                    />
+                    {description && (
+                      <div
+                        className="prose prose-sm max-w-none overflow-hidden font-sans text-[12px] font-normal tracking-[0.02em] text-foreground/90 [overflow-wrap:anywhere] [&_a]:underline [&_a]:underline-offset-2 [&_blockquote]:border-l [&_blockquote]:border-foreground/30 [&_blockquote]:pl-4 [&_h1]:text-base [&_h1]:font-bold [&_h2]:text-sm [&_h2]:font-bold [&_h3]:text-xs [&_h3]:font-semibold [&_img]:my-4 [&_img]:h-auto [&_img]:max-w-full [&_img]:rounded-lg [&_li]:leading-[1.7] [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:leading-[1.75] [&_ul]:list-disc [&_ul]:pl-5"
+                        dangerouslySetInnerHTML={{ __html: description }}
+                      />
+                    )}
 
-                    <div className="flex flex-wrap gap-4 pt-4">
+                    <div className="flex flex-wrap gap-4 pt-2">
                       <Link
                         href={`/${locale}/journal`}
                         className="text-[9px] font-bold uppercase tracking-[0.3em] text-foreground underline decoration-foreground/15 underline-offset-8 transition hover:opacity-70"
@@ -536,23 +547,23 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                   </div>
 
                   {/* Inquiry Buttons */}
-                  <div className="space-y-8 pt-8">
-                    <h4 className="text-[9px] font-bold uppercase tracking-[0.3em] text-foreground/30">
+                  <div className="space-y-4 pt-6">
+                    <h4 className="text-[9px] font-bold uppercase tracking-[0.3em] text-foreground/40">
                       {t('orderInquiry')}
                     </h4>
-                    <div className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-2.5 max-w-sm">
                       {socialLinks?.instagramUsername && (
                         <a
                           href={`https://instagram.com/${socialLinks.instagramUsername}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="group flex max-w-full items-center justify-between gap-4 border border-foreground/10 px-4 py-4 transition-all duration-300 hover:bg-foreground hover:text-white sm:px-6"
+                          className="group flex w-full items-center justify-between gap-4 border border-foreground/15 bg-white px-5 py-3.5 transition-all duration-200 hover:border-foreground hover:bg-foreground hover:text-white"
                           aria-label="Instagram Inquiry"
                         >
-                          <span className="min-w-0 text-[10px] font-bold uppercase tracking-[0.2em] sm:tracking-[0.3em]">
+                          <span className="min-w-0 text-[10px] font-bold uppercase tracking-[0.2em] sm:tracking-[0.25em]">
                             Instagram
                           </span>
-                          <Instagram className="h-4 w-4" />
+                          <Instagram className="h-4 w-4 shrink-0 transition-transform duration-200 group-hover:scale-110" />
                         </a>
                       )}
                       {socialLinks?.facebookPageUrl && (
@@ -560,13 +571,13 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                           href={socialLinks.facebookPageUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="group flex max-w-full items-center justify-between gap-4 border border-foreground/10 px-4 py-4 transition-all duration-300 hover:bg-foreground hover:text-white sm:px-6"
+                          className="group flex w-full items-center justify-between gap-4 border border-foreground/15 bg-white px-5 py-3.5 transition-all duration-200 hover:border-foreground hover:bg-foreground hover:text-white"
                           aria-label="Facebook Inquiry"
                         >
-                          <span className="min-w-0 text-[10px] font-bold uppercase tracking-[0.2em] sm:tracking-[0.3em]">
+                          <span className="min-w-0 text-[10px] font-bold uppercase tracking-[0.2em] sm:tracking-[0.25em]">
                             Facebook
                           </span>
-                          <Facebook className="h-4 w-4" />
+                          <Facebook className="h-4 w-4 shrink-0 transition-transform duration-200 group-hover:scale-110" />
                         </a>
                       )}
                     </div>
@@ -648,6 +659,17 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
           </div>
         </div>
       </section>
+
+      {/* Lightbox Modal with Zoom / Pan / Navigation */}
+      {product?.images && (
+        <ProductImageLightbox
+          images={product.images}
+          initialIndex={lightboxIndex ?? 0}
+          isOpen={lightboxIndex !== null}
+          onClose={() => setLightboxIndex(null)}
+          productName={name}
+        />
+      )}
     </div>
   )
 }

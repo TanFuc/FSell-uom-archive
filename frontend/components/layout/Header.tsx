@@ -152,7 +152,7 @@ export function Header() {
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50)
+      setIsScrolled(window.scrollY > 20)
     }
     handleScroll()
     window.addEventListener('scroll', handleScroll, { passive: true })
@@ -542,26 +542,27 @@ export function Header() {
     },
   }
 
-  const isHeaderOpaque = showMobileMenu
+  const isHeaderOpaque = showMobileMenu || isScrolled
+  const isBorderVisible = isScrolled || showMobileMenu
 
   return (
     <header
       className={cn(
-        'fixed left-0 right-0 top-0 z-50 transition-colors duration-300',
-        isHeaderOpaque ? 'bg-white shadow-sm' : 'bg-transparent',
+        'fixed left-0 right-0 top-0 z-50 transition-[background-color,box-shadow,border-color] duration-300',
+        isHeaderOpaque ? 'bg-white/95 backdrop-blur-md shadow-xs' : 'bg-transparent',
+        isBorderVisible ? 'border-b border-foreground/[0.06]' : 'border-b-0',
       )}
       style={{ paddingRight: 'var(--scrollbar-compensation, 0px)' }}
     >
       <div
         className={cn(
-          'relative z-[70] flex items-center bg-inherit px-6 transition-[height,border-color] duration-200 lg:px-12',
+          'relative z-[70] flex items-center bg-inherit px-4 transition-[height] duration-200 sm:px-6 lg:px-12',
           isScrolled ? 'h-16 lg:h-20' : 'h-20 lg:h-28',
-          isHeaderOpaque && !isScrolled ? 'border-b border-foreground/[0.03]' : 'border-b-0',
         )}
       >
         <div className="flex w-full items-center justify-between">
           {/* Left */}
-          <div className="flex w-1/3 items-center">
+          <div className="flex w-auto shrink-0 items-center lg:w-1/3">
             <button
               onClick={toggleMobileMenu}
               aria-label={showMobileMenu ? t('closeMenu') : t('openMenu')}
@@ -606,12 +607,12 @@ export function Header() {
           </div>
 
           {/* Middle Logo */}
-          <div className="flex w-1/3 justify-center overflow-hidden">
+          <div className="flex flex-1 min-w-0 justify-center px-2 text-center lg:w-1/3">
             <Link
               href={`/${locale}`}
               className={cn(
-                'font-playfair font-bold tracking-tighter transition-all duration-500 hover:opacity-80',
-                isScrolled ? 'text-xl lg:text-3xl' : 'text-2xl lg:text-4xl',
+                'font-playfair font-bold tracking-tighter transition-all duration-300 hover:opacity-80 whitespace-nowrap',
+                isScrolled ? 'text-lg sm:text-xl lg:text-3xl' : 'text-xl sm:text-2xl lg:text-4xl',
               )}
               tabIndex={0}
               suppressHydrationWarning
@@ -621,7 +622,7 @@ export function Header() {
           </div>
 
           {/* Right Socials + Search + Lang */}
-          <div className="flex w-1/3 items-center justify-end gap-3 lg:gap-8">
+          <div className="flex w-auto shrink-0 items-center justify-end gap-3 lg:w-1/3 lg:gap-8">
             {/* Desktop Socials */}
             <div className="mr-2 hidden items-center gap-5 lg:flex">
               {socialLinks?.instagramUsername && (
