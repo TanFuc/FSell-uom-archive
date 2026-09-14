@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api-client'
+import { revalidatePaths } from '@/lib/revalidate'
 
 export const bannerKeys = {
   all: ['banners'] as const,
@@ -42,6 +43,7 @@ export function useCreateBanner() {
     mutationFn: (data: any) => apiClient.createBanner(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: bannerKeys.all })
+      void revalidatePaths(['/vi', '/en'])
     },
   })
 }
@@ -52,6 +54,7 @@ export function useUpdateBanner() {
     mutationFn: ({ id, data }: { id: string; data: any }) => apiClient.updateBanner(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: bannerKeys.all })
+      void revalidatePaths(['/vi', '/en'])
     },
   })
 }
@@ -62,6 +65,7 @@ export function useDeleteBanner() {
     mutationFn: (id: string) => apiClient.deleteBanner(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: bannerKeys.all })
+      void revalidatePaths(['/vi', '/en'])
     },
   })
 }

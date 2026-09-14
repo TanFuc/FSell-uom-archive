@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { apiClient } from '@/lib/api-client'
+import { revalidatePaths } from '@/lib/revalidate'
 import type { ThemeSettings, SocialLinks, SiteContent, BrandingSettings } from '@/lib/types'
 
 const BRANDING_CACHE_KEY = 'uom_branding_cache'
@@ -125,6 +126,7 @@ export function useUpdateTheme() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: settingsKeys.theme() })
       queryClient.invalidateQueries({ queryKey: settingsKeys.all })
+      void revalidatePaths(['/vi', '/en'])
       toast.success('Theme updated successfully')
     },
     onError: (error: any) => {
@@ -141,6 +143,7 @@ export function useUpdateSocialLinks() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: settingsKeys.social() })
       queryClient.invalidateQueries({ queryKey: settingsKeys.all })
+      void revalidatePaths(['/vi', '/en'])
       toast.success('Social links updated successfully')
     },
     onError: (error: any) => {
@@ -157,6 +160,7 @@ export function useUpdateExchangeRate() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: settingsKeys.exchange() })
       queryClient.invalidateQueries({ queryKey: settingsKeys.all })
+      void revalidatePaths(['/vi', '/en'])
       toast.success('Exchange rate updated successfully')
     },
     onError: (error: any) => {
@@ -173,6 +177,7 @@ export function useUpdateSiteContent() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: settingsKeys.content() })
       queryClient.invalidateQueries({ queryKey: settingsKeys.all })
+      void revalidatePaths(['/vi', '/en', '/vi/journal', '/en/journal', '/vi/about', '/en/about'])
       toast.success('Site content updated successfully')
     },
     onError: (error: any) => {
@@ -204,6 +209,7 @@ export function useUpdateBranding() {
       queryClient.invalidateQueries({ queryKey: settingsKeys.branding() })
       queryClient.invalidateQueries({ queryKey: settingsKeys.content() })
       queryClient.invalidateQueries({ queryKey: settingsKeys.all })
+      void revalidatePaths(['/vi', '/en'])
       toast.success('Branding updated successfully')
     },
     onError: (error: any) => {
