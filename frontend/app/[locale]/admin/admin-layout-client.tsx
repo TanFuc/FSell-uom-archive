@@ -73,6 +73,22 @@ export default function AdminLayoutClient({ children }: AdminLayoutProps) {
     })
   }
 
+  // Keyboard shortcut Ctrl+B / Cmd+B to toggle sidebar
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+        const activeTag = document.activeElement?.tagName?.toLowerCase()
+        if (activeTag === 'input' || activeTag === 'textarea' || document.activeElement?.getAttribute('contenteditable') === 'true') {
+          return
+        }
+        e.preventDefault()
+        toggleCollapsed()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
   useEffect(() => {
     if (isLoginPage) {
       setIsAuthorized(true)
@@ -199,52 +215,80 @@ export default function AdminLayoutClient({ children }: AdminLayoutProps) {
         )}
       >
         {/* Sidebar Header */}
-        <div className="flex h-16 items-center justify-between border-b px-4 flex-shrink-0">
-          <div className={cn('flex items-center gap-2 overflow-hidden', isCollapsed && 'md:hidden')}>
-            <Logo variant="text" customHref={`/${locale}/admin/dashboard`} />
-            <span className="text-[10px] uppercase font-semibold tracking-wider text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-              ADMIN
-            </span>
-          </div>
+        <div
+          className={cn(
+            'relative flex h-16 items-center border-b flex-shrink-0 transition-all duration-300',
+            isCollapsed ? 'justify-center px-2' : 'justify-between px-4',
+          )}
+        >
+          {/* Expanded Branding: Full Logo + ADMIN tag */}
+          {!isCollapsed ? (
+            <div className="flex items-center gap-2 overflow-hidden">
+              <Logo variant="text" customHref={`/${locale}/admin/dashboard`} />
+              <span className="text-[10px] uppercase font-semibold tracking-wider text-neutral-500 bg-neutral-100 px-1.5 py-0.5 rounded border border-neutral-200/60">
+                ADMIN
+              </span>
+            </div>
+          ) : (
+            /* Collapsed Branding: Centered "Ư." mark in perfect alignment with nav icons below */
+            <Link
+              href={`/${locale}/admin/dashboard`}
+              className="group relative flex h-10 w-10 items-center justify-center rounded-xl font-serif font-bold text-xl text-neutral-900 hover:bg-neutral-100 hover:text-neutral-700 transition-all"
+              title="ƯƠM. Archive - Bảng điều khiển"
+            >
+              <span>Ư.</span>
+              <span className="pointer-events-none absolute left-full ml-3 hidden rounded-lg bg-neutral-900 px-3 py-1.5 text-xs font-medium text-white shadow-xl group-hover:md:block z-50 whitespace-nowrap font-sans">
+                ƯƠM. Archive • Bảng điều khiển
+              </span>
+            </Link>
+          )}
 
-          {isCollapsed && (
-            <div className="hidden md:flex mx-auto">
-              <span className="font-serif font-bold text-lg text-primary">Ư.</span>
+          {/* Expanded Actions: Language switcher + Collapse Button + Mobile Close */}
+          {!isCollapsed && (
+            <div className="flex items-center gap-1">
+              <Link
+                href={newPath}
+                className="text-xs font-semibold uppercase tracking-widest text-neutral-500 hover:text-neutral-900 px-1.5 py-1 rounded hover:bg-neutral-100 transition-colors"
+                title={`Đổi ngôn ngữ sang ${switchLocale.toUpperCase()}`}
+              >
+                {switchLocale}
+              </Link>
+
+              {/* Desktop Collapse Button */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="hidden md:flex h-8 w-8 text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg"
+                onClick={toggleCollapsed}
+                title="Thu gọn sidebar (Ctrl+B)"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+
+              {/* Mobile Close Button */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="md:hidden h-8 w-8 text-neutral-500 hover:text-neutral-900"
+                onClick={() => setIsSidebarOpen(false)}
+              >
+                <X className="h-5 w-5" />
+              </Button>
             </div>
           )}
 
-          <div className="flex items-center gap-1">
-            <Link
-              href={newPath}
-              className={cn(
-                'text-xs font-semibold uppercase tracking-widest text-muted-foreground hover:text-foreground px-1.5 py-1 rounded transition-colors',
-                isCollapsed && 'md:hidden',
-              )}
-            >
-              {switchLocale}
-            </Link>
-
-            {/* Desktop Collapse / Expand Toggle Button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="hidden md:flex h-8 w-8 text-muted-foreground hover:text-foreground"
+          {/* Collapsed Rail Expand Button: Centered vertically on the right border dividing line */}
+          {isCollapsed && (
+            <button
+              type="button"
               onClick={toggleCollapsed}
-              title={isCollapsed ? 'Mở rộng sidebar (Ctrl+B)' : 'Thu gọn sidebar'}
+              className="hidden md:flex absolute -right-3 top-1/2 -translate-y-1/2 z-50 h-6 w-6 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-600 shadow-xs hover:bg-neutral-100 hover:text-neutral-900 hover:scale-110 active:scale-95 transition-all cursor-pointer"
+              title="Mở rộng sidebar (Ctrl+B)"
+              aria-label="Mở rộng sidebar"
             >
-              {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-            </Button>
-
-            {/* Mobile Close Button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="md:hidden"
-              onClick={() => setIsSidebarOpen(false)}
-            >
-              <X className="h-5 w-5" />
-            </Button>
-          </div>
+              <ChevronRight className="h-3.5 w-3.5" />
+            </button>
+          )}
         </div>
 
         {/* Navigation List */}
@@ -259,11 +303,11 @@ export default function AdminLayoutClient({ children }: AdminLayoutProps) {
                 href={item.href}
                 title={isCollapsed ? item.label : undefined}
                 className={cn(
-                  'group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150',
+                  'group relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-all duration-150',
                   isActive
                     ? 'bg-neutral-100 text-neutral-900 font-semibold shadow-xs'
                     : 'text-neutral-600 hover:bg-neutral-100/70 hover:text-neutral-900',
-                  isCollapsed && 'md:justify-center md:px-2',
+                  isCollapsed && 'md:justify-center md:px-0 md:h-10 md:w-10 md:mx-auto',
                 )}
                 onClick={() => setIsSidebarOpen(false)}
               >
