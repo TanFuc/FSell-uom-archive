@@ -706,22 +706,23 @@ export default function AdminStoriesPage() {
             <Card
               key={story.id}
               data-story-id={story.id}
-              className={
+              className={cn(
+                'flex flex-col h-full transition-all duration-300',
                 activeCardId === story.id
-                  ? 'translate-y-[-4px] scale-[1.01] border-primary/30 shadow-md transition-all duration-300'
+                  ? 'translate-y-[-4px] scale-[1.01] border-primary/30 shadow-md'
                   : justUpdatedId === story.id
-                    ? 'border-emerald-300/70 shadow-sm shadow-emerald-100 transition-all duration-300'
-                    : 'transition-all duration-300'
-              }
+                    ? 'border-emerald-300/70 shadow-sm shadow-emerald-100'
+                    : 'hover:shadow-sm',
+              )}
             >
-              <CardContent className="relative space-y-3 p-4">
+              <CardContent className="relative flex flex-col flex-1 p-4 space-y-3">
                 {justUpdatedId === story.id && (
-                  <div className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full border border-emerald-300 bg-emerald-50 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 shadow-sm">
+                  <div className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full border border-emerald-300 bg-emerald-50 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 shadow-sm z-10">
                     <CheckCircle2 className="h-3.5 w-3.5" />
                     Updated
                   </div>
                 )}
-                <div className="relative aspect-[4/3] overflow-hidden rounded-md bg-muted">
+                <div className="relative aspect-[4/3] w-full overflow-hidden rounded-md bg-muted border border-border/40">
                   <Image
                     src={story.imageUrl}
                     alt={story.titleEn}
@@ -730,82 +731,92 @@ export default function AdminStoriesPage() {
                     unoptimized
                   />
                 </div>
-                <h3 className="font-semibold">{locale === 'vi' ? story.titleVi : story.titleEn}</h3>
-                <div
-                  className={cn(
-                    'inline-flex w-fit items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide border transition-colors',
-                    story.isVisible
-                      ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                      : 'border-neutral-200 bg-neutral-100 text-neutral-500',
-                  )}
-                >
-                  <span
-                    className={cn(
-                      'h-1.5 w-1.5 rounded-full',
-                      story.isVisible ? 'bg-emerald-500' : 'bg-neutral-400',
-                    )}
-                  />
-                  {story.isVisible
-                    ? locale === 'vi'
-                      ? 'Hiện'
-                      : 'Visible'
-                    : locale === 'vi'
-                      ? 'Ẩn'
-                      : 'Hidden'}
-                </div>
-                <p className="line-clamp-2 text-sm text-muted-foreground">
-                  {locale === 'vi' ? story.summaryVi : story.summaryEn}
-                </p>
-                <div className="space-y-2 rounded-md border border-muted/50 bg-muted/20 p-2">
-                  <div
-                    className={`rounded-sm px-1.5 py-1 ${isContentViMissing ? 'border border-amber-300/60 bg-amber-50/80' : ''}`}
+                <div>
+                  <h3
+                    className="font-semibold text-base line-clamp-1 h-6 text-foreground"
+                    title={locale === 'vi' ? story.titleVi : story.titleEn}
                   >
-                    <div className="mb-1 flex items-center justify-between gap-2">
-                      <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/80">
+                    {locale === 'vi' ? story.titleVi : story.titleEn}
+                  </h3>
+                </div>
+                <div>
+                  <div
+                    className={cn(
+                      'inline-flex w-fit items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide border transition-colors',
+                      story.isVisible
+                        ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                        : 'border-neutral-200 bg-neutral-100 text-neutral-500',
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        'h-1.5 w-1.5 rounded-full',
+                        story.isVisible ? 'bg-emerald-500' : 'bg-neutral-400',
+                      )}
+                    />
+                    {story.isVisible
+                      ? locale === 'vi'
+                        ? 'Hiện'
+                        : 'Visible'
+                      : locale === 'vi'
+                        ? 'Ẩn'
+                        : 'Hidden'}
+                  </div>
+                </div>
+                <p className="line-clamp-2 text-xs text-muted-foreground h-9 leading-relaxed">
+                  {(locale === 'vi' ? story.summaryVi : story.summaryEn) || '—'}
+                </p>
+                <div className="space-y-2 rounded-lg border border-border/50 bg-muted/20 p-2.5">
+                  <div
+                    className={cn(
+                      'rounded px-1.5 py-1',
+                      isContentViMissing ? 'border border-amber-300/60 bg-amber-50/80' : '',
+                    )}
+                  >
+                    <div className="mb-0.5 flex items-center justify-between gap-2">
+                      <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground/80">
                         Content VI
-                      </p>
+                      </span>
                       {isContentViMissing && (
                         <span className="rounded bg-amber-200/80 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-amber-900">
                           Missing
                         </span>
                       )}
                     </div>
-                    {isContentViMissing ? (
-                      <p className="text-xs text-muted-foreground">No content</p>
-                    ) : (
-                      <div
-                        className="prose prose-sm prose-p:my-1 prose-p:text-muted-foreground prose-li:my-0 prose-li:text-muted-foreground max-h-20 max-w-none overflow-hidden text-xs leading-relaxed"
-                        dangerouslySetInnerHTML={{ __html: story.contentVi }}
-                      />
-                    )}
+                    <p className="line-clamp-2 text-xs text-muted-foreground h-8 leading-relaxed">
+                      {contentViPreview || (
+                        <span className="italic opacity-60">No content</span>
+                      )}
+                    </p>
                   </div>
                   <div
-                    className={`rounded-sm px-1.5 py-1 ${isContentEnMissing ? 'border border-amber-300/60 bg-amber-50/80' : ''}`}
+                    className={cn(
+                      'rounded px-1.5 py-1 border-t border-border/40 pt-1.5',
+                      isContentEnMissing ? 'border border-amber-300/60 bg-amber-50/80' : '',
+                    )}
                   >
-                    <div className="mb-1 flex items-center justify-between gap-2">
-                      <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/80">
+                    <div className="mb-0.5 flex items-center justify-between gap-2">
+                      <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground/80">
                         Content EN
-                      </p>
+                      </span>
                       {isContentEnMissing && (
                         <span className="rounded bg-amber-200/80 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-amber-900">
                           Missing
                         </span>
                       )}
                     </div>
-                    {isContentEnMissing ? (
-                      <p className="text-xs text-muted-foreground">No content</p>
-                    ) : (
-                      <div
-                        className="prose prose-sm prose-p:my-1 prose-p:text-muted-foreground prose-li:my-0 prose-li:text-muted-foreground max-h-20 max-w-none overflow-hidden text-xs leading-relaxed"
-                        dangerouslySetInnerHTML={{ __html: story.contentEn }}
-                      />
-                    )}
+                    <p className="line-clamp-2 text-xs text-muted-foreground h-8 leading-relaxed">
+                      {contentEnPreview || (
+                        <span className="italic opacity-60">No content</span>
+                      )}
+                    </p>
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="mt-auto pt-3 border-t border-border/40 flex items-center gap-2">
                   <Button
                     size="sm"
                     variant={editingId === story.id ? 'default' : 'outline'}
+                    className="flex-1 h-8 text-xs"
                     onClick={() => handleEdit(story)}
                   >
                     {editingId === story.id
@@ -819,24 +830,25 @@ export default function AdminStoriesPage() {
                       href={`/${locale}/journal/${encodeURIComponent(getStorySlug(story, locale as 'vi' | 'en'))}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex h-9 w-9 items-center justify-center rounded-md border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                      className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                       title={
                         locale === 'vi'
                           ? 'Xem story ngoài trang public'
                           : 'View story on public site'
                       }
                     >
-                      <ExternalLink className="h-4 w-4" />
+                      <ExternalLink className="h-3.5 w-3.5" />
                     </a>
                   )}
                   <Button
                     size="sm"
                     variant="outline"
-                    className={
+                    className={cn(
+                      'h-8 text-xs px-3',
                       story.isVisible
                         ? 'text-neutral-600 hover:bg-neutral-100'
-                        : 'text-emerald-700 border-emerald-200 bg-emerald-50 hover:bg-emerald-100'
-                    }
+                        : 'text-emerald-700 border-emerald-200 bg-emerald-50 hover:bg-emerald-100',
+                    )}
                     onClick={() => handleToggleVisibility(story.id)}
                   >
                     {story.isVisible
@@ -850,7 +862,7 @@ export default function AdminStoriesPage() {
                   <Button
                     size="sm"
                     variant="outline"
-                    className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 hover:border-red-300 transition-colors"
+                    className="h-8 text-xs px-2.5 text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 hover:border-red-300 transition-colors"
                     onClick={() => handleDelete(story.id)}
                   >
                     {t('delete')}
