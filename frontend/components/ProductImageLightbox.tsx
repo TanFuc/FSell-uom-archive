@@ -3,6 +3,7 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { ZoomIn, ZoomOut, RotateCcw, X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 
 interface ProductImageLightboxProps {
   images: string[]
@@ -30,6 +31,11 @@ export default function ProductImageLightbox({
   const dragStart = useRef({ x: 0, y: 0 })
   const panStart = useRef({ x: 0, y: 0 })
   const containerRef = useRef<HTMLDivElement>(null)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Sync initialIndex when opening
   useEffect(() => {
@@ -159,13 +165,14 @@ export default function ProductImageLightbox({
     setIsDragging(false)
   }
 
-  if (!isOpen || !images.length) return null
+  if (!mounted) return null
 
   const currentImage = images[currentIndex]
 
-  return (
+  return createPortal(
     <AnimatePresence>
-      <motion.div
+      {isOpen && images.length > 0 && currentImage && (
+        <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -335,8 +342,10 @@ export default function ProductImageLightbox({
             </p>
           )}
         </div>
-      </motion.div>
-    </AnimatePresence>
+        </motion.div>
+      )}
+    </AnimatePresence>,
+    document.body,
   )
 }
 
