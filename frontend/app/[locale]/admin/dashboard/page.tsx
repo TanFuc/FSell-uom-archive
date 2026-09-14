@@ -1,33 +1,21 @@
 'use client'
 
-import { zodResolver } from '@hookform/resolvers/zod'
 import {
   Package,
   Users,
   DollarSign,
-  Eye,
-  EyeOff,
   LayoutGrid,
   CheckCircle,
   Star,
+  KeyRound,
+  Eye,
 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useEffect, useState } from 'react'
-import { useForm } from 'react-hook-form'
-import * as z from 'zod'
+import { AccountModal } from '@/components/admin/AccountModal'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
 import { useDocumentTitle } from '@/hooks/use-document-title'
-import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api'
 import { useAuthStore } from '@/lib/store'
 
@@ -38,58 +26,9 @@ interface DashboardStats {
   totalUsers: number
 }
 
-const accountSchema = z
-  .object({
-    email: z.string().email('Invalid email'),
-    currentPassword: z.string().optional().or(z.literal('')),
-    newPassword: z
-      .string()
-      .min(8, 'Password must be at least 8 characters')
-      .optional()
-      .or(z.literal('')),
-    confirmNewPassword: z
-      .string()
-      .min(8, 'Password must be at least 8 characters')
-      .optional()
-      .or(z.literal('')),
-  })
-  .superRefine((data, ctx) => {
-    if (
-      (data.newPassword || data.confirmNewPassword) &&
-      data.newPassword !== data.confirmNewPassword
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['confirmNewPassword'],
-        message: 'Passwords do not match',
-      })
-    }
-
-    if (data.newPassword && !data.currentPassword) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['currentPassword'],
-        message: 'Current password is required',
-      })
-    }
-  })
-
-type AccountFormValues = z.infer<typeof accountSchema>
-
-function extractBackendMessages(error: unknown): string[] {
-  const responseMessage = (error as any)?.response?.data?.message
-
-  if (Array.isArray(responseMessage)) return responseMessage.map((message) => String(message))
-  if (typeof responseMessage === 'string') return [responseMessage]
-  if (typeof (error as any)?.message === 'string') return [(error as any).message]
-
-  return []
-}
-
 export default function DashboardPage() {
   const t = useTranslations('admin')
-  const { toast } = useToast()
-  const { user: currentUser, setUser } = useAuthStore()
+  const { user: currentUser } = useAuthStore()
   const [stats, setStats] = useState<DashboardStats>({
     totalProducts: 0,
     activeProducts: 0,
@@ -97,32 +36,9 @@ export default function DashboardPage() {
     totalUsers: 0,
   })
   const [isLoading, setIsLoading] = useState(true)
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false)
-  const [showNewPassword, setShowNewPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-
-  const accountForm = useForm<AccountFormValues>({
-    resolver: zodResolver(accountSchema),
-    defaultValues: {
-      email: '',
-      currentPassword: '',
-      newPassword: '',
-      confirmNewPassword: '',
-    },
-  })
+  const [isAccountModalOpen, setIsAccountModalOpen] = useState(false)
 
   useDocumentTitle(t('dashboard'), 'Admin - ƯƠM. Archive')
-
-  useEffect(() => {
-    if (!currentUser?.email) return
-
-    accountForm.reset({
-      email: currentUser.email,
-      currentPassword: '',
-      newPassword: '',
-      confirmNewPassword: '',
-    })
-  }, [currentUser?.email, accountForm])
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -150,75 +66,6 @@ export default function DashboardPage() {
 
     fetchStats()
   }, [])
-
-  const onUpdateAccount = async (data: AccountFormValues) => {
-    accountForm.clearErrors(['email', 'currentPassword', 'newPassword', 'confirmNewPassword'])
-
-    const payload: { email?: string; currentPassword?: string; newPassword?: string } = {}
-
-    if (data.email && data.email !== currentUser?.email) {
-      payload.email = data.email
-    }
-
-    if (data.newPassword) {
-      payload.currentPassword = data.currentPassword
-      payload.newPassword = data.newPassword
-    }
-
-    if (!payload.email && !payload.newPassword) {
-      toast({ title: t('error'), description: t('noChangesToUpdate'), variant: 'destructive' })
-      return
-    }
-
-    try {
-      const updatedUser = await api.updateMyProfile(payload)
-      setUser({
-        ...currentUser,
-        ...updatedUser,
-      })
-
-      accountForm.reset({
-        email: updatedUser.email,
-        currentPassword: '',
-        newPassword: '',
-        confirmNewPassword: '',
-      })
-
-      toast({ title: t('success'), description: t('accountUpdated') })
-    } catch (error) {
-      const messages = extractBackendMessages(error)
-      let hasFieldError = false
-
-      messages.forEach((message) => {
-        const normalized = message.toLowerCase()
-
-        if (normalized.includes('email')) {
-          accountForm.setError('email', { type: 'server', message })
-          hasFieldError = true
-          return
-        }
-
-        if (normalized.includes('current password')) {
-          accountForm.setError('currentPassword', { type: 'server', message })
-          hasFieldError = true
-          return
-        }
-
-        if (normalized.includes('password')) {
-          accountForm.setError('newPassword', { type: 'server', message })
-          hasFieldError = true
-        }
-      })
-
-      if (!hasFieldError) {
-        toast({
-          title: t('error'),
-          description: messages[0] || t('failedToUpdateAccount'),
-          variant: 'destructive',
-        })
-      }
-    }
-  }
 
   const statCards = [
     {
@@ -324,132 +171,47 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm font-medium uppercase tracking-wide">
-            {t('accountManagement')}
-          </CardTitle>
+      <Card className="border bg-gradient-to-br from-card to-muted/20">
+        <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between pb-2">
+          <div>
+            <CardTitle className="text-sm font-semibold uppercase tracking-wide">
+              {t('accountManagement')}
+            </CardTitle>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Thông tin tài khoản đăng nhập và bảo mật quản trị viên.
+            </p>
+          </div>
+          <Button
+            size="sm"
+            onClick={() => setIsAccountModalOpen(true)}
+            className="text-xs h-8"
+          >
+            <KeyRound className="mr-1.5 h-3.5 w-3.5" />
+            Cập nhật tài khoản & Đổi mật khẩu
+          </Button>
         </CardHeader>
         <CardContent>
-          <Form {...accountForm}>
-            <form onSubmit={accountForm.handleSubmit(onUpdateAccount)} className="space-y-4">
-              <FormField
-                control={accountForm.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('loginAccountEmail')}</FormLabel>
-                    <FormControl>
-                      <Input {...field} type="email" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <FormField
-                  control={accountForm.control}
-                  name="currentPassword"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('currentPassword')}</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Input
-                            {...field}
-                            type={showCurrentPassword ? 'text' : 'password'}
-                            className="pr-10"
-                          />
-                          <button
-                            type="button"
-                            className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
-                            onClick={() => setShowCurrentPassword((v) => !v)}
-                            tabIndex={-1}
-                          >
-                            {showCurrentPassword ? (
-                              <EyeOff className="h-4 w-4" />
-                            ) : (
-                              <Eye className="h-4 w-4" />
-                            )}
-                          </button>
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={accountForm.control}
-                  name="newPassword"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('newPassword')}</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Input
-                            {...field}
-                            type={showNewPassword ? 'text' : 'password'}
-                            className="pr-10"
-                          />
-                          <button
-                            type="button"
-                            className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
-                            onClick={() => setShowNewPassword((v) => !v)}
-                            tabIndex={-1}
-                          >
-                            {showNewPassword ? (
-                              <EyeOff className="h-4 w-4" />
-                            ) : (
-                              <Eye className="h-4 w-4" />
-                            )}
-                          </button>
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <FormField
-                control={accountForm.control}
-                name="confirmNewPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('confirmNewPassword')}</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Input
-                          {...field}
-                          type={showConfirmPassword ? 'text' : 'password'}
-                          className="pr-10"
-                        />
-                        <button
-                          type="button"
-                          className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
-                          onClick={() => setShowConfirmPassword((v) => !v)}
-                          tabIndex={-1}
-                        >
-                          {showConfirmPassword ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
-                        </button>
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <Button type="submit">{t('updateAccount')}</Button>
-            </form>
-          </Form>
+          <div className="grid gap-3 sm:grid-cols-3 pt-2">
+            <div className="rounded-lg border bg-card p-3">
+              <span className="text-[10px] text-muted-foreground uppercase font-semibold">Họ và tên</span>
+              <p className="text-sm font-semibold text-foreground mt-0.5">{currentUser?.fullName || '—'}</p>
+            </div>
+            <div className="rounded-lg border bg-card p-3">
+              <span className="text-[10px] text-muted-foreground uppercase font-semibold">Email đăng nhập</span>
+              <p className="text-sm font-semibold text-foreground mt-0.5">{currentUser?.email || '—'}</p>
+            </div>
+            <div className="rounded-lg border bg-card p-3">
+              <span className="text-[10px] text-muted-foreground uppercase font-semibold">Quyền hạn</span>
+              <p className="text-sm font-semibold text-primary mt-0.5">{currentUser?.role || '—'}</p>
+            </div>
+          </div>
         </CardContent>
       </Card>
+
+      <AccountModal
+        open={isAccountModalOpen}
+        onOpenChange={setIsAccountModalOpen}
+      />
     </div>
   )
 }

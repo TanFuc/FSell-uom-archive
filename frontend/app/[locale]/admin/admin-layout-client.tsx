@@ -14,17 +14,23 @@ import {
   Image as ImageIcon,
   Brush,
   Sparkles,
+  ChevronLeft,
+  ChevronRight,
+  User as UserIcon,
+  KeyRound,
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 import { useEffect, useState } from 'react'
+import { AccountModal } from '@/components/admin/AccountModal'
 import Logo from '@/components/Logo'
 import { Button } from '@/components/ui/button'
 import { LoadingScreen } from '@/components/ui/loading-screen'
 import { Separator } from '@/components/ui/separator'
 import { api } from '@/lib/api'
 import { useAuthStore } from '@/lib/store'
+import { cn } from '@/lib/utils'
 
 interface AdminLayoutProps {
   children: React.ReactNode
@@ -36,12 +42,36 @@ export default function AdminLayoutClient({ children }: AdminLayoutProps) {
   const locale = useLocale()
   const t = useTranslations('admin')
   const { user, setUser, logout } = useAuthStore()
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false) // Mobile drawer state
+  const [isCollapsed, setIsCollapsed] = useState(false) // Desktop collapse state
+  const [isAccountModalOpen, setIsAccountModalOpen] = useState(false)
+
   const isLoginPage = pathname.includes('/admin/login')
   const [isAuthorized, setIsAuthorized] = useState(isLoginPage || !!user)
 
   const switchLocale = locale === 'vi' ? 'en' : 'vi'
   const newPath = pathname.replace(`/${locale}`, `/${switchLocale}`)
+
+  // Initialize desktop collapsed state from localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedCollapsed = localStorage.getItem('admin_sidebar_collapsed')
+      if (savedCollapsed === 'true') {
+        setIsCollapsed(true)
+      }
+    }
+  }, [])
+
+  const toggleCollapsed = () => {
+    setIsCollapsed((prev) => {
+      const next = !prev
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('admin_sidebar_collapsed', String(next))
+      }
+      return next
+    })
+  }
 
   useEffect(() => {
     if (isLoginPage) {
@@ -125,112 +155,242 @@ export default function AdminLayoutClient({ children }: AdminLayoutProps) {
     navItems.push({ href: `/${locale}/admin/users`, label: t('users'), icon: Users })
   }
 
+  const userInitial = user?.fullName ? user.fullName.charAt(0).toUpperCase() : 'U'
+
   return (
-    <div className="safe-screen flex min-h-screen bg-background pt-16 text-foreground md:pt-0">
+    <div className="flex h-screen w-full overflow-hidden bg-background text-foreground">
       {/* Mobile Top Bar */}
-      <div className="fixed left-0 right-0 top-0 z-30 flex h-16 items-center justify-between border-b bg-background px-4 md:hidden">
+      <div className="fixed left-0 right-0 top-0 z-30 flex h-16 items-center justify-between border-b bg-background/95 px-4 backdrop-blur-md md:hidden">
         <div className="flex min-w-0 items-center gap-2">
           <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(true)}>
             <Menu className="h-5 w-5" />
           </Button>
           <Logo variant="text" customHref={`/${locale}/admin/dashboard`} />
         </div>
-        <Link
-          href={newPath}
-          className="text-xs font-semibold uppercase tracking-widest text-muted-foreground"
-        >
-          {switchLocale}
-        </Link>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsAccountModalOpen(true)}
+            className="h-8 px-2 text-xs"
+          >
+            <UserIcon className="h-4 w-4 mr-1" />
+            {user.fullName.split(' ')[0]}
+          </Button>
+          <Link
+            href={newPath}
+            className="text-xs font-semibold uppercase tracking-widest text-muted-foreground"
+          >
+            {switchLocale}
+          </Link>
+        </div>
       </div>
 
-      {/* Sidebar */}
+      {/* Sidebar: Desktop is in-flow relative flex child; Mobile is slide-in drawer */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 w-64 transform border-r bg-card transition-transform duration-200 ease-in-out md:relative md:translate-x-0 ${
-          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        className={cn(
+          'flex flex-col border-r bg-card transition-all duration-300 ease-in-out',
+          // Mobile drawer (fixed overlay)
+          'fixed inset-y-0 left-0 z-40 w-72',
+          isSidebarOpen ? 'translate-x-0' : '-translate-x-full',
+          // Desktop behavior (in-flow relative flex child, never overlaps content)
+          'md:relative md:inset-auto md:z-auto md:flex md:h-full md:flex-shrink-0 md:translate-x-0',
+          isCollapsed ? 'md:w-20' : 'md:w-64',
+        )}
       >
-        <div className="flex h-full flex-col">
-          {/* Logo with Dashboard text */}
-          <div className="flex h-16 items-center gap-2 border-b px-6">
+        {/* Sidebar Header */}
+        <div className="flex h-16 items-center justify-between border-b px-4 flex-shrink-0">
+          <div className={cn('flex items-center gap-2 overflow-hidden', isCollapsed && 'md:hidden')}>
             <Logo variant="text" customHref={`/${locale}/admin/dashboard`} />
-            <span className="text-xs uppercase tracking-widest text-muted-foreground">
-              {t('dashboard')}
+            <span className="text-[10px] uppercase font-semibold tracking-wider text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+              ADMIN
             </span>
-            <div className="ml-auto flex items-center gap-2">
-              <Link
-                href={newPath}
-                className="text-xs font-semibold uppercase tracking-widest text-muted-foreground"
-              >
-                {switchLocale}
-              </Link>
-
-              {/* Mobile Close Button */}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="md:hidden"
-                onClick={() => setIsSidebarOpen(false)}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
           </div>
 
-          {/* Navigation */}
-          <nav className="flex-1 space-y-1 overflow-y-auto p-4">
-            {navItems.map((item) => {
-              const Icon = item.icon
-              const isActive = pathname === item.href
+          {isCollapsed && (
+            <div className="hidden md:flex mx-auto">
+              <span className="font-serif font-bold text-lg text-primary">Ư.</span>
+            </div>
+          )}
 
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`flex items-center gap-3 px-3 py-2 text-sm transition-colors ${
-                    isActive
-                      ? 'bg-accent text-accent-foreground'
-                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-                  }`}
-                  onClick={() => setIsSidebarOpen(false)}
-                >
-                  <Icon className="h-4 w-4" />
-                  {item.label}
-                </Link>
-              )
-            })}
-          </nav>
+          <div className="flex items-center gap-1">
+            <Link
+              href={newPath}
+              className={cn(
+                'text-xs font-semibold uppercase tracking-widest text-muted-foreground hover:text-foreground px-1.5 py-1 rounded transition-colors',
+                isCollapsed && 'md:hidden',
+              )}
+            >
+              {switchLocale}
+            </Link>
 
-          <Separator />
+            {/* Desktop Collapse / Expand Toggle Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="hidden md:flex h-8 w-8 text-muted-foreground hover:text-foreground"
+              onClick={toggleCollapsed}
+              title={isCollapsed ? 'Mở rộng sidebar (Ctrl+B)' : 'Thu gọn sidebar'}
+            >
+              {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+            </Button>
 
-          {/* User info and logout */}
-          <div className="p-4">
-            {user && (
-              <div className="mb-4">
-                <p className="text-sm font-medium">{user.fullName}</p>
-                <p className="text-xs text-muted-foreground">{user.email}</p>
-                <p className="text-xs text-muted-foreground">{user.role}</p>
-              </div>
-            )}
-            <Button variant="ghost" className="w-full justify-start text-sm" onClick={handleLogout}>
-              <LogOut className="mr-2 h-4 w-4" />
-              {t('logout')}
+            {/* Mobile Close Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden"
+              onClick={() => setIsSidebarOpen(false)}
+            >
+              <X className="h-5 w-5" />
             </Button>
           </div>
         </div>
+
+        {/* Navigation List */}
+        <nav className="flex-1 space-y-1 overflow-y-auto px-2 py-3">
+          {navItems.map((item) => {
+            const Icon = item.icon
+            const isActive = pathname === item.href
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                title={isCollapsed ? item.label : undefined}
+                className={cn(
+                  'group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150',
+                  isActive
+                    ? 'bg-neutral-100 text-neutral-900 font-semibold shadow-xs'
+                    : 'text-neutral-600 hover:bg-neutral-100/70 hover:text-neutral-900',
+                  isCollapsed && 'md:justify-center md:px-2',
+                )}
+                onClick={() => setIsSidebarOpen(false)}
+              >
+                <Icon
+                  className={cn(
+                    'h-4 w-4 flex-shrink-0 transition-transform group-hover:scale-105',
+                    isActive ? 'text-neutral-900' : 'text-neutral-500 group-hover:text-neutral-900',
+                  )}
+                />
+                <span className={cn('truncate text-[13px]', isCollapsed && 'md:hidden')}>
+                  {item.label}
+                </span>
+
+                {/* Collapsed hover tooltip */}
+                {isCollapsed && (
+                  <span className="pointer-events-none absolute left-full ml-3 hidden rounded-lg bg-neutral-900 px-3 py-1.5 text-xs font-medium text-white shadow-xl group-hover:md:block z-50 whitespace-nowrap">
+                    {item.label}
+                  </span>
+                )}
+              </Link>
+            )
+          })}
+        </nav>
+
+        <Separator />
+
+        {/* User Account & Logout Footer - Clean Light Aesthetic, No Dark Box */}
+        <div className="border-t border-neutral-200/70 p-3 bg-neutral-50/50 flex-shrink-0">
+          {!isCollapsed ? (
+            <div className="space-y-2">
+              {/* User Profile Card */}
+              <div
+                onClick={() => setIsAccountModalOpen(true)}
+                className="group flex cursor-pointer items-center gap-2.5 rounded-xl border border-neutral-200/80 bg-white p-2.5 shadow-2xs transition-all hover:border-neutral-300 hover:bg-neutral-50"
+                title="Bấm để cập nhật thông tin và đổi mật khẩu"
+              >
+                <div className="relative flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-neutral-900 font-serif font-bold text-xs text-white">
+                  {userInitial}
+                  <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-white" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <p className="truncate text-xs font-semibold text-neutral-900 group-hover:text-neutral-700 transition-colors">
+                      {user.fullName || 'Admin User'}
+                    </p>
+                    <span className="rounded bg-neutral-100 px-1.5 py-0.5 text-[9px] font-medium text-neutral-600 uppercase border border-neutral-200/60">
+                      {user.role}
+                    </span>
+                  </div>
+                  <p className="truncate text-[11px] text-neutral-500">{user.email}</p>
+                </div>
+                <KeyRound className="h-3.5 w-3.5 text-neutral-400 group-hover:text-neutral-700 transition-colors" />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-1.5">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 justify-center text-xs h-8 rounded-lg border-neutral-200 bg-white hover:bg-neutral-50 text-neutral-700 font-medium"
+                  onClick={() => setIsAccountModalOpen(true)}
+                >
+                  <UserIcon className="mr-1.5 h-3.5 w-3.5 text-neutral-500" />
+                  Tài khoản
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs h-8 px-2.5 rounded-lg text-neutral-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+                  onClick={handleLogout}
+                  title={t('logout')}
+                >
+                  <LogOut className="h-3.5 w-3.5 mr-1" />
+                  {t('logout')}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            /* Collapsed Mode */
+            <div className="flex flex-col items-center gap-2 py-1">
+              <button
+                type="button"
+                onClick={() => setIsAccountModalOpen(true)}
+                className="group relative flex h-8 w-8 items-center justify-center rounded-full bg-neutral-900 font-serif font-bold text-xs text-white shadow-xs hover:ring-2 hover:ring-neutral-400 transition-all"
+                title={`${user.fullName} (${t('accountManagement')})`}
+              >
+                {userInitial}
+                <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-white" />
+                <span className="pointer-events-none absolute left-full ml-3 hidden rounded-lg bg-neutral-900 px-3 py-1.5 text-xs font-medium text-white shadow-xl group-hover:md:block z-50 whitespace-nowrap">
+                  {user.fullName} • Quản lý tài khoản
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="group relative flex h-7.5 w-7.5 items-center justify-center rounded-lg text-neutral-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+                title={t('logout')}
+              >
+                <LogOut className="h-3.5 w-3.5" />
+                <span className="pointer-events-none absolute left-full ml-3 hidden rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white shadow-xl group-hover:md:block z-50 whitespace-nowrap">
+                  {t('logout')}
+                </span>
+              </button>
+            </div>
+          )}
+        </div>
       </aside>
 
-      {/* Overlay for mobile */}
+      {/* Mobile Backdrop Overlay */}
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 z-30 bg-black/80 backdrop-blur-sm md:hidden"
+          className="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm md:hidden"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
 
-      {/* Main content */}
-      <main className="min-w-0 flex-1 overflow-y-auto overflow-x-hidden">
-        <div className="min-w-0 p-4 sm:p-6 md:p-8">{children}</div>
+      {/* Main Content Area - Scrollable Independently */}
+      <main className="flex-1 h-full min-w-0 overflow-y-auto overflow-x-hidden pt-16 md:pt-0">
+        <div className="min-w-0 p-4 sm:p-6 md:p-8 max-w-7xl mx-auto">{children}</div>
       </main>
+
+      {/* Account Management Modal (Accessible from anywhere) */}
+      <AccountModal
+        open={isAccountModalOpen}
+        onOpenChange={setIsAccountModalOpen}
+      />
     </div>
   )
 }
