@@ -248,9 +248,11 @@ export default function TrashPage() {
                         <RotateCcw className="h-4 w-4" />
                       </Button>
                       <Button
-                        variant="destructive"
+                        variant="outline"
                         size="sm"
                         onClick={() => setPermanentDeleteDialog({ open: true, product })}
+                        className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 hover:border-red-300 transition-colors"
+                        title="Xóa vĩnh viễn"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -316,7 +318,8 @@ export default function TrashPage() {
               {t('cancel')}
             </Button>
             <Button
-              variant="destructive"
+              variant="outline"
+              className="bg-red-600 text-white border-red-600 hover:bg-red-700 hover:border-red-700 transition-colors"
               onClick={() =>
                 permanentDeleteDialog.product &&
                 handlePermanentDelete(permanentDeleteDialog.product)

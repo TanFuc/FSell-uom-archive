@@ -42,6 +42,8 @@ import {
 import { useDocumentTitle } from '@/hooks/use-document-title'
 import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api'
+import { revalidatePaths } from '@/lib/revalidate'
+import { pingProductSeo } from '@/lib/seo-ping'
 import { type Product } from '@/lib/types'
 import { formatPriceVND, getImageUrl, optimizeProductImage, cn } from '@/lib/utils'
 
@@ -297,26 +299,31 @@ export default function ProductsPage() {
     setIsPinging(product.id)
 
     try {
-      const response = await fetch('/api/revalidate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          path: `/${locale}/shop/${product.slug}`,
-        }),
-      })
+      const pathsToRevalidate = [
+        `/vi/shop/${product.slug}`,
+        `/en/shop/${product.slug}`,
+        '/vi/shop',
+        '/en/shop',
+        '/sitemap.xml',
+      ]
 
-      if (response.ok) {
+      const [revalResult] = await Promise.all([
+        revalidatePaths(pathsToRevalidate),
+        pingProductSeo(product.slug),
+      ])
+
+      if (revalResult.success) {
         toast({
           title: 'SEO Refresh Thành công',
-          description: 'Đã xóa cache & gửi yêu cầu cập nhật tới Googlebot',
+          description: 'Đã xóa cache & gửi yêu cầu làm mới chỉ mục (IndexNow & Googlebot)',
         })
       } else {
-        throw new Error('Failed to revalidate')
+        throw new Error(revalResult.message || 'Làm mới cache thất bại')
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: 'Lỗi SEO Refresh',
-        description: 'Không thể làm mới chỉ mục ngay lúc này',
+        description: error?.message || 'Không thể làm mới chỉ mục ngay lúc này',
         variant: 'destructive',
       })
     } finally {
@@ -416,9 +423,9 @@ export default function ProductsPage() {
                 Bỏ nổi bật
               </Button>
               <Button
-                variant="destructive"
+                variant="outline"
                 size="sm"
-                className="shrink-0 snap-start"
+                className="shrink-0 snap-start text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 hover:border-red-300 transition-colors"
                 onClick={handleBulkDelete}
               >
                 <Trash2 className="mr-2 h-4 w-4" />
@@ -550,19 +557,24 @@ export default function ProductsPage() {
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()} className="text-center">
                     <Button
-                      variant={product.isActive ? 'default' : 'outline'}
+                      variant="outline"
                       size="sm"
                       onClick={(e) => handleToggleActive(product, e)}
-                      className={`whitespace-nowrap ${product.isActive ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                      className={cn(
+                        'whitespace-nowrap transition-colors text-xs font-medium',
+                        product.isActive
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100 hover:text-emerald-800'
+                          : 'bg-neutral-100 text-neutral-500 border-neutral-200 hover:bg-neutral-200/80 hover:text-neutral-700',
+                      )}
                     >
                       {product.isActive ? (
                         <>
-                          <Power className="mr-1 h-4 w-4" />
+                          <Power className="mr-1.5 h-3.5 w-3.5 text-emerald-600" />
                           Bật
                         </>
                       ) : (
                         <>
-                          <PowerOff className="mr-1 h-4 w-4" />
+                          <PowerOff className="mr-1.5 h-3.5 w-3.5 text-neutral-400" />
                           Tắt
                         </>
                       )}
@@ -570,19 +582,24 @@ export default function ProductsPage() {
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()} className="text-center">
                     <Button
-                      variant={product.isFeatured ? 'default' : 'outline'}
+                      variant="outline"
                       size="sm"
                       onClick={(e) => handleToggleFeatured(product, e)}
-                      className={`whitespace-nowrap ${product.isFeatured ? 'bg-yellow-600 hover:bg-yellow-700' : ''}`}
+                      className={cn(
+                        'whitespace-nowrap transition-colors text-xs font-medium',
+                        product.isFeatured
+                          ? 'bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100'
+                          : 'bg-neutral-100 text-neutral-500 border-neutral-200 hover:bg-neutral-200/80 hover:text-neutral-700',
+                      )}
                     >
                       {product.isFeatured ? (
                         <>
-                          <Star className="mr-1 h-4 w-4 fill-current" />
+                          <Star className="mr-1.5 h-3.5 w-3.5 fill-amber-500 text-amber-600" />
                           Nổi bật
                         </>
                       ) : (
                         <>
-                          <StarOff className="mr-1 h-4 w-4" />
+                          <StarOff className="mr-1.5 h-3.5 w-3.5 text-neutral-400" />
                           Thường
                         </>
                       )}
@@ -596,14 +613,14 @@ export default function ProductsPage() {
                       disabled={isPinging === product.id}
                       className={cn(
                         'h-8 w-8',
-                        isPinging === product.id ? 'animate-spin' : 'hover:text-amber-600',
+                        isPinging === product.id && 'cursor-not-allowed opacity-70',
                       )}
-                      title="Làm mới chỉ mục SEO (Ping Google)"
+                      title="Làm mới chỉ mục SEO trên Google"
                     >
                       {isPinging === product.id ? (
                         <RefreshCw className="h-4 w-4 animate-spin" />
                       ) : (
-                        <Zap className="h-4 w-4" />
+                        <Zap className="h-4 w-4 text-amber-500" />
                       )}
                     </Button>
                   </TableCell>
@@ -614,6 +631,7 @@ export default function ProductsPage() {
                         size="icon"
                         onClick={() => router.push(`/${locale}/admin/products/${product.id}`)}
                         title="Chỉnh sửa"
+                        className="hover:bg-neutral-100 text-neutral-600 hover:text-neutral-900"
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -622,6 +640,7 @@ export default function ProductsPage() {
                         size="icon"
                         onClick={() => handleDuplicate(product)}
                         title="Nhân bản"
+                        className="hover:bg-neutral-100 text-neutral-600 hover:text-neutral-900"
                       >
                         <Copy className="h-4 w-4" />
                       </Button>
@@ -629,7 +648,7 @@ export default function ProductsPage() {
                         variant="ghost"
                         size="icon"
                         onClick={() => setDeleteDialog({ open: true, product })}
-                        className="text-destructive hover:text-destructive"
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
                         title="Xóa"
                       >
                         <Trash2 className="h-4 w-4" />

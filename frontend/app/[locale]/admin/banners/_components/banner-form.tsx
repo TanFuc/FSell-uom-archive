@@ -130,8 +130,19 @@ export default function BannerForm({ initialData }: BannerFormProps) {
       }
       router.push(`/${locale}/admin/banners`)
       router.refresh()
-    } catch (error) {
-      toast({ title: t('error'), description: 'Failed to save banner', variant: 'destructive' })
+    } catch (error: any) {
+      console.error('Failed to save banner:', error)
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        (Array.isArray(error?.response?.data?.errors)
+          ? error.response.data.errors.join(', ')
+          : 'Failed to save banner')
+      toast({
+        title: t('error'),
+        description: message,
+        variant: 'destructive',
+      })
     }
   }
 
@@ -365,7 +376,9 @@ export default function BannerForm({ initialData }: BannerFormProps) {
                     name="imageUrl"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Hình ảnh (Desktop) *</FormLabel>
+                        <FormLabel className="flex items-center gap-1">
+                          Hình ảnh (Desktop) <span className="text-destructive font-bold">*</span>
+                        </FormLabel>
                         <FormControl>
                           <div className="space-y-4">
                             {field.value ? (

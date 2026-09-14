@@ -516,15 +516,23 @@ export default function ProductFormPage() {
 
       if (isNew) {
         await api.createProduct(productData)
-        toast({ title: t('success'), description: 'Product created' })
+        toast({ title: t('success'), description: 'Đã tạo sản phẩm thành công' })
       } else {
         await api.updateProduct(id, productData)
-        toast({ title: t('success'), description: 'Product updated' })
+        toast({ title: t('success'), description: 'Đã cập nhật sản phẩm thành công' })
       }
 
       router.push(`/${locale}/admin/products`)
-    } catch (error) {
-      toast({ title: t('error'), description: 'Failed to save product', variant: 'destructive' })
+    } catch (error: any) {
+      const serverMsg =
+        error?.response?.data?.message ||
+        error?.message ||
+        'Không thể lưu sản phẩm lúc này. Vui lòng kiểm tra lại thông tin.'
+      toast({
+        title: t('error'),
+        description: Array.isArray(serverMsg) ? serverMsg.join(', ') : String(serverMsg),
+        variant: 'destructive',
+      })
     } finally {
       setIsSaving(false)
     }
@@ -660,7 +668,9 @@ export default function ProductFormPage() {
                             name="nameVi"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>{t('vietnameseName')}</FormLabel>
+                                <FormLabel>
+                                  {t('vietnameseName')} <span className="text-destructive font-bold">*</span>
+                                </FormLabel>
                                 <FormControl>
                                   <Input {...field} />
                                 </FormControl>
@@ -686,7 +696,9 @@ export default function ProductFormPage() {
                             name="descriptionVi"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>{t('vietnameseDescription')}</FormLabel>
+                                <FormLabel>
+                                  {t('vietnameseDescription')} <span className="text-destructive font-bold">*</span>
+                                </FormLabel>
                                 <FormControl>
                                   <RichTextEditor
                                     content={field.value}
@@ -713,7 +725,9 @@ export default function ProductFormPage() {
                             name="nameEn"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>{t('englishName')}</FormLabel>
+                                <FormLabel>
+                                  {t('englishName')} <span className="text-destructive font-bold">*</span>
+                                </FormLabel>
                                 <FormControl>
                                   <Input {...field} />
                                 </FormControl>
@@ -743,7 +757,9 @@ export default function ProductFormPage() {
                             name="descriptionEn"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>{t('englishDescription')}</FormLabel>
+                                <FormLabel>
+                                  {t('englishDescription')} <span className="text-destructive font-bold">*</span>
+                                </FormLabel>
                                 <FormControl>
                                   <RichTextEditor
                                     content={field.value}
@@ -1049,7 +1065,9 @@ export default function ProductFormPage() {
                         render={({ field }) => (
                           <FormItem>
                             <div className="flex items-center justify-between">
-                              <FormLabel>{t('category')}</FormLabel>
+                              <FormLabel>
+                                {t('category')} <span className="text-destructive font-bold">*</span>
+                              </FormLabel>
                               <Button
                                 type="button"
                                 variant="ghost"
@@ -1088,7 +1106,9 @@ export default function ProductFormPage() {
                         name="stock"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{t('stockLabelForm')}</FormLabel>
+                            <FormLabel>
+                              {t('stockLabelForm')} <span className="text-destructive font-bold">*</span>
+                            </FormLabel>
                             <FormControl>
                               <Input {...field} type="number" />
                             </FormControl>
@@ -1205,8 +1225,10 @@ export default function ProductFormPage() {
                 {/* Images */}
                 <Card>
                   <CardHeader>
-                    <CardTitle className="uppercase tracking-wide">Images</CardTitle>
-                    <CardDescription>Upload product images (4:5 ratio recommended)</CardDescription>
+                    <CardTitle className="uppercase tracking-wide">
+                      Images <span className="text-destructive font-bold">*</span>
+                    </CardTitle>
+                    <CardDescription>Upload product images (tối thiểu 1 ảnh, tỉ lệ 4:5 khuyến nghị)</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">

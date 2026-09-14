@@ -27,7 +27,7 @@ import { useUpdateBanner, useDeleteBanner } from '@/hooks/use-banners'
 import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api'
 import { type Banner } from '@/lib/types'
-import { optimizeProductImage } from '@/lib/utils'
+import { optimizeProductImage, cn } from '@/lib/utils'
 
 export default function BannersPage() {
   const router = useRouter()
@@ -197,19 +197,24 @@ export default function BannersPage() {
                   </TableCell>
                   <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
                     <Button
-                      variant={banner.isActive ? 'default' : 'outline'}
+                      variant="outline"
                       size="sm"
-                      className={banner.isActive ? 'h-7 bg-green-600 hover:bg-green-700' : 'h-7'}
+                      className={cn(
+                        'h-7 text-xs font-medium transition-colors',
+                        banner.isActive
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100'
+                          : 'bg-neutral-100 text-neutral-500 border-neutral-200 hover:bg-neutral-200/80 hover:text-neutral-700',
+                      )}
                       onClick={(e) => handleToggleActive(banner, e)}
                     >
                       {banner.isActive ? (
                         <>
-                          <Power className="mr-1 h-3 w-3" />
+                          <Power className="mr-1 h-3 w-3 text-emerald-600" />
                           {t('active')}
                         </>
                       ) : (
                         <>
-                          <PowerOff className="mr-1 h-3 w-3" />
+                          <PowerOff className="mr-1 h-3 w-3 text-neutral-400" />
                           {t('inactive')}
                         </>
                       )}
@@ -221,14 +226,17 @@ export default function BannersPage() {
                         variant="ghost"
                         size="icon"
                         onClick={() => router.push(`/${locale}/admin/banners/${banner.id}`)}
+                        className="hover:bg-neutral-100 text-neutral-600 hover:text-neutral-900"
+                        title="Chỉnh sửa"
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="text-destructive hover:text-destructive"
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
                         onClick={() => setDeleteDialog({ open: true, banner })}
+                        title="Xóa"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -257,7 +265,11 @@ export default function BannersPage() {
             >
               {t('cancel')}
             </Button>
-            <Button variant="destructive" onClick={handleDelete}>
+            <Button
+              variant="outline"
+              className="bg-red-600 text-white border-red-600 hover:bg-red-700 hover:border-red-700 transition-colors"
+              onClick={handleDelete}
+            >
               {t('banners.deleteAction')}
             </Button>
           </DialogFooter>

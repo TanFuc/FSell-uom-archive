@@ -162,9 +162,13 @@ export default function CategoryFormPage() {
 
       router.push(`/${locale}/admin/categories`)
     } catch (error: any) {
+      const serverMsg =
+        error?.response?.data?.message ||
+        error?.message ||
+        t('failedToUpdate')
       toast({
         title: t('error'),
-        description: error.message || t('failedToUpdate'),
+        description: Array.isArray(serverMsg) ? serverMsg.join(', ') : String(serverMsg),
         variant: 'destructive',
       })
     } finally {
@@ -214,7 +218,9 @@ export default function CategoryFormPage() {
               name="slug"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t('categorySlug')}</FormLabel>
+                  <FormLabel>
+                    {t('categorySlug')} <span className="text-destructive font-bold">*</span>
+                  </FormLabel>
                   <div className="flex gap-2">
                     <FormControl>
                       <Input {...field} placeholder="category-slug" />
@@ -234,7 +240,9 @@ export default function CategoryFormPage() {
               name="nameVi"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t('vietnameseName')}</FormLabel>
+                  <FormLabel>
+                    {t('vietnameseName')} <span className="text-destructive font-bold">*</span>
+                  </FormLabel>
                   <FormControl>
                     <Input {...field} placeholder="Tên danh mục" />
                   </FormControl>
@@ -249,7 +257,9 @@ export default function CategoryFormPage() {
               name="nameEn"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t('englishName')}</FormLabel>
+                  <FormLabel>
+                    {t('englishName')} <span className="text-destructive font-bold">*</span>
+                  </FormLabel>
                   <FormControl>
                     <Input {...field} placeholder="Category Name" />
                   </FormControl>

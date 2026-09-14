@@ -13,6 +13,8 @@ import { useBranding } from '@/hooks/use-settings'
 import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api'
 import { pingStorySeo } from '@/lib/seo-ping'
+import { revalidatePaths } from '@/lib/revalidate'
+import { cn } from '@/lib/utils'
 import {
   getStorySlug,
   parseStories,
@@ -195,123 +197,6 @@ export default function AdminStoriesPage() {
     }, 320)
   }
 
-  const handleUpsert = () => {
-    const updatedAt = new Date().toISOString()
-
-    if (
-      !draft.titleVi.trim() ||
-      !draft.titleEn.trim() ||
-      !draft.summaryVi.trim() ||
-      !draft.summaryEn.trim() ||
-      !draft.contentVi.trim() ||
-      !draft.contentEn.trim() ||
-      !draft.imageUrl.trim()
-    ) {
-      toast({ title: t('error'), description: t('stories.requiredFields'), variant: 'destructive' })
-      return
-    }
-
-    if (editingId) {
-      const targetId = editingId
-      const previousStory = stories.find((story) => story.id === targetId)
-      const shouldPingOnSave =
-        previousStory?.isVisible === false && (draft.isVisible === undefined || draft.isVisible)
-
-      setStories((prev) =>
-        prev.map((story) =>
-          story.id === editingId
-            ? {
-                ...story,
-                ...draft,
-                ...buildAutoSlugs({
-                  id: story.id,
-                  slug: '',
-                  slugVi: draft.slugVi,
-                  slugEn: draft.slugEn,
-                  titleVi: draft.titleVi,
-                  titleEn: draft.titleEn,
-                }),
-                slug: getStorySlug(
-                  {
-                    id: story.id,
-                    slug: '',
-                    slugVi: draft.slugVi,
-                    slugEn: draft.slugEn,
-                    titleVi: draft.titleVi,
-                    titleEn: draft.titleEn,
-                  },
-                  'en',
-                ),
-                publishedAt: draft.publishedAt?.trim() || undefined,
-                updatedAt,
-              }
-            : story,
-        ),
-      )
-
-      setDraft((prev) => ({
-        ...prev,
-        publishedAt: prev.publishedAt?.trim() || '',
-        updatedAt,
-      }))
-      if (shouldPingOnSave) {
-        setPendingPublishPingIds((prev) => Array.from(new Set([...prev, targetId])))
-      }
-      setJustUpdatedId(targetId)
-      setLastUpdatedTitle((locale === 'vi' ? draft.titleVi : draft.titleEn).trim())
-      toast({
-        title: t('success'),
-        description: locale === 'vi' ? 'Đã cập nhật story.' : 'Story updated successfully.',
-      })
-
-      window.setTimeout(() => {
-        setJustUpdatedId((prev) => (prev === targetId ? null : prev))
-      }, 1500)
-    } else {
-      const newId = crypto.randomUUID()
-      setStories((prev) => [
-        {
-          id: newId,
-          ...draft,
-          ...buildAutoSlugs({
-            id: newId,
-            slug: '',
-            slugVi: draft.slugVi,
-            slugEn: draft.slugEn,
-            titleVi: draft.titleVi,
-            titleEn: draft.titleEn,
-          }),
-          slug: getStorySlug(
-            {
-              id: newId,
-              slug: '',
-              slugVi: draft.slugVi,
-              slugEn: draft.slugEn,
-              titleVi: draft.titleVi,
-              titleEn: draft.titleEn,
-            },
-            'en',
-          ),
-          publishedAt: draft.publishedAt?.trim() || undefined,
-          updatedAt,
-        },
-        ...prev,
-      ])
-
-      toast({
-        title: t('success'),
-        description: locale === 'vi' ? 'Đã thêm story mới.' : 'New story added.',
-      })
-
-      resetDraft()
-    }
-  }
-
-  const handleDelete = (id: string) => {
-    setStories((prev) => prev.filter((story) => story.id !== id))
-    if (editingId === id) resetDraft()
-  }
-
   const persistStories = async (
     nextStories: StoryItem[],
     successDescription?: string,
@@ -356,9 +241,169 @@ export default function AdminStoriesPage() {
         void pingStorySeo(getStorySlug(story, 'vi'), getStorySlug(story, 'en'))
       }
 
+      void revalidatePaths(['/vi', '/en', '/vi/journal', '/en/journal'])
+
       return true
-    } catch {
+    } catch (err: any) {
+      toast({
+        title: t('error'),
+        description: err?.response?.data?.message || err?.message || t('stories.saveError'),
+        variant: 'destructive',
+      })
       return false
+    }
+  }
+
+  const handleUpsert = async () => {
+    const updatedAt = new Date().toISOString()
+
+    const missingFields: string[] = []
+    if (!draft.titleVi.trim()) missingFields.push(locale === 'vi' ? 'Tiêu đề (VI)' : 'Title (VI)')
+    if (!draft.titleEn.trim()) missingFields.push(locale === 'vi' ? 'Tiêu đề (EN)' : 'Title (EN)')
+    if (!draft.summaryVi.trim()) missingFields.push(locale === 'vi' ? 'Tóm tắt (VI)' : 'Summary (VI)')
+    if (!draft.summaryEn.trim()) missingFields.push(locale === 'vi' ? 'Tóm tắt (EN)' : 'Summary (EN)')
+    if (!draft.contentVi.trim()) missingFields.push(locale === 'vi' ? 'Nội dung (VI)' : 'Content (VI)')
+    if (!draft.contentEn.trim()) missingFields.push(locale === 'vi' ? 'Nội dung (EN)' : 'Content (EN)')
+    if (!draft.imageUrl.trim()) missingFields.push(locale === 'vi' ? 'Ảnh story' : 'Story image')
+
+    if (missingFields.length > 0) {
+      toast({
+        title: t('error'),
+        description:
+          locale === 'vi'
+            ? `Vui lòng điền đủ các trường bắt buộc: ${missingFields.join(', ')}`
+            : `Please fill required fields: ${missingFields.join(', ')}`,
+        variant: 'destructive',
+      })
+      return
+    }
+
+    setIsSaving(true)
+
+    try {
+      if (editingId) {
+        const targetId = editingId
+        const previousStory = stories.find((story) => story.id === targetId)
+        const shouldPingOnSave =
+          previousStory?.isVisible === false && (draft.isVisible === undefined || draft.isVisible)
+
+        const nextStories = stories.map((story) =>
+          story.id === editingId
+            ? {
+                ...story,
+                ...draft,
+                ...buildAutoSlugs({
+                  id: story.id,
+                  slug: '',
+                  slugVi: draft.slugVi,
+                  slugEn: draft.slugEn,
+                  titleVi: draft.titleVi,
+                  titleEn: draft.titleEn,
+                }),
+                slug: getStorySlug(
+                  {
+                    id: story.id,
+                    slug: '',
+                    slugVi: draft.slugVi,
+                    slugEn: draft.slugEn,
+                    titleVi: draft.titleVi,
+                    titleEn: draft.titleEn,
+                  },
+                  'en',
+                ),
+                publishedAt: draft.publishedAt?.trim() || undefined,
+                updatedAt,
+              }
+            : story,
+        )
+
+        const success = await persistStories(
+          nextStories,
+          locale === 'vi' ? 'Đã cập nhật story và lưu vào cơ sở dữ liệu thành công.' : 'Story updated and saved successfully.',
+          shouldPingOnSave ? [targetId] : [],
+        )
+
+        if (success) {
+          setDraft((prev) => ({
+            ...prev,
+            publishedAt: prev.publishedAt?.trim() || '',
+            updatedAt,
+          }))
+          if (shouldPingOnSave) {
+            setPendingPublishPingIds((prev) => Array.from(new Set([...prev, targetId])))
+          }
+          setJustUpdatedId(targetId)
+          setLastUpdatedTitle((locale === 'vi' ? draft.titleVi : draft.titleEn).trim())
+
+          window.setTimeout(() => {
+            setJustUpdatedId((prev) => (prev === targetId ? null : prev))
+          }, 2000)
+        }
+      } else {
+        const newId = crypto.randomUUID()
+        const newStory: StoryItem = {
+          id: newId,
+          ...draft,
+          ...buildAutoSlugs({
+            id: newId,
+            slug: '',
+            slugVi: draft.slugVi,
+            slugEn: draft.slugEn,
+            titleVi: draft.titleVi,
+            titleEn: draft.titleEn,
+          }),
+          slug: getStorySlug(
+            {
+              id: newId,
+              slug: '',
+              slugVi: draft.slugVi,
+              slugEn: draft.slugEn,
+              titleVi: draft.titleVi,
+              titleEn: draft.titleEn,
+            },
+            'en',
+          ),
+          publishedAt: draft.publishedAt?.trim() || undefined,
+          updatedAt,
+        }
+        const nextStories = [newStory, ...stories]
+
+        const success = await persistStories(
+          nextStories,
+          locale === 'vi' ? 'Đã thêm story mới và lưu vào cơ sở dữ liệu thành công.' : 'New story added and saved successfully.',
+          newStory.isVisible !== false ? [newId] : [],
+        )
+
+        if (success) {
+          resetDraft()
+        }
+      }
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    const storyToDelete = stories.find((s) => s.id === id)
+    const storyTitle = storyToDelete ? (locale === 'vi' ? storyToDelete.titleVi : storyToDelete.titleEn) : ''
+    const confirmMessage = locale === 'vi'
+      ? `Bạn có chắc chắn muốn xóa story "${storyTitle}" khỏi website?`
+      : `Are you sure you want to delete story "${storyTitle}"?`
+
+    if (!confirm(confirmMessage)) return
+
+    const nextStories = stories.filter((story) => story.id !== id)
+    setIsSaving(true)
+    try {
+      const success = await persistStories(
+        nextStories,
+        locale === 'vi' ? 'Đã xóa story và cập nhật website thành công.' : 'Story deleted and website updated successfully.',
+      )
+      if (success && editingId === id) {
+        resetDraft()
+      }
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -488,33 +533,53 @@ export default function AdminStoriesPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
-              <Input
-                value={draft.titleVi}
-                onChange={(event) => setDraft((prev) => ({ ...prev, titleVi: event.target.value }))}
-                placeholder={t('stories.titleVi')}
-              />
-              <Input
-                value={draft.titleEn}
-                onChange={(event) => setDraft((prev) => ({ ...prev, titleEn: event.target.value }))}
-                placeholder={t('stories.titleEn')}
-              />
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-foreground">
+                  {t('stories.titleVi')} <span className="text-destructive font-bold">*</span>
+                </label>
+                <Input
+                  value={draft.titleVi}
+                  onChange={(event) => setDraft((prev) => ({ ...prev, titleVi: event.target.value }))}
+                  placeholder={t('stories.titleVi')}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-foreground">
+                  {t('stories.titleEn')} <span className="text-destructive font-bold">*</span>
+                </label>
+                <Input
+                  value={draft.titleEn}
+                  onChange={(event) => setDraft((prev) => ({ ...prev, titleEn: event.target.value }))}
+                  placeholder={t('stories.titleEn')}
+                />
+              </div>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
-              <Input
-                value={draft.summaryVi}
-                onChange={(event) =>
-                  setDraft((prev) => ({ ...prev, summaryVi: event.target.value }))
-                }
-                placeholder={t('stories.summaryVi')}
-              />
-              <Input
-                value={draft.summaryEn}
-                onChange={(event) =>
-                  setDraft((prev) => ({ ...prev, summaryEn: event.target.value }))
-                }
-                placeholder={t('stories.summaryEn')}
-              />
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-foreground">
+                  {t('stories.summaryVi')} <span className="text-destructive font-bold">*</span>
+                </label>
+                <Input
+                  value={draft.summaryVi}
+                  onChange={(event) =>
+                    setDraft((prev) => ({ ...prev, summaryVi: event.target.value }))
+                  }
+                  placeholder={t('stories.summaryVi')}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-foreground">
+                  {t('stories.summaryEn')} <span className="text-destructive font-bold">*</span>
+                </label>
+                <Input
+                  value={draft.summaryEn}
+                  onChange={(event) =>
+                    setDraft((prev) => ({ ...prev, summaryEn: event.target.value }))
+                  }
+                  placeholder={t('stories.summaryEn')}
+                />
+              </div>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
@@ -536,7 +601,9 @@ export default function AdminStoriesPage() {
 
             <div className="grid gap-4 xl:grid-cols-2">
               <div className="space-y-2">
-                <p className="text-sm font-medium text-foreground">{t('stories.contentVi')}</p>
+                <p className="text-xs font-semibold text-foreground">
+                  {t('stories.contentVi')} <span className="text-destructive font-bold">*</span>
+                </p>
                 <RichTextEditor
                   content={draft.contentVi}
                   onChange={(value) => setDraft((prev) => ({ ...prev, contentVi: value }))}
@@ -545,7 +612,9 @@ export default function AdminStoriesPage() {
                 />
               </div>
               <div className="space-y-2">
-                <p className="text-sm font-medium text-foreground">{t('stories.contentEn')}</p>
+                <p className="text-xs font-semibold text-foreground">
+                  {t('stories.contentEn')} <span className="text-destructive font-bold">*</span>
+                </p>
                 <RichTextEditor
                   content={draft.contentEn}
                   onChange={(value) => setDraft((prev) => ({ ...prev, contentEn: value }))}
@@ -555,37 +624,47 @@ export default function AdminStoriesPage() {
               </div>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-[1fr_auto]">
-              <Input
-                value={draft.imageUrl}
-                onChange={(event) =>
-                  setDraft((prev) => ({ ...prev, imageUrl: event.target.value }))
-                }
-                placeholder={t('stories.imageUrl')}
-              />
-              <label className="inline-flex cursor-pointer items-center justify-center rounded-md border px-4 text-sm">
-                {isUploading ? `${t('loading')}...` : t('stories.uploadImage')}
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  disabled={isUploading}
-                  onChange={handleUploadImage}
-                />
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-foreground">
+                {t('stories.imageUrl')} <span className="text-destructive font-bold">*</span>
               </label>
+              <div className="grid gap-4 md:grid-cols-[1fr_auto]">
+                <Input
+                  value={draft.imageUrl}
+                  onChange={(event) =>
+                    setDraft((prev) => ({ ...prev, imageUrl: event.target.value }))
+                  }
+                  placeholder={t('stories.imageUrl')}
+                />
+                <label className="inline-flex cursor-pointer items-center justify-center rounded-md border px-4 text-sm hover:bg-accent">
+                  {isUploading ? `${t('loading')}...` : t('stories.uploadImage')}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    disabled={isUploading}
+                    onChange={handleUploadImage}
+                  />
+                </label>
+              </div>
             </div>
 
-            <Input
-              value={draft.publishedAt}
-              onChange={(event) =>
-                setDraft((prev) => ({ ...prev, publishedAt: event.target.value }))
-              }
-              placeholder={t('stories.publishedAt')}
-            />
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-foreground">
+                {t('stories.publishedAt')}
+              </label>
+              <Input
+                value={draft.publishedAt}
+                onChange={(event) =>
+                  setDraft((prev) => ({ ...prev, publishedAt: event.target.value }))
+                }
+                placeholder="YYYY-MM-DD"
+              />
+            </div>
 
-            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-              <Button onClick={handleUpsert} className="w-full sm:w-auto">
-                {editingStory ? t('stories.updateStory') : t('stories.addStory')}
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap pt-2">
+              <Button onClick={handleUpsert} disabled={isSaving} className="w-full sm:w-auto">
+                {isSaving ? `${t('loading')}...` : editingStory ? t('stories.updateStory') : t('stories.addStory')}
               </Button>
               {editingStory && (
                 <Button variant="outline" onClick={resetDraft} className="w-full sm:w-auto">
@@ -652,7 +731,20 @@ export default function AdminStoriesPage() {
                   />
                 </div>
                 <h3 className="font-semibold">{locale === 'vi' ? story.titleVi : story.titleEn}</h3>
-                <div className="inline-flex w-fit rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                <div
+                  className={cn(
+                    'inline-flex w-fit items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide border transition-colors',
+                    story.isVisible
+                      ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                      : 'border-neutral-200 bg-neutral-100 text-neutral-500',
+                  )}
+                >
+                  <span
+                    className={cn(
+                      'h-1.5 w-1.5 rounded-full',
+                      story.isVisible ? 'bg-emerald-500' : 'bg-neutral-400',
+                    )}
+                  />
                   {story.isVisible
                     ? locale === 'vi'
                       ? 'Hiện'
@@ -740,6 +832,11 @@ export default function AdminStoriesPage() {
                   <Button
                     size="sm"
                     variant="outline"
+                    className={
+                      story.isVisible
+                        ? 'text-neutral-600 hover:bg-neutral-100'
+                        : 'text-emerald-700 border-emerald-200 bg-emerald-50 hover:bg-emerald-100'
+                    }
                     onClick={() => handleToggleVisibility(story.id)}
                   >
                     {story.isVisible
@@ -750,7 +847,12 @@ export default function AdminStoriesPage() {
                         ? 'Hiện'
                         : 'Show'}
                   </Button>
-                  <Button size="sm" variant="destructive" onClick={() => handleDelete(story.id)}>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 hover:border-red-300 transition-colors"
+                    onClick={() => handleDelete(story.id)}
+                  >
                     {t('delete')}
                   </Button>
                 </div>
