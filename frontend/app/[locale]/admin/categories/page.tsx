@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { useDocumentTitle } from '@/hooks/use-document-title'
 import { useToast } from '@/hooks/use-toast'
+import { useConfirm } from '@/hooks/use-confirm'
 import { api } from '@/lib/api'
 import { type Category } from '@/lib/types'
 
@@ -15,6 +16,7 @@ export default function CategoriesPage() {
   const locale = useLocale()
   const t = useTranslations('admin')
   const { toast } = useToast()
+  const confirm = useConfirm()
 
   useDocumentTitle(t('categories'), 'Admin - ƯƠM. Archive')
 
@@ -44,7 +46,19 @@ export default function CategoriesPage() {
   }, [])
 
   const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`${t('confirmDelete')} "${name}"?`)) return
+    const confirmed = await confirm({
+      title: locale === 'vi' ? 'Xóa danh mục?' : 'Delete category?',
+      description:
+        locale === 'vi'
+          ? `Bạn có chắc chắn muốn xóa danh mục "${name}" không? Các sản phẩm thuộc danh mục này có thể bị ảnh hưởng.`
+          : `Are you sure you want to delete category "${name}"? Products in this category may be affected.`,
+      confirmText: locale === 'vi' ? 'Xóa danh mục' : 'Delete',
+      cancelText: locale === 'vi' ? 'Hủy' : 'Cancel',
+      variant: 'destructive',
+      icon: 'trash',
+    })
+
+    if (!confirmed) return
 
     setCategories((prev) => prev.filter((c) => c.id !== id))
 

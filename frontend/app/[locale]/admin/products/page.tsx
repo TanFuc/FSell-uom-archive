@@ -41,6 +41,7 @@ import {
 } from '@/components/ui/table'
 import { useDocumentTitle } from '@/hooks/use-document-title'
 import { useToast } from '@/hooks/use-toast'
+import { useConfirm } from '@/hooks/use-confirm'
 import { api } from '@/lib/api'
 import { revalidatePaths } from '@/lib/revalidate'
 import { pingProductSeo } from '@/lib/seo-ping'
@@ -59,6 +60,7 @@ export default function ProductsPage() {
   const locale = useLocale()
   const t = useTranslations('admin')
   const { toast } = useToast()
+  const confirm = useConfirm()
 
   useDocumentTitle(t('products'), 'Admin - ƯƠM. Archive')
 
@@ -221,6 +223,21 @@ export default function ProductsPage() {
 
   const handleBulkDelete = async () => {
     const idsToDelete = [...selectedProducts]
+    if (idsToDelete.length === 0) return
+
+    const confirmed = await confirm({
+      title: locale === 'vi' ? 'Xóa các sản phẩm đã chọn?' : 'Delete selected products?',
+      description:
+        locale === 'vi'
+          ? `Bạn có chắc chắn muốn chuyển ${idsToDelete.length} sản phẩm đã chọn vào thùng rác không? Bạn có thể khôi phục lại sau.`
+          : `Are you sure you want to move ${idsToDelete.length} selected products to trash? You can restore them later.`,
+      confirmText: locale === 'vi' ? 'Chuyển vào thùng rác' : 'Move to trash',
+      cancelText: locale === 'vi' ? 'Hủy' : 'Cancel',
+      variant: 'destructive',
+      icon: 'trash',
+    })
+
+    if (!confirmed) return
 
     try {
       await Promise.all(idsToDelete.map((id) => api.deleteProduct(id)))

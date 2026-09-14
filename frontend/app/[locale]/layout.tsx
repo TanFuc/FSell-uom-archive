@@ -7,6 +7,7 @@ import { Toaster as SonnerToaster } from 'sonner'
 import { DisableRightClick } from '@/components/DisableRightClick'
 import { ConditionalLayout } from '@/components/layout/ConditionalLayout'
 import { QueryProvider } from '@/components/providers/QueryProvider'
+import { ConfirmationProvider } from '@/components/providers/ConfirmationProvider'
 import { Toaster } from '@/components/ui/toaster'
 import { locales } from '@/i18n'
 import {
@@ -177,9 +178,11 @@ export default async function RootLayout({ children, params: { locale } }: RootL
         <DisableRightClick />
         <NextIntlClientProvider messages={messages}>
           <QueryProvider>
-            <ConditionalLayout>{children}</ConditionalLayout>
-            <Toaster />
-            <SonnerToaster />
+            <ConfirmationProvider>
+              <ConditionalLayout>{children}</ConditionalLayout>
+              <Toaster />
+              <SonnerToaster />
+            </ConfirmationProvider>
           </QueryProvider>
         </NextIntlClientProvider>
       </body>

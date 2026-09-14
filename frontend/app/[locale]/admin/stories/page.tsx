@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { useBranding } from '@/hooks/use-settings'
 import { useToast } from '@/hooks/use-toast'
+import { useConfirm } from '@/hooks/use-confirm'
 import { api } from '@/lib/api'
 import { pingStorySeo } from '@/lib/seo-ping'
 import { revalidatePaths } from '@/lib/revalidate'
@@ -44,6 +45,7 @@ export default function AdminStoriesPage() {
   const t = useTranslations('admin')
   const locale = useLocale()
   const { toast } = useToast()
+  const confirm = useConfirm()
   const { data: branding } = useBranding()
 
   const [stories, setStories] = useState<StoryItem[]>([])
@@ -385,12 +387,25 @@ export default function AdminStoriesPage() {
 
   const handleDelete = async (id: string) => {
     const storyToDelete = stories.find((s) => s.id === id)
-    const storyTitle = storyToDelete ? (locale === 'vi' ? storyToDelete.titleVi : storyToDelete.titleEn) : ''
-    const confirmMessage = locale === 'vi'
-      ? `Bạn có chắc chắn muốn xóa story "${storyTitle}" khỏi website?`
-      : `Are you sure you want to delete story "${storyTitle}"?`
+    const storyTitle = storyToDelete
+      ? locale === 'vi'
+        ? storyToDelete.titleVi
+        : storyToDelete.titleEn
+      : ''
 
-    if (!confirm(confirmMessage)) return
+    const confirmed = await confirm({
+      title: locale === 'vi' ? 'Xóa story?' : 'Delete story?',
+      description:
+        locale === 'vi'
+          ? `Bạn có chắc chắn muốn xóa story "${storyTitle}" khỏi website không? Hành động này sẽ gỡ bài viết khỏi Journal.`
+          : `Are you sure you want to delete story "${storyTitle}"? This will remove the article from the Journal.`,
+      confirmText: locale === 'vi' ? 'Xóa story' : 'Delete',
+      cancelText: locale === 'vi' ? 'Hủy' : 'Cancel',
+      variant: 'destructive',
+      icon: 'trash',
+    })
+
+    if (!confirmed) return
 
     const nextStories = stories.filter((story) => story.id !== id)
     setIsSaving(true)
