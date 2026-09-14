@@ -15,6 +15,15 @@ export interface StoryItem {
   imageUrl: string
   publishedAt?: string
   updatedAt?: string
+  // SEO & Search Indexing fields
+  seoTitleVi?: string
+  seoTitleEn?: string
+  seoDescriptionVi?: string
+  seoDescriptionEn?: string
+  seoKeywordsVi?: string
+  seoKeywordsEn?: string
+  canonicalUrl?: string
+  noIndex?: boolean
 }
 
 function isNonEmptyString(value: unknown): value is string {
@@ -140,6 +149,24 @@ export function parseStories(raw: unknown): StoryItem[] {
         imageUrl: source.imageUrl,
         ...(isNonEmptyString(source.publishedAt) ? { publishedAt: source.publishedAt } : {}),
         ...(isNonEmptyString(source.updatedAt) ? { updatedAt: source.updatedAt } : {}),
+        ...(isNonEmptyString(source.seoTitleVi) ? { seoTitleVi: source.seoTitleVi.trim() } : {}),
+        ...(isNonEmptyString(source.seoTitleEn) ? { seoTitleEn: source.seoTitleEn.trim() } : {}),
+        ...(isNonEmptyString(source.seoDescriptionVi)
+          ? { seoDescriptionVi: source.seoDescriptionVi.trim() }
+          : {}),
+        ...(isNonEmptyString(source.seoDescriptionEn)
+          ? { seoDescriptionEn: source.seoDescriptionEn.trim() }
+          : {}),
+        ...(isNonEmptyString(source.seoKeywordsVi)
+          ? { seoKeywordsVi: source.seoKeywordsVi.trim() }
+          : {}),
+        ...(isNonEmptyString(source.seoKeywordsEn)
+          ? { seoKeywordsEn: source.seoKeywordsEn.trim() }
+          : {}),
+        ...(isNonEmptyString(source.canonicalUrl)
+          ? { canonicalUrl: source.canonicalUrl.trim() }
+          : {}),
+        ...(source.noIndex === true ? { noIndex: true } : {}),
       })
 
       const added = acc[acc.length - 1]
@@ -186,6 +213,14 @@ export function serializeStories(stories: StoryItem[]): string {
       imageUrl: story.imageUrl.trim(),
       ...(story.publishedAt?.trim() ? { publishedAt: story.publishedAt.trim() } : {}),
       ...(story.updatedAt?.trim() ? { updatedAt: story.updatedAt.trim() } : {}),
+      ...(story.seoTitleVi?.trim() ? { seoTitleVi: story.seoTitleVi.trim() } : {}),
+      ...(story.seoTitleEn?.trim() ? { seoTitleEn: story.seoTitleEn.trim() } : {}),
+      ...(story.seoDescriptionVi?.trim() ? { seoDescriptionVi: story.seoDescriptionVi.trim() } : {}),
+      ...(story.seoDescriptionEn?.trim() ? { seoDescriptionEn: story.seoDescriptionEn.trim() } : {}),
+      ...(story.seoKeywordsVi?.trim() ? { seoKeywordsVi: story.seoKeywordsVi.trim() } : {}),
+      ...(story.seoKeywordsEn?.trim() ? { seoKeywordsEn: story.seoKeywordsEn.trim() } : {}),
+      ...(story.canonicalUrl?.trim() ? { canonicalUrl: story.canonicalUrl.trim() } : {}),
+      ...(story.noIndex === true ? { noIndex: true } : {}),
     })),
   )
 }

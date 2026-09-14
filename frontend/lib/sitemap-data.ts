@@ -481,7 +481,9 @@ export function buildProductEntries(products: Product[]): SitemapUrlEntry[] {
 export function buildStoryEntries(stories: StoryItem[]): SitemapUrlEntry[] {
   const now = new Date()
 
-  return stories.flatMap((story) => {
+  return stories
+    .filter((story) => story.isVisible !== false && story.noIndex !== true)
+    .flatMap((story) => {
     const viSlug = safeEncodePathSegment(getStorySlug(story, 'vi'))
     const enSlug = safeEncodePathSegment(getStorySlug(story, 'en'))
     const lastmod = toIsoDate(story.updatedAt ?? story.publishedAt, now)

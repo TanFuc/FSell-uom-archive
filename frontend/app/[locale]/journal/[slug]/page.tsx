@@ -108,28 +108,56 @@ export async function generateMetadata({ params }: StoryDetailProps): Promise<Me
     }
   }
 
-  const title = params.locale === 'vi' ? story.titleVi : story.titleEn
-  const description = truncateMetaDescription(
-    stripHtmlTags(params.locale === 'vi' ? story.summaryVi : story.summaryEn),
-  )
+  const isVi = params.locale === 'vi'
+  const title = (isVi ? story.seoTitleVi || story.titleVi : story.seoTitleEn || story.titleEn).trim()
+  const rawDescription = isVi
+    ? story.seoDescriptionVi || story.summaryVi
+    : story.seoDescriptionEn || story.summaryEn
+  const description = truncateMetaDescription(stripHtmlTags(rawDescription))
   const viSlug = encodeURIComponent(getStorySlug(story, 'vi'))
   const enSlug = encodeURIComponent(getStorySlug(story, 'en'))
-  const canonicalPath = params.locale === 'vi' ? `/vi/journal/${viSlug}` : `/en/journal/${enSlug}`
+  const canonicalPath = isVi ? `/vi/journal/${viSlug}` : `/en/journal/${enSlug}`
+  const rawKeywords = (isVi ? story.seoKeywordsVi : story.seoKeywordsEn)?.trim()
+  const keywords = rawKeywords
+    ? rawKeywords
+        .split(',')
+        .map((k) => k.trim())
+        .filter(Boolean)
+    : undefined
 
-  return buildPageMetadata({
+  const metadata = buildPageMetadata({
     locale: params.locale,
-    path: canonicalPath,
+    path: story.canonicalUrl || canonicalPath,
     title,
     description,
     branding,
     image: story.imageUrl,
     type: 'article',
+    robots: story.noIndex
+      ? { index: false, follow: true }
+      : {
+          index: true,
+          follow: true,
+          googleBot: {
+            index: true,
+            follow: true,
+            'max-video-preview': -1,
+            'max-image-preview': 'large',
+            'max-snippet': -1,
+          },
+        },
     alternates: {
       vi: `/vi/journal/${viSlug}`,
       en: `/en/journal/${enSlug}`,
       'x-default': `/vi/journal/${viSlug}`,
     },
   })
+
+  if (keywords && keywords.length > 0) {
+    metadata.keywords = keywords
+  }
+
+  return metadata
 }
 
 export default async function StoryDetailPage({ params }: StoryDetailProps) {
@@ -154,15 +182,18 @@ export default async function StoryDetailPage({ params }: StoryDetailProps) {
     }
   }
 
-  const title = params.locale === 'vi' ? story.titleVi : story.titleEn
-  const summary = params.locale === 'vi' ? story.summaryVi : story.summaryEn
-  const content = params.locale === 'vi' ? story.contentVi : story.contentEn
+  const isVi = params.locale === 'vi'
+  const title = (isVi ? story.seoTitleVi || story.titleVi : story.seoTitleEn || story.titleEn).trim()
+  const summary = (isVi ? story.seoDescriptionVi || story.summaryVi : story.seoDescriptionEn || story.summaryEn).trim()
+  const content = isVi ? story.contentVi : story.contentEn
+  const rawKeywords = (isVi ? story.seoKeywordsVi : story.seoKeywordsEn)?.trim()
+  const wordCount = stripHtmlTags(content).split(/\s+/).filter(Boolean).length
   const relatedStories = stories.filter((item) => item.id !== story.id).slice(0, 4)
   const shopCta = params.locale === 'vi' ? 'Xem shop' : 'Visit the shop'
 
   const viSlug = encodeURIComponent(getStorySlug(story, 'vi'))
   const enSlug = encodeURIComponent(getStorySlug(story, 'en'))
-  const canonicalPath = params.locale === 'vi' ? `/vi/journal/${viSlug}` : `/en/journal/${enSlug}`
+  const canonicalPath = isVi ? `/vi/journal/${viSlug}` : `/en/journal/${enSlug}`
 
   const articleJsonLd = {
     '@context': 'https://schema.org',
@@ -174,6 +205,9 @@ export default async function StoryDetailPage({ params }: StoryDetailProps) {
       ? new Date(story.publishedAt).toISOString()
       : new Date().toISOString(),
     dateModified: story.updatedAt ? new Date(story.updatedAt).toISOString() : undefined,
+    inLanguage: params.locale,
+    wordCount,
+    ...(rawKeywords ? { keywords: rawKeywords } : {}),
     author: [
       {
         '@type': 'Organization',
@@ -185,6 +219,10 @@ export default async function StoryDetailPage({ params }: StoryDetailProps) {
       '@type': 'Organization',
       name: brandName,
       url: BASE_URL,
+      logo: {
+        '@type': 'ImageObject',
+        url: `${BASE_URL}/assets/logo.png`,
+      },
     },
     mainEntityOfPage: `${BASE_URL}${canonicalPath}`,
   }

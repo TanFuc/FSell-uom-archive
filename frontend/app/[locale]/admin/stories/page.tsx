@@ -1,6 +1,6 @@
 'use client'
 
-import { CheckCircle2, ExternalLink } from 'lucide-react'
+import { CheckCircle2, ExternalLink, Zap, RefreshCw, Sparkles } from 'lucide-react'
 import Image from 'next/image'
 import { useLocale, useTranslations } from 'next-intl'
 import { useEffect, useMemo, useState } from 'react'
@@ -21,6 +21,7 @@ import {
   parseStories,
   serializeStories,
   stripHtmlTags,
+  toStorySlug,
   STORIES_CONTENT_KEY,
   type StoryItem,
 } from '@/lib/stories'
@@ -39,6 +40,14 @@ const EMPTY_STORY: Omit<StoryItem, 'id'> = {
   imageUrl: '',
   publishedAt: '',
   updatedAt: '',
+  seoTitleVi: '',
+  seoTitleEn: '',
+  seoDescriptionVi: '',
+  seoDescriptionEn: '',
+  seoKeywordsVi: '',
+  seoKeywordsEn: '',
+  canonicalUrl: '',
+  noIndex: false,
 }
 
 export default function AdminStoriesPage() {
@@ -60,6 +69,7 @@ export default function AdminStoriesPage() {
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [filterMode, setFilterMode] = useState<'all' | 'visible' | 'hidden'>('all')
   const [pendingPublishPingIds, setPendingPublishPingIds] = useState<string[]>([])
+  const [isPingingId, setIsPingingId] = useState<string | null>(null)
 
   useEffect(() => {
     const loadStories = async () => {
@@ -185,6 +195,14 @@ export default function AdminStoriesPage() {
       imageUrl: story.imageUrl,
       publishedAt: story.publishedAt || '',
       updatedAt: story.updatedAt || '',
+      seoTitleVi: story.seoTitleVi || '',
+      seoTitleEn: story.seoTitleEn || '',
+      seoDescriptionVi: story.seoDescriptionVi || '',
+      seoDescriptionEn: story.seoDescriptionEn || '',
+      seoKeywordsVi: story.seoKeywordsVi || '',
+      seoKeywordsEn: story.seoKeywordsEn || '',
+      canonicalUrl: story.canonicalUrl || '',
+      noIndex: story.noIndex || false,
     })
 
     restoreScrollPosition(currentScrollY)
@@ -197,6 +215,54 @@ export default function AdminStoriesPage() {
     window.setTimeout(() => {
       setActiveCardId(null)
     }, 320)
+  }
+
+  const handlePingGoogle = async (story: StoryItem, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation()
+    setIsPingingId(story.id)
+
+    try {
+      const viSlug = getStorySlug(story, 'vi')
+      const enSlug = getStorySlug(story, 'en')
+      const pathsToRevalidate = [
+        `/vi/journal/${encodeURIComponent(viSlug)}`,
+        `/en/journal/${encodeURIComponent(enSlug)}`,
+        '/vi/journal',
+        '/en/journal',
+        '/vi',
+        '/en',
+        '/sitemap.xml',
+      ]
+
+      const [revalResult] = await Promise.all([
+        revalidatePaths(pathsToRevalidate),
+        pingStorySeo(viSlug, enSlug),
+      ])
+
+      if (revalResult.success) {
+        toast({
+          title: locale === 'vi' ? 'Làm mới chỉ mục thành công' : 'SEO Indexing Refreshed',
+          description:
+            locale === 'vi'
+              ? `Đã xóa cache & gửi yêu cầu làm mới chỉ mục tới Googlebot & IndexNow cho story "${story.titleVi || story.titleEn}".`
+              : `Cache cleared & indexing signal sent to Googlebot and IndexNow for story "${story.titleEn || story.titleVi}".`,
+        })
+      } else {
+        throw new Error(revalResult.message || 'Làm mới cache thất bại')
+      }
+    } catch (error: any) {
+      toast({
+        title: locale === 'vi' ? 'Lỗi làm mới chỉ mục' : 'Indexing Refresh Error',
+        description:
+          error?.message ||
+          (locale === 'vi'
+            ? 'Không thể làm mới chỉ mục lúc này'
+            : 'Could not refresh index at this time'),
+        variant: 'destructive',
+      })
+    } finally {
+      setIsPingingId(null)
+    }
   }
 
   const persistStories = async (
@@ -237,13 +303,19 @@ export default function AdminStoriesPage() {
       const storiesById = new Map(refreshedStories.map((story) => [story.id, story]))
       const storiesToPing = publishStoryIds
         .map((id) => storiesById.get(id))
-        .filter((story): story is StoryItem => story !== undefined && story.isVisible !== false)
+        .filter((story): story is StoryItem => story !== undefined && story.isVisible !== false && !story.noIndex)
 
       for (const story of storiesToPing) {
-        void pingStorySeo(getStorySlug(story, 'vi'), getStorySlug(story, 'en'))
+        const viSlug = getStorySlug(story, 'vi')
+        const enSlug = getStorySlug(story, 'en')
+        void pingStorySeo(viSlug, enSlug)
+        void revalidatePaths([
+          `/vi/journal/${encodeURIComponent(viSlug)}`,
+          `/en/journal/${encodeURIComponent(enSlug)}`,
+        ])
       }
 
-      void revalidatePaths(['/vi', '/en', '/vi/journal', '/en/journal'])
+      void revalidatePaths(['/vi', '/en', '/vi/journal', '/en/journal', '/sitemap.xml'])
 
       return true
     } catch (err: any) {
@@ -285,9 +357,8 @@ export default function AdminStoriesPage() {
     try {
       if (editingId) {
         const targetId = editingId
-        const previousStory = stories.find((story) => story.id === targetId)
         const shouldPingOnSave =
-          previousStory?.isVisible === false && (draft.isVisible === undefined || draft.isVisible)
+          (draft.isVisible === undefined || draft.isVisible) && !draft.noIndex
 
         const nextStories = stories.map((story) =>
           story.id === editingId
@@ -373,7 +444,7 @@ export default function AdminStoriesPage() {
         const success = await persistStories(
           nextStories,
           locale === 'vi' ? 'Đã thêm story mới và lưu vào cơ sở dữ liệu thành công.' : 'New story added and saved successfully.',
-          newStory.isVisible !== false ? [newId] : [],
+          newStory.isVisible !== false && !newStory.noIndex ? [newId] : [],
         )
 
         if (success) {
@@ -597,21 +668,313 @@ export default function AdminStoriesPage() {
               </div>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
-              <SeoSnippetPreview
-                locale="vi"
-                path={`/vi/journal/${draft.slugVi || 'story-slug'}`}
-                title={draft.titleVi || 'Tiêu đề story'}
-                description={draft.summaryVi || 'Tóm tắt story sẽ hiển thị ở đây.'}
-                branding={branding}
-              />
-              <SeoSnippetPreview
-                locale="en"
-                path={`/en/journal/${draft.slugEn || 'story-slug'}`}
-                title={draft.titleEn || 'Story title'}
-                description={draft.summaryEn || 'The story summary shown in Google appears here.'}
-                branding={branding}
-              />
+            {/* SEO & Search Indexing Card */}
+            <div className="rounded-xl border border-neutral-200/80 bg-neutral-50/50 p-4 space-y-4">
+              <div className="flex items-center justify-between border-b border-neutral-200/60 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600">
+                    <Sparkles className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-neutral-900">
+                      {locale === 'vi' ? 'Cấu hình SEO & Chỉ mục Google' : 'SEO & Google Indexing Settings'}
+                    </h4>
+                    <p className="text-xs text-neutral-500">
+                      {locale === 'vi'
+                        ? 'Tùy chỉnh đường dẫn URL, Meta Title, Meta Description và từ khóa tối ưu tìm kiếm'
+                        : 'Customize URL slugs, Meta Title, Meta Description and keywords for search engines'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* URL Slugs */}
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-neutral-800">
+                      {locale === 'vi' ? 'Đường dẫn SEO (Slug VI)' : 'SEO Slug (VI)'}
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setDraft((prev) => ({
+                          ...prev,
+                          slugVi: toStorySlug(prev.titleVi || ''),
+                        }))
+                      }
+                      className="text-[11px] text-primary hover:underline font-medium"
+                    >
+                      {locale === 'vi' ? 'Tự động tạo từ tiêu đề' : 'Generate from title'}
+                    </button>
+                  </div>
+                  <Input
+                    value={draft.slugVi || ''}
+                    onChange={(e) =>
+                      setDraft((prev) => ({ ...prev, slugVi: toStorySlug(e.target.value) }))
+                    }
+                    placeholder={toStorySlug(draft.titleVi) || 'nhung-ban-tay-giu-lua'}
+                    className="font-mono text-xs bg-white"
+                  />
+                  <p className="text-[11px] text-neutral-500 truncate">
+                    URL:{' '}
+                    <span className="font-mono text-neutral-700">
+                      /vi/journal/{draft.slugVi || toStorySlug(draft.titleVi) || '...'}
+                    </span>
+                  </p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-neutral-800">
+                      {locale === 'vi' ? 'Đường dẫn SEO (Slug EN)' : 'SEO Slug (EN)'}
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setDraft((prev) => ({
+                          ...prev,
+                          slugEn: toStorySlug(prev.titleEn || ''),
+                        }))
+                      }
+                      className="text-[11px] text-primary hover:underline font-medium"
+                    >
+                      {locale === 'vi' ? 'Tự động tạo từ tiêu đề' : 'Generate from title'}
+                    </button>
+                  </div>
+                  <Input
+                    value={draft.slugEn || ''}
+                    onChange={(e) =>
+                      setDraft((prev) => ({ ...prev, slugEn: toStorySlug(e.target.value) }))
+                    }
+                    placeholder={toStorySlug(draft.titleEn) || 'hands-that-keep-the-fire'}
+                    className="font-mono text-xs bg-white"
+                  />
+                  <p className="text-[11px] text-neutral-500 truncate">
+                    URL:{' '}
+                    <span className="font-mono text-neutral-700">
+                      /en/journal/{draft.slugEn || toStorySlug(draft.titleEn) || '...'}
+                    </span>
+                  </p>
+                </div>
+              </div>
+
+              {/* Meta Titles */}
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-neutral-800">
+                      {locale === 'vi' ? 'Tiêu đề SEO (Meta Title VI)' : 'Meta Title (VI)'}
+                    </label>
+                    <span
+                      className={cn(
+                        'text-[10px] font-mono',
+                        (draft.seoTitleVi || draft.titleVi).length > 60
+                          ? 'text-amber-600 font-bold'
+                          : (draft.seoTitleVi || draft.titleVi).length >= 40
+                            ? 'text-emerald-600 font-medium'
+                            : 'text-neutral-500',
+                      )}
+                    >
+                      {(draft.seoTitleVi || draft.titleVi).length}/60
+                    </span>
+                  </div>
+                  <Input
+                    value={draft.seoTitleVi || ''}
+                    onChange={(e) =>
+                      setDraft((prev) => ({ ...prev, seoTitleVi: e.target.value }))
+                    }
+                    placeholder={draft.titleVi || (locale === 'vi' ? 'Mặc định lấy từ tiêu đề bài viết' : 'Default from story title')}
+                    className="bg-white"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-neutral-800">
+                      {locale === 'vi' ? 'Tiêu đề SEO (Meta Title EN)' : 'Meta Title (EN)'}
+                    </label>
+                    <span
+                      className={cn(
+                        'text-[10px] font-mono',
+                        (draft.seoTitleEn || draft.titleEn).length > 60
+                          ? 'text-amber-600 font-bold'
+                          : (draft.seoTitleEn || draft.titleEn).length >= 40
+                            ? 'text-emerald-600 font-medium'
+                            : 'text-neutral-500',
+                      )}
+                    >
+                      {(draft.seoTitleEn || draft.titleEn).length}/60
+                    </span>
+                  </div>
+                  <Input
+                    value={draft.seoTitleEn || ''}
+                    onChange={(e) =>
+                      setDraft((prev) => ({ ...prev, seoTitleEn: e.target.value }))
+                    }
+                    placeholder={draft.titleEn || (locale === 'vi' ? 'Mặc định lấy từ tiêu đề bài viết' : 'Default from story title')}
+                    className="bg-white"
+                  />
+                </div>
+              </div>
+
+              {/* Meta Descriptions */}
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-neutral-800">
+                      {locale === 'vi' ? 'Mô tả SEO (Meta Description VI)' : 'Meta Description (VI)'}
+                    </label>
+                    <span
+                      className={cn(
+                        'text-[10px] font-mono',
+                        (draft.seoDescriptionVi || draft.summaryVi).length > 160
+                          ? 'text-amber-600 font-bold'
+                          : (draft.seoDescriptionVi || draft.summaryVi).length >= 120
+                            ? 'text-emerald-600 font-medium'
+                            : 'text-neutral-500',
+                      )}
+                    >
+                      {(draft.seoDescriptionVi || draft.summaryVi).length}/160
+                    </span>
+                  </div>
+                  <Input
+                    value={draft.seoDescriptionVi || ''}
+                    onChange={(e) =>
+                      setDraft((prev) => ({ ...prev, seoDescriptionVi: e.target.value }))
+                    }
+                    placeholder={draft.summaryVi || (locale === 'vi' ? 'Mặc định lấy từ tóm tắt' : 'Default from summary')}
+                    className="bg-white"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-neutral-800">
+                      {locale === 'vi' ? 'Mô tả SEO (Meta Description EN)' : 'Meta Description (EN)'}
+                    </label>
+                    <span
+                      className={cn(
+                        'text-[10px] font-mono',
+                        (draft.seoDescriptionEn || draft.summaryEn).length > 160
+                          ? 'text-amber-600 font-bold'
+                          : (draft.seoDescriptionEn || draft.summaryEn).length >= 120
+                            ? 'text-emerald-600 font-medium'
+                            : 'text-neutral-500',
+                      )}
+                    >
+                      {(draft.seoDescriptionEn || draft.summaryEn).length}/160
+                    </span>
+                  </div>
+                  <Input
+                    value={draft.seoDescriptionEn || ''}
+                    onChange={(e) =>
+                      setDraft((prev) => ({ ...prev, seoDescriptionEn: e.target.value }))
+                    }
+                    placeholder={draft.summaryEn || (locale === 'vi' ? 'Mặc định lấy từ tóm tắt' : 'Default from summary')}
+                    className="bg-white"
+                  />
+                </div>
+              </div>
+
+              {/* SEO Keywords */}
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-neutral-800">
+                    {locale === 'vi' ? 'Từ khóa SEO (VI)' : 'Keywords (VI)'}
+                  </label>
+                  <Input
+                    value={draft.seoKeywordsVi || ''}
+                    onChange={(e) =>
+                      setDraft((prev) => ({ ...prev, seoKeywordsVi: e.target.value }))
+                    }
+                    placeholder={locale === 'vi' ? 'gốm thủ công, nghệ nhân gốm, câu chuyện gốm sứ' : 'vietnamese ceramics, artisan pottery'}
+                    className="bg-white"
+                  />
+                  <p className="text-[10px] text-neutral-500">
+                    {locale === 'vi' ? 'Phân cách các từ khóa bằng dấu phẩy (,)' : 'Separate keywords with commas (,)'}
+                  </p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-neutral-800">
+                    {locale === 'vi' ? 'Từ khóa SEO (EN)' : 'Keywords (EN)'}
+                  </label>
+                  <Input
+                    value={draft.seoKeywordsEn || ''}
+                    onChange={(e) =>
+                      setDraft((prev) => ({ ...prev, seoKeywordsEn: e.target.value }))
+                    }
+                    placeholder="vietnamese ceramics, pottery journal, handcrafted stories"
+                    className="bg-white"
+                  />
+                  <p className="text-[10px] text-neutral-500">
+                    {locale === 'vi' ? 'Phân cách các từ khóa bằng dấu phẩy (,)' : 'Separate keywords with commas (,)'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Advanced Options & Noindex */}
+              <div className="grid gap-4 md:grid-cols-2 pt-2 border-t border-neutral-200/60">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-neutral-800">
+                    {locale === 'vi' ? 'URL Canonical tùy biến (nếu có)' : 'Custom Canonical URL'}
+                  </label>
+                  <Input
+                    value={draft.canonicalUrl || ''}
+                    onChange={(e) =>
+                      setDraft((prev) => ({ ...prev, canonicalUrl: e.target.value }))
+                    }
+                    placeholder="https://www.uomarchive.com/vi/journal/..."
+                    className="font-mono text-xs bg-white"
+                  />
+                </div>
+
+                <div className="flex items-center gap-3 pt-3">
+                  <input
+                    type="checkbox"
+                    id="noIndexToggle"
+                    checked={draft.noIndex || false}
+                    onChange={(e) =>
+                      setDraft((prev) => ({ ...prev, noIndex: e.target.checked }))
+                    }
+                    className="h-4 w-4 rounded border-neutral-300 text-primary focus:ring-primary cursor-pointer"
+                  />
+                  <label htmlFor="noIndexToggle" className="text-xs text-neutral-800 cursor-pointer select-none">
+                    <span className="font-semibold text-destructive">
+                      {locale === 'vi' ? 'Chặn Google lập chỉ mục (noindex)' : 'Block Google from indexing (noindex)'}
+                    </span>
+                    <p className="text-[11px] text-neutral-500">
+                      {locale === 'vi'
+                        ? 'Bật tùy chọn này nếu bài viết đang nháp hoặc không muốn xuất hiện trên kết quả tìm kiếm'
+                        : 'Enable this if the story is a draft or should not appear in search engine results'}
+                    </p>
+                  </label>
+                </div>
+              </div>
+
+              {/* Live Google Snippet Previews */}
+              <div className="pt-2">
+                <p className="text-xs font-semibold text-neutral-600 mb-2">
+                  {locale === 'vi' ? 'Xem trước kết quả tìm kiếm Google (SERP Preview):' : 'Google SERP Preview:'}
+                </p>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <SeoSnippetPreview
+                    locale="vi"
+                    path={`/vi/journal/${draft.slugVi || toStorySlug(draft.titleVi) || 'story-slug'}`}
+                    title={draft.seoTitleVi || draft.titleVi || 'Tiêu đề story'}
+                    description={draft.seoDescriptionVi || draft.summaryVi || 'Tóm tắt story sẽ hiển thị ở đây.'}
+                    branding={branding}
+                  />
+                  <SeoSnippetPreview
+                    locale="en"
+                    path={`/en/journal/${draft.slugEn || toStorySlug(draft.titleEn) || 'story-slug'}`}
+                    title={draft.seoTitleEn || draft.titleEn || 'Story title'}
+                    description={draft.seoDescriptionEn || draft.summaryEn || 'The story summary shown in Google appears here.'}
+                    branding={branding}
+                  />
+                </div>
+              </div>
             </div>
 
             <div className="grid gap-4 xl:grid-cols-2">
@@ -777,6 +1140,11 @@ export default function AdminStoriesPage() {
                         ? 'Ẩn'
                         : 'Hidden'}
                   </div>
+                  {story.noIndex && (
+                    <span className="inline-flex items-center rounded-full border border-neutral-300 bg-neutral-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-neutral-600">
+                      Noindex
+                    </span>
+                  )}
                 </div>
                 <p className="line-clamp-2 text-xs text-muted-foreground h-9 leading-relaxed">
                   {(locale === 'vi' ? story.summaryVi : story.summaryEn) || '—'}
@@ -854,6 +1222,26 @@ export default function AdminStoriesPage() {
                     >
                       <ExternalLink className="h-3.5 w-3.5" />
                     </a>
+                  )}
+                  {story.isVisible && !story.noIndex && (
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      className="h-8 w-8 shrink-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50 hover:border-amber-300"
+                      onClick={(e) => handlePingGoogle(story, e)}
+                      disabled={isPingingId === story.id}
+                      title={
+                        locale === 'vi'
+                          ? 'Làm mới chỉ mục SEO trên Google & IndexNow'
+                          : 'Refresh SEO indexing on Google & IndexNow'
+                      }
+                    >
+                      {isPingingId === story.id ? (
+                        <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Zap className="h-3.5 w-3.5 fill-amber-500 text-amber-500" />
+                      )}
+                    </Button>
                   )}
                   <Button
                     size="sm"
