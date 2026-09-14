@@ -7,22 +7,19 @@ import {
   X,
   Plus,
   RefreshCw,
-  PanelLeftClose,
-  PanelLeftOpen,
-  PanelRightClose,
-  PanelRightOpen,
+  Save,
 } from 'lucide-react'
 import Image from 'next/image'
-import Link from 'next/link'
 import { useRouter, useParams } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 import { useEffect, useState, useCallback } from 'react'
-import { useForm, useWatch } from 'react-hook-form'
+import { useForm, useWatch, type FieldErrors } from 'react-hook-form'
 import * as z from 'zod'
 import { SeoSnippetPreview } from '@/components/admin/SeoSnippetPreview'
 import { RichTextEditor } from '@/components/RichTextEditor'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { useConfirm } from '@/hooks/use-confirm'
 import {
   Dialog,
   DialogContent,
@@ -59,7 +56,7 @@ import { api } from '@/lib/api'
 import { vndToUsd } from '@/lib/currency'
 import { optimizeAndResizeImage, optimizeAndResizeImages } from '@/lib/image-upload'
 import { type Category } from '@/lib/types'
-import { getImageUrl, slugify } from '@/lib/utils'
+import { getImageUrl, slugify, cn } from '@/lib/utils'
 
 const productSchema = z.object({
   slug: z.string().min(1, 'Slug is required'),
@@ -262,8 +259,7 @@ export default function ProductFormPage() {
   const [newCatNameVi, setNewCatNameVi] = useState('')
   const [newCatNameEn, setNewCatNameEn] = useState('')
   const [variantGroups, setVariantGroups] = useState<VariantGroupDraft[]>([])
-  const [isLeftColumnCollapsed, setIsLeftColumnCollapsed] = useState(false)
-  const [isRightColumnCollapsed, setIsRightColumnCollapsed] = useState(false)
+  const confirm = useConfirm()
   const { data: exchangeRateData } = useExchangeRate()
   const { data: branding } = useBranding()
   const exchangeRate = exchangeRateData?.rate
@@ -538,6 +534,65 @@ export default function ProductFormPage() {
     }
   }
 
+  const onInvalid = (errors: FieldErrors<ProductFormValues>) => {
+    const errorKeys = Object.keys(errors) as (keyof ProductFormValues)[]
+    if (errorKeys.length > 0) {
+      const firstKey = errorKeys[0]
+      const firstError = errors[firstKey]
+      const fieldNames: Record<string, string> = {
+        nameVi: 'Tên sản phẩm (Tiếng Việt)',
+        nameEn: 'Tên sản phẩm (Tiếng Anh)',
+        descriptionVi: 'Mô tả chi tiết (Tiếng Việt)',
+        descriptionEn: 'Mô tả chi tiết (Tiếng Anh)',
+        priceVND: 'Giá niêm yết (VND)',
+        stock: 'Số lượng tồn kho',
+        slug: 'Đường dẫn (Slug)',
+      }
+      const fieldLabel = fieldNames[firstKey] || firstKey
+      toast({
+        title: locale === 'vi' ? 'Thông tin chưa đầy đủ' : 'Incomplete Information',
+        description:
+          firstError?.message ||
+          (locale === 'vi'
+            ? `Vui lòng kiểm tra lại trường "${fieldLabel}".`
+            : `Please check field "${fieldLabel}".`),
+        variant: 'destructive',
+      })
+      const element = document.querySelector(`[name="${firstKey}"]`)
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+    }
+  }
+
+  const handleCancel = async () => {
+    if (form.formState.isDirty) {
+      const confirmed = await confirm({
+        title: locale === 'vi' ? 'Hủy bỏ thay đổi?' : 'Discard changes?',
+        description:
+          locale === 'vi'
+            ? 'Bạn có thay đổi chưa được lưu. Bạn có chắc chắn muốn rời khỏi trang không?'
+            : 'You have unsaved changes. Are you sure you want to leave this page?',
+        confirmText: locale === 'vi' ? 'Rời khỏi trang' : 'Discard & Leave',
+        cancelText: locale === 'vi' ? 'Tiếp tục sửa' : 'Keep editing',
+        variant: 'destructive',
+      })
+      if (!confirmed) return
+    }
+    router.push(`/${locale}/admin/products`)
+  }
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault()
+        void form.handleSubmit(onSubmit, onInvalid)()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [form, onSubmit, onInvalid])
+
   const handleQuickCreateCategory = async () => {
     if (!newCatNameVi || !newCatNameEn) {
       toast({
@@ -588,67 +643,103 @@ export default function ProductFormPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button asChild variant="ghost" size="icon">
-          <Link href={`/${locale}/admin/products`}>
+      {/* Sticky Top Action Header */}
+      <div className="sticky top-0 z-30 -mx-4 -mt-6 mb-6 flex flex-col gap-3 border-b bg-background/95 px-4 py-3.5 backdrop-blur-md transition-all sm:-mx-6 sm:px-6 sm:flex-row sm:items-center sm:justify-between lg:-mx-8 lg:px-8">
+        <div className="flex items-center gap-3">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={handleCancel}
+            title={locale === 'vi' ? 'Quay lại danh sách' : 'Back to products'}
+            className="h-9 w-9 rounded-full"
+          >
             <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
-        <div>
-          <h1 className="font-serif text-2xl">{isNew ? t('create') : t('edit')} Product</h1>
-          <p className="text-muted-foreground">
-            {isNew ? 'Add a new product' : 'Update product details'}
-          </p>
+          </Button>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="font-serif text-lg sm:text-2xl font-semibold tracking-tight text-foreground line-clamp-1">
+                {isNew
+                  ? locale === 'vi'
+                    ? 'Tạo sản phẩm mới'
+                    : 'Create Product'
+                  : productName || t('updateProduct')}
+              </h1>
+              {!isNew && (
+                <span
+                  className={cn(
+                    'rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider',
+                    form.watch('isActive')
+                      ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                      : 'bg-neutral-200 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300',
+                  )}
+                >
+                  {form.watch('isActive')
+                    ? locale === 'vi'
+                      ? 'Đang bán'
+                      : 'Active'
+                    : locale === 'vi'
+                      ? 'Tạm ẩn'
+                      : 'Draft'}
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {isNew
+                ? locale === 'vi'
+                  ? 'Điền thông tin và hình ảnh để đưa sản phẩm lên danh mục'
+                  : 'Add product details and images'
+                : locale === 'vi'
+                  ? `Mã: ${id}`
+                  : `ID: ${id}`}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 self-end sm:self-center">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleCancel}
+            disabled={isSaving}
+            className="h-9 px-4 text-xs"
+          >
+            {t('cancel')}
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            disabled={isSaving}
+            onClick={form.handleSubmit(onSubmit, onInvalid)}
+            className="h-9 px-5 text-xs font-semibold shadow-sm"
+          >
+            {isSaving ? (
+              <>
+                <RefreshCw className="mr-2 h-3.5 w-3.5 animate-spin" />
+                {locale === 'vi' ? 'Đang lưu...' : 'Saving...'}
+              </>
+            ) : (
+              <>
+                <Save className="mr-2 h-3.5 w-3.5" />
+                {isNew
+                  ? locale === 'vi'
+                    ? 'Tạo sản phẩm'
+                    : 'Create'
+                  : locale === 'vi'
+                    ? 'Lưu thay đổi'
+                    : 'Save changes'}
+              </>
+            )}
+          </Button>
         </div>
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <div className="flex flex-wrap gap-2 rounded-lg border bg-muted/20 p-3">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                if (isLeftColumnCollapsed && isRightColumnCollapsed) {
-                  setIsRightColumnCollapsed(false)
-                }
-                setIsLeftColumnCollapsed((prev) => !prev)
-              }}
-            >
-              {isLeftColumnCollapsed ? (
-                <PanelLeftOpen className="mr-2 h-4 w-4" />
-              ) : (
-                <PanelLeftClose className="mr-2 h-4 w-4" />
-              )}
-              {isLeftColumnCollapsed ? 'Hiện cột trái' : 'Ẩn cột trái'}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                if (isRightColumnCollapsed && isLeftColumnCollapsed) {
-                  setIsLeftColumnCollapsed(false)
-                }
-                setIsRightColumnCollapsed((prev) => !prev)
-              }}
-            >
-              {isRightColumnCollapsed ? (
-                <PanelRightOpen className="mr-2 h-4 w-4" />
-              ) : (
-                <PanelRightClose className="mr-2 h-4 w-4" />
-              )}
-              {isRightColumnCollapsed ? 'Hiện cột phải' : 'Ẩn cột phải'}
-            </Button>
-          </div>
-
-          <div className="grid gap-6 lg:grid-cols-3">
+        <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-6">
+          <div className="grid gap-6 lg:grid-cols-3 items-start">
             {/* Main content - 2 columns */}
-            {!isLeftColumnCollapsed && (
-              <div
-                className={`space-y-6 ${isRightColumnCollapsed ? 'lg:col-span-3' : 'lg:col-span-2'}`}
-              >
+            <div className="space-y-6 lg:col-span-2">
                 {/* Basic Info */}
                 <Card>
                   <CardHeader>
@@ -1184,11 +1275,9 @@ export default function ProductFormPage() {
                   </CardContent>
                 </Card>
               </div>
-            )}
 
-            {/* Sidebar - 1 column */}
-            {!isRightColumnCollapsed && (
-              <div className={`space-y-6 ${isLeftColumnCollapsed ? 'lg:col-span-3' : ''}`}>
+            {/* Sidebar - 1 column (Sticky) */}
+            <div className="space-y-6 lg:col-span-1 lg:sticky lg:top-20">
                 {/* Status */}
                 <Card>
                   <CardHeader>
@@ -1383,24 +1472,93 @@ export default function ProductFormPage() {
                   </CardContent>
                 </Card>
 
-                {/* Actions */}
-                <div className="flex flex-col gap-2">
-                  <Button type="submit" disabled={isSaving}>
-                    {isSaving ? t('loading') : t('save')}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => router.push(`/${locale}/admin/products`)}
-                  >
-                    {t('cancel')}
-                  </Button>
-                </div>
+                {/* Actions Card */}
+                <Card className="border shadow-sm bg-gradient-to-br from-card to-muted/20">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-semibold uppercase tracking-wide">
+                      {locale === 'vi' ? 'Thao tác lưu' : 'Save Actions'}
+                    </CardTitle>
+                    <CardDescription className="text-xs">
+                      {locale === 'vi' ? 'Phím tắt: Ctrl + S để lưu nhanh' : 'Shortcut: Ctrl + S to save'}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <Button
+                      type="submit"
+                      disabled={isSaving}
+                      className="w-full h-10 text-xs font-semibold shadow-sm"
+                    >
+                      {isSaving ? (
+                        <>
+                          <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                          {locale === 'vi' ? 'Đang lưu...' : 'Saving...'}
+                        </>
+                      ) : (
+                        <>
+                          <Save className="mr-2 h-4 w-4" />
+                          {isNew
+                            ? locale === 'vi'
+                              ? 'Tạo sản phẩm'
+                              : 'Create Product'
+                            : locale === 'vi'
+                              ? 'Lưu thay đổi'
+                              : 'Save Changes'}
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={isSaving}
+                      onClick={handleCancel}
+                      className="w-full h-10 text-xs"
+                    >
+                      {t('cancel')}
+                    </Button>
+                  </CardContent>
+                </Card>
               </div>
-            )}
-          </div>
-        </form>
-      </Form>
+            </div>
+
+            {/* Mobile Sticky Bottom Bar */}
+            <div className="sticky bottom-0 z-20 flex items-center justify-between gap-3 border-t bg-background/95 p-3.5 backdrop-blur-md shadow-lg rounded-t-xl sm:hidden">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleCancel}
+                disabled={isSaving}
+                className="flex-1 h-9 text-xs"
+              >
+                {t('cancel')}
+              </Button>
+              <Button
+                type="submit"
+                size="sm"
+                disabled={isSaving}
+                className="flex-1 h-9 text-xs font-semibold"
+              >
+                {isSaving ? (
+                  <>
+                    <RefreshCw className="mr-2 h-3.5 w-3.5 animate-spin" />
+                    {locale === 'vi' ? 'Đang lưu...' : 'Saving...'}
+                  </>
+                ) : (
+                  <>
+                    <Save className="mr-2 h-3.5 w-3.5" />
+                    {isNew
+                      ? locale === 'vi'
+                        ? 'Tạo'
+                        : 'Create'
+                      : locale === 'vi'
+                        ? 'Lưu'
+                        : 'Save'}
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        </Form>
 
       {/* Quick Category Dialog */}
       <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
