@@ -79,11 +79,11 @@ async function fetchShopSsrData(): Promise<ShopSsrData> {
   return {
     products:
       productsResult.status === 'fulfilled'
-        ? unwrapData<PaginatedResponse<Product>>(productsResult.value) ?? undefined
+        ? (unwrapData<PaginatedResponse<Product>>(productsResult.value) ?? undefined)
         : undefined,
     categories:
       categoriesResult.status === 'fulfilled'
-        ? unwrapData<Category[]>(categoriesResult.value) ?? undefined
+        ? (unwrapData<Category[]>(categoriesResult.value) ?? undefined)
         : undefined,
   }
 }

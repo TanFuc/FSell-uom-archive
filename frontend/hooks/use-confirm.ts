@@ -1,1 +1,5 @@
-export { useConfirm, type ConfirmOptions, type ConfirmFunction } from '@/components/providers/ConfirmationProvider'
+export {
+  useConfirm,
+  type ConfirmOptions,
+  type ConfirmFunction,
+} from '@/components/providers/ConfirmationProvider'

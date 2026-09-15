@@ -1,14 +1,7 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import {
-  ArrowLeft,
-  Upload,
-  X,
-  Plus,
-  RefreshCw,
-  Save,
-} from 'lucide-react'
+import { ArrowLeft, Upload, X, Plus, RefreshCw, Save } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter, useParams } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
@@ -644,7 +637,7 @@ export default function ProductFormPage() {
   return (
     <div className="space-y-6">
       {/* Sticky Top Action Header */}
-      <div className="sticky top-0 z-30 -mx-4 -mt-6 mb-6 flex flex-col gap-3 border-b bg-background/95 px-4 py-3.5 backdrop-blur-md transition-all sm:-mx-6 sm:px-6 sm:flex-row sm:items-center sm:justify-between lg:-mx-8 lg:px-8">
+      <div className="sticky top-0 z-30 -mx-4 -mt-6 mb-6 flex flex-col gap-3 border-b bg-background/95 px-4 py-3.5 backdrop-blur-md transition-all sm:-mx-6 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:-mx-8 lg:px-8">
         <div className="flex items-center gap-3">
           <Button
             type="button"
@@ -658,7 +651,7 @@ export default function ProductFormPage() {
           </Button>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="font-serif text-lg sm:text-2xl font-semibold tracking-tight text-foreground line-clamp-1">
+              <h1 className="line-clamp-1 font-serif text-lg font-semibold tracking-tight text-foreground sm:text-2xl">
                 {isNew
                   ? locale === 'vi'
                     ? 'Tạo sản phẩm mới'
@@ -737,828 +730,811 @@ export default function ProductFormPage() {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-6">
-          <div className="grid gap-6 lg:grid-cols-3 items-start">
+          <div className="grid items-start gap-6 lg:grid-cols-3">
             {/* Main content - 2 columns */}
             <div className="space-y-6 lg:col-span-2">
-                {/* Basic Info */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="uppercase tracking-wide">Basic Information</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid gap-4 lg:grid-cols-2">
-                      <Card className="border-primary/20">
-                        <CardHeader className="pb-3">
-                          <CardTitle className="text-sm uppercase tracking-wide">
-                            Vietnamese Content
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                          <FormField
-                            control={form.control}
-                            name="nameVi"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>
-                                  {t('vietnameseName')} <span className="text-destructive font-bold">*</span>
-                                </FormLabel>
-                                <FormControl>
-                                  <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="shortDescriptionVi"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Mo ta ngan (Tieng Viet)</FormLabel>
-                                <FormControl>
-                                  <Textarea {...field} rows={3} placeholder="Mo ta tom tat..." />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="descriptionVi"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>
-                                  {t('vietnameseDescription')} <span className="text-destructive font-bold">*</span>
-                                </FormLabel>
-                                <FormControl>
-                                  <RichTextEditor
-                                    content={field.value}
-                                    onChange={field.onChange}
-                                    placeholder={t('enterDescription')}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </CardContent>
-                      </Card>
-
-                      <Card className="border-primary/20">
-                        <CardHeader className="pb-3">
-                          <CardTitle className="text-sm uppercase tracking-wide">
-                            English Content
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                          <FormField
-                            control={form.control}
-                            name="nameEn"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>
-                                  {t('englishName')} <span className="text-destructive font-bold">*</span>
-                                </FormLabel>
-                                <FormControl>
-                                  <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="shortDescriptionEn"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Short Description (English)</FormLabel>
-                                <FormControl>
-                                  <Textarea
-                                    {...field}
-                                    rows={3}
-                                    placeholder="Summary description..."
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="descriptionEn"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>
-                                  {t('englishDescription')} <span className="text-destructive font-bold">*</span>
-                                </FormLabel>
-                                <FormControl>
-                                  <RichTextEditor
-                                    content={field.value}
-                                    onChange={field.onChange}
-                                    placeholder={t('enterDescription')}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </CardContent>
-                      </Card>
-                    </div>
-
-                    <Card className="bg-muted/20">
+              {/* Basic Info */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="uppercase tracking-wide">Basic Information</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    <Card className="border-primary/20">
                       <CardHeader className="pb-3">
-                        <CardTitle className="text-base">SEO Preview</CardTitle>
-                        <CardDescription>
-                          Google snippet auto-generated from product name, summary, and slug.
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="grid gap-4 md:grid-cols-2">
-                        <SeoSnippetPreview
-                          locale="vi"
-                          path={`/vi/shop/${slugWatch || 'product-slug'}`}
-                          title={nameViWatch || 'Tên sản phẩm'}
-                          description={
-                            shortDescriptionViWatch || 'Mô tả ngắn của sản phẩm sẽ hiển thị ở đây.'
-                          }
-                          branding={branding}
-                        />
-                        <SeoSnippetPreview
-                          locale="en"
-                          path={`/en/shop/${slugWatch || 'product-slug'}`}
-                          title={nameEnWatch || 'Product name'}
-                          description={
-                            shortDescriptionEnWatch ||
-                            'The product summary shown in Google search results appears here.'
-                          }
-                          branding={branding}
-                        />
-                      </CardContent>
-                    </Card>
-
-                    {/* Price Fields */}
-                    <Card className="bg-muted/30">
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-base">{t('pricing')}</CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        {/* Original Price */}
-                        <div className="grid gap-4 md:grid-cols-2">
-                          <FormField
-                            control={form.control}
-                            name="priceVND"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>{t('priceVND')} *</FormLabel>
-                                <FormControl>
-                                  <Input {...field} type="number" placeholder="1,000,000" />
-                                </FormControl>
-                                <FormDescription>{t('originalPrice')}</FormDescription>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="priceUSD"
-                            render={({ field }) => (
-                              <FormItem>
-                                <div className="flex items-center justify-between">
-                                  <FormLabel>{t('priceUSD')}</FormLabel>
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => setAutoConvertPrice(!autoConvertPrice)}
-                                    className="h-6 text-xs"
-                                  >
-                                    <RefreshCw
-                                      className={`mr-1 h-3 w-3 ${autoConvertPrice ? 'text-green-500' : ''}`}
-                                    />
-                                    {autoConvertPrice ? t('autoOn') : t('autoOff')}
-                                  </Button>
-                                </div>
-                                <FormControl>
-                                  <Input
-                                    {...field}
-                                    type="number"
-                                    step="0.01"
-                                    value={field.value || ''}
-                                    onChange={(e) => {
-                                      setAutoConvertPrice(false)
-                                      field.onChange(
-                                        e.target.value ? parseFloat(e.target.value) : undefined,
-                                      )
-                                    }}
-                                  />
-                                </FormControl>
-                                <FormDescription>{t('autoCalculated')}</FormDescription>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-
-                        <Separator />
-
-                        {/* Sale Price */}
-                        <div className="grid gap-4 md:grid-cols-2">
-                          <FormField
-                            control={form.control}
-                            name="salePriceVND"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>{t('salePriceVND')}</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    {...field}
-                                    type="number"
-                                    placeholder={t('optional')}
-                                    value={field.value || ''}
-                                    onChange={(e) =>
-                                      field.onChange(
-                                        e.target.value ? parseInt(e.target.value) : null,
-                                      )
-                                    }
-                                  />
-                                </FormControl>
-                                <FormDescription>{t('discountPrice')}</FormDescription>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="salePriceUSD"
-                            render={({ field }) => (
-                              <FormItem>
-                                <div className="flex items-center justify-between">
-                                  <FormLabel>{t('salePriceUSD')}</FormLabel>
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => setAutoConvertSalePrice(!autoConvertSalePrice)}
-                                    className="h-6 text-xs"
-                                  >
-                                    <RefreshCw
-                                      className={`mr-1 h-3 w-3 ${autoConvertSalePrice ? 'text-green-500' : ''}`}
-                                    />
-                                    {autoConvertSalePrice ? t('autoOn') : t('autoOff')}
-                                  </Button>
-                                </div>
-                                <FormControl>
-                                  <Input
-                                    {...field}
-                                    type="number"
-                                    step="0.01"
-                                    placeholder={t('optional')}
-                                    value={field.value || ''}
-                                    onChange={(e) => {
-                                      setAutoConvertSalePrice(false)
-                                      field.onChange(
-                                        e.target.value ? parseFloat(e.target.value) : null,
-                                      )
-                                    }}
-                                  />
-                                </FormControl>
-                                <FormDescription>{t('autoCalculated')}</FormDescription>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="bg-muted/30">
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-base">
-                          {t('variantClassificationTitle')}
+                        <CardTitle className="text-sm uppercase tracking-wide">
+                          Vietnamese Content
                         </CardTitle>
-                        <CardDescription>{t('variantClassificationDesc')}</CardDescription>
                       </CardHeader>
                       <CardContent className="space-y-4">
-                        {variantGroups.length === 0 ? (
-                          <p className="text-sm text-muted-foreground">{t('variantNoGroups')}</p>
-                        ) : null}
-
-                        {variantGroups.map((group, index) => (
-                          <div key={group.id} className="space-y-3 rounded-md border p-4">
-                            <div className="flex items-center justify-between">
-                              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                                {t('variantGroupLabel', { index: index + 1 })}
-                              </p>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => removeVariantGroup(group.id)}
-                                className="h-7 px-2 text-xs"
-                              >
-                                <X className="mr-1 h-3 w-3" />
-                                {t('delete')}
-                              </Button>
-                            </div>
-
-                            <div className="grid gap-3 md:grid-cols-2">
-                              <div className="space-y-2">
-                                <Label htmlFor={`${group.id}-label-vi`}>
-                                  {t('variantLabelVi')}
-                                </Label>
-                                <Input
-                                  id={`${group.id}-label-vi`}
-                                  value={group.labelVi}
-                                  onChange={(e) =>
-                                    updateVariantGroup(group.id, 'labelVi', e.target.value)
-                                  }
-                                  placeholder="Loai"
+                        <FormField
+                          control={form.control}
+                          name="nameVi"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>
+                                {t('vietnameseName')}{' '}
+                                <span className="font-bold text-destructive">*</span>
+                              </FormLabel>
+                              <FormControl>
+                                <Input {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="shortDescriptionVi"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Mo ta ngan (Tieng Viet)</FormLabel>
+                              <FormControl>
+                                <Textarea {...field} rows={3} placeholder="Mo ta tom tat..." />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="descriptionVi"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>
+                                {t('vietnameseDescription')}{' '}
+                                <span className="font-bold text-destructive">*</span>
+                              </FormLabel>
+                              <FormControl>
+                                <RichTextEditor
+                                  content={field.value}
+                                  onChange={field.onChange}
+                                  placeholder={t('enterDescription')}
                                 />
-                              </div>
-                              <div className="space-y-2">
-                                <Label htmlFor={`${group.id}-label-en`}>
-                                  {t('variantLabelEn')}
-                                </Label>
-                                <Input
-                                  id={`${group.id}-label-en`}
-                                  value={group.labelEn}
-                                  onChange={(e) =>
-                                    updateVariantGroup(group.id, 'labelEn', e.target.value)
-                                  }
-                                  placeholder="Types"
-                                />
-                              </div>
-                            </div>
-
-                            <div className="grid gap-3 md:grid-cols-2">
-                              <div className="space-y-2">
-                                <Label htmlFor={`${group.id}-values-vi`}>
-                                  {t('variantValuesVi')}
-                                </Label>
-                                <Textarea
-                                  id={`${group.id}-values-vi`}
-                                  rows={2}
-                                  value={group.valuesVi}
-                                  onChange={(e) =>
-                                    updateVariantGroup(group.id, 'valuesVi', e.target.value)
-                                  }
-                                  placeholder="Thuong, Cao cap"
-                                />
-                                <FormDescription>
-                                  {t('variantValuesCount', {
-                                    count: parseVariantValues(group.valuesVi).length,
-                                  })}
-                                </FormDescription>
-                              </div>
-                              <div className="space-y-2">
-                                <Label htmlFor={`${group.id}-values-en`}>
-                                  {t('variantValuesEn')}
-                                </Label>
-                                <Textarea
-                                  id={`${group.id}-values-en`}
-                                  rows={2}
-                                  value={group.valuesEn}
-                                  onChange={(e) =>
-                                    updateVariantGroup(group.id, 'valuesEn', e.target.value)
-                                  }
-                                  placeholder="Classic, Premium"
-                                />
-                                <FormDescription>
-                                  {t('variantValuesCount', {
-                                    count: parseVariantValues(group.valuesEn).length,
-                                  })}
-                                </FormDescription>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-
-                        <div className="flex items-center justify-between">
-                          <p className="text-xs text-muted-foreground">{t('variantValuesHint')}</p>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={addVariantGroup}
-                          >
-                            <Plus className="mr-2 h-4 w-4" />
-                            {t('addVariantGroup')}
-                          </Button>
-                        </div>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
                       </CardContent>
                     </Card>
 
-                    {/* Category and Stock */}
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <FormField
-                        control={form.control}
-                        name="categoryId"
-                        render={({ field }) => (
-                          <FormItem>
-                            <div className="flex items-center justify-between">
+                    <Card className="border-primary/20">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-sm uppercase tracking-wide">
+                          English Content
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <FormField
+                          control={form.control}
+                          name="nameEn"
+                          render={({ field }) => (
+                            <FormItem>
                               <FormLabel>
-                                {t('category')} <span className="text-destructive font-bold">*</span>
+                                {t('englishName')}{' '}
+                                <span className="font-bold text-destructive">*</span>
                               </FormLabel>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                className="h-6 px-2 text-xs"
-                                onClick={() => setIsCategoryDialogOpen(true)}
-                              >
-                                <Plus className="mr-1 h-3 w-3" />
-                                Thêm mới
-                              </Button>
-                            </div>
-                            <Select
-                              onValueChange={(val) => field.onChange(val === 'none' ? null : val)}
-                              value={field.value || 'none'}
-                            >
                               <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder={t('selectCategory')} />
-                                </SelectTrigger>
+                                <Input {...field} />
                               </FormControl>
-                              <SelectContent>
-                                <SelectItem value="none">{t('noCategory')}</SelectItem>
-                                {categories.map((category) => (
-                                  <SelectItem key={category.id} value={category.id}>
-                                    {locale === 'vi' ? category.nameVi : category.nameEn}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="stock"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>
-                              {t('stockLabelForm')} <span className="text-destructive font-bold">*</span>
-                            </FormLabel>
-                            <FormControl>
-                              <Input {...field} type="number" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Inquiry Settings */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="uppercase tracking-wide">
-                      {t('inquirySettings')}
-                    </CardTitle>
-                    <CardDescription>Configure customer inquiry options</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="inquiryEnabled"
-                      render={({ field }) => (
-                        <FormItem className="flex items-center justify-between">
-                          <div>
-                            <FormLabel>{t('inquiryEnabled')}</FormLabel>
-                            <FormDescription>
-                              Allow customers to ask about this product
-                            </FormDescription>
-                          </div>
-                          <FormControl>
-                            <Switch checked={field.value} onCheckedChange={field.onChange} />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-
-                    <Separator />
-
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <FormField
-                        control={form.control}
-                        name="inquiryMessageVi"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{t('inquiryMessageVi')}</FormLabel>
-                            <FormControl>
-                              <Textarea {...field} rows={4} placeholder={t('autoGenerated')} />
-                            </FormControl>
-                            <FormDescription>
-                              Leave empty for auto-generated message
-                            </FormDescription>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="inquiryMessageEn"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{t('inquiryMessageEn')}</FormLabel>
-                            <FormControl>
-                              <Textarea {...field} rows={4} placeholder={t('autoGenerated')} />
-                            </FormControl>
-                            <FormDescription>
-                              Leave empty for auto-generated message
-                            </FormDescription>
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-            {/* Sidebar - 1 column (Sticky) */}
-            <div className="space-y-6 lg:col-span-1 lg:sticky lg:top-20">
-                {/* Status */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="uppercase tracking-wide">{t('status')}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="isActive"
-                      render={({ field }) => (
-                        <FormItem className="flex items-center justify-between">
-                          <FormLabel>{t('active')}</FormLabel>
-                          <FormControl>
-                            <Switch checked={field.value} onCheckedChange={field.onChange} />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="isFeatured"
-                      render={({ field }) => (
-                        <FormItem className="flex items-center justify-between">
-                          <FormLabel>{t('featured')}</FormLabel>
-                          <FormControl>
-                            <Switch checked={field.value} onCheckedChange={field.onChange} />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                  </CardContent>
-                </Card>
-
-                {/* Images */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="uppercase tracking-wide">
-                      Images <span className="text-destructive font-bold">*</span>
-                    </CardTitle>
-                    <CardDescription>Upload product images (tối thiểu 1 ảnh, tỉ lệ 4:5 khuyến nghị)</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      {images.map((image, index) => (
-                        <div
-                          key={index}
-                          className="aspect-product group relative cursor-move overflow-hidden rounded-md border"
-                        >
-                          <Image
-                            src={getImageUrl(image)}
-                            alt={`Product ${index + 1}`}
-                            fill
-                            sizes="150px"
-                            className="object-cover transition-transform duration-300 group-hover:scale-105"
-                          />
-                          {index === 0 && (
-                            <div className="absolute left-2 top-2 z-10 rounded-sm bg-primary/90 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-primary-foreground shadow-sm backdrop-blur-sm">
-                              Main Display
-                            </div>
+                              <FormMessage />
+                            </FormItem>
                           )}
-                          <div className="absolute inset-x-0 bottom-0 grid translate-y-full grid-cols-2 gap-1 bg-black/70 p-2 transition-transform duration-300 group-hover:translate-y-0">
+                        />
+                        <FormField
+                          control={form.control}
+                          name="shortDescriptionEn"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Short Description (English)</FormLabel>
+                              <FormControl>
+                                <Textarea
+                                  {...field}
+                                  rows={3}
+                                  placeholder="Summary description..."
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="descriptionEn"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>
+                                {t('englishDescription')}{' '}
+                                <span className="font-bold text-destructive">*</span>
+                              </FormLabel>
+                              <FormControl>
+                                <RichTextEditor
+                                  content={field.value}
+                                  onChange={field.onChange}
+                                  placeholder={t('enterDescription')}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  <Card className="bg-muted/20">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base">SEO Preview</CardTitle>
+                      <CardDescription>
+                        Google snippet auto-generated from product name, summary, and slug.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="grid gap-4 md:grid-cols-2">
+                      <SeoSnippetPreview
+                        locale="vi"
+                        path={`/vi/shop/${slugWatch || 'product-slug'}`}
+                        title={nameViWatch || 'Tên sản phẩm'}
+                        description={
+                          shortDescriptionViWatch || 'Mô tả ngắn của sản phẩm sẽ hiển thị ở đây.'
+                        }
+                        branding={branding}
+                      />
+                      <SeoSnippetPreview
+                        locale="en"
+                        path={`/en/shop/${slugWatch || 'product-slug'}`}
+                        title={nameEnWatch || 'Product name'}
+                        description={
+                          shortDescriptionEnWatch ||
+                          'The product summary shown in Google search results appears here.'
+                        }
+                        branding={branding}
+                      />
+                    </CardContent>
+                  </Card>
+
+                  {/* Price Fields */}
+                  <Card className="bg-muted/30">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base">{t('pricing')}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {/* Original Price */}
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <FormField
+                          control={form.control}
+                          name="priceVND"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>{t('priceVND')} *</FormLabel>
+                              <FormControl>
+                                <Input {...field} type="number" placeholder="1,000,000" />
+                              </FormControl>
+                              <FormDescription>{t('originalPrice')}</FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="priceUSD"
+                          render={({ field }) => (
+                            <FormItem>
+                              <div className="flex items-center justify-between">
+                                <FormLabel>{t('priceUSD')}</FormLabel>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setAutoConvertPrice(!autoConvertPrice)}
+                                  className="h-6 text-xs"
+                                >
+                                  <RefreshCw
+                                    className={`mr-1 h-3 w-3 ${autoConvertPrice ? 'text-green-500' : ''}`}
+                                  />
+                                  {autoConvertPrice ? t('autoOn') : t('autoOff')}
+                                </Button>
+                              </div>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  type="number"
+                                  step="0.01"
+                                  value={field.value || ''}
+                                  onChange={(e) => {
+                                    setAutoConvertPrice(false)
+                                    field.onChange(
+                                      e.target.value ? parseFloat(e.target.value) : undefined,
+                                    )
+                                  }}
+                                />
+                              </FormControl>
+                              <FormDescription>{t('autoCalculated')}</FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <Separator />
+
+                      {/* Sale Price */}
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <FormField
+                          control={form.control}
+                          name="salePriceVND"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>{t('salePriceVND')}</FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  type="number"
+                                  placeholder={t('optional')}
+                                  value={field.value || ''}
+                                  onChange={(e) =>
+                                    field.onChange(e.target.value ? parseInt(e.target.value) : null)
+                                  }
+                                />
+                              </FormControl>
+                              <FormDescription>{t('discountPrice')}</FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="salePriceUSD"
+                          render={({ field }) => (
+                            <FormItem>
+                              <div className="flex items-center justify-between">
+                                <FormLabel>{t('salePriceUSD')}</FormLabel>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setAutoConvertSalePrice(!autoConvertSalePrice)}
+                                  className="h-6 text-xs"
+                                >
+                                  <RefreshCw
+                                    className={`mr-1 h-3 w-3 ${autoConvertSalePrice ? 'text-green-500' : ''}`}
+                                  />
+                                  {autoConvertSalePrice ? t('autoOn') : t('autoOff')}
+                                </Button>
+                              </div>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  type="number"
+                                  step="0.01"
+                                  placeholder={t('optional')}
+                                  value={field.value || ''}
+                                  onChange={(e) => {
+                                    setAutoConvertSalePrice(false)
+                                    field.onChange(
+                                      e.target.value ? parseFloat(e.target.value) : null,
+                                    )
+                                  }}
+                                />
+                              </FormControl>
+                              <FormDescription>{t('autoCalculated')}</FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-muted/30">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base">{t('variantClassificationTitle')}</CardTitle>
+                      <CardDescription>{t('variantClassificationDesc')}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {variantGroups.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">{t('variantNoGroups')}</p>
+                      ) : null}
+
+                      {variantGroups.map((group, index) => (
+                        <div key={group.id} className="space-y-3 rounded-md border p-4">
+                          <div className="flex items-center justify-between">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                              {t('variantGroupLabel', { index: index + 1 })}
+                            </p>
                             <Button
                               type="button"
-                              variant="secondary"
+                              variant="ghost"
                               size="sm"
-                              className="h-7 text-[10px]"
-                              onClick={() => copyImageUrl(image)}
+                              onClick={() => removeVariantGroup(group.id)}
+                              className="h-7 px-2 text-xs"
                             >
-                              Copy URL
+                              <X className="mr-1 h-3 w-3" />
+                              {t('delete')}
                             </Button>
-                            <Button
-                              type="button"
-                              variant="secondary"
-                              size="sm"
-                              className="h-7 text-[10px]"
-                              onClick={() => insertImageIntoDescription('descriptionVi', image)}
-                            >
-                              Insert VI
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="secondary"
-                              size="sm"
-                              className="h-7 text-[10px]"
-                              onClick={() => insertImageIntoDescription('descriptionEn', image)}
-                            >
-                              Insert EN
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="destructive"
-                              size="sm"
-                              className="h-7 text-[10px]"
-                              onClick={() => removeImage(index)}
-                            >
-                              Remove
-                            </Button>
+                          </div>
+
+                          <div className="grid gap-3 md:grid-cols-2">
+                            <div className="space-y-2">
+                              <Label htmlFor={`${group.id}-label-vi`}>{t('variantLabelVi')}</Label>
+                              <Input
+                                id={`${group.id}-label-vi`}
+                                value={group.labelVi}
+                                onChange={(e) =>
+                                  updateVariantGroup(group.id, 'labelVi', e.target.value)
+                                }
+                                placeholder="Loai"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor={`${group.id}-label-en`}>{t('variantLabelEn')}</Label>
+                              <Input
+                                id={`${group.id}-label-en`}
+                                value={group.labelEn}
+                                onChange={(e) =>
+                                  updateVariantGroup(group.id, 'labelEn', e.target.value)
+                                }
+                                placeholder="Types"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="grid gap-3 md:grid-cols-2">
+                            <div className="space-y-2">
+                              <Label htmlFor={`${group.id}-values-vi`}>
+                                {t('variantValuesVi')}
+                              </Label>
+                              <Textarea
+                                id={`${group.id}-values-vi`}
+                                rows={2}
+                                value={group.valuesVi}
+                                onChange={(e) =>
+                                  updateVariantGroup(group.id, 'valuesVi', e.target.value)
+                                }
+                                placeholder="Thuong, Cao cap"
+                              />
+                              <FormDescription>
+                                {t('variantValuesCount', {
+                                  count: parseVariantValues(group.valuesVi).length,
+                                })}
+                              </FormDescription>
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor={`${group.id}-values-en`}>
+                                {t('variantValuesEn')}
+                              </Label>
+                              <Textarea
+                                id={`${group.id}-values-en`}
+                                rows={2}
+                                value={group.valuesEn}
+                                onChange={(e) =>
+                                  updateVariantGroup(group.id, 'valuesEn', e.target.value)
+                                }
+                                placeholder="Classic, Premium"
+                              />
+                              <FormDescription>
+                                {t('variantValuesCount', {
+                                  count: parseVariantValues(group.valuesEn).length,
+                                })}
+                              </FormDescription>
+                            </div>
                           </div>
                         </div>
                       ))}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Tip: Use Insert VI/EN to quickly place selected image into product
-                      description.
-                    </p>
 
-                    <div className="relative">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        onChange={handleImageUpload}
-                        className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-                        disabled={isUploading}
-                      />
-                      <Button variant="outline" className="w-full" disabled={isUploading}>
-                        <Upload className="mr-2 h-4 w-4" />
-                        {isUploading ? 'Uploading...' : 'Upload Images'}
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Hover Image */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="uppercase tracking-wide">Hover Image</CardTitle>
-                    <CardDescription>Image shown when user hovers over product</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {hoverImage && (
-                      <div className="aspect-product relative border">
-                        <Image
-                          src={getImageUrl(hoverImage)}
-                          alt="Hover image"
-                          fill
-                          sizes="300px"
-                          className="object-cover"
-                        />
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="icon"
-                          className="absolute right-1 top-1 h-6 w-6"
-                          onClick={() => setHoverImage(null)}
-                        >
-                          <X className="h-4 w-4" />
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs text-muted-foreground">{t('variantValuesHint')}</p>
+                        <Button type="button" variant="outline" size="sm" onClick={addVariantGroup}>
+                          <Plus className="mr-2 h-4 w-4" />
+                          {t('addVariantGroup')}
                         </Button>
                       </div>
-                    )}
+                    </CardContent>
+                  </Card>
 
-                    <div className="relative">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={async (e) => {
-                          const file = e.target.files?.[0]
-                          if (!file) return
-                          setIsUploading(true)
-                          try {
-                            const optimizedFile = await optimizeAndResizeImage(file, {
-                              maxWidth: 1800,
-                              maxHeight: 1800,
-                              quality: 0.86,
-                              outputType: 'image/webp',
-                            })
-                            const result = await api.uploadImage(optimizedFile, 'products')
-                            setHoverImage(result.url)
-                            toast({ title: t('success'), description: 'Hover image uploaded' })
-                          } catch (error) {
-                            toast({
-                              title: t('error'),
-                              description: 'Upload failed',
-                              variant: 'destructive',
-                            })
-                          } finally {
-                            setIsUploading(false)
-                          }
-                        }}
-                        className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-                        disabled={isUploading}
+                  {/* Category and Stock */}
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name="categoryId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <div className="flex items-center justify-between">
+                            <FormLabel>
+                              {t('category')} <span className="font-bold text-destructive">*</span>
+                            </FormLabel>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-2 text-xs"
+                              onClick={() => setIsCategoryDialogOpen(true)}
+                            >
+                              <Plus className="mr-1 h-3 w-3" />
+                              Thêm mới
+                            </Button>
+                          </div>
+                          <Select
+                            onValueChange={(val) => field.onChange(val === 'none' ? null : val)}
+                            value={field.value || 'none'}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder={t('selectCategory')} />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="none">{t('noCategory')}</SelectItem>
+                              {categories.map((category) => (
+                                <SelectItem key={category.id} value={category.id}>
+                                  {locale === 'vi' ? category.nameVi : category.nameEn}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="stock"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            {t('stockLabelForm')}{' '}
+                            <span className="font-bold text-destructive">*</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input {...field} type="number" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Inquiry Settings */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="uppercase tracking-wide">{t('inquirySettings')}</CardTitle>
+                  <CardDescription>Configure customer inquiry options</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="inquiryEnabled"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center justify-between">
+                        <div>
+                          <FormLabel>{t('inquiryEnabled')}</FormLabel>
+                          <FormDescription>
+                            Allow customers to ask about this product
+                          </FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+
+                  <Separator />
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name="inquiryMessageVi"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('inquiryMessageVi')}</FormLabel>
+                          <FormControl>
+                            <Textarea {...field} rows={4} placeholder={t('autoGenerated')} />
+                          </FormControl>
+                          <FormDescription>Leave empty for auto-generated message</FormDescription>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="inquiryMessageEn"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('inquiryMessageEn')}</FormLabel>
+                          <FormControl>
+                            <Textarea {...field} rows={4} placeholder={t('autoGenerated')} />
+                          </FormControl>
+                          <FormDescription>Leave empty for auto-generated message</FormDescription>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Sidebar - 1 column (Sticky) */}
+            <div className="space-y-6 lg:sticky lg:top-20 lg:col-span-1">
+              {/* Status */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="uppercase tracking-wide">{t('status')}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="isActive"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center justify-between">
+                        <FormLabel>{t('active')}</FormLabel>
+                        <FormControl>
+                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="isFeatured"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center justify-between">
+                        <FormLabel>{t('featured')}</FormLabel>
+                        <FormControl>
+                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Images */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="uppercase tracking-wide">
+                    Images <span className="font-bold text-destructive">*</span>
+                  </CardTitle>
+                  <CardDescription>
+                    Upload product images (tối thiểu 1 ảnh, tỉ lệ 4:5 khuyến nghị)
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    {images.map((image, index) => (
+                      <div
+                        key={index}
+                        className="aspect-product group relative cursor-move overflow-hidden rounded-md border"
+                      >
+                        <Image
+                          src={getImageUrl(image)}
+                          alt={`Product ${index + 1}`}
+                          fill
+                          sizes="150px"
+                          className="object-cover transition-transform duration-300 group-hover:scale-105"
+                        />
+                        {index === 0 && (
+                          <div className="absolute left-2 top-2 z-10 rounded-sm bg-primary/90 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-primary-foreground shadow-sm backdrop-blur-sm">
+                            Main Display
+                          </div>
+                        )}
+                        <div className="absolute inset-x-0 bottom-0 grid translate-y-full grid-cols-2 gap-1 bg-black/70 p-2 transition-transform duration-300 group-hover:translate-y-0">
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            className="h-7 text-[10px]"
+                            onClick={() => copyImageUrl(image)}
+                          >
+                            Copy URL
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            className="h-7 text-[10px]"
+                            onClick={() => insertImageIntoDescription('descriptionVi', image)}
+                          >
+                            Insert VI
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            className="h-7 text-[10px]"
+                            onClick={() => insertImageIntoDescription('descriptionEn', image)}
+                          >
+                            Insert EN
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            className="h-7 text-[10px]"
+                            onClick={() => removeImage(index)}
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Tip: Use Insert VI/EN to quickly place selected image into product description.
+                  </p>
+
+                  <div className="relative">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleImageUpload}
+                      className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                      disabled={isUploading}
+                    />
+                    <Button variant="outline" className="w-full" disabled={isUploading}>
+                      <Upload className="mr-2 h-4 w-4" />
+                      {isUploading ? 'Uploading...' : 'Upload Images'}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Hover Image */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="uppercase tracking-wide">Hover Image</CardTitle>
+                  <CardDescription>Image shown when user hovers over product</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {hoverImage && (
+                    <div className="aspect-product relative border">
+                      <Image
+                        src={getImageUrl(hoverImage)}
+                        alt="Hover image"
+                        fill
+                        sizes="300px"
+                        className="object-cover"
                       />
-                      <Button variant="outline" className="w-full" disabled={isUploading}>
-                        <Upload className="mr-2 h-4 w-4" />
-                        {isUploading
-                          ? 'Uploading...'
-                          : hoverImage
-                            ? 'Change Hover Image'
-                            : 'Upload Hover Image'}
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute right-1 top-1 h-6 w-6"
+                        onClick={() => setHoverImage(null)}
+                      >
+                        <X className="h-4 w-4" />
                       </Button>
                     </div>
-                  </CardContent>
-                </Card>
+                  )}
 
-                {/* Actions Card */}
-                <Card className="border shadow-sm bg-gradient-to-br from-card to-muted/20">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-semibold uppercase tracking-wide">
-                      {locale === 'vi' ? 'Thao tác lưu' : 'Save Actions'}
-                    </CardTitle>
-                    <CardDescription className="text-xs">
-                      {locale === 'vi' ? 'Phím tắt: Ctrl + S để lưu nhanh' : 'Shortcut: Ctrl + S to save'}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    <Button
-                      type="submit"
-                      disabled={isSaving}
-                      className="w-full h-10 text-xs font-semibold shadow-sm"
-                    >
-                      {isSaving ? (
-                        <>
-                          <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                          {locale === 'vi' ? 'Đang lưu...' : 'Saving...'}
-                        </>
-                      ) : (
-                        <>
-                          <Save className="mr-2 h-4 w-4" />
-                          {isNew
-                            ? locale === 'vi'
-                              ? 'Tạo sản phẩm'
-                              : 'Create Product'
-                            : locale === 'vi'
-                              ? 'Lưu thay đổi'
-                              : 'Save Changes'}
-                        </>
-                      )}
+                  <div className="relative">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0]
+                        if (!file) return
+                        setIsUploading(true)
+                        try {
+                          const optimizedFile = await optimizeAndResizeImage(file, {
+                            maxWidth: 1800,
+                            maxHeight: 1800,
+                            quality: 0.86,
+                            outputType: 'image/webp',
+                          })
+                          const result = await api.uploadImage(optimizedFile, 'products')
+                          setHoverImage(result.url)
+                          toast({ title: t('success'), description: 'Hover image uploaded' })
+                        } catch (error) {
+                          toast({
+                            title: t('error'),
+                            description: 'Upload failed',
+                            variant: 'destructive',
+                          })
+                        } finally {
+                          setIsUploading(false)
+                        }
+                      }}
+                      className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                      disabled={isUploading}
+                    />
+                    <Button variant="outline" className="w-full" disabled={isUploading}>
+                      <Upload className="mr-2 h-4 w-4" />
+                      {isUploading
+                        ? 'Uploading...'
+                        : hoverImage
+                          ? 'Change Hover Image'
+                          : 'Upload Hover Image'}
                     </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      disabled={isSaving}
-                      onClick={handleCancel}
-                      className="w-full h-10 text-xs"
-                    >
-                      {t('cancel')}
-                    </Button>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
+                  </div>
+                </CardContent>
+              </Card>
 
-            {/* Mobile Sticky Bottom Bar */}
-            <div className="sticky bottom-0 z-20 flex items-center justify-between gap-3 border-t bg-background/95 p-3.5 backdrop-blur-md shadow-lg rounded-t-xl sm:hidden">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleCancel}
-                disabled={isSaving}
-                className="flex-1 h-9 text-xs"
-              >
-                {t('cancel')}
-              </Button>
-              <Button
-                type="submit"
-                size="sm"
-                disabled={isSaving}
-                className="flex-1 h-9 text-xs font-semibold"
-              >
-                {isSaving ? (
-                  <>
-                    <RefreshCw className="mr-2 h-3.5 w-3.5 animate-spin" />
-                    {locale === 'vi' ? 'Đang lưu...' : 'Saving...'}
-                  </>
-                ) : (
-                  <>
-                    <Save className="mr-2 h-3.5 w-3.5" />
-                    {isNew
-                      ? locale === 'vi'
-                        ? 'Tạo'
-                        : 'Create'
-                      : locale === 'vi'
-                        ? 'Lưu'
-                        : 'Save'}
-                  </>
-                )}
-              </Button>
+              {/* Actions Card */}
+              <Card className="border bg-gradient-to-br from-card to-muted/20 shadow-sm">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-semibold uppercase tracking-wide">
+                    {locale === 'vi' ? 'Thao tác lưu' : 'Save Actions'}
+                  </CardTitle>
+                  <CardDescription className="text-xs">
+                    {locale === 'vi'
+                      ? 'Phím tắt: Ctrl + S để lưu nhanh'
+                      : 'Shortcut: Ctrl + S to save'}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <Button
+                    type="submit"
+                    disabled={isSaving}
+                    className="h-10 w-full text-xs font-semibold shadow-sm"
+                  >
+                    {isSaving ? (
+                      <>
+                        <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                        {locale === 'vi' ? 'Đang lưu...' : 'Saving...'}
+                      </>
+                    ) : (
+                      <>
+                        <Save className="mr-2 h-4 w-4" />
+                        {isNew
+                          ? locale === 'vi'
+                            ? 'Tạo sản phẩm'
+                            : 'Create Product'
+                          : locale === 'vi'
+                            ? 'Lưu thay đổi'
+                            : 'Save Changes'}
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={isSaving}
+                    onClick={handleCancel}
+                    className="h-10 w-full text-xs"
+                  >
+                    {t('cancel')}
+                  </Button>
+                </CardContent>
+              </Card>
             </div>
-          </form>
-        </Form>
+          </div>
+
+          {/* Mobile Sticky Bottom Bar */}
+          <div className="sticky bottom-0 z-20 flex items-center justify-between gap-3 rounded-t-xl border-t bg-background/95 p-3.5 shadow-lg backdrop-blur-md sm:hidden">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleCancel}
+              disabled={isSaving}
+              className="h-9 flex-1 text-xs"
+            >
+              {t('cancel')}
+            </Button>
+            <Button
+              type="submit"
+              size="sm"
+              disabled={isSaving}
+              className="h-9 flex-1 text-xs font-semibold"
+            >
+              {isSaving ? (
+                <>
+                  <RefreshCw className="mr-2 h-3.5 w-3.5 animate-spin" />
+                  {locale === 'vi' ? 'Đang lưu...' : 'Saving...'}
+                </>
+              ) : (
+                <>
+                  <Save className="mr-2 h-3.5 w-3.5" />
+                  {isNew ? (locale === 'vi' ? 'Tạo' : 'Create') : locale === 'vi' ? 'Lưu' : 'Save'}
+                </>
+              )}
+            </Button>
+          </div>
+        </form>
+      </Form>
 
       {/* Quick Category Dialog */}
       <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>

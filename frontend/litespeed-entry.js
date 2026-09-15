@@ -35,11 +35,15 @@ try {
 } catch (e) {}
 
 process.on('SIGTERM', () => {
-  try { if (fs.existsSync(PID_FILE)) fs.unlinkSync(PID_FILE) } catch (e) {}
+  try {
+    if (fs.existsSync(PID_FILE)) fs.unlinkSync(PID_FILE)
+  } catch (e) {}
   process.exit(0)
 })
 process.on('SIGINT', () => {
-  try { if (fs.existsSync(PID_FILE)) fs.unlinkSync(PID_FILE) } catch (e) {}
+  try {
+    if (fs.existsSync(PID_FILE)) fs.unlinkSync(PID_FILE)
+  } catch (e) {}
   process.exit(0)
 })
 

@@ -148,7 +148,7 @@ export default function CategoriesPage() {
                   variant="ghost"
                   size="icon"
                   onClick={() => router.push(`/${locale}/admin/categories/${category.id}`)}
-                  className="hover:bg-neutral-100 text-neutral-600 hover:text-neutral-900"
+                  className="text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
                 >
                   <Edit className="h-4 w-4" />
                 </Button>
@@ -158,7 +158,7 @@ export default function CategoriesPage() {
                   onClick={() =>
                     handleDelete(category.id, locale === 'vi' ? category.nameVi : category.nameEn)
                   }
-                  className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                  className="text-red-500 hover:bg-red-50 hover:text-red-700"
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>

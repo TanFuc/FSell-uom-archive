@@ -162,10 +162,7 @@ export default function CategoryFormPage() {
 
       router.push(`/${locale}/admin/categories`)
     } catch (error: any) {
-      const serverMsg =
-        error?.response?.data?.message ||
-        error?.message ||
-        t('failedToUpdate')
+      const serverMsg = error?.response?.data?.message || error?.message || t('failedToUpdate')
       toast({
         title: t('error'),
         description: Array.isArray(serverMsg) ? serverMsg.join(', ') : String(serverMsg),
@@ -219,7 +216,7 @@ export default function CategoryFormPage() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    {t('categorySlug')} <span className="text-destructive font-bold">*</span>
+                    {t('categorySlug')} <span className="font-bold text-destructive">*</span>
                   </FormLabel>
                   <div className="flex gap-2">
                     <FormControl>
@@ -241,7 +238,7 @@ export default function CategoryFormPage() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    {t('vietnameseName')} <span className="text-destructive font-bold">*</span>
+                    {t('vietnameseName')} <span className="font-bold text-destructive">*</span>
                   </FormLabel>
                   <FormControl>
                     <Input {...field} placeholder="Tên danh mục" />
@@ -258,7 +255,7 @@ export default function CategoryFormPage() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    {t('englishName')} <span className="text-destructive font-bold">*</span>
+                    {t('englishName')} <span className="font-bold text-destructive">*</span>
                   </FormLabel>
                   <FormControl>
                     <Input {...field} placeholder="Category Name" />

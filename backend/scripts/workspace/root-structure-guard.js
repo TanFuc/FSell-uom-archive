@@ -7,8 +7,8 @@ const rootDir = path.resolve(__dirname, '../../..')
 const args = new Set(process.argv.slice(2))
 const mode = args.has('--hard') ? 'hard' : 'safe'
 
-const allowListSafe = new Set(['.git', 'backend', 'frontend', 'node_modules'])
-const allowListHard = new Set(['.git', 'backend', 'frontend'])
+const allowListSafe = new Set(['.git', 'backend', 'frontend', 'node_modules', 'scripts', 'release'])
+const allowListHard = new Set(['.git', 'backend', 'frontend', 'scripts', 'release'])
 const allowList = mode === 'hard' ? allowListHard : allowListSafe
 
 function isDirectory(fullPath) {

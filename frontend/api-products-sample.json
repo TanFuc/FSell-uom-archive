@@ -68,9 +68,7 @@
         "priceUSD": 80.77,
         "salePriceVND": null,
         "salePriceUSD": null,
-        "images": [
-          "https://images.uomarchive.com/seed/hero.png"
-        ],
+        "images": ["https://images.uomarchive.com/seed/hero.png"],
         "hoverImage": null,
         "material": "�?t cao lanh / Kaolin",
         "dimensions": "30cm x 18cm",
@@ -115,9 +113,7 @@
         "priceUSD": 21.15,
         "salePriceVND": null,
         "salePriceUSD": null,
-        "images": [
-          "https://images.uomarchive.com/seed/journal-hands.png"
-        ],
+        "images": ["https://images.uomarchive.com/seed/journal-hands.png"],
         "hoverImage": null,
         "material": "G?m men r?n / Crackle wear",
         "dimensions": "26cm diameter",
@@ -162,9 +158,7 @@
         "priceUSD": 9.62,
         "salePriceVND": null,
         "salePriceUSD": null,
-        "images": [
-          "https://images.uomarchive.com/seed/journal-glaze.png"
-        ],
+        "images": ["https://images.uomarchive.com/seed/journal-glaze.png"],
         "hoverImage": null,
         "material": "G?m tr�ng men m? / Matte glazed ceramic",
         "dimensions": "8cm x 6cm",
@@ -209,9 +203,7 @@
         "priceUSD": 36.54,
         "salePriceVND": null,
         "salePriceUSD": null,
-        "images": [
-          "https://images.uomarchive.com/seed/journal-tea.png"
-        ],
+        "images": ["https://images.uomarchive.com/seed/journal-tea.png"],
         "hoverImage": null,
         "material": "G?m lai xi mang / Ceramic-concrete hybrid",
         "dimensions": "22cm x 22cm",

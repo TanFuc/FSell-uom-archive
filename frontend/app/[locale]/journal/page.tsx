@@ -208,7 +208,7 @@ export default async function JournalPage({ params }: PageProps) {
                 key={story.id}
                 href={`/${locale}/journal/${encodeURIComponent(getStorySlug(story, locale))}`}
                 prefetch={false}
-                className="group flex flex-col h-full overflow-hidden rounded-2xl border border-black/10 bg-white/95 shadow-sm transition duration-300 hover:-translate-y-1.5 hover:shadow-xl"
+                className="group flex h-full flex-col overflow-hidden rounded-2xl border border-black/10 bg-white/95 shadow-sm transition duration-300 hover:-translate-y-1.5 hover:shadow-xl"
               >
                 <div className="relative aspect-[4/3] overflow-hidden bg-foreground/[0.03]">
                   <Image
@@ -222,7 +222,7 @@ export default async function JournalPage({ params }: PageProps) {
                   />
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-70" />
                 </div>
-                <div className="flex flex-1 flex-col p-5 space-y-3">
+                <div className="flex flex-1 flex-col space-y-3 p-5">
                   <div className="min-h-[1.5rem]">
                     {story.publishedAt ? (
                       <p className="inline-flex max-w-full rounded-full border border-foreground/10 bg-foreground/[0.03] px-2.5 py-1 text-[10px] uppercase tracking-[0.12em] text-foreground/55 sm:tracking-[0.18em]">
@@ -230,10 +230,10 @@ export default async function JournalPage({ params }: PageProps) {
                       </p>
                     ) : null}
                   </div>
-                  <h2 className="text-mobile-safe font-playfair text-xl leading-tight text-foreground line-clamp-2 min-h-[3.25rem]">
+                  <h2 className="text-mobile-safe line-clamp-2 min-h-[3.25rem] font-playfair text-xl leading-tight text-foreground">
                     {locale === 'vi' ? story.titleVi : story.titleEn}
                   </h2>
-                  <p className="line-clamp-3 text-sm leading-relaxed text-foreground/70 min-h-[3.75rem]">
+                  <p className="line-clamp-3 min-h-[3.75rem] text-sm leading-relaxed text-foreground/70">
                     {locale === 'vi' ? story.summaryVi : story.summaryEn}
                   </p>
                   <div className="mt-auto pt-3">

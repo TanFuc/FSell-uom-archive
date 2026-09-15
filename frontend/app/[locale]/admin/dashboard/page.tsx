@@ -172,46 +172,51 @@ export default function DashboardPage() {
       </Card>
 
       <Card className="border bg-gradient-to-br from-card to-muted/20">
-        <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between pb-2">
+        <CardHeader className="flex flex-col gap-2 pb-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <CardTitle className="text-sm font-semibold uppercase tracking-wide">
               {t('accountManagement')}
             </CardTitle>
-            <p className="text-xs text-muted-foreground mt-0.5">
+            <p className="mt-0.5 text-xs text-muted-foreground">
               Thông tin tài khoản đăng nhập và bảo mật quản trị viên.
             </p>
           </div>
-          <Button
-            size="sm"
-            onClick={() => setIsAccountModalOpen(true)}
-            className="text-xs h-8"
-          >
+          <Button size="sm" onClick={() => setIsAccountModalOpen(true)} className="h-8 text-xs">
             <KeyRound className="mr-1.5 h-3.5 w-3.5" />
             Cập nhật tài khoản & Đổi mật khẩu
           </Button>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-3 sm:grid-cols-3 pt-2">
+          <div className="grid gap-3 pt-2 sm:grid-cols-3">
             <div className="rounded-lg border bg-card p-3">
-              <span className="text-[10px] text-muted-foreground uppercase font-semibold">Họ và tên</span>
-              <p className="text-sm font-semibold text-foreground mt-0.5">{currentUser?.fullName || '—'}</p>
+              <span className="text-[10px] font-semibold uppercase text-muted-foreground">
+                Họ và tên
+              </span>
+              <p className="mt-0.5 text-sm font-semibold text-foreground">
+                {currentUser?.fullName || '—'}
+              </p>
             </div>
             <div className="rounded-lg border bg-card p-3">
-              <span className="text-[10px] text-muted-foreground uppercase font-semibold">Email đăng nhập</span>
-              <p className="text-sm font-semibold text-foreground mt-0.5">{currentUser?.email || '—'}</p>
+              <span className="text-[10px] font-semibold uppercase text-muted-foreground">
+                Email đăng nhập
+              </span>
+              <p className="mt-0.5 text-sm font-semibold text-foreground">
+                {currentUser?.email || '—'}
+              </p>
             </div>
             <div className="rounded-lg border bg-card p-3">
-              <span className="text-[10px] text-muted-foreground uppercase font-semibold">Quyền hạn</span>
-              <p className="text-sm font-semibold text-primary mt-0.5">{currentUser?.role || '—'}</p>
+              <span className="text-[10px] font-semibold uppercase text-muted-foreground">
+                Quyền hạn
+              </span>
+              <p className="mt-0.5 text-sm font-semibold text-primary">
+                {currentUser?.role || '—'}
+              </p>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <AccountModal
-        open={isAccountModalOpen}
-        onOpenChange={setIsAccountModalOpen}
-      />
+      <AccountModal open={isAccountModalOpen} onOpenChange={setIsAccountModalOpen} />
     </div>
   )
 }

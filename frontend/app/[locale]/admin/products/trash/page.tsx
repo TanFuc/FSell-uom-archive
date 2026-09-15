@@ -251,7 +251,7 @@ export default function TrashPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => setPermanentDeleteDialog({ open: true, product })}
-                        className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 hover:border-red-300 transition-colors"
+                        className="border-red-200 text-red-600 transition-colors hover:border-red-300 hover:bg-red-50 hover:text-red-700"
                         title="Xóa vĩnh viễn"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -319,7 +319,7 @@ export default function TrashPage() {
             </Button>
             <Button
               variant="outline"
-              className="bg-red-600 text-white border-red-600 hover:bg-red-700 hover:border-red-700 transition-colors"
+              className="border-red-600 bg-red-600 text-white transition-colors hover:border-red-700 hover:bg-red-700"
               onClick={() =>
                 permanentDeleteDialog.product &&
                 handlePermanentDelete(permanentDeleteDialog.product)

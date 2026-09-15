@@ -484,38 +484,38 @@ export function buildStoryEntries(stories: StoryItem[]): SitemapUrlEntry[] {
   return stories
     .filter((story) => story.isVisible !== false && story.noIndex !== true)
     .flatMap((story) => {
-    const viSlug = safeEncodePathSegment(getStorySlug(story, 'vi'))
-    const enSlug = safeEncodePathSegment(getStorySlug(story, 'en'))
-    const lastmod = toIsoDate(story.updatedAt ?? story.publishedAt, now)
-    const image = story.imageUrl ? [toAbsoluteUrl(story.imageUrl)] : undefined
+      const viSlug = safeEncodePathSegment(getStorySlug(story, 'vi'))
+      const enSlug = safeEncodePathSegment(getStorySlug(story, 'en'))
+      const lastmod = toIsoDate(story.updatedAt ?? story.publishedAt, now)
+      const image = story.imageUrl ? [toAbsoluteUrl(story.imageUrl)] : undefined
 
-    return [
-      {
-        loc: `${BASE_URL}/vi/journal/${viSlug}`,
-        lastmod,
-        changefreq: 'daily' as const,
-        priority: 0.75,
-        alternates: {
-          vi: `${BASE_URL}/vi/journal/${viSlug}`,
-          en: `${BASE_URL}/en/journal/${enSlug}`,
-          'x-default': `${BASE_URL}/vi/journal/${viSlug}`,
+      return [
+        {
+          loc: `${BASE_URL}/vi/journal/${viSlug}`,
+          lastmod,
+          changefreq: 'daily' as const,
+          priority: 0.75,
+          alternates: {
+            vi: `${BASE_URL}/vi/journal/${viSlug}`,
+            en: `${BASE_URL}/en/journal/${enSlug}`,
+            'x-default': `${BASE_URL}/vi/journal/${viSlug}`,
+          },
+          images: image,
         },
-        images: image,
-      },
-      {
-        loc: `${BASE_URL}/en/journal/${enSlug}`,
-        lastmod,
-        changefreq: 'daily' as const,
-        priority: 0.75,
-        alternates: {
-          vi: `${BASE_URL}/vi/journal/${viSlug}`,
-          en: `${BASE_URL}/en/journal/${enSlug}`,
-          'x-default': `${BASE_URL}/vi/journal/${viSlug}`,
+        {
+          loc: `${BASE_URL}/en/journal/${enSlug}`,
+          lastmod,
+          changefreq: 'daily' as const,
+          priority: 0.75,
+          alternates: {
+            vi: `${BASE_URL}/vi/journal/${viSlug}`,
+            en: `${BASE_URL}/en/journal/${enSlug}`,
+            'x-default': `${BASE_URL}/vi/journal/${viSlug}`,
+          },
+          images: image,
         },
-        images: image,
-      },
-    ]
-  })
+      ]
+    })
 }
 
 export function chunkEntries<T>(entries: T[], chunkSize = SITEMAP_CHUNK_SIZE): T[][] {

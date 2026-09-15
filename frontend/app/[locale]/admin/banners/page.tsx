@@ -202,8 +202,8 @@ export default function BannersPage() {
                       className={cn(
                         'h-7 text-xs font-medium transition-colors',
                         banner.isActive
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100'
-                          : 'bg-neutral-100 text-neutral-500 border-neutral-200 hover:bg-neutral-200/80 hover:text-neutral-700',
+                          ? 'border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                          : 'border-neutral-200 bg-neutral-100 text-neutral-500 hover:bg-neutral-200/80 hover:text-neutral-700',
                       )}
                       onClick={(e) => handleToggleActive(banner, e)}
                     >
@@ -226,7 +226,7 @@ export default function BannersPage() {
                         variant="ghost"
                         size="icon"
                         onClick={() => router.push(`/${locale}/admin/banners/${banner.id}`)}
-                        className="hover:bg-neutral-100 text-neutral-600 hover:text-neutral-900"
+                        className="text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
                         title="Chỉnh sửa"
                       >
                         <Edit className="h-4 w-4" />
@@ -234,7 +234,7 @@ export default function BannersPage() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                        className="text-red-500 hover:bg-red-50 hover:text-red-700"
                         onClick={() => setDeleteDialog({ open: true, banner })}
                         title="Xóa"
                       >
@@ -267,7 +267,7 @@ export default function BannersPage() {
             </Button>
             <Button
               variant="outline"
-              className="bg-red-600 text-white border-red-600 hover:bg-red-700 hover:border-red-700 transition-colors"
+              className="border-red-600 bg-red-600 text-white transition-colors hover:border-red-700 hover:bg-red-700"
               onClick={handleDelete}
             >
               {t('banners.deleteAction')}

@@ -98,10 +98,7 @@ export function SplashScreen({ initialLoadingText }: { initialLoadingText?: stri
         if (!cancelled) setFontReady(true)
       }, FONT_READY_TIMEOUT_MS)
 
-      Promise.allSettled([
-        document.fonts.load(`700 1em "${fontName}"`),
-        document.fonts.ready,
-      ])
+      Promise.allSettled([document.fonts.load(`700 1em "${fontName}"`), document.fonts.ready])
         .then(() => {
           if (!cancelled) {
             setFontReady(true)

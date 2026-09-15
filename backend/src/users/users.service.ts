@@ -32,10 +32,7 @@ export class UsersService {
     }
 
     if (search) {
-      where.OR = [
-        { email: { contains: search } },
-        { fullName: { contains: search } },
-      ]
+      where.OR = [{ email: { contains: search } }, { fullName: { contains: search } }]
     }
 
     if (role) where.role = role

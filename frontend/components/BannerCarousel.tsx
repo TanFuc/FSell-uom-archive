@@ -90,7 +90,9 @@ export function BannerCarousel({ banners, locale, autoPlayInterval = 6500 }: Ban
             key={banner.id || index}
             className={cn(
               'absolute inset-0 transition-opacity duration-1000 ease-in-out',
-              isActive ? 'pointer-events-auto z-[2] opacity-100' : 'pointer-events-none z-[1] opacity-0',
+              isActive
+                ? 'pointer-events-auto z-[2] opacity-100'
+                : 'pointer-events-none z-[1] opacity-0',
             )}
           >
             {/* Cinematic Image Frame */}

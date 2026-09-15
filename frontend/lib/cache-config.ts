@@ -12,4 +12,3 @@ export const BRANDING_REVALIDATE_SECONDS = Number.parseInt(
   process.env.NEXT_BRANDING_REVALIDATE_SECONDS || '15',
   10,
 )
-

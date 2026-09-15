@@ -314,39 +314,39 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
   const faqItems =
     locale === 'vi'
       ? [
-        {
-          question: `${name} phù hợp với không gian nào?`,
-          answer:
-            'Sản phẩm phù hợp với không gian sống tối giản hoặc góc trưng bày thủ công, tôn bật chất liệu gốm.',
-        },
-        {
-          question: 'Cách bảo quản gốm sứ thủ công?',
-          answer:
-            'Hạn chế va đập mạnh, vệ sinh nhẹ nhàng bằng khăn mềm và tránh thay đổi nhiệt độ đột ngột.',
-        },
-        {
-          question: 'Làm sao để đặt hàng hoặc tư vấn?',
-          answer:
-            'Bạn có thể nhắn qua Instagram/Facebook hoặc gửi yêu cầu tư vấn ngay trên trang sản phẩm.',
-        },
-      ]
+          {
+            question: `${name} phù hợp với không gian nào?`,
+            answer:
+              'Sản phẩm phù hợp với không gian sống tối giản hoặc góc trưng bày thủ công, tôn bật chất liệu gốm.',
+          },
+          {
+            question: 'Cách bảo quản gốm sứ thủ công?',
+            answer:
+              'Hạn chế va đập mạnh, vệ sinh nhẹ nhàng bằng khăn mềm và tránh thay đổi nhiệt độ đột ngột.',
+          },
+          {
+            question: 'Làm sao để đặt hàng hoặc tư vấn?',
+            answer:
+              'Bạn có thể nhắn qua Instagram/Facebook hoặc gửi yêu cầu tư vấn ngay trên trang sản phẩm.',
+          },
+        ]
       : [
-        {
-          question: `Where does ${name} fit best?`,
-          answer:
-            'It complements minimal interiors or curated display corners, highlighting handcrafted ceramic textures.',
-        },
-        {
-          question: 'How should I care for handcrafted ceramics?',
-          answer:
-            'Avoid heavy impact, clean gently with a soft cloth, and keep away from sudden temperature changes.',
-        },
-        {
-          question: 'How can I inquire or place an order?',
-          answer:
-            'Message us via Instagram/Facebook or send an inquiry directly on the product page.',
-        },
-      ]
+          {
+            question: `Where does ${name} fit best?`,
+            answer:
+              'It complements minimal interiors or curated display corners, highlighting handcrafted ceramic textures.',
+          },
+          {
+            question: 'How should I care for handcrafted ceramics?',
+            answer:
+              'Avoid heavy impact, clean gently with a soft cloth, and keep away from sudden temperature changes.',
+          },
+          {
+            question: 'How can I inquire or place an order?',
+            answer:
+              'Message us via Instagram/Facebook or send an inquiry directly on the product page.',
+          },
+        ]
   return (
     <div className="w-full max-w-full overflow-x-clip">
       {/* Header padding for fixed header */}
@@ -453,7 +453,7 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                             setLightboxIndex(index)
                           }
                         }}
-                        className="relative aspect-[3/4] h-auto w-full shrink-0 snap-center overflow-hidden rounded-sm bg-muted/10 md:h-auto md:w-full md:hover:shadow-xl cursor-pointer"
+                        className="relative aspect-[3/4] h-auto w-full shrink-0 cursor-pointer snap-center overflow-hidden rounded-sm bg-muted/10 md:h-auto md:w-full md:hover:shadow-xl"
                       >
                         <Image
                           src={optimizeProductImage(image, { width: 1200, height: 1600 })}
@@ -551,7 +551,7 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                     <h4 className="text-[9px] font-bold uppercase tracking-[0.3em] text-foreground/40">
                       {t('orderInquiry')}
                     </h4>
-                    <div className="flex flex-col gap-2.5 max-w-sm">
+                    <div className="flex max-w-sm flex-col gap-2.5">
                       {socialLinks?.instagramUsername && (
                         <a
                           href={`https://instagram.com/${socialLinks.instagramUsername}`}

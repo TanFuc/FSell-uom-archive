@@ -78,7 +78,11 @@ export default function AdminLayoutClient({ children }: AdminLayoutProps) {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
         const activeTag = document.activeElement?.tagName?.toLowerCase()
-        if (activeTag === 'input' || activeTag === 'textarea' || document.activeElement?.getAttribute('contenteditable') === 'true') {
+        if (
+          activeTag === 'input' ||
+          activeTag === 'textarea' ||
+          document.activeElement?.getAttribute('contenteditable') === 'true'
+        ) {
           return
         }
         e.preventDefault()
@@ -190,7 +194,7 @@ export default function AdminLayoutClient({ children }: AdminLayoutProps) {
             onClick={() => setIsAccountModalOpen(true)}
             className="h-8 px-2 text-xs"
           >
-            <UserIcon className="h-4 w-4 mr-1" />
+            <UserIcon className="mr-1 h-4 w-4" />
             {user.fullName.split(' ')[0]}
           </Button>
           <Link
@@ -217,7 +221,7 @@ export default function AdminLayoutClient({ children }: AdminLayoutProps) {
         {/* Sidebar Header */}
         <div
           className={cn(
-            'relative flex h-16 items-center border-b flex-shrink-0 transition-all duration-300',
+            'relative flex h-16 flex-shrink-0 items-center border-b transition-all duration-300',
             isCollapsed ? 'justify-center px-2' : 'justify-between px-4',
           )}
         >
@@ -225,7 +229,7 @@ export default function AdminLayoutClient({ children }: AdminLayoutProps) {
           {!isCollapsed ? (
             <div className="flex items-center gap-2 overflow-hidden">
               <Logo variant="text" customHref={`/${locale}/admin/dashboard`} />
-              <span className="text-[10px] uppercase font-semibold tracking-wider text-neutral-500 bg-neutral-100 px-1.5 py-0.5 rounded border border-neutral-200/60">
+              <span className="rounded border border-neutral-200/60 bg-neutral-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-neutral-500">
                 ADMIN
               </span>
             </div>
@@ -233,11 +237,11 @@ export default function AdminLayoutClient({ children }: AdminLayoutProps) {
             /* Collapsed Branding: Centered "Ư." mark in perfect alignment with nav icons below */
             <Link
               href={`/${locale}/admin/dashboard`}
-              className="group relative flex h-10 w-10 items-center justify-center rounded-xl font-serif font-bold text-xl text-neutral-900 hover:bg-neutral-100 hover:text-neutral-700 transition-all"
+              className="group relative flex h-10 w-10 items-center justify-center rounded-xl font-serif text-xl font-bold text-neutral-900 transition-all hover:bg-neutral-100 hover:text-neutral-700"
               title="ƯƠM. Archive - Bảng điều khiển"
             >
               <span>Ư.</span>
-              <span className="pointer-events-none absolute left-full ml-3 hidden rounded-lg bg-neutral-900 px-3 py-1.5 text-xs font-medium text-white shadow-xl group-hover:md:block z-50 whitespace-nowrap font-sans">
+              <span className="pointer-events-none absolute left-full z-50 ml-3 hidden whitespace-nowrap rounded-lg bg-neutral-900 px-3 py-1.5 font-sans text-xs font-medium text-white shadow-xl group-hover:md:block">
                 ƯƠM. Archive • Bảng điều khiển
               </span>
             </Link>
@@ -248,7 +252,7 @@ export default function AdminLayoutClient({ children }: AdminLayoutProps) {
             <div className="flex items-center gap-1">
               <Link
                 href={newPath}
-                className="text-xs font-semibold uppercase tracking-widest text-neutral-500 hover:text-neutral-900 px-1.5 py-1 rounded hover:bg-neutral-100 transition-colors"
+                className="rounded px-1.5 py-1 text-xs font-semibold uppercase tracking-widest text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900"
                 title={`Đổi ngôn ngữ sang ${switchLocale.toUpperCase()}`}
               >
                 {switchLocale}
@@ -258,7 +262,7 @@ export default function AdminLayoutClient({ children }: AdminLayoutProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                className="hidden md:flex h-8 w-8 text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg"
+                className="hidden h-8 w-8 rounded-lg text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900 md:flex"
                 onClick={toggleCollapsed}
                 title="Thu gọn sidebar (Ctrl+B)"
               >
@@ -269,7 +273,7 @@ export default function AdminLayoutClient({ children }: AdminLayoutProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                className="md:hidden h-8 w-8 text-neutral-500 hover:text-neutral-900"
+                className="h-8 w-8 text-neutral-500 hover:text-neutral-900 md:hidden"
                 onClick={() => setIsSidebarOpen(false)}
               >
                 <X className="h-5 w-5" />
@@ -282,7 +286,7 @@ export default function AdminLayoutClient({ children }: AdminLayoutProps) {
             <button
               type="button"
               onClick={toggleCollapsed}
-              className="hidden md:flex absolute -right-3 top-1/2 -translate-y-1/2 z-50 h-6 w-6 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-600 shadow-xs hover:bg-neutral-100 hover:text-neutral-900 hover:scale-110 active:scale-95 transition-all cursor-pointer"
+              className="shadow-xs absolute -right-3 top-1/2 z-50 hidden h-6 w-6 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-600 transition-all hover:scale-110 hover:bg-neutral-100 hover:text-neutral-900 active:scale-95 md:flex"
               title="Mở rộng sidebar (Ctrl+B)"
               aria-label="Mở rộng sidebar"
             >
@@ -305,9 +309,9 @@ export default function AdminLayoutClient({ children }: AdminLayoutProps) {
                 className={cn(
                   'group relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-all duration-150',
                   isActive
-                    ? 'bg-neutral-100 text-neutral-900 font-semibold shadow-xs'
+                    ? 'shadow-xs bg-neutral-100 font-semibold text-neutral-900'
                     : 'text-neutral-600 hover:bg-neutral-100/70 hover:text-neutral-900',
-                  isCollapsed && 'md:justify-center md:px-0 md:h-10 md:w-10 md:mx-auto',
+                  isCollapsed && 'md:mx-auto md:h-10 md:w-10 md:justify-center md:px-0',
                 )}
                 onClick={() => setIsSidebarOpen(false)}
               >
@@ -323,7 +327,7 @@ export default function AdminLayoutClient({ children }: AdminLayoutProps) {
 
                 {/* Collapsed hover tooltip */}
                 {isCollapsed && (
-                  <span className="pointer-events-none absolute left-full ml-3 hidden rounded-lg bg-neutral-900 px-3 py-1.5 text-xs font-medium text-white shadow-xl group-hover:md:block z-50 whitespace-nowrap">
+                  <span className="pointer-events-none absolute left-full z-50 ml-3 hidden whitespace-nowrap rounded-lg bg-neutral-900 px-3 py-1.5 text-xs font-medium text-white shadow-xl group-hover:md:block">
                     {item.label}
                   </span>
                 )}
@@ -335,31 +339,31 @@ export default function AdminLayoutClient({ children }: AdminLayoutProps) {
         <Separator />
 
         {/* User Account & Logout Footer - Clean Light Aesthetic, No Dark Box */}
-        <div className="border-t border-neutral-200/70 p-3 bg-neutral-50/50 flex-shrink-0">
+        <div className="flex-shrink-0 border-t border-neutral-200/70 bg-neutral-50/50 p-3">
           {!isCollapsed ? (
             <div className="space-y-2">
               {/* User Profile Card */}
               <div
                 onClick={() => setIsAccountModalOpen(true)}
-                className="group flex cursor-pointer items-center gap-2.5 rounded-xl border border-neutral-200/80 bg-white p-2.5 shadow-2xs transition-all hover:border-neutral-300 hover:bg-neutral-50"
+                className="shadow-2xs group flex cursor-pointer items-center gap-2.5 rounded-xl border border-neutral-200/80 bg-white p-2.5 transition-all hover:border-neutral-300 hover:bg-neutral-50"
                 title="Bấm để cập nhật thông tin và đổi mật khẩu"
               >
-                <div className="relative flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-neutral-900 font-serif font-bold text-xs text-white">
+                <div className="relative flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-neutral-900 font-serif text-xs font-bold text-white">
                   {userInitial}
                   <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-white" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5">
-                    <p className="truncate text-xs font-semibold text-neutral-900 group-hover:text-neutral-700 transition-colors">
+                    <p className="truncate text-xs font-semibold text-neutral-900 transition-colors group-hover:text-neutral-700">
                       {user.fullName || 'Admin User'}
                     </p>
-                    <span className="rounded bg-neutral-100 px-1.5 py-0.5 text-[9px] font-medium text-neutral-600 uppercase border border-neutral-200/60">
+                    <span className="rounded border border-neutral-200/60 bg-neutral-100 px-1.5 py-0.5 text-[9px] font-medium uppercase text-neutral-600">
                       {user.role}
                     </span>
                   </div>
                   <p className="truncate text-[11px] text-neutral-500">{user.email}</p>
                 </div>
-                <KeyRound className="h-3.5 w-3.5 text-neutral-400 group-hover:text-neutral-700 transition-colors" />
+                <KeyRound className="h-3.5 w-3.5 text-neutral-400 transition-colors group-hover:text-neutral-700" />
               </div>
 
               {/* Action Buttons */}
@@ -367,7 +371,7 @@ export default function AdminLayoutClient({ children }: AdminLayoutProps) {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="flex-1 justify-center text-xs h-8 rounded-lg border-neutral-200 bg-white hover:bg-neutral-50 text-neutral-700 font-medium"
+                  className="h-8 flex-1 justify-center rounded-lg border-neutral-200 bg-white text-xs font-medium text-neutral-700 hover:bg-neutral-50"
                   onClick={() => setIsAccountModalOpen(true)}
                 >
                   <UserIcon className="mr-1.5 h-3.5 w-3.5 text-neutral-500" />
@@ -376,11 +380,11 @@ export default function AdminLayoutClient({ children }: AdminLayoutProps) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-xs h-8 px-2.5 rounded-lg text-neutral-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+                  className="h-8 rounded-lg px-2.5 text-xs text-neutral-500 transition-colors hover:bg-red-50 hover:text-red-600"
                   onClick={handleLogout}
                   title={t('logout')}
                 >
-                  <LogOut className="h-3.5 w-3.5 mr-1" />
+                  <LogOut className="mr-1 h-3.5 w-3.5" />
                   {t('logout')}
                 </Button>
               </div>
@@ -391,12 +395,12 @@ export default function AdminLayoutClient({ children }: AdminLayoutProps) {
               <button
                 type="button"
                 onClick={() => setIsAccountModalOpen(true)}
-                className="group relative flex h-8 w-8 items-center justify-center rounded-full bg-neutral-900 font-serif font-bold text-xs text-white shadow-xs hover:ring-2 hover:ring-neutral-400 transition-all"
+                className="shadow-xs group relative flex h-8 w-8 items-center justify-center rounded-full bg-neutral-900 font-serif text-xs font-bold text-white transition-all hover:ring-2 hover:ring-neutral-400"
                 title={`${user.fullName} (${t('accountManagement')})`}
               >
                 {userInitial}
                 <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-white" />
-                <span className="pointer-events-none absolute left-full ml-3 hidden rounded-lg bg-neutral-900 px-3 py-1.5 text-xs font-medium text-white shadow-xl group-hover:md:block z-50 whitespace-nowrap">
+                <span className="pointer-events-none absolute left-full z-50 ml-3 hidden whitespace-nowrap rounded-lg bg-neutral-900 px-3 py-1.5 text-xs font-medium text-white shadow-xl group-hover:md:block">
                   {user.fullName} • Quản lý tài khoản
                 </span>
               </button>
@@ -404,11 +408,11 @@ export default function AdminLayoutClient({ children }: AdminLayoutProps) {
               <button
                 type="button"
                 onClick={handleLogout}
-                className="group relative flex h-7.5 w-7.5 items-center justify-center rounded-lg text-neutral-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+                className="h-7.5 w-7.5 group relative flex items-center justify-center rounded-lg text-neutral-500 transition-colors hover:bg-red-50 hover:text-red-600"
                 title={t('logout')}
               >
                 <LogOut className="h-3.5 w-3.5" />
-                <span className="pointer-events-none absolute left-full ml-3 hidden rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white shadow-xl group-hover:md:block z-50 whitespace-nowrap">
+                <span className="pointer-events-none absolute left-full z-50 ml-3 hidden whitespace-nowrap rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white shadow-xl group-hover:md:block">
                   {t('logout')}
                 </span>
               </button>
@@ -426,15 +430,12 @@ export default function AdminLayoutClient({ children }: AdminLayoutProps) {
       )}
 
       {/* Main Content Area - Scrollable Independently */}
-      <main className="flex-1 h-full min-w-0 overflow-y-auto overflow-x-hidden pt-16 md:pt-0">
-        <div className="min-w-0 p-4 sm:p-6 md:p-8 max-w-7xl mx-auto">{children}</div>
+      <main className="h-full min-w-0 flex-1 overflow-y-auto overflow-x-hidden pt-16 md:pt-0">
+        <div className="mx-auto min-w-0 max-w-7xl p-4 sm:p-6 md:p-8">{children}</div>
       </main>
 
       {/* Account Management Modal (Accessible from anywhere) */}
-      <AccountModal
-        open={isAccountModalOpen}
-        onOpenChange={setIsAccountModalOpen}
-      />
+      <AccountModal open={isAccountModalOpen} onOpenChange={setIsAccountModalOpen} />
     </div>
   )
 }

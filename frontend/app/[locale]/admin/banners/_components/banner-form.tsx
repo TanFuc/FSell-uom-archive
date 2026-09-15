@@ -377,7 +377,7 @@ export default function BannerForm({ initialData }: BannerFormProps) {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="flex items-center gap-1">
-                          Hình ảnh (Desktop) <span className="text-destructive font-bold">*</span>
+                          Hình ảnh (Desktop) <span className="font-bold text-destructive">*</span>
                         </FormLabel>
                         <FormControl>
                           <div className="space-y-4">

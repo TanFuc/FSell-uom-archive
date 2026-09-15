@@ -303,7 +303,10 @@ export default function AdminStoriesPage() {
       const storiesById = new Map(refreshedStories.map((story) => [story.id, story]))
       const storiesToPing = publishStoryIds
         .map((id) => storiesById.get(id))
-        .filter((story): story is StoryItem => story !== undefined && story.isVisible !== false && !story.noIndex)
+        .filter(
+          (story): story is StoryItem =>
+            story !== undefined && story.isVisible !== false && !story.noIndex,
+        )
 
       for (const story of storiesToPing) {
         const viSlug = getStorySlug(story, 'vi')
@@ -334,10 +337,14 @@ export default function AdminStoriesPage() {
     const missingFields: string[] = []
     if (!draft.titleVi.trim()) missingFields.push(locale === 'vi' ? 'Tiêu đề (VI)' : 'Title (VI)')
     if (!draft.titleEn.trim()) missingFields.push(locale === 'vi' ? 'Tiêu đề (EN)' : 'Title (EN)')
-    if (!draft.summaryVi.trim()) missingFields.push(locale === 'vi' ? 'Tóm tắt (VI)' : 'Summary (VI)')
-    if (!draft.summaryEn.trim()) missingFields.push(locale === 'vi' ? 'Tóm tắt (EN)' : 'Summary (EN)')
-    if (!draft.contentVi.trim()) missingFields.push(locale === 'vi' ? 'Nội dung (VI)' : 'Content (VI)')
-    if (!draft.contentEn.trim()) missingFields.push(locale === 'vi' ? 'Nội dung (EN)' : 'Content (EN)')
+    if (!draft.summaryVi.trim())
+      missingFields.push(locale === 'vi' ? 'Tóm tắt (VI)' : 'Summary (VI)')
+    if (!draft.summaryEn.trim())
+      missingFields.push(locale === 'vi' ? 'Tóm tắt (EN)' : 'Summary (EN)')
+    if (!draft.contentVi.trim())
+      missingFields.push(locale === 'vi' ? 'Nội dung (VI)' : 'Content (VI)')
+    if (!draft.contentEn.trim())
+      missingFields.push(locale === 'vi' ? 'Nội dung (EN)' : 'Content (EN)')
     if (!draft.imageUrl.trim()) missingFields.push(locale === 'vi' ? 'Ảnh story' : 'Story image')
 
     if (missingFields.length > 0) {
@@ -392,7 +399,9 @@ export default function AdminStoriesPage() {
 
         const success = await persistStories(
           nextStories,
-          locale === 'vi' ? 'Đã cập nhật story và lưu vào cơ sở dữ liệu thành công.' : 'Story updated and saved successfully.',
+          locale === 'vi'
+            ? 'Đã cập nhật story và lưu vào cơ sở dữ liệu thành công.'
+            : 'Story updated and saved successfully.',
           shouldPingOnSave ? [targetId] : [],
         )
 
@@ -443,7 +452,9 @@ export default function AdminStoriesPage() {
 
         const success = await persistStories(
           nextStories,
-          locale === 'vi' ? 'Đã thêm story mới và lưu vào cơ sở dữ liệu thành công.' : 'New story added and saved successfully.',
+          locale === 'vi'
+            ? 'Đã thêm story mới và lưu vào cơ sở dữ liệu thành công.'
+            : 'New story added and saved successfully.',
           newStory.isVisible !== false && !newStory.noIndex ? [newId] : [],
         )
 
@@ -483,7 +494,9 @@ export default function AdminStoriesPage() {
     try {
       const success = await persistStories(
         nextStories,
-        locale === 'vi' ? 'Đã xóa story và cập nhật website thành công.' : 'Story deleted and website updated successfully.',
+        locale === 'vi'
+          ? 'Đã xóa story và cập nhật website thành công.'
+          : 'Story deleted and website updated successfully.',
       )
       if (success && editingId === id) {
         resetDraft()
@@ -621,21 +634,25 @@ export default function AdminStoriesPage() {
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-foreground">
-                  {t('stories.titleVi')} <span className="text-destructive font-bold">*</span>
+                  {t('stories.titleVi')} <span className="font-bold text-destructive">*</span>
                 </label>
                 <Input
                   value={draft.titleVi}
-                  onChange={(event) => setDraft((prev) => ({ ...prev, titleVi: event.target.value }))}
+                  onChange={(event) =>
+                    setDraft((prev) => ({ ...prev, titleVi: event.target.value }))
+                  }
                   placeholder={t('stories.titleVi')}
                 />
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-foreground">
-                  {t('stories.titleEn')} <span className="text-destructive font-bold">*</span>
+                  {t('stories.titleEn')} <span className="font-bold text-destructive">*</span>
                 </label>
                 <Input
                   value={draft.titleEn}
-                  onChange={(event) => setDraft((prev) => ({ ...prev, titleEn: event.target.value }))}
+                  onChange={(event) =>
+                    setDraft((prev) => ({ ...prev, titleEn: event.target.value }))
+                  }
                   placeholder={t('stories.titleEn')}
                 />
               </div>
@@ -644,7 +661,7 @@ export default function AdminStoriesPage() {
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-foreground">
-                  {t('stories.summaryVi')} <span className="text-destructive font-bold">*</span>
+                  {t('stories.summaryVi')} <span className="font-bold text-destructive">*</span>
                 </label>
                 <Input
                   value={draft.summaryVi}
@@ -656,7 +673,7 @@ export default function AdminStoriesPage() {
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-foreground">
-                  {t('stories.summaryEn')} <span className="text-destructive font-bold">*</span>
+                  {t('stories.summaryEn')} <span className="font-bold text-destructive">*</span>
                 </label>
                 <Input
                   value={draft.summaryEn}
@@ -669,7 +686,7 @@ export default function AdminStoriesPage() {
             </div>
 
             {/* SEO & Search Indexing Card */}
-            <div className="rounded-xl border border-neutral-200/80 bg-neutral-50/50 p-4 space-y-4">
+            <div className="space-y-4 rounded-xl border border-neutral-200/80 bg-neutral-50/50 p-4">
               <div className="flex items-center justify-between border-b border-neutral-200/60 pb-3">
                 <div className="flex items-center gap-2.5">
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600">
@@ -677,7 +694,9 @@ export default function AdminStoriesPage() {
                   </div>
                   <div>
                     <h4 className="text-sm font-semibold text-neutral-900">
-                      {locale === 'vi' ? 'Cấu hình SEO & Chỉ mục Google' : 'SEO & Google Indexing Settings'}
+                      {locale === 'vi'
+                        ? 'Cấu hình SEO & Chỉ mục Google'
+                        : 'SEO & Google Indexing Settings'}
                     </h4>
                     <p className="text-xs text-neutral-500">
                       {locale === 'vi'
@@ -703,7 +722,7 @@ export default function AdminStoriesPage() {
                           slugVi: toStorySlug(prev.titleVi || ''),
                         }))
                       }
-                      className="text-[11px] text-primary hover:underline font-medium"
+                      className="text-[11px] font-medium text-primary hover:underline"
                     >
                       {locale === 'vi' ? 'Tự động tạo từ tiêu đề' : 'Generate from title'}
                     </button>
@@ -714,9 +733,9 @@ export default function AdminStoriesPage() {
                       setDraft((prev) => ({ ...prev, slugVi: toStorySlug(e.target.value) }))
                     }
                     placeholder={toStorySlug(draft.titleVi) || 'nhung-ban-tay-giu-lua'}
-                    className="font-mono text-xs bg-white"
+                    className="bg-white font-mono text-xs"
                   />
-                  <p className="text-[11px] text-neutral-500 truncate">
+                  <p className="truncate text-[11px] text-neutral-500">
                     URL:{' '}
                     <span className="font-mono text-neutral-700">
                       /vi/journal/{draft.slugVi || toStorySlug(draft.titleVi) || '...'}
@@ -737,7 +756,7 @@ export default function AdminStoriesPage() {
                           slugEn: toStorySlug(prev.titleEn || ''),
                         }))
                       }
-                      className="text-[11px] text-primary hover:underline font-medium"
+                      className="text-[11px] font-medium text-primary hover:underline"
                     >
                       {locale === 'vi' ? 'Tự động tạo từ tiêu đề' : 'Generate from title'}
                     </button>
@@ -748,9 +767,9 @@ export default function AdminStoriesPage() {
                       setDraft((prev) => ({ ...prev, slugEn: toStorySlug(e.target.value) }))
                     }
                     placeholder={toStorySlug(draft.titleEn) || 'hands-that-keep-the-fire'}
-                    className="font-mono text-xs bg-white"
+                    className="bg-white font-mono text-xs"
                   />
-                  <p className="text-[11px] text-neutral-500 truncate">
+                  <p className="truncate text-[11px] text-neutral-500">
                     URL:{' '}
                     <span className="font-mono text-neutral-700">
                       /en/journal/{draft.slugEn || toStorySlug(draft.titleEn) || '...'}
@@ -768,11 +787,11 @@ export default function AdminStoriesPage() {
                     </label>
                     <span
                       className={cn(
-                        'text-[10px] font-mono',
+                        'font-mono text-[10px]',
                         (draft.seoTitleVi || draft.titleVi).length > 60
-                          ? 'text-amber-600 font-bold'
+                          ? 'font-bold text-amber-600'
                           : (draft.seoTitleVi || draft.titleVi).length >= 40
-                            ? 'text-emerald-600 font-medium'
+                            ? 'font-medium text-emerald-600'
                             : 'text-neutral-500',
                       )}
                     >
@@ -781,10 +800,13 @@ export default function AdminStoriesPage() {
                   </div>
                   <Input
                     value={draft.seoTitleVi || ''}
-                    onChange={(e) =>
-                      setDraft((prev) => ({ ...prev, seoTitleVi: e.target.value }))
+                    onChange={(e) => setDraft((prev) => ({ ...prev, seoTitleVi: e.target.value }))}
+                    placeholder={
+                      draft.titleVi ||
+                      (locale === 'vi'
+                        ? 'Mặc định lấy từ tiêu đề bài viết'
+                        : 'Default from story title')
                     }
-                    placeholder={draft.titleVi || (locale === 'vi' ? 'Mặc định lấy từ tiêu đề bài viết' : 'Default from story title')}
                     className="bg-white"
                   />
                 </div>
@@ -796,11 +818,11 @@ export default function AdminStoriesPage() {
                     </label>
                     <span
                       className={cn(
-                        'text-[10px] font-mono',
+                        'font-mono text-[10px]',
                         (draft.seoTitleEn || draft.titleEn).length > 60
-                          ? 'text-amber-600 font-bold'
+                          ? 'font-bold text-amber-600'
                           : (draft.seoTitleEn || draft.titleEn).length >= 40
-                            ? 'text-emerald-600 font-medium'
+                            ? 'font-medium text-emerald-600'
                             : 'text-neutral-500',
                       )}
                     >
@@ -809,10 +831,13 @@ export default function AdminStoriesPage() {
                   </div>
                   <Input
                     value={draft.seoTitleEn || ''}
-                    onChange={(e) =>
-                      setDraft((prev) => ({ ...prev, seoTitleEn: e.target.value }))
+                    onChange={(e) => setDraft((prev) => ({ ...prev, seoTitleEn: e.target.value }))}
+                    placeholder={
+                      draft.titleEn ||
+                      (locale === 'vi'
+                        ? 'Mặc định lấy từ tiêu đề bài viết'
+                        : 'Default from story title')
                     }
-                    placeholder={draft.titleEn || (locale === 'vi' ? 'Mặc định lấy từ tiêu đề bài viết' : 'Default from story title')}
                     className="bg-white"
                   />
                 </div>
@@ -823,15 +848,17 @@ export default function AdminStoriesPage() {
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-semibold text-neutral-800">
-                      {locale === 'vi' ? 'Mô tả SEO (Meta Description VI)' : 'Meta Description (VI)'}
+                      {locale === 'vi'
+                        ? 'Mô tả SEO (Meta Description VI)'
+                        : 'Meta Description (VI)'}
                     </label>
                     <span
                       className={cn(
-                        'text-[10px] font-mono',
+                        'font-mono text-[10px]',
                         (draft.seoDescriptionVi || draft.summaryVi).length > 160
-                          ? 'text-amber-600 font-bold'
+                          ? 'font-bold text-amber-600'
                           : (draft.seoDescriptionVi || draft.summaryVi).length >= 120
-                            ? 'text-emerald-600 font-medium'
+                            ? 'font-medium text-emerald-600'
                             : 'text-neutral-500',
                       )}
                     >
@@ -843,7 +870,10 @@ export default function AdminStoriesPage() {
                     onChange={(e) =>
                       setDraft((prev) => ({ ...prev, seoDescriptionVi: e.target.value }))
                     }
-                    placeholder={draft.summaryVi || (locale === 'vi' ? 'Mặc định lấy từ tóm tắt' : 'Default from summary')}
+                    placeholder={
+                      draft.summaryVi ||
+                      (locale === 'vi' ? 'Mặc định lấy từ tóm tắt' : 'Default from summary')
+                    }
                     className="bg-white"
                   />
                 </div>
@@ -851,15 +881,17 @@ export default function AdminStoriesPage() {
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-semibold text-neutral-800">
-                      {locale === 'vi' ? 'Mô tả SEO (Meta Description EN)' : 'Meta Description (EN)'}
+                      {locale === 'vi'
+                        ? 'Mô tả SEO (Meta Description EN)'
+                        : 'Meta Description (EN)'}
                     </label>
                     <span
                       className={cn(
-                        'text-[10px] font-mono',
+                        'font-mono text-[10px]',
                         (draft.seoDescriptionEn || draft.summaryEn).length > 160
-                          ? 'text-amber-600 font-bold'
+                          ? 'font-bold text-amber-600'
                           : (draft.seoDescriptionEn || draft.summaryEn).length >= 120
-                            ? 'text-emerald-600 font-medium'
+                            ? 'font-medium text-emerald-600'
                             : 'text-neutral-500',
                       )}
                     >
@@ -871,7 +903,10 @@ export default function AdminStoriesPage() {
                     onChange={(e) =>
                       setDraft((prev) => ({ ...prev, seoDescriptionEn: e.target.value }))
                     }
-                    placeholder={draft.summaryEn || (locale === 'vi' ? 'Mặc định lấy từ tóm tắt' : 'Default from summary')}
+                    placeholder={
+                      draft.summaryEn ||
+                      (locale === 'vi' ? 'Mặc định lấy từ tóm tắt' : 'Default from summary')
+                    }
                     className="bg-white"
                   />
                 </div>
@@ -888,11 +923,17 @@ export default function AdminStoriesPage() {
                     onChange={(e) =>
                       setDraft((prev) => ({ ...prev, seoKeywordsVi: e.target.value }))
                     }
-                    placeholder={locale === 'vi' ? 'gốm thủ công, nghệ nhân gốm, câu chuyện gốm sứ' : 'vietnamese ceramics, artisan pottery'}
+                    placeholder={
+                      locale === 'vi'
+                        ? 'gốm thủ công, nghệ nhân gốm, câu chuyện gốm sứ'
+                        : 'vietnamese ceramics, artisan pottery'
+                    }
                     className="bg-white"
                   />
                   <p className="text-[10px] text-neutral-500">
-                    {locale === 'vi' ? 'Phân cách các từ khóa bằng dấu phẩy (,)' : 'Separate keywords with commas (,)'}
+                    {locale === 'vi'
+                      ? 'Phân cách các từ khóa bằng dấu phẩy (,)'
+                      : 'Separate keywords with commas (,)'}
                   </p>
                 </div>
 
@@ -909,13 +950,15 @@ export default function AdminStoriesPage() {
                     className="bg-white"
                   />
                   <p className="text-[10px] text-neutral-500">
-                    {locale === 'vi' ? 'Phân cách các từ khóa bằng dấu phẩy (,)' : 'Separate keywords with commas (,)'}
+                    {locale === 'vi'
+                      ? 'Phân cách các từ khóa bằng dấu phẩy (,)'
+                      : 'Separate keywords with commas (,)'}
                   </p>
                 </div>
               </div>
 
               {/* Advanced Options & Noindex */}
-              <div className="grid gap-4 md:grid-cols-2 pt-2 border-t border-neutral-200/60">
+              <div className="grid gap-4 border-t border-neutral-200/60 pt-2 md:grid-cols-2">
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-neutral-800">
                     {locale === 'vi' ? 'URL Canonical tùy biến (nếu có)' : 'Custom Canonical URL'}
@@ -926,7 +969,7 @@ export default function AdminStoriesPage() {
                       setDraft((prev) => ({ ...prev, canonicalUrl: e.target.value }))
                     }
                     placeholder="https://www.uomarchive.com/vi/journal/..."
-                    className="font-mono text-xs bg-white"
+                    className="bg-white font-mono text-xs"
                   />
                 </div>
 
@@ -935,14 +978,17 @@ export default function AdminStoriesPage() {
                     type="checkbox"
                     id="noIndexToggle"
                     checked={draft.noIndex || false}
-                    onChange={(e) =>
-                      setDraft((prev) => ({ ...prev, noIndex: e.target.checked }))
-                    }
-                    className="h-4 w-4 rounded border-neutral-300 text-primary focus:ring-primary cursor-pointer"
+                    onChange={(e) => setDraft((prev) => ({ ...prev, noIndex: e.target.checked }))}
+                    className="h-4 w-4 cursor-pointer rounded border-neutral-300 text-primary focus:ring-primary"
                   />
-                  <label htmlFor="noIndexToggle" className="text-xs text-neutral-800 cursor-pointer select-none">
+                  <label
+                    htmlFor="noIndexToggle"
+                    className="cursor-pointer select-none text-xs text-neutral-800"
+                  >
                     <span className="font-semibold text-destructive">
-                      {locale === 'vi' ? 'Chặn Google lập chỉ mục (noindex)' : 'Block Google from indexing (noindex)'}
+                      {locale === 'vi'
+                        ? 'Chặn Google lập chỉ mục (noindex)'
+                        : 'Block Google from indexing (noindex)'}
                     </span>
                     <p className="text-[11px] text-neutral-500">
                       {locale === 'vi'
@@ -955,22 +1001,32 @@ export default function AdminStoriesPage() {
 
               {/* Live Google Snippet Previews */}
               <div className="pt-2">
-                <p className="text-xs font-semibold text-neutral-600 mb-2">
-                  {locale === 'vi' ? 'Xem trước kết quả tìm kiếm Google (SERP Preview):' : 'Google SERP Preview:'}
+                <p className="mb-2 text-xs font-semibold text-neutral-600">
+                  {locale === 'vi'
+                    ? 'Xem trước kết quả tìm kiếm Google (SERP Preview):'
+                    : 'Google SERP Preview:'}
                 </p>
                 <div className="grid gap-4 md:grid-cols-2">
                   <SeoSnippetPreview
                     locale="vi"
                     path={`/vi/journal/${draft.slugVi || toStorySlug(draft.titleVi) || 'story-slug'}`}
                     title={draft.seoTitleVi || draft.titleVi || 'Tiêu đề story'}
-                    description={draft.seoDescriptionVi || draft.summaryVi || 'Tóm tắt story sẽ hiển thị ở đây.'}
+                    description={
+                      draft.seoDescriptionVi ||
+                      draft.summaryVi ||
+                      'Tóm tắt story sẽ hiển thị ở đây.'
+                    }
                     branding={branding}
                   />
                   <SeoSnippetPreview
                     locale="en"
                     path={`/en/journal/${draft.slugEn || toStorySlug(draft.titleEn) || 'story-slug'}`}
                     title={draft.seoTitleEn || draft.titleEn || 'Story title'}
-                    description={draft.seoDescriptionEn || draft.summaryEn || 'The story summary shown in Google appears here.'}
+                    description={
+                      draft.seoDescriptionEn ||
+                      draft.summaryEn ||
+                      'The story summary shown in Google appears here.'
+                    }
                     branding={branding}
                   />
                 </div>
@@ -980,7 +1036,7 @@ export default function AdminStoriesPage() {
             <div className="grid gap-4 xl:grid-cols-2">
               <div className="space-y-2">
                 <p className="text-xs font-semibold text-foreground">
-                  {t('stories.contentVi')} <span className="text-destructive font-bold">*</span>
+                  {t('stories.contentVi')} <span className="font-bold text-destructive">*</span>
                 </p>
                 <RichTextEditor
                   content={draft.contentVi}
@@ -991,7 +1047,7 @@ export default function AdminStoriesPage() {
               </div>
               <div className="space-y-2">
                 <p className="text-xs font-semibold text-foreground">
-                  {t('stories.contentEn')} <span className="text-destructive font-bold">*</span>
+                  {t('stories.contentEn')} <span className="font-bold text-destructive">*</span>
                 </p>
                 <RichTextEditor
                   content={draft.contentEn}
@@ -1004,7 +1060,7 @@ export default function AdminStoriesPage() {
 
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-foreground">
-                {t('stories.imageUrl')} <span className="text-destructive font-bold">*</span>
+                {t('stories.imageUrl')} <span className="font-bold text-destructive">*</span>
               </label>
               <div className="grid gap-4 md:grid-cols-[1fr_auto]">
                 <Input
@@ -1040,9 +1096,13 @@ export default function AdminStoriesPage() {
               />
             </div>
 
-            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap pt-2">
+            <div className="flex flex-col gap-2 pt-2 sm:flex-row sm:flex-wrap">
               <Button onClick={handleUpsert} disabled={isSaving} className="w-full sm:w-auto">
-                {isSaving ? `${t('loading')}...` : editingStory ? t('stories.updateStory') : t('stories.addStory')}
+                {isSaving
+                  ? `${t('loading')}...`
+                  : editingStory
+                    ? t('stories.updateStory')
+                    : t('stories.addStory')}
               </Button>
               {editingStory && (
                 <Button variant="outline" onClick={resetDraft} className="w-full sm:w-auto">
@@ -1085,7 +1145,7 @@ export default function AdminStoriesPage() {
               key={story.id}
               data-story-id={story.id}
               className={cn(
-                'flex flex-col h-full transition-all duration-300',
+                'flex h-full flex-col transition-all duration-300',
                 activeCardId === story.id
                   ? 'translate-y-[-4px] scale-[1.01] border-primary/30 shadow-md'
                   : justUpdatedId === story.id
@@ -1093,14 +1153,14 @@ export default function AdminStoriesPage() {
                     : 'hover:shadow-sm',
               )}
             >
-              <CardContent className="relative flex flex-col flex-1 p-4 space-y-3">
+              <CardContent className="relative flex flex-1 flex-col space-y-3 p-4">
                 {justUpdatedId === story.id && (
-                  <div className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full border border-emerald-300 bg-emerald-50 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 shadow-sm z-10">
+                  <div className="absolute right-3 top-3 z-10 inline-flex items-center gap-1 rounded-full border border-emerald-300 bg-emerald-50 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 shadow-sm">
                     <CheckCircle2 className="h-3.5 w-3.5" />
                     Updated
                   </div>
                 )}
-                <div className="relative aspect-[4/3] w-full overflow-hidden rounded-md bg-muted border border-border/40">
+                <div className="relative aspect-[4/3] w-full overflow-hidden rounded-md border border-border/40 bg-muted">
                   <Image
                     src={story.imageUrl}
                     alt={story.titleEn}
@@ -1111,7 +1171,7 @@ export default function AdminStoriesPage() {
                 </div>
                 <div>
                   <h3
-                    className="font-semibold text-base line-clamp-1 h-6 text-foreground"
+                    className="line-clamp-1 h-6 text-base font-semibold text-foreground"
                     title={locale === 'vi' ? story.titleVi : story.titleEn}
                   >
                     {locale === 'vi' ? story.titleVi : story.titleEn}
@@ -1120,7 +1180,7 @@ export default function AdminStoriesPage() {
                 <div>
                   <div
                     className={cn(
-                      'inline-flex w-fit items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide border transition-colors',
+                      'inline-flex w-fit items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide transition-colors',
                       story.isVisible
                         ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
                         : 'border-neutral-200 bg-neutral-100 text-neutral-500',
@@ -1146,7 +1206,7 @@ export default function AdminStoriesPage() {
                     </span>
                   )}
                 </div>
-                <p className="line-clamp-2 text-xs text-muted-foreground h-9 leading-relaxed">
+                <p className="line-clamp-2 h-9 text-xs leading-relaxed text-muted-foreground">
                   {(locale === 'vi' ? story.summaryVi : story.summaryEn) || '—'}
                 </p>
                 <div className="space-y-2 rounded-lg border border-border/50 bg-muted/20 p-2.5">
@@ -1166,15 +1226,13 @@ export default function AdminStoriesPage() {
                         </span>
                       )}
                     </div>
-                    <p className="line-clamp-2 text-xs text-muted-foreground h-8 leading-relaxed">
-                      {contentViPreview || (
-                        <span className="italic opacity-60">No content</span>
-                      )}
+                    <p className="line-clamp-2 h-8 text-xs leading-relaxed text-muted-foreground">
+                      {contentViPreview || <span className="italic opacity-60">No content</span>}
                     </p>
                   </div>
                   <div
                     className={cn(
-                      'rounded px-1.5 py-1 border-t border-border/40 pt-1.5',
+                      'rounded border-t border-border/40 px-1.5 py-1 pt-1.5',
                       isContentEnMissing ? 'border border-amber-300/60 bg-amber-50/80' : '',
                     )}
                   >
@@ -1188,18 +1246,16 @@ export default function AdminStoriesPage() {
                         </span>
                       )}
                     </div>
-                    <p className="line-clamp-2 text-xs text-muted-foreground h-8 leading-relaxed">
-                      {contentEnPreview || (
-                        <span className="italic opacity-60">No content</span>
-                      )}
+                    <p className="line-clamp-2 h-8 text-xs leading-relaxed text-muted-foreground">
+                      {contentEnPreview || <span className="italic opacity-60">No content</span>}
                     </p>
                   </div>
                 </div>
-                <div className="mt-auto pt-3 border-t border-border/40 flex items-center gap-2">
+                <div className="mt-auto flex items-center gap-2 border-t border-border/40 pt-3">
                   <Button
                     size="sm"
                     variant={editingId === story.id ? 'default' : 'outline'}
-                    className="flex-1 h-8 text-xs"
+                    className="h-8 flex-1 text-xs"
                     onClick={() => handleEdit(story)}
                   >
                     {editingId === story.id
@@ -1227,7 +1283,7 @@ export default function AdminStoriesPage() {
                     <Button
                       size="icon"
                       variant="outline"
-                      className="h-8 w-8 shrink-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50 hover:border-amber-300"
+                      className="h-8 w-8 shrink-0 text-amber-600 hover:border-amber-300 hover:bg-amber-50 hover:text-amber-700"
                       onClick={(e) => handlePingGoogle(story, e)}
                       disabled={isPingingId === story.id}
                       title={
@@ -1247,10 +1303,10 @@ export default function AdminStoriesPage() {
                     size="sm"
                     variant="outline"
                     className={cn(
-                      'h-8 text-xs px-3',
+                      'h-8 px-3 text-xs',
                       story.isVisible
                         ? 'text-neutral-600 hover:bg-neutral-100'
-                        : 'text-emerald-700 border-emerald-200 bg-emerald-50 hover:bg-emerald-100',
+                        : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100',
                     )}
                     onClick={() => handleToggleVisibility(story.id)}
                   >
@@ -1265,7 +1321,7 @@ export default function AdminStoriesPage() {
                   <Button
                     size="sm"
                     variant="outline"
-                    className="h-8 text-xs px-2.5 text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 hover:border-red-300 transition-colors"
+                    className="h-8 border-red-200 px-2.5 text-xs text-red-600 transition-colors hover:border-red-300 hover:bg-red-50 hover:text-red-700"
                     onClick={() => handleDelete(story.id)}
                   >
                     {t('delete')}

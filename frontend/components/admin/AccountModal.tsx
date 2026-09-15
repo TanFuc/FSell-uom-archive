@@ -33,11 +33,7 @@ const accountSchema = z
   .object({
     email: z.string().email('Email không hợp lệ'),
     currentPassword: z.string().optional().or(z.literal('')),
-    newPassword: z
-      .string()
-      .min(8, 'Mật khẩu mới tối thiểu 8 ký tự')
-      .optional()
-      .or(z.literal('')),
+    newPassword: z.string().min(8, 'Mật khẩu mới tối thiểu 8 ký tự').optional().or(z.literal('')),
     confirmNewPassword: z
       .string()
       .min(8, 'Mật khẩu xác nhận tối thiểu 8 ký tự')
@@ -180,7 +176,7 @@ export function AccountModal({ open, onOpenChange }: AccountModalProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-xs">
-                    Email đăng nhập <span className="text-destructive font-bold">*</span>
+                    Email đăng nhập <span className="font-bold text-destructive">*</span>
                   </FormLabel>
                   <FormControl>
                     <Input {...field} placeholder="admin@example.com" />
@@ -191,7 +187,7 @@ export function AccountModal({ open, onOpenChange }: AccountModalProps) {
             />
 
             <div className="pt-2">
-              <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1 mb-2">
+              <p className="mb-2 flex items-center gap-1 text-xs font-semibold text-muted-foreground">
                 <KeyRound className="h-3.5 w-3.5" />
                 Đổi mật khẩu (bỏ trống nếu không đổi)
               </p>

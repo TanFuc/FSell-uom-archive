@@ -215,8 +215,12 @@ export function serializeStories(stories: StoryItem[]): string {
       ...(story.updatedAt?.trim() ? { updatedAt: story.updatedAt.trim() } : {}),
       ...(story.seoTitleVi?.trim() ? { seoTitleVi: story.seoTitleVi.trim() } : {}),
       ...(story.seoTitleEn?.trim() ? { seoTitleEn: story.seoTitleEn.trim() } : {}),
-      ...(story.seoDescriptionVi?.trim() ? { seoDescriptionVi: story.seoDescriptionVi.trim() } : {}),
-      ...(story.seoDescriptionEn?.trim() ? { seoDescriptionEn: story.seoDescriptionEn.trim() } : {}),
+      ...(story.seoDescriptionVi?.trim()
+        ? { seoDescriptionVi: story.seoDescriptionVi.trim() }
+        : {}),
+      ...(story.seoDescriptionEn?.trim()
+        ? { seoDescriptionEn: story.seoDescriptionEn.trim() }
+        : {}),
       ...(story.seoKeywordsVi?.trim() ? { seoKeywordsVi: story.seoKeywordsVi.trim() } : {}),
       ...(story.seoKeywordsEn?.trim() ? { seoKeywordsEn: story.seoKeywordsEn.trim() } : {}),
       ...(story.canonicalUrl?.trim() ? { canonicalUrl: story.canonicalUrl.trim() } : {}),

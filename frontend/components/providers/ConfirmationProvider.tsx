@@ -100,8 +100,8 @@ export function ConfirmationProvider({ children }: { children: React.ReactNode }
           if (!isOpen) handleCancel()
         }}
       >
-        <DialogContent className="sm:max-w-[420px] p-6 rounded-2xl border border-border/70 bg-background shadow-2xl">
-          <DialogHeader className="flex flex-col items-center text-center gap-3">
+        <DialogContent className="rounded-2xl border border-border/70 bg-background p-6 shadow-2xl sm:max-w-[420px]">
+          <DialogHeader className="flex flex-col items-center gap-3 text-center">
             <div
               className={cn(
                 'flex h-12 w-12 items-center justify-center rounded-full',
@@ -123,7 +123,7 @@ export function ConfirmationProvider({ children }: { children: React.ReactNode }
               <DialogTitle className="text-lg font-semibold tracking-tight text-foreground">
                 {options.title}
               </DialogTitle>
-              <DialogDescription className="text-xs text-muted-foreground leading-relaxed">
+              <DialogDescription className="text-xs leading-relaxed text-muted-foreground">
                 {options.description}
               </DialogDescription>
             </div>
@@ -135,7 +135,7 @@ export function ConfirmationProvider({ children }: { children: React.ReactNode }
               variant="outline"
               size="sm"
               onClick={handleCancel}
-              className="flex-1 h-9 text-xs"
+              className="h-9 flex-1 text-xs"
             >
               {options.cancelText}
             </Button>
@@ -144,7 +144,7 @@ export function ConfirmationProvider({ children }: { children: React.ReactNode }
               size="sm"
               variant={isDestructive ? 'destructive' : 'default'}
               onClick={handleConfirm}
-              className="flex-1 h-9 text-xs"
+              className="h-9 flex-1 text-xs"
             >
               {options.confirmText}
             </Button>

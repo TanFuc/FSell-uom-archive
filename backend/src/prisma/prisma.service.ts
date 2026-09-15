@@ -47,4 +47,3 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     this.logger.log('Prisma disconnected from database')
   }
 }
-

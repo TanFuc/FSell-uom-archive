@@ -109,7 +109,9 @@ export async function generateMetadata({ params }: StoryDetailProps): Promise<Me
   }
 
   const isVi = params.locale === 'vi'
-  const title = (isVi ? story.seoTitleVi || story.titleVi : story.seoTitleEn || story.titleEn).trim()
+  const title = (
+    isVi ? story.seoTitleVi || story.titleVi : story.seoTitleEn || story.titleEn
+  ).trim()
   const rawDescription = isVi
     ? story.seoDescriptionVi || story.summaryVi
     : story.seoDescriptionEn || story.summaryEn
@@ -183,8 +185,12 @@ export default async function StoryDetailPage({ params }: StoryDetailProps) {
   }
 
   const isVi = params.locale === 'vi'
-  const title = (isVi ? story.seoTitleVi || story.titleVi : story.seoTitleEn || story.titleEn).trim()
-  const summary = (isVi ? story.seoDescriptionVi || story.summaryVi : story.seoDescriptionEn || story.summaryEn).trim()
+  const title = (
+    isVi ? story.seoTitleVi || story.titleVi : story.seoTitleEn || story.titleEn
+  ).trim()
+  const summary = (
+    isVi ? story.seoDescriptionVi || story.summaryVi : story.seoDescriptionEn || story.summaryEn
+  ).trim()
   const content = isVi ? story.contentVi : story.contentEn
   const rawKeywords = (isVi ? story.seoKeywordsVi : story.seoKeywordsEn)?.trim()
   const wordCount = stripHtmlTags(content).split(/\s+/).filter(Boolean).length

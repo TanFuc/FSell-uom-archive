@@ -442,7 +442,7 @@ export default function ProductsPage() {
               <Button
                 variant="outline"
                 size="sm"
-                className="shrink-0 snap-start text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 hover:border-red-300 transition-colors"
+                className="shrink-0 snap-start border-red-200 text-red-600 transition-colors hover:border-red-300 hover:bg-red-50 hover:text-red-700"
                 onClick={handleBulkDelete}
               >
                 <Trash2 className="mr-2 h-4 w-4" />
@@ -578,10 +578,10 @@ export default function ProductsPage() {
                       size="sm"
                       onClick={(e) => handleToggleActive(product, e)}
                       className={cn(
-                        'whitespace-nowrap transition-colors text-xs font-medium',
+                        'whitespace-nowrap text-xs font-medium transition-colors',
                         product.isActive
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100 hover:text-emerald-800'
-                          : 'bg-neutral-100 text-neutral-500 border-neutral-200 hover:bg-neutral-200/80 hover:text-neutral-700',
+                          ? 'border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800'
+                          : 'border-neutral-200 bg-neutral-100 text-neutral-500 hover:bg-neutral-200/80 hover:text-neutral-700',
                       )}
                     >
                       {product.isActive ? (
@@ -603,10 +603,10 @@ export default function ProductsPage() {
                       size="sm"
                       onClick={(e) => handleToggleFeatured(product, e)}
                       className={cn(
-                        'whitespace-nowrap transition-colors text-xs font-medium',
+                        'whitespace-nowrap text-xs font-medium transition-colors',
                         product.isFeatured
-                          ? 'bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100'
-                          : 'bg-neutral-100 text-neutral-500 border-neutral-200 hover:bg-neutral-200/80 hover:text-neutral-700',
+                          ? 'border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100'
+                          : 'border-neutral-200 bg-neutral-100 text-neutral-500 hover:bg-neutral-200/80 hover:text-neutral-700',
                       )}
                     >
                       {product.isFeatured ? (
@@ -648,7 +648,7 @@ export default function ProductsPage() {
                         size="icon"
                         onClick={() => router.push(`/${locale}/admin/products/${product.id}`)}
                         title="Chỉnh sửa"
-                        className="hover:bg-neutral-100 text-neutral-600 hover:text-neutral-900"
+                        className="text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -657,7 +657,7 @@ export default function ProductsPage() {
                         size="icon"
                         onClick={() => handleDuplicate(product)}
                         title="Nhân bản"
-                        className="hover:bg-neutral-100 text-neutral-600 hover:text-neutral-900"
+                        className="text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
                       >
                         <Copy className="h-4 w-4" />
                       </Button>
@@ -665,7 +665,7 @@ export default function ProductsPage() {
                         variant="ghost"
                         size="icon"
                         onClick={() => setDeleteDialog({ open: true, product })}
-                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                        className="text-red-500 hover:bg-red-50 hover:text-red-700"
                         title="Xóa"
                       >
                         <Trash2 className="h-4 w-4" />
