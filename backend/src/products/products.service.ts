@@ -235,10 +235,14 @@ export class ProductsService {
     }
 
     const priceData = this.preparePriceData(dto, exchangeRate)
+    const material = dto.material?.trim() ? dto.material.trim() : null
+    const dimensions = dto.dimensions?.trim() ? dto.dimensions.trim() : null
 
     const product = await this.prisma.product.create({
       data: {
         ...productData,
+        material,
+        dimensions,
         ...priceData,
         createdBy: userId,
         updatedBy: userId,
@@ -288,11 +292,21 @@ export class ProductsService {
     }
 
     const priceData = this.preparePriceData(dto, exchangeRate)
+    const material =
+      dto.material !== undefined ? (dto.material?.trim() ? dto.material.trim() : null) : undefined
+    const dimensions =
+      dto.dimensions !== undefined
+        ? dto.dimensions?.trim()
+          ? dto.dimensions.trim()
+          : null
+        : undefined
 
     const updatedProduct = await this.prisma.product.update({
       where: { id },
       data: {
         ...updateData,
+        ...(material !== undefined ? { material } : {}),
+        ...(dimensions !== undefined ? { dimensions } : {}),
         ...priceData,
         updatedBy: userId,
         relatedProducts: relatedProductIds
@@ -573,22 +587,32 @@ export class ProductsService {
     computedPriceUSD?: number,
   ): string {
     if (language === 'vi') {
+      const specs = [
+        dto.material ? `- Chất liệu: ${dto.material}` : null,
+        dto.dimensions ? `- Kích thước: ${dto.dimensions}` : null,
+      ]
+        .filter(Boolean)
+        .join('\n')
+
       return `Xin chào! Tôi quan tâm đến sản phẩm "${dto.nameVi}".
 
 Thông tin sản phẩm:
-- Giá: ${dto.priceVND.toLocaleString('vi-VN')}₫
-- Chất liệu: ${dto.material}
-- Kích thước: ${dto.dimensions}
+- Giá: ${dto.priceVND.toLocaleString('vi-VN')}₫${specs ? '\n' + specs : ''}
 
 Bạn có thể cho tôi biết thêm chi tiết không?`
     } else {
       const priceUSD = computedPriceUSD ?? this.convertVndToUsd(dto.priceVND, exchangeRate)
+      const specs = [
+        dto.material ? `- Material: ${dto.material}` : null,
+        dto.dimensions ? `- Dimensions: ${dto.dimensions}` : null,
+      ]
+        .filter(Boolean)
+        .join('\n')
+
       return `Hello! I'm interested in the "${dto.nameEn}".
 
 Product details:
-- Price: ${dto.priceVND.toLocaleString('vi-VN')}₫ (~$${priceUSD})
-- Material: ${dto.material}
-- Dimensions: ${dto.dimensions}
+- Price: ${dto.priceVND.toLocaleString('vi-VN')}₫ (~$${priceUSD})${specs ? '\n' + specs : ''}
 
 Could you provide more information?`
     }
