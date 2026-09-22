@@ -55,27 +55,29 @@ export function getDisplayPrice(
 } {
   const isEnglish = locale === 'en'
 
+  // Only treat salePriceVND as a real discount when it is strictly less than priceVND
+  const effectiveSaleVND =
+    product.salePriceVND != null && product.salePriceVND > 0 && product.salePriceVND < product.priceVND
+      ? product.salePriceVND
+      : null
+
   let currentPriceValue: number
   let originalPriceValue: number
 
   if (isEnglish) {
     originalPriceValue =
       product.priceUSD ?? convertPrice(product.priceVND, 'VND', 'USD', exchangeRate)
-    currentPriceValue =
-      product.salePriceUSD ??
-      (product.salePriceVND
-        ? convertPrice(product.salePriceVND, 'VND', 'USD', exchangeRate)
-        : originalPriceValue)
+    currentPriceValue = effectiveSaleVND
+      ? (product.salePriceUSD ?? convertPrice(effectiveSaleVND, 'VND', 'USD', exchangeRate))
+      : originalPriceValue
   } else {
     originalPriceValue = product.priceVND
-    currentPriceValue = product.salePriceVND ?? product.priceVND
+    currentPriceValue = effectiveSaleVND ?? product.priceVND
   }
 
-  const hasDiscount = product.salePriceVND != null && product.salePriceVND < product.priceVND
+  const hasDiscount = effectiveSaleVND !== null
   const discountPercentage = hasDiscount
-    ? Math.round(
-        ((product.priceVND - (product.salePriceVND ?? product.priceVND)) / product.priceVND) * 100,
-      )
+    ? Math.round(((product.priceVND - effectiveSaleVND!) / product.priceVND) * 100)
     : null
 
   const currency = isEnglish ? 'USD' : 'VND'

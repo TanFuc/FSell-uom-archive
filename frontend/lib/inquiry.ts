@@ -23,22 +23,32 @@ export function generateDefaultInquiryMessage(
   exchangeRate: number = DEFAULT_EXCHANGE_RATE,
 ): string {
   if (language === 'vi') {
+    const specs = [
+      product.material ? `- Chất liệu: ${product.material}` : null,
+      product.dimensions ? `- Kích thước: ${product.dimensions}` : null,
+    ]
+      .filter(Boolean)
+      .join('\n')
+
     return `Xin chào! Tôi quan tâm đến sản phẩm "${product.nameVi}".
 
 Thông tin sản phẩm:
-- Giá: ${product.priceVND.toLocaleString('vi-VN')}₫
-- Chất liệu: ${product.material}
-- Kích thước: ${product.dimensions}
+- Giá: ${product.priceVND.toLocaleString('vi-VN')}₫${specs ? '\n' + specs : ''}
 
 Bạn có thể cho tôi biết thêm chi tiết không?`
   } else {
     const priceUSD = Math.round(product.priceVND / exchangeRate)
+    const specs = [
+      product.material ? `- Material: ${product.material}` : null,
+      product.dimensions ? `- Dimensions: ${product.dimensions}` : null,
+    ]
+      .filter(Boolean)
+      .join('\n')
+
     return `Hello! I'm interested in the "${product.nameEn}".
 
 Product details:
-- Price: ${product.priceVND.toLocaleString('vi-VN')}₫ (~$${priceUSD})
-- Material: ${product.material}
-- Dimensions: ${product.dimensions}
+- Price: ${product.priceVND.toLocaleString('vi-VN')}₫ (~$${priceUSD})${specs ? '\n' + specs : ''}
 
 Could you provide more information?`
   }
