@@ -30,10 +30,12 @@ import {
   AlignJustify,
   Underline as UnderlineIcon,
 } from 'lucide-react'
+import { useLocale } from 'next-intl'
 import { useCallback, useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api'
+import { getApiErrorMessage } from '@/lib/error-handler'
 import { cn } from '@/lib/utils'
 
 interface RichTextEditorProps {
@@ -51,6 +53,7 @@ export function RichTextEditor({
   className,
   disabled = false,
 }: RichTextEditorProps) {
+  const locale = useLocale()
   const { toast } = useToast()
   const [isUploading, setIsUploading] = useState(false)
   const [isMaximized, setIsMaximized] = useState(false)
@@ -120,15 +123,26 @@ export function RichTextEditor({
       try {
         const result = await api.uploadImage(file)
         editor.chain().focus().setImage({ src: result.url }).run()
-        toast({ title: 'Success', description: 'Image uploaded successfully' })
+        toast({
+          title: locale === 'vi' ? 'Thành công' : 'Success',
+          description: locale === 'vi' ? 'Tải ảnh lên thành công' : 'Image uploaded successfully',
+        })
       } catch (error) {
         console.error('Image upload failed:', error)
-        toast({ title: 'Error', description: 'Failed to upload image', variant: 'destructive' })
+        toast({
+          title: locale === 'vi' ? 'Lỗi' : 'Error',
+          description: getApiErrorMessage(
+            error,
+            locale,
+            locale === 'vi' ? 'Tải ảnh lên thất bại' : 'Failed to upload image',
+          ),
+          variant: 'destructive',
+        })
       } finally {
         setIsUploading(false)
       }
     },
-    [editor, toast],
+    [editor, locale, toast],
   )
 
   const handleFileSelect = useCallback(

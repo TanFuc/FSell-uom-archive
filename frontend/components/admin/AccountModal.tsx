@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Eye, EyeOff, KeyRound, Shield, User as UserIcon } from 'lucide-react'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
@@ -27,6 +27,7 @@ import { Input } from '@/components/ui/input'
 import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api'
 import { useAuthStore } from '@/lib/store'
+import { getApiErrorMessage } from '@/lib/error-handler'
 import type { UpdateMyProfileDto } from '@/lib/types'
 
 const accountSchema = z
@@ -70,6 +71,7 @@ interface AccountModalProps {
 
 export function AccountModal({ open, onOpenChange }: AccountModalProps) {
   const t = useTranslations('admin')
+  const locale = useLocale()
   const { toast } = useToast()
   const { user: currentUser, setUser } = useAuthStore()
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -128,13 +130,15 @@ export function AccountModal({ open, onOpenChange }: AccountModalProps) {
       })
       onOpenChange(false)
     } catch (error: any) {
-      const serverMsg =
-        error?.response?.data?.message ||
-        error?.message ||
-        'Không thể cập nhật tài khoản. Vui lòng kiểm tra lại thông tin.'
       toast({
         title: t('error'),
-        description: Array.isArray(serverMsg) ? serverMsg.join(', ') : serverMsg,
+        description: getApiErrorMessage(
+          error,
+          locale,
+          locale === 'vi'
+            ? 'Không thể cập nhật tài khoản. Vui lòng kiểm tra lại thông tin.'
+            : 'Failed to update account. Please check your inputs.',
+        ),
         variant: 'destructive',
       })
     } finally {

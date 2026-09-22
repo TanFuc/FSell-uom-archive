@@ -7,7 +7,7 @@ import { useState } from 'react'
 import { useExchangeRate } from '@/hooks/use-settings'
 import { getDisplayPrice } from '@/lib/currency'
 import type { Product } from '@/lib/types'
-import { optimizeProductImage } from '@/lib/utils'
+import { optimizeProductImage, cn } from '@/lib/utils'
 
 interface ProductCardProps {
   product: Product
@@ -111,7 +111,12 @@ export function ProductCard({ product, locale, priority }: ProductCardProps) {
           {name}
         </h3>
         <div className="flex flex-wrap items-center gap-2">
-          <p className="font-sans text-[10px] font-medium uppercase tracking-wide text-foreground md:text-xs">
+          <p
+            className={cn(
+              'font-sans text-[10px] font-medium uppercase tracking-wide md:text-xs',
+              priceDisplay.hasDiscount ? 'font-semibold text-[#991b1b]' : 'text-foreground',
+            )}
+          >
             {priceDisplay.currentPrice}
           </p>
           {priceDisplay.hasDiscount && priceDisplay.originalPrice && (
