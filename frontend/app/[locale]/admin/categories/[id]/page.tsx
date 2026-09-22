@@ -21,6 +21,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { useDocumentTitle } from '@/hooks/use-document-title'
 import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api'
+import { getApiErrorMessage } from '@/lib/error-handler'
 import { optimizeAndResizeImage } from '@/lib/image-upload'
 import { type CreateCategoryDto, type UpdateCategoryDto } from '@/lib/types'
 
@@ -162,10 +163,9 @@ export default function CategoryFormPage() {
 
       router.push(`/${locale}/admin/categories`)
     } catch (error: any) {
-      const serverMsg = error?.response?.data?.message || error?.message || t('failedToUpdate')
       toast({
         title: t('error'),
-        description: Array.isArray(serverMsg) ? serverMsg.join(', ') : String(serverMsg),
+        description: getApiErrorMessage(error, locale, t('failedToUpdate')),
         variant: 'destructive',
       })
     } finally {

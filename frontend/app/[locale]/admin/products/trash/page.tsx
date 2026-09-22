@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/table'
 import { useProducts } from '@/hooks/use-products'
 import { useToast } from '@/hooks/use-toast'
+import { getApiErrorMessage } from '@/lib/error-handler'
 import { api } from '@/lib/api'
 import { type Product } from '@/lib/types'
 import { formatPriceVND, getImageUrl, optimizeProductImage } from '@/lib/utils'
@@ -68,13 +69,16 @@ export default function TrashPage() {
   const handleRestore = async (product: Product) => {
     try {
       await api.restoreProduct(product.id)
-      toast({ title: t('success'), description: t('userRestored') })
+      toast({
+        title: t('success'),
+        description: locale === 'vi' ? 'Đã khôi phục sản phẩm thành công' : 'Product restored successfully',
+      })
       refetch()
       setRestoreDialog({ open: false, product: null })
     } catch (error: any) {
       toast({
         title: t('error'),
-        description: error.message || t('failedToRestore'),
+        description: getApiErrorMessage(error, locale, t('failedToRestore')),
         variant: 'destructive',
       })
     }
@@ -83,13 +87,16 @@ export default function TrashPage() {
   const handlePermanentDelete = async (product: Product) => {
     try {
       await api.hardDeleteProduct(product.id)
-      toast({ title: t('success'), description: 'Đã xóa vĩnh viễn sản phẩm' })
+      toast({
+        title: t('success'),
+        description: locale === 'vi' ? 'Đã xóa vĩnh viễn sản phẩm' : 'Product permanently deleted',
+      })
       refetch()
       setPermanentDeleteDialog({ open: false, product: null })
     } catch (error: any) {
       toast({
         title: t('error'),
-        description: error.message || t('failedToDelete'),
+        description: getApiErrorMessage(error, locale, t('failedToDelete')),
         variant: 'destructive',
       })
     }
@@ -100,14 +107,21 @@ export default function TrashPage() {
       await Promise.all(selectedProducts.map((id) => api.restoreProduct(id)))
       toast({
         title: t('success'),
-        description: `Đã khôi phục ${selectedProducts.length} sản phẩm`,
+        description:
+          locale === 'vi'
+            ? `Đã khôi phục ${selectedProducts.length} sản phẩm`
+            : `Restored ${selectedProducts.length} products`,
       })
       setSelectedProducts([])
       refetch()
     } catch (error: any) {
       toast({
         title: t('error'),
-        description: error.message || 'Khôi phục thất bại',
+        description: getApiErrorMessage(
+          error,
+          locale,
+          locale === 'vi' ? 'Khôi phục thất bại' : 'Failed to restore',
+        ),
         variant: 'destructive',
       })
     }

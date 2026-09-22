@@ -486,14 +486,26 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                     <h1 className="text-mobile-safe font-sans text-sm font-bold leading-tight tracking-[0.08em] text-foreground sm:text-base sm:tracking-[0.1em]">
                       {name}
                     </h1>
-                    <div className="flex items-center gap-4">
-                      <p className="font-sans text-xs font-semibold tracking-[0.05em] text-foreground sm:text-sm">
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      <p
+                        className={cn(
+                          'font-sans text-xs font-semibold tracking-[0.05em] sm:text-sm',
+                          priceDisplay.hasDiscount ? 'text-[#991b1b]' : 'text-foreground',
+                        )}
+                      >
                         {priceDisplay.currentPrice}
                       </p>
                       {priceDisplay.hasDiscount && priceDisplay.originalPrice && (
-                        <p className="text-xs font-light text-foreground/30 line-through">
-                          {priceDisplay.originalPrice}
-                        </p>
+                        <>
+                          <p className="text-xs font-light text-foreground/30 line-through">
+                            {priceDisplay.originalPrice}
+                          </p>
+                          {priceDisplay.discountPercentage && (
+                            <span className="rounded-sm bg-[#991b1b]/10 px-1.5 py-0.5 text-[9px] font-bold tracking-wide text-[#991b1b]">
+                              −{priceDisplay.discountPercentage}%
+                            </span>
+                          )}
+                        </>
                       )}
                     </div>
                   </div>
@@ -509,6 +521,28 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                         {shortDescription}
                       </p>
                     ) : null}
+
+                    {/* Chất liệu & Kích thước */}
+                    {(product.material || product.dimensions) && (
+                      <div className="flex flex-col gap-1 text-[12px] font-normal leading-[1.7] tracking-[0.02em] text-foreground/90">
+                        {product.material && (
+                          <p>
+                            <span className="font-semibold uppercase tracking-[0.08em]">
+                              {locale === 'vi' ? 'Chất liệu' : 'Material'}:{' '}
+                            </span>
+                            {product.material}
+                          </p>
+                        )}
+                        {product.dimensions && (
+                          <p>
+                            <span className="font-semibold uppercase tracking-[0.08em]">
+                              {locale === 'vi' ? 'Kích thước' : 'Dimensions'}:{' '}
+                            </span>
+                            {product.dimensions}
+                          </p>
+                        )}
+                      </div>
+                    )}
 
                     {/* Combined Description & Technical Specs */}
                     {variants.groups.length > 0 && (

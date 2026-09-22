@@ -13,6 +13,7 @@ import { RichTextEditor } from '@/components/RichTextEditor'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useConfirm } from '@/hooks/use-confirm'
+import { getApiErrorMessage } from '@/lib/error-handler'
 import {
   Dialog,
   DialogContent,
@@ -61,12 +62,18 @@ const productSchema = z.object({
   descriptionEn: z.string().min(1, 'English description is required'),
   priceVND: z.coerce.number().min(0, 'Price must be positive'),
   priceUSD: z.coerce.number().min(0).optional(),
-  salePriceVND: z.coerce.number().min(0).optional().nullable(),
-  salePriceUSD: z.coerce.number().min(0).optional().nullable(),
+  salePriceVND: z.preprocess(
+    (val) => (val === '' || val === null || val === undefined ? null : Number(val)),
+    z.number().min(0).nullable().optional(),
+  ),
+  salePriceUSD: z.preprocess(
+    (val) => (val === '' || val === null || val === undefined ? null : Number(val)),
+    z.number().min(0).nullable().optional(),
+  ),
   categoryId: z.string().optional().nullable(),
-  material: z.string().optional(),
-  dimensions: z.string().optional(),
   stock: z.coerce.number().int().min(0, 'Stock must be non-negative'),
+  material: z.string().optional().nullable().or(z.literal('')),
+  dimensions: z.string().optional().nullable().or(z.literal('')),
   isActive: z.boolean().default(true),
   isFeatured: z.boolean().default(false),
   inquiryEnabled: z.boolean().default(true),
@@ -272,9 +279,9 @@ export default function ProductFormPage() {
       salePriceVND: null,
       salePriceUSD: null,
       categoryId: null,
+      stock: 0,
       material: '',
       dimensions: '',
-      stock: 0,
       isActive: true,
       isFeatured: false,
       inquiryEnabled: true,
@@ -368,9 +375,9 @@ export default function ProductFormPage() {
         salePriceVND: product.salePriceVND || null,
         salePriceUSD: product.salePriceUSD || null,
         categoryId: product.categoryId || null,
-        material: product.material,
-        dimensions: product.dimensions,
         stock: product.stock,
+        material: product.material || '',
+        dimensions: product.dimensions || '',
         isActive: product.isActive,
         isFeatured: product.isFeatured,
         inquiryEnabled: product.inquiryEnabled,
@@ -389,7 +396,11 @@ export default function ProductFormPage() {
       }
     } catch (error) {
       console.error('Failed to fetch product:', error)
-      toast({ title: t('error'), description: 'Product not found', variant: 'destructive' })
+      toast({
+        title: t('error'),
+        description: locale === 'vi' ? 'Không tìm thấy sản phẩm' : 'Product not found',
+        variant: 'destructive',
+      })
       router.push(`/${locale}/admin/products`)
     } finally {
       setIsLoading(false)
@@ -427,9 +438,20 @@ export default function ProductFormPage() {
       const uploadPromises = optimizedFiles.map((file) => api.uploadImage(file, 'products'))
       const results = await Promise.all(uploadPromises)
       setImages((prev) => [...prev, ...results.map((r) => r.url)])
-      toast({ title: t('success'), description: 'Images uploaded' })
+      toast({
+        title: t('success'),
+        description: locale === 'vi' ? 'Đã tải ảnh lên thành công' : 'Images uploaded',
+      })
     } catch (error) {
-      toast({ title: t('error'), description: 'Upload failed', variant: 'destructive' })
+      toast({
+        title: t('error'),
+        description: getApiErrorMessage(
+          error,
+          locale,
+          locale === 'vi' ? 'Tải ảnh thất bại' : 'Upload failed',
+        ),
+        variant: 'destructive',
+      })
     } finally {
       setIsUploading(false)
     }
@@ -442,9 +464,16 @@ export default function ProductFormPage() {
   const copyImageUrl = async (image: string) => {
     try {
       await navigator.clipboard.writeText(getImageUrl(image))
-      toast({ title: t('success'), description: 'Image URL copied' })
+      toast({
+        title: t('success'),
+        description: locale === 'vi' ? 'Đã sao chép liên kết hình ảnh' : 'Image URL copied',
+      })
     } catch {
-      toast({ title: t('error'), description: 'Failed to copy URL', variant: 'destructive' })
+      toast({
+        title: t('error'),
+        description: locale === 'vi' ? 'Không thể sao chép liên kết' : 'Failed to copy URL',
+        variant: 'destructive',
+      })
     }
   }
 
@@ -453,14 +482,23 @@ export default function ProductFormPage() {
     const imageHtml = `<p><img src="${getImageUrl(image)}" alt="product-image" /></p>`
     const nextValue = current ? `${current}\n${imageHtml}` : imageHtml
     form.setValue(field, nextValue, { shouldDirty: true })
-    toast({ title: t('success'), description: `Inserted image into ${field}` })
+    toast({
+      title: t('success'),
+      description:
+        locale === 'vi'
+          ? 'Đã chèn hình ảnh vào nội dung'
+          : `Inserted image into ${field}`,
+    })
   }
 
   const onSubmit = async (data: ProductFormValues) => {
     if (images.length === 0) {
       toast({
         title: t('error'),
-        description: 'At least one image is required',
+        description:
+          locale === 'vi'
+            ? 'Vui lòng tải lên ít nhất một hình ảnh sản phẩm'
+            : 'At least one image is required',
         variant: 'destructive',
       })
       return
@@ -497,6 +535,8 @@ export default function ProductFormPage() {
 
       const productData = {
         ...restData,
+        material: data.material?.trim() || null,
+        dimensions: data.dimensions?.trim() || null,
         shortDescriptionVi,
         shortDescriptionEn,
         images,
@@ -505,21 +545,32 @@ export default function ProductFormPage() {
 
       if (isNew) {
         await api.createProduct(productData)
-        toast({ title: t('success'), description: 'Đã tạo sản phẩm thành công' })
+        toast({
+          title: t('success'),
+          description: locale === 'vi' ? 'Đã tạo sản phẩm thành công' : 'Product created successfully',
+        })
+        window.location.href = `/${locale}/admin/products`
+        return
       } else {
         await api.updateProduct(id, productData)
-        toast({ title: t('success'), description: 'Đã cập nhật sản phẩm thành công' })
+        toast({
+          title: t('success'),
+          description: locale === 'vi' ? 'Đã cập nhật sản phẩm thành công' : 'Product updated successfully',
+        })
+        router.push(`/${locale}/admin/products`)
+        router.refresh()
       }
-
-      router.push(`/${locale}/admin/products`)
     } catch (error: any) {
-      const serverMsg =
-        error?.response?.data?.message ||
-        error?.message ||
-        'Không thể lưu sản phẩm lúc này. Vui lòng kiểm tra lại thông tin.'
+      const serverMsg = getApiErrorMessage(
+        error,
+        locale,
+        locale === 'vi'
+          ? 'Không thể lưu sản phẩm lúc này. Vui lòng kiểm tra lại thông tin.'
+          : 'Failed to save product. Please check your inputs.',
+      )
       toast({
         title: t('error'),
-        description: Array.isArray(serverMsg) ? serverMsg.join(', ') : String(serverMsg),
+        description: serverMsg,
         variant: 'destructive',
       })
     } finally {
@@ -554,6 +605,7 @@ export default function ProductFormPage() {
       const element = document.querySelector(`[name="${firstKey}"]`)
       if (element) {
         element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        ;(element as HTMLElement).focus?.({ preventScroll: true })
       }
     }
   }
@@ -635,9 +687,9 @@ export default function ProductFormPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Sticky Top Action Header */}
-      <div className="sticky top-0 z-30 -mx-4 -mt-6 mb-6 flex flex-col gap-3 border-b bg-background/95 px-4 py-3.5 backdrop-blur-md transition-all sm:-mx-6 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:-mx-8 lg:px-8">
+    <div className="flex flex-col lg:h-[calc(100dvh-4rem)] lg:overflow-hidden">
+      {/* Top Action Header */}
+      <div className="flex-shrink-0 mb-4 flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <Button
             type="button"
@@ -729,21 +781,21 @@ export default function ProductFormPage() {
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-6">
-          <div className="grid items-start gap-6 lg:grid-cols-3">
-            {/* Main content - 2 columns */}
-            <div className="space-y-6 lg:col-span-2">
+        <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="flex-1 min-h-0 lg:overflow-hidden flex flex-col">
+          <div className="grid items-start gap-6 lg:grid-cols-3 flex-1 min-h-0 lg:h-full lg:overflow-hidden">
+            {/* Main content - 2 columns (Independent scroll) */}
+            <div className="space-y-6 lg:col-span-2 lg:h-full lg:overflow-y-auto lg:pr-3 lg:pb-10">
               {/* Basic Info */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="uppercase tracking-wide">Basic Information</CardTitle>
+                  <CardTitle className="uppercase tracking-wide">{t('basicInfo')}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid gap-4 lg:grid-cols-2">
                     <Card className="border-primary/20">
                       <CardHeader className="pb-3">
                         <CardTitle className="text-sm uppercase tracking-wide">
-                          Vietnamese Content
+                          {locale === 'vi' ? 'Nội dung Tiếng Việt' : 'Vietnamese Content'}
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-4">
@@ -768,9 +820,21 @@ export default function ProductFormPage() {
                           name="shortDescriptionVi"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Mo ta ngan (Tieng Viet)</FormLabel>
+                              <FormLabel>
+                                {locale === 'vi'
+                                  ? 'Mô tả ngắn (Tiếng Việt)'
+                                  : 'Short Description (Vietnamese)'}
+                              </FormLabel>
                               <FormControl>
-                                <Textarea {...field} rows={3} placeholder="Mo ta tom tat..." />
+                                <Textarea
+                                  {...field}
+                                  rows={3}
+                                  placeholder={
+                                    locale === 'vi'
+                                      ? 'Mô tả tóm tắt...'
+                                      : 'Summary description...'
+                                  }
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -802,7 +866,7 @@ export default function ProductFormPage() {
                     <Card className="border-primary/20">
                       <CardHeader className="pb-3">
                         <CardTitle className="text-sm uppercase tracking-wide">
-                          English Content
+                          {locale === 'vi' ? 'Nội dung Tiếng Anh' : 'English Content'}
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-4">
@@ -827,7 +891,11 @@ export default function ProductFormPage() {
                           name="shortDescriptionEn"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Short Description (English)</FormLabel>
+                              <FormLabel>
+                                {locale === 'vi'
+                                  ? 'Mô tả ngắn (Tiếng Anh)'
+                                  : 'Short Description (English)'}
+                              </FormLabel>
                               <FormControl>
                                 <Textarea
                                   {...field}
@@ -865,9 +933,13 @@ export default function ProductFormPage() {
 
                   <Card className="bg-muted/20">
                     <CardHeader className="pb-3">
-                      <CardTitle className="text-base">SEO Preview</CardTitle>
+                      <CardTitle className="text-base">
+                        {locale === 'vi' ? 'Xem trước SEO' : 'SEO Preview'}
+                      </CardTitle>
                       <CardDescription>
-                        Google snippet auto-generated from product name, summary, and slug.
+                        {locale === 'vi'
+                          ? 'Đoạn trích Google được tạo tự động từ tên sản phẩm, mô tả tóm tắt và đường dẫn.'
+                          : 'Google snippet auto-generated from product name, summary, and slug.'}
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="grid gap-4 md:grid-cols-2">
@@ -1026,6 +1098,62 @@ export default function ProductFormPage() {
                     </CardContent>
                   </Card>
 
+                  {/* Material & Dimensions (Optional) */}
+                  <Card className="bg-muted/30">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base">
+                        {locale === 'vi' ? 'Thông số kỹ thuật (Tùy chọn)' : 'Technical Specs (Optional)'}
+                      </CardTitle>
+                      <CardDescription>
+                        {locale === 'vi'
+                          ? 'Chất liệu và kích thước sẽ hiển thị trên trang sản phẩm.'
+                          : 'Material and dimensions shown on the product page.'}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <FormField
+                          control={form.control}
+                          name="material"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>
+                                {locale === 'vi' ? 'Chất liệu' : 'Material'}
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  value={field.value ?? ''}
+                                  placeholder={locale === 'vi' ? 'VD: Gốm sứ, đất sét...' : 'E.g.: Ceramic, clay...'}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="dimensions"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>
+                                {locale === 'vi' ? 'Kích thước' : 'Dimensions'}
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  value={field.value ?? ''}
+                                  placeholder={locale === 'vi' ? 'VD: 15cm × 30cm...' : 'E.g.: 15cm × 30cm...'}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+
                   <Card className="bg-muted/30">
                     <CardHeader className="pb-3">
                       <CardTitle className="text-base">{t('variantClassificationTitle')}</CardTitle>
@@ -1063,7 +1191,7 @@ export default function ProductFormPage() {
                                 onChange={(e) =>
                                   updateVariantGroup(group.id, 'labelVi', e.target.value)
                                 }
-                                placeholder="Loai"
+                                placeholder={locale === 'vi' ? 'Loại' : 'Type'}
                               />
                             </div>
                             <div className="space-y-2">
@@ -1091,7 +1219,7 @@ export default function ProductFormPage() {
                                 onChange={(e) =>
                                   updateVariantGroup(group.id, 'valuesVi', e.target.value)
                                 }
-                                placeholder="Thuong, Cao cap"
+                                placeholder={locale === 'vi' ? 'Thường, Cao cấp' : 'Classic, Premium'}
                               />
                               <FormDescription>
                                 {t('variantValuesCount', {
@@ -1151,7 +1279,7 @@ export default function ProductFormPage() {
                               onClick={() => setIsCategoryDialogOpen(true)}
                             >
                               <Plus className="mr-1 h-3 w-3" />
-                              Thêm mới
+                              {locale === 'vi' ? 'Thêm mới' : 'Add new'}
                             </Button>
                           </div>
                           <Select
@@ -1193,6 +1321,8 @@ export default function ProductFormPage() {
                       )}
                     />
                   </div>
+
+
                 </CardContent>
               </Card>
 
@@ -1200,7 +1330,11 @@ export default function ProductFormPage() {
               <Card>
                 <CardHeader>
                   <CardTitle className="uppercase tracking-wide">{t('inquirySettings')}</CardTitle>
-                  <CardDescription>Configure customer inquiry options</CardDescription>
+                  <CardDescription>
+                    {locale === 'vi'
+                      ? 'Cấu hình tùy chọn hỏi đáp cho khách hàng'
+                      : 'Configure customer inquiry options'}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <FormField
@@ -1211,7 +1345,9 @@ export default function ProductFormPage() {
                         <div>
                           <FormLabel>{t('inquiryEnabled')}</FormLabel>
                           <FormDescription>
-                            Allow customers to ask about this product
+                            {locale === 'vi'
+                              ? 'Cho phép khách hàng gửi câu hỏi về sản phẩm này'
+                              : 'Allow customers to ask about this product'}
                           </FormDescription>
                         </div>
                         <FormControl>
@@ -1233,7 +1369,11 @@ export default function ProductFormPage() {
                           <FormControl>
                             <Textarea {...field} rows={4} placeholder={t('autoGenerated')} />
                           </FormControl>
-                          <FormDescription>Leave empty for auto-generated message</FormDescription>
+                          <FormDescription>
+                            {locale === 'vi'
+                              ? 'Để trống để tự động tạo tin nhắn'
+                              : 'Leave empty for auto-generated message'}
+                          </FormDescription>
                         </FormItem>
                       )}
                     />
@@ -1246,7 +1386,11 @@ export default function ProductFormPage() {
                           <FormControl>
                             <Textarea {...field} rows={4} placeholder={t('autoGenerated')} />
                           </FormControl>
-                          <FormDescription>Leave empty for auto-generated message</FormDescription>
+                          <FormDescription>
+                            {locale === 'vi'
+                              ? 'Để trống để tự động tạo tin nhắn'
+                              : 'Leave empty for auto-generated message'}
+                          </FormDescription>
                         </FormItem>
                       )}
                     />
@@ -1255,8 +1399,8 @@ export default function ProductFormPage() {
               </Card>
             </div>
 
-            {/* Sidebar - 1 column (Sticky) */}
-            <div className="space-y-6 lg:sticky lg:top-20 lg:col-span-1">
+            {/* Sidebar - 1 column (Independent scroll) */}
+            <div className="space-y-6 lg:col-span-1 lg:h-full lg:overflow-y-auto lg:pl-1 lg:pr-2 lg:pb-10">
               {/* Status */}
               <Card>
                 <CardHeader>
@@ -1294,10 +1438,13 @@ export default function ProductFormPage() {
               <Card>
                 <CardHeader>
                   <CardTitle className="uppercase tracking-wide">
-                    Images <span className="font-bold text-destructive">*</span>
+                    {locale === 'vi' ? 'Hình ảnh' : 'Images'}{' '}
+                    <span className="font-bold text-destructive">*</span>
                   </CardTitle>
                   <CardDescription>
-                    Upload product images (tối thiểu 1 ảnh, tỉ lệ 4:5 khuyến nghị)
+                    {locale === 'vi'
+                      ? 'Tải ảnh sản phẩm (tối thiểu 1 ảnh, khuyến nghị tỷ lệ 4:5)'
+                      : 'Upload product images (minimum 1 image, 4:5 ratio recommended)'}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -1316,7 +1463,7 @@ export default function ProductFormPage() {
                         />
                         {index === 0 && (
                           <div className="absolute left-2 top-2 z-10 rounded-sm bg-primary/90 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-primary-foreground shadow-sm backdrop-blur-sm">
-                            Main Display
+                            {locale === 'vi' ? 'Hiển thị chính' : 'Main Display'}
                           </div>
                         )}
                         <div className="absolute inset-x-0 bottom-0 grid translate-y-full grid-cols-2 gap-1 bg-black/70 p-2 transition-transform duration-300 group-hover:translate-y-0">
@@ -1327,7 +1474,7 @@ export default function ProductFormPage() {
                             className="h-7 text-[10px]"
                             onClick={() => copyImageUrl(image)}
                           >
-                            Copy URL
+                            {locale === 'vi' ? 'Sao chép URL' : 'Copy URL'}
                           </Button>
                           <Button
                             type="button"
@@ -1336,7 +1483,7 @@ export default function ProductFormPage() {
                             className="h-7 text-[10px]"
                             onClick={() => insertImageIntoDescription('descriptionVi', image)}
                           >
-                            Insert VI
+                            {locale === 'vi' ? 'Chèn VI' : 'Insert VI'}
                           </Button>
                           <Button
                             type="button"
@@ -1345,7 +1492,7 @@ export default function ProductFormPage() {
                             className="h-7 text-[10px]"
                             onClick={() => insertImageIntoDescription('descriptionEn', image)}
                           >
-                            Insert EN
+                            {locale === 'vi' ? 'Chèn EN' : 'Insert EN'}
                           </Button>
                           <Button
                             type="button"
@@ -1354,14 +1501,16 @@ export default function ProductFormPage() {
                             className="h-7 text-[10px]"
                             onClick={() => removeImage(index)}
                           >
-                            Remove
+                            {locale === 'vi' ? 'Xóa' : 'Remove'}
                           </Button>
                         </div>
                       </div>
                     ))}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Tip: Use Insert VI/EN to quickly place selected image into product description.
+                    {locale === 'vi'
+                      ? 'Mẹo: Dùng Chèn VI/EN để đưa nhanh ảnh vào phần mô tả sản phẩm.'
+                      : 'Tip: Use Insert VI/EN to quickly place selected image into product description.'}
                   </p>
 
                   <div className="relative">
@@ -1375,7 +1524,13 @@ export default function ProductFormPage() {
                     />
                     <Button variant="outline" className="w-full" disabled={isUploading}>
                       <Upload className="mr-2 h-4 w-4" />
-                      {isUploading ? 'Uploading...' : 'Upload Images'}
+                      {isUploading
+                        ? locale === 'vi'
+                          ? 'Đang tải lên...'
+                          : 'Uploading...'
+                        : locale === 'vi'
+                          ? 'Tải ảnh lên'
+                          : 'Upload Images'}
                     </Button>
                   </div>
                 </CardContent>
@@ -1384,8 +1539,14 @@ export default function ProductFormPage() {
               {/* Hover Image */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="uppercase tracking-wide">Hover Image</CardTitle>
-                  <CardDescription>Image shown when user hovers over product</CardDescription>
+                  <CardTitle className="uppercase tracking-wide">
+                    {locale === 'vi' ? 'Ảnh khi di chuột' : 'Hover Image'}
+                  </CardTitle>
+                  <CardDescription>
+                    {locale === 'vi'
+                      ? 'Ảnh hiển thị khi người dùng di chuột qua sản phẩm'
+                      : 'Image shown when user hovers over product'}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {hoverImage && (
@@ -1426,11 +1587,18 @@ export default function ProductFormPage() {
                           })
                           const result = await api.uploadImage(optimizedFile, 'products')
                           setHoverImage(result.url)
-                          toast({ title: t('success'), description: 'Hover image uploaded' })
+                          toast({
+                            title: t('success'),
+                            description: locale === 'vi' ? 'Đã tải ảnh di chuột thành công' : 'Hover image uploaded',
+                          })
                         } catch (error) {
                           toast({
                             title: t('error'),
-                            description: 'Upload failed',
+                            description: getApiErrorMessage(
+                              error,
+                              locale,
+                              locale === 'vi' ? 'Tải ảnh di chuột thất bại' : 'Upload failed',
+                            ),
                             variant: 'destructive',
                           })
                         } finally {
@@ -1443,10 +1611,16 @@ export default function ProductFormPage() {
                     <Button variant="outline" className="w-full" disabled={isUploading}>
                       <Upload className="mr-2 h-4 w-4" />
                       {isUploading
-                        ? 'Uploading...'
+                        ? locale === 'vi'
+                          ? 'Đang tải lên...'
+                          : 'Uploading...'
                         : hoverImage
-                          ? 'Change Hover Image'
-                          : 'Upload Hover Image'}
+                          ? locale === 'vi'
+                            ? 'Đổi ảnh di chuột'
+                            : 'Change Hover Image'
+                          : locale === 'vi'
+                            ? 'Tải ảnh di chuột'
+                            : 'Upload Hover Image'}
                     </Button>
                   </div>
                 </CardContent>

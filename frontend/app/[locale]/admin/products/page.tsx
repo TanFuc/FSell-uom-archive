@@ -42,6 +42,7 @@ import {
 import { useDocumentTitle } from '@/hooks/use-document-title'
 import { useToast } from '@/hooks/use-toast'
 import { useConfirm } from '@/hooks/use-confirm'
+import { getApiErrorMessage } from '@/lib/error-handler'
 import { api } from '@/lib/api'
 import { revalidatePaths } from '@/lib/revalidate'
 import { pingProductSeo } from '@/lib/seo-ping'
@@ -141,7 +142,11 @@ export default function ProductsPage() {
       setSelectedProducts((prev) => prev.filter((id) => id !== productToDelete.id))
       toast({ title: t('success'), description: 'Đã chuyển vào thùng rác' })
     } catch (error) {
-      toast({ title: t('error'), description: t('failedToDelete'), variant: 'destructive' })
+      toast({
+        title: t('error'),
+        description: getApiErrorMessage(error, locale, t('failedToDelete')),
+        variant: 'destructive',
+      })
     } finally {
       setDeleteDialog({ open: false, product: null })
     }
@@ -153,7 +158,11 @@ export default function ProductsPage() {
       toast({ title: t('success'), description: t('productDuplicated') })
       setProducts((prev) => [duplicated, ...prev])
     } catch (error) {
-      toast({ title: t('error'), description: t('failedToUpdate'), variant: 'destructive' })
+      toast({
+        title: t('error'),
+        description: getApiErrorMessage(error, locale, t('failedToUpdate')),
+        variant: 'destructive',
+      })
     }
   }
 
@@ -179,7 +188,11 @@ export default function ProductsPage() {
           item.id === product.id ? { ...item, isActive: product.isActive } : item,
         ),
       )
-      toast({ title: t('error'), description: t('failedToUpdate'), variant: 'destructive' })
+      toast({
+        title: t('error'),
+        description: getApiErrorMessage(error, locale, t('failedToUpdate')),
+        variant: 'destructive',
+      })
     } finally {
       setBusyProductIds((prev) => {
         const next = new Set(prev)
@@ -211,7 +224,11 @@ export default function ProductsPage() {
           item.id === product.id ? { ...item, isFeatured: product.isFeatured } : item,
         ),
       )
-      toast({ title: t('error'), description: t('failedToUpdate'), variant: 'destructive' })
+      toast({
+        title: t('error'),
+        description: getApiErrorMessage(error, locale, t('failedToUpdate')),
+        variant: 'destructive',
+      })
     } finally {
       setBusyProductIds((prev) => {
         const next = new Set(prev)
@@ -249,7 +266,11 @@ export default function ProductsPage() {
       setSelectedProducts([])
       fetchProducts({ withLoading: false })
     } catch (error) {
-      toast({ title: t('error'), description: t('failedToDelete'), variant: 'destructive' })
+      toast({
+        title: t('error'),
+        description: getApiErrorMessage(error, locale, t('failedToDelete')),
+        variant: 'destructive',
+      })
     }
   }
 
@@ -269,7 +290,11 @@ export default function ProductsPage() {
       setSelectedProducts([])
       fetchProducts({ withLoading: false })
     } catch (error) {
-      toast({ title: t('error'), description: t('failedToUpdate'), variant: 'destructive' })
+      toast({
+        title: t('error'),
+        description: getApiErrorMessage(error, locale, t('failedToUpdate')),
+        variant: 'destructive',
+      })
       fetchProducts({ withLoading: false })
     }
   }

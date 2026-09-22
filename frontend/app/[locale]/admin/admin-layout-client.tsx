@@ -22,7 +22,7 @@ import {
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { AccountModal } from '@/components/admin/AccountModal'
 import Logo from '@/components/Logo'
 import { Button } from '@/components/ui/button'
@@ -52,6 +52,28 @@ export default function AdminLayoutClient({ children }: AdminLayoutProps) {
 
   const switchLocale = locale === 'vi' ? 'en' : 'vi'
   const newPath = pathname.replace(`/${locale}`, `/${switchLocale}`)
+
+  const mainRef = useRef<HTMLElement>(null)
+
+  // Lock window scrolling and ensure window scroll is at 0 while in admin layout
+  useEffect(() => {
+    window.scrollTo(0, 0)
+    const prevHtmlOverflow = document.documentElement.style.overflow
+    const prevBodyOverflow = document.body.style.overflow
+    document.documentElement.style.overflow = 'hidden'
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.documentElement.style.overflow = prevHtmlOverflow
+      document.body.style.overflow = prevBodyOverflow
+    }
+  }, [])
+
+  // Reset internal main scroll container to top whenever pathname changes
+  useEffect(() => {
+    mainRef.current?.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+    window.scrollTo(0, 0)
+  }, [pathname])
 
   // Initialize desktop collapsed state from localStorage
   useEffect(() => {
@@ -178,7 +200,7 @@ export default function AdminLayoutClient({ children }: AdminLayoutProps) {
   const userInitial = user?.fullName ? user.fullName.charAt(0).toUpperCase() : 'U'
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-background text-foreground">
+    <div className="fixed inset-0 z-0 flex overflow-hidden bg-background text-foreground">
       {/* Mobile Top Bar */}
       <div className="fixed left-0 right-0 top-0 z-30 flex h-16 items-center justify-between border-b bg-background/95 px-4 backdrop-blur-md md:hidden">
         <div className="flex min-w-0 items-center gap-2">
@@ -430,7 +452,7 @@ export default function AdminLayoutClient({ children }: AdminLayoutProps) {
       )}
 
       {/* Main Content Area - Scrollable Independently */}
-      <main className="h-full min-w-0 flex-1 overflow-y-auto overflow-x-hidden pt-16 md:pt-0">
+      <main ref={mainRef} className="h-full min-w-0 flex-1 overflow-y-auto overflow-x-hidden pt-16 md:pt-0">
         <div className="mx-auto min-w-0 max-w-7xl p-4 sm:p-6 md:p-8">{children}</div>
       </main>
 

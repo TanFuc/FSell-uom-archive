@@ -11,7 +11,7 @@ import {
   Shield,
   User as UserIcon,
 } from 'lucide-react'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { useEffect, useState, useCallback } from 'react'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
@@ -98,6 +98,7 @@ function extractBackendMessages(error: unknown): string[] {
 }
 
 export default function UsersPage() {
+  const locale = useLocale()
   const t = useTranslations('admin')
   const { toast } = useToast()
   const { user: currentUser } = useAuthStore()
@@ -136,7 +137,7 @@ export default function UsersPage() {
       console.error('Failed to fetch users:', error)
       toast({
         title: t('error'),
-        description: 'Failed to load users',
+        description: locale === 'vi' ? 'Không thể tải danh sách người dùng' : 'Failed to load users',
         variant: 'destructive',
       })
     } finally {
@@ -202,7 +203,7 @@ export default function UsersPage() {
           updateData.password = data.password
         }
         await api.updateUser(editingUser.id, updateData)
-        toast({ title: t('success'), description: 'User updated' })
+        toast({ title: t('success'), description: t('userUpdated') })
       } else {
         await api.createUser({
           email: data.email,
@@ -210,7 +211,7 @@ export default function UsersPage() {
           password: data.password!,
           role: data.role,
         })
-        toast({ title: t('success'), description: 'User created' })
+        toast({ title: t('success'), description: t('userCreated') })
       }
       setDialogOpen(false)
       fetchUsers()
@@ -251,7 +252,7 @@ export default function UsersPage() {
       if (!hasFieldError) {
         toast({
           title: t('error'),
-          description: messages[0] || 'Failed to save user',
+          description: messages[0] || t('failedToSaveUser'),
           variant: 'destructive',
         })
       }
@@ -263,10 +264,10 @@ export default function UsersPage() {
 
     try {
       await api.deleteUser(deleteDialog.user.id)
-      toast({ title: t('success'), description: 'User deleted' })
+      toast({ title: t('success'), description: t('userDeleted') })
       fetchUsers()
     } catch (error) {
-      toast({ title: t('error'), description: 'Failed to delete', variant: 'destructive' })
+      toast({ title: t('error'), description: t('failedToDelete'), variant: 'destructive' })
     } finally {
       setDeleteDialog({ open: false, user: null })
     }
@@ -275,10 +276,10 @@ export default function UsersPage() {
   const handleRestore = async (user: User) => {
     try {
       await api.restoreUser(user.id)
-      toast({ title: t('success'), description: 'User restored' })
+      toast({ title: t('success'), description: t('userRestored') })
       fetchUsers()
     } catch (error) {
-      toast({ title: t('error'), description: 'Failed to restore', variant: 'destructive' })
+      toast({ title: t('error'), description: t('failedToRestore'), variant: 'destructive' })
     }
   }
 
