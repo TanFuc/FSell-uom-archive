@@ -152,12 +152,16 @@ export default function OrderTrackingDetailPage() {
           </div>
 
           <OrderTrackingTimeline
+            orderId={order.orderNumber || order.id}
+            sapoOrderId={order.sapoOrderId}
             status={order.status}
             trackingNumber={order.trackingNumber}
             trackingCompany={order.trackingCompany}
             trackingUrl={order.trackingUrl}
             createdAt={order.createdAt}
             updatedAt={order.updatedAt}
+            onSyncTracking={handleSyncTracking}
+            isSyncing={syncing}
           />
         </div>
 

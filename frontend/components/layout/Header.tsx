@@ -623,7 +623,7 @@ export function Header() {
               <Link
                 href={`/${locale}`}
                 className={cn(
-                  'whitespace-nowrap font-playfair font-bold tracking-tighter transition-all duration-300 hover:opacity-80',
+                  'truncate max-w-[180px] sm:max-w-none font-playfair font-bold tracking-tighter transition-all duration-300 hover:opacity-80',
                   isScrolled ? 'text-lg sm:text-xl lg:text-3xl' : 'text-xl sm:text-2xl lg:text-4xl',
                 )}
                 tabIndex={0}
@@ -633,8 +633,8 @@ export function Header() {
               </Link>
             </div>
 
-            {/* Right Socials + Search + Lang */}
-            <div className="flex w-auto shrink-0 items-center justify-end gap-3 lg:w-1/3 lg:gap-8">
+            {/* Right Socials + Search + Cart + Auth + Lang */}
+            <div className="flex w-auto shrink-0 items-center justify-end gap-2 sm:gap-3.5 lg:w-1/3 lg:gap-7">
               {/* Desktop Socials */}
               <div className="mr-2 hidden items-center gap-5 lg:flex">
                 {socialLinks?.instagramUsername && (
@@ -665,7 +665,7 @@ export function Header() {
                 onClick={() => {
                   showSearch ? closeSearchPanel() : openSearchPanel()
                 }}
-                className="flex items-center gap-2 py-1 outline-none"
+                className="flex items-center gap-1.5 p-1 outline-none transition-opacity hover:opacity-60"
                 aria-label={showSearch ? t('closeSearch') : t('openSearch')}
               >
                 {showSearch ? (
@@ -687,10 +687,12 @@ export function Header() {
                     setIsCartOpen(true)
                   }
                 }}
-                className="flex items-center gap-1.5 py-1 outline-none transition-opacity hover:opacity-60"
+                className="flex items-center gap-1.5 p-1 outline-none transition-opacity hover:opacity-60 relative"
                 aria-label="Giỏ hàng"
               >
-                <ShoppingBag className="h-5 w-5 lg:h-6 lg:w-6" />
+                <div className="relative flex items-center justify-center">
+                  <ShoppingBag className="h-5 w-5 lg:h-6 lg:w-6" />
+                </div>
                 <span className="hidden text-xs font-bold uppercase leading-none tracking-widest lg:inline">
                   {locale === 'vi' ? 'Giỏ hàng' : 'Cart'}
                 </span>
@@ -698,19 +700,19 @@ export function Header() {
 
               {/* Customer Account Button */}
               {isAuthenticated ? (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 sm:gap-2">
                   <Link
                     href={`/${locale}/my-orders`}
-                    className="flex items-center gap-1.5 text-xs font-bold uppercase leading-none tracking-widest hover:text-[#8C7E6A] transition-colors"
+                    className="flex items-center gap-1 p-1 text-xs font-bold uppercase leading-none tracking-widest hover:text-[#8C7E6A] transition-colors"
                   >
-                    <UserIcon className="h-4 w-4" />
+                    <UserIcon className="h-4 w-4 sm:h-5 sm:w-5" />
                     <span className="hidden md:inline">
                       {customer?.fullName?.split(' ').slice(-1)[0] || 'Tài khoản'}
                     </span>
                   </Link>
                   <button
                     onClick={customerLogout}
-                    className="text-[9px] uppercase tracking-wider text-foreground/40 hover:text-foreground"
+                    className="hidden sm:inline text-[9px] uppercase tracking-wider text-foreground/40 hover:text-foreground"
                     title="Đăng xuất"
                   >
                     (Thoát)
@@ -719,9 +721,9 @@ export function Header() {
               ) : (
                 <button
                   onClick={() => openAuthModal('Đăng nhập tài khoản khách hàng')}
-                  className="flex items-center gap-1.5 py-1 text-xs font-bold uppercase leading-none tracking-widest transition-opacity hover:opacity-60"
+                  className="flex items-center gap-1 p-1 text-xs font-bold uppercase leading-none tracking-widest transition-opacity hover:opacity-60"
                 >
-                  <UserIcon className="h-4 w-4 lg:h-5 lg:w-5" />
+                  <UserIcon className="h-4 w-4 sm:h-5 sm:w-5" />
                   <span className="hidden md:inline">
                     {locale === 'vi' ? 'Đăng nhập' : 'Login'}
                   </span>
@@ -730,7 +732,7 @@ export function Header() {
 
               <Link
                 href={newPath}
-                className="flex h-full items-center text-xs font-bold uppercase leading-none tracking-widest lg:text-sm"
+                className="flex h-full items-center p-1 text-xs font-bold uppercase leading-none tracking-widest lg:text-sm shrink-0"
                 aria-label={locale === 'vi' ? 'Switch to English' : 'Chuyển sang Tiếng Việt'}
               >
                 {switchLocale}

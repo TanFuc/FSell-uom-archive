@@ -634,6 +634,7 @@ class ApiClient {
 
   async checkoutOrder(data: {
     cartId: string
+    itemIds?: string[]
     customerEmail: string
     customerName: string
     phoneNumber: string

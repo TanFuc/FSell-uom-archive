@@ -2,7 +2,16 @@
 
 import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight } from 'lucide-react'
+import {
+  X,
+  Trash2,
+  Plus,
+  Minus,
+  ShoppingBag,
+  ArrowRight,
+  CheckSquare,
+  Square,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { api } from '@/lib/api'
 import { useCustomerStore } from '@/lib/customer-store'
@@ -16,6 +25,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const { isAuthenticated, openAuthModal } = useCustomerStore()
   const [cart, setCart] = useState<any>(null)
   const [loading, setLoading] = useState(false)
+  const [selectedItemIds, setSelectedItemIds] = useState<string[]>([])
 
   const fetchCart = async () => {
     if (!isAuthenticated) return
@@ -41,6 +51,35 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
     }
   }, [isOpen, isAuthenticated])
 
+  // Tự động chọn tất cả sản phẩm khi tải giỏ hàng lần đầu hoặc bảo toàn mục đang chọn
+  useEffect(() => {
+    if (cart?.items) {
+      const validIds = new Set(cart.items.map((i: any) => i.id))
+      setSelectedItemIds((prev) => {
+        if (prev.length === 0) {
+          return cart.items.map((i: any) => i.id)
+        }
+        const remaining = prev.filter((id) => validIds.has(id))
+        return remaining.length > 0 ? remaining : cart.items.map((i: any) => i.id)
+      })
+    }
+  }, [cart])
+
+  const toggleSelectItem = (id: string) => {
+    setSelectedItemIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
+    )
+  }
+
+  const toggleSelectAll = () => {
+    const items = cart?.items || []
+    if (selectedItemIds.length === items.length) {
+      setSelectedItemIds([])
+    } else {
+      setSelectedItemIds(items.map((i: any) => i.id))
+    }
+  }
+
   const handleUpdateQuantity = async (cartItemId: string, currentQty: number, delta: number) => {
     const newQty = currentQty + delta
     try {
@@ -64,10 +103,14 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   if (!isOpen) return null
 
   const items = cart?.items || []
-  const subtotal = items.reduce(
+  const selectedItems = items.filter((item: any) => selectedItemIds.includes(item.id))
+  const subtotal = selectedItems.reduce(
     (sum: number, item: any) => sum + item.priceVND * item.quantity,
     0,
   )
+
+  const checkoutHref =
+    selectedItemIds.length > 0 ? `/checkout?items=${selectedItemIds.join(',')}` : '#'
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
@@ -81,20 +124,43 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
       <div className="absolute inset-y-0 right-0 max-w-full flex pl-10">
         <div className="w-screen max-w-md bg-[#F9F7F1] border-l border-[#ECE8DF] shadow-2xl flex flex-col">
           {/* Header */}
-          <div className="px-6 py-4 border-b border-[#ECE8DF] flex items-center justify-between bg-white/70">
-            <div className="flex items-center gap-2">
-              <ShoppingBag className="w-4 h-4 text-[#8C7E6A]" />
-              <h2 className="font-serif text-sm uppercase tracking-[0.2em] font-semibold text-[#4A4238]">
+          <div className="px-6 py-4 border-b border-[#ECE8DF] flex items-center justify-between bg-[#F9F7F1]/95 backdrop-blur-sm sticky top-0 z-10">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <ShoppingBag className="w-4 h-4 text-[#8C7E6A] shrink-0" />
+              <h2 className="font-serif text-xs sm:text-sm uppercase tracking-[0.2em] font-semibold text-[#4A4238] truncate">
                 Giỏ hàng của bạn ({items.length})
               </h2>
             </div>
             <button
               onClick={onClose}
-              className="p-1 -mr-1 text-stone-400 hover:text-[#4A4238] transition-colors"
+              className="p-1.5 -mr-1 text-stone-400 hover:text-[#4A4238] hover:bg-stone-200/50 rounded-full transition-colors shrink-0"
+              aria-label="Đóng"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
+
+          {/* Select all bar (chỉ hiển thị khi có sản phẩm) */}
+          {items.length > 0 && (
+            <div className="px-6 py-2.5 bg-white/70 border-b border-[#ECE8DF] flex items-center justify-between text-xs">
+              <button
+                type="button"
+                onClick={toggleSelectAll}
+                className="flex items-center gap-2 text-stone-700 hover:text-[#4A4238] font-medium transition-colors"
+              >
+                {selectedItemIds.length === items.length && items.length > 0 ? (
+                  <CheckSquare className="w-4 h-4 text-[#8C7E6A]" />
+                ) : (
+                  <Square className="w-4 h-4 text-stone-400" />
+                )}
+                <span>Chọn tất cả ({items.length})</span>
+              </button>
+
+              <span className="text-[11px] text-[#8C7E6A] font-medium font-mono">
+                Đã chọn: {selectedItemIds.length}/{items.length}
+              </span>
+            </div>
+          )}
 
           {/* Items List */}
           <div className="flex-1 overflow-y-auto p-6 divide-y divide-[#F0EDE6]">
@@ -103,98 +169,151 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 <div className="w-6 h-6 border-2 border-[#8C7E6A] border-t-transparent rounded-full animate-spin" />
               </div>
             ) : items.length === 0 ? (
-              <div className="h-64 flex flex-col items-center justify-center text-center">
-                <ShoppingBag className="w-10 h-10 text-stone-300 stroke-[1.2] mb-3" />
-                <p className="font-serif text-xs uppercase tracking-wider text-stone-600 mb-1">
-                  Giỏ hàng chưa có sản phẩm
-                </p>
-                <p className="text-[11px] text-stone-400">
-                  Hãy khám phá bộ sưu tập gốm thủ công của chúng tôi.
-                </p>
+              <div className="h-full min-h-[300px] flex flex-col items-center justify-center text-center p-6 space-y-4">
+                <div className="w-16 h-16 rounded-full bg-white border border-[#ECE8DF] flex items-center justify-center shadow-xs">
+                  <ShoppingBag className="w-7 h-7 text-[#8C7E6A] stroke-[1.2]" />
+                </div>
+                <div className="space-y-1">
+                  <p className="font-serif text-sm uppercase tracking-wider font-medium text-[#4A4238]">
+                    Giỏ hàng chưa có sản phẩm
+                  </p>
+                  <p className="text-xs text-stone-400 max-w-xs leading-relaxed">
+                    Hãy khám phá bộ sưu tập gốm thủ công độc bản của chúng tôi để chọn tác phẩm ưng ý.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="mt-2 px-5 py-2.5 bg-[#4A4238] text-white hover:bg-[#8C7E6A] text-xs uppercase tracking-widest font-medium transition-all"
+                >
+                  Khám phá cửa hàng
+                </button>
               </div>
             ) : (
-              items.map((item: any) => (
-                <div key={item.id} className="py-4 flex gap-4 first:pt-0 last:pb-0">
-                  {/* Image */}
-                  <div className="w-16 h-16 bg-white border border-[#ECE8DF] overflow-hidden shrink-0">
-                    {item.product?.images?.[0] ? (
-                      <img
-                        src={item.product.images[0]}
-                        alt={item.product.nameVi}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-[10px] text-stone-400">
-                        No pic
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Info */}
-                  <div className="flex-1 min-w-0 flex flex-col justify-between">
-                    <div>
-                      <h4 className="text-xs font-medium text-[#4A4238] truncate">
-                        {item.product?.nameVi}
-                      </h4>
-                      <p className="font-mono text-xs font-semibold text-[#8C7E6A] mt-0.5">
-                        {Number(item.priceVND).toLocaleString('vi-VN')} ₫
-                      </p>
-                    </div>
-
-                    {/* Quantity controls */}
-                    <div className="flex items-center justify-between mt-2">
-                      <div className="flex items-center border border-[#D5CFC4] bg-white">
-                        <button
-                          onClick={() => handleUpdateQuantity(item.id, item.quantity, -1)}
-                          className="p-1 text-stone-500 hover:text-[#4A4238] transition-colors"
-                        >
-                          <Minus className="w-3 h-3" />
-                        </button>
-                        <span className="font-mono text-xs px-2 min-w-[24px] text-center font-medium">
-                          {item.quantity}
-                        </span>
-                        <button
-                          onClick={() => handleUpdateQuantity(item.id, item.quantity, 1)}
-                          className="p-1 text-stone-500 hover:text-[#4A4238] transition-colors"
-                        >
-                          <Plus className="w-3 h-3" />
-                        </button>
-                      </div>
-
+              items.map((item: any) => {
+                const isSelected = selectedItemIds.includes(item.id)
+                return (
+                  <div
+                    key={item.id}
+                    className={`py-4 flex gap-3 transition-opacity ${
+                      isSelected ? 'opacity-100' : 'opacity-55'
+                    }`}
+                  >
+                    {/* Checkbox chọn sản phẩm */}
+                    <div className="pt-5 shrink-0">
                       <button
-                        onClick={() => handleRemoveItem(item.id)}
-                        className="p-1 text-stone-400 hover:text-red-600 transition-colors"
-                        title="Xóa khỏi giỏ"
+                        type="button"
+                        onClick={() => toggleSelectItem(item.id)}
+                        className="p-1 focus:outline-none hover:scale-105 transition-transform"
+                        title={isSelected ? 'Bỏ chọn' : 'Chọn đặt hàng'}
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        {isSelected ? (
+                          <CheckSquare className="w-4 h-4 text-[#8C7E6A]" />
+                        ) : (
+                          <Square className="w-4 h-4 text-stone-400" />
+                        )}
                       </button>
                     </div>
+
+                    {/* Ảnh sản phẩm */}
+                    <div className="w-16 h-16 bg-white border border-[#ECE8DF] overflow-hidden shrink-0 rounded-xs">
+                      {item.product?.images?.[0] ? (
+                        <img
+                          src={item.product.images[0]}
+                          alt={item.product.nameVi}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-[10px] text-stone-400">
+                          Chưa có ảnh
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Thông tin sản phẩm */}
+                    <div className="flex-1 min-w-0 flex flex-col justify-between">
+                      <div>
+                        <h4 className="text-xs font-medium text-[#4A4238] truncate" title={item.product?.nameVi}>
+                          {item.product?.nameVi}
+                        </h4>
+                        <p className="font-mono text-xs font-semibold text-[#8C7E6A] mt-0.5">
+                          {Number(item.priceVND).toLocaleString('vi-VN')} ₫
+                        </p>
+                      </div>
+
+                      {/* Nút chỉnh số lượng & Xóa */}
+                      <div className="flex items-center justify-between mt-2">
+                        <div className="flex items-center border border-[#D5CFC4] bg-white rounded-xs">
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateQuantity(item.id, item.quantity, -1)}
+                            className="p-1 text-stone-500 hover:text-[#4A4238] transition-colors"
+                          >
+                            <Minus className="w-3 h-3" />
+                          </button>
+                          <span className="font-mono text-xs px-2 min-w-[24px] text-center font-medium">
+                            {item.quantity}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateQuantity(item.id, item.quantity, 1)}
+                            className="p-1 text-stone-500 hover:text-[#4A4238] transition-colors"
+                          >
+                            <Plus className="w-3 h-3" />
+                          </button>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveItem(item.id)}
+                          className="p-1 text-stone-400 hover:text-red-600 transition-colors"
+                          title="Xóa khỏi giỏ"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))
+                )
+              })
             )}
           </div>
 
           {/* Footer Checkout */}
           {items.length > 0 && (
-            <div className="p-6 border-t border-[#ECE8DF] bg-white/70 space-y-4">
+            <div className="p-6 border-t border-[#ECE8DF] bg-white/80 space-y-4">
               <div className="flex justify-between items-baseline text-xs">
-                <span className="uppercase tracking-wider text-stone-500 font-medium">
-                  Tổng tiền tạm tính
-                </span>
+                <div className="flex flex-col">
+                  <span className="uppercase tracking-wider text-stone-500 font-medium">
+                    Tổng tiền tạm tính
+                  </span>
+                  <span className="text-[10px] text-stone-400">
+                    ({selectedItemIds.length} sản phẩm được chọn)
+                  </span>
+                </div>
                 <span className="font-mono text-base font-semibold text-[#8C7E6A]">
                   {subtotal.toLocaleString('vi-VN')} ₫
                 </span>
               </div>
 
-              <Link
-                href="/checkout"
-                onClick={onClose}
-                className="w-full py-3.5 px-4 bg-[#4A4238] text-white hover:bg-[#8C7E6A] transition-colors uppercase tracking-[0.25em] text-xs font-medium text-center shadow-sm flex items-center justify-center gap-2"
-              >
-                <span>Tiến hành đặt hàng</span>
-                <ArrowRight className="w-4 h-4" />
-              </Link>
+              {selectedItemIds.length > 0 ? (
+                <Link
+                  href={checkoutHref}
+                  onClick={onClose}
+                  className="w-full py-3.5 px-4 bg-[#4A4238] text-white hover:bg-[#8C7E6A] transition-colors uppercase tracking-[0.25em] text-xs font-medium text-center shadow-sm flex items-center justify-center gap-2"
+                >
+                  <span>Tiến hành đặt hàng ({selectedItemIds.length})</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  disabled
+                  className="w-full py-3.5 px-4 bg-stone-300 text-stone-500 cursor-not-allowed uppercase tracking-[0.25em] text-xs font-medium text-center flex items-center justify-center gap-2"
+                >
+                  <span>Vui lòng chọn sản phẩm</span>
+                </button>
+              )}
             </div>
           )}
         </div>

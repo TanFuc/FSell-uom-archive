@@ -4,6 +4,10 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
+import { ShoppingBag, Check } from 'lucide-react'
+import { toast } from 'sonner'
+import { api } from '@/lib/api'
+import { useCustomerStore } from '@/lib/customer-store'
 import { useExchangeRate } from '@/hooks/use-settings'
 import { getDisplayPrice } from '@/lib/currency'
 import type { Product } from '@/lib/types'
@@ -18,16 +22,53 @@ interface ProductCardProps {
 export function ProductCard({ product, locale, priority }: ProductCardProps) {
   const t = useTranslations('admin')
   const { data: exchangeRate } = useExchangeRate({ enabled: locale === 'en' })
+  const { isAuthenticated, openAuthModal } = useCustomerStore()
   const name = locale === 'vi' ? product.nameVi : product.nameEn
   const productHref = `/${locale}/shop/${product.slug}`
   const hasImages = product.images && product.images.length > 0
   const mainImage = hasImages ? product.images[0] : null
   const hoverImage = product.hoverImage
   const [shouldLoadHoverImage, setShouldLoadHoverImage] = useState(false)
+  const [isAdding, setIsAdding] = useState(false)
+  const [isAdded, setIsAdded] = useState(false)
   const anchorLabel =
     locale === 'vi' ? `San pham gom su thu cong: ${name}` : `Handcrafted ceramic product: ${name}`
 
   const priceDisplay = getDisplayPrice(product, locale, exchangeRate?.rate)
+
+  const handleQuickAddToCart = async (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+
+    if (!isAuthenticated) {
+      openAuthModal('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng')
+      return
+    }
+
+    if (isAdding) return
+    setIsAdding(true)
+    try {
+      await api.addToCart(product.id, 1)
+      setIsAdded(true)
+      toast.success(
+        locale === 'vi'
+          ? `Đã thêm vào giỏ hàng: ${name}`
+          : `Added to cart: ${name}`,
+      )
+      setTimeout(() => setIsAdded(false), 2000)
+    } catch (err: any) {
+      if (err?.response?.status === 401) {
+        openAuthModal('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại')
+      } else {
+        toast.error(
+          err?.response?.data?.message ||
+            (locale === 'vi' ? 'Không thể thêm sản phẩm' : 'Failed to add to cart'),
+        )
+      }
+    } finally {
+      setIsAdding(false)
+    }
+  }
 
   return (
     <Link
@@ -102,6 +143,27 @@ export function ProductCard({ product, locale, priority }: ProductCardProps) {
             <span>{locale === 'vi' ? 'Nổi bật' : 'Featured'}</span>
           </div>
         )}
+
+        {/* Nút Thêm nhanh vào giỏ hàng (Quick Add to Cart) */}
+        <button
+          type="button"
+          onClick={handleQuickAddToCart}
+          disabled={isAdding}
+          aria-label={locale === 'vi' ? 'Thêm nhanh vào giỏ hàng' : 'Quick add to cart'}
+          title={locale === 'vi' ? 'Thêm nhanh vào giỏ hàng' : 'Quick add to cart'}
+          className={cn(
+            'absolute bottom-2.5 right-2.5 z-20 flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-white/95 text-[#4A4238] shadow-[0_2px_10px_rgba(0,0,0,0.12)] backdrop-blur-md transition-all duration-300 hover:bg-[#4A4238] hover:text-white hover:scale-110 active:scale-95 sm:opacity-0 sm:translate-y-2 group-hover:opacity-100 group-hover:translate-y-0',
+            isAdded && 'bg-[#8C7E6A] text-white opacity-100 translate-y-0',
+          )}
+        >
+          {isAdding ? (
+            <div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+          ) : isAdded ? (
+            <Check className="h-3.5 w-3.5" />
+          ) : (
+            <ShoppingBag className="h-3.5 w-3.5" />
+          )}
+        </button>
       </div>
       <div className="mt-3 space-y-1">
         <h3

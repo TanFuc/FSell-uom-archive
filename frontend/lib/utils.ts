@@ -73,6 +73,22 @@ function getPublicImageBaseUrl(): string {
 export function normalizePublicImageUrl(path: string): string {
   if (!path) return path
 
+  // Protocol-relative URL (e.g. //bizweb.dktcdn.net/...)
+  if (path.startsWith('//')) {
+    return `https:${path}`
+  }
+
+  // Local uploads served by backend server
+  if (path.startsWith('/uploads/') || path.startsWith('uploads/')) {
+    const apiBase = (
+      process.env.NEXT_PUBLIC_API_BASE_URL ||
+      process.env.NEXT_PUBLIC_API_URL ||
+      'http://localhost:3006'
+    ).replace(/\/$/, '')
+    const cleanPath = path.startsWith('/') ? path : `/${path}`
+    return `${apiBase}${cleanPath}`
+  }
+
   const imageBaseUrl = getPublicImageBaseUrl()
 
   if (/^https?:\/\//i.test(path)) {

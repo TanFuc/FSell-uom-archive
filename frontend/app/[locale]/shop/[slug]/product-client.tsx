@@ -290,8 +290,12 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
     setAddingToCart(true)
     try {
       await api.addToCart(product.id, qty)
-      toast.success('Đã thêm sản phẩm vào giỏ hàng thành công!')
-      setIsCartDrawerOpen(true)
+      toast.success('Đã thêm sản phẩm vào giỏ hàng!', {
+        action: {
+          label: 'Xem giỏ',
+          onClick: () => setIsCartDrawerOpen(true),
+        },
+      })
     } catch (err: any) {
       if (err?.response?.status === 401) {
         openAuthModal('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại', () => {
