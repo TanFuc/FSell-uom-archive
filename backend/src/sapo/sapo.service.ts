@@ -164,4 +164,182 @@ export class SapoService {
       return null
     }
   }
+
+  // ==============================================================================
+  // SAPO WEBHOOK MANAGEMENT APIS (CRUD & Batch Register)
+  // ==============================================================================
+
+  /**
+   * Lấy danh sách tất cả các Webhook đã đăng ký trên Sapo: GET /admin/webhooks.json
+   */
+  async getWebhooks(params?: {
+    topic?: string
+    address?: string
+    limit?: number
+    page?: number
+    since_id?: string | number
+    created_on_min?: string
+    created_on_max?: string
+    modified_on_min?: string
+    modified_on_max?: string
+    fields?: string
+  }): Promise<any[]> {
+    try {
+      const response = await this.client.get('/webhooks.json', { params })
+      return response.data?.webhooks || []
+    } catch (error: any) {
+      this.logger.error('Lỗi khi lấy danh sách Webhooks từ Sapo', error?.response?.data || error.message)
+      return []
+    }
+  }
+
+  /**
+   * Lấy tổng số Webhook trên Sapo: GET /admin/webhooks/count.json
+   */
+  async getWebhookCount(params?: { topic?: string; address?: string }): Promise<number> {
+    try {
+      const response = await this.client.get('/webhooks/count.json', { params })
+      return Number(response.data?.count || 0)
+    } catch (error: any) {
+      this.logger.error('Lỗi khi lấy số lượng Webhooks từ Sapo', error?.response?.data || error.message)
+      return 0
+    }
+  }
+
+  /**
+   * Lấy chi tiết 1 Webhook theo Id: GET /admin/webhooks/{id}.json
+   */
+  async getWebhookDetail(id: string | number): Promise<any> {
+    try {
+      const response = await this.client.get(`/webhooks/${id}.json`)
+      return response.data?.webhook || null
+    } catch (error: any) {
+      this.logger.error(`Lỗi khi lấy chi tiết Webhook ID ${id} từ Sapo`, error?.response?.data || error.message)
+      return null
+    }
+  }
+
+  /**
+   * Tạo mới một Webhook trên Sapo: POST /admin/webhooks.json
+   * Topic: orders/create, orders/updated, fulfillments/create, products/update, v.v.
+   */
+  async createWebhook(
+    topic: string,
+    address: string,
+    format: 'json' | 'xml' = 'json',
+  ): Promise<any> {
+    try {
+      this.logger.log(`Tạo mới Webhook Sapo: topic=${topic}, address=${address}`)
+      const payload = {
+        webhook: {
+          topic,
+          address,
+          format,
+        },
+      }
+      const response = await this.client.post('/webhooks.json', payload)
+      return response.data?.webhook
+    } catch (error: any) {
+      const errorMsg = error?.response?.data || error.message
+      this.logger.error(`Lỗi khi tạo Webhook [${topic}] trên Sapo`, errorMsg)
+      throw new HttpException(
+        error?.response?.data?.message || `Không thể tạo Webhook ${topic} trên Sapo`,
+        error?.response?.status || HttpStatus.BAD_GATEWAY,
+      )
+    }
+  }
+
+  /**
+   * Cập nhật topic hoặc địa chỉ URI của một Webhook: PUT /admin/webhooks/{id}.json
+   */
+  async updateWebhook(
+    id: string | number,
+    data: { address?: string; topic?: string },
+  ): Promise<any> {
+    try {
+      this.logger.log(`Cập nhật Webhook Sapo ID ${id}`)
+      const payload = {
+        webhook: {
+          id,
+          ...data,
+        },
+      }
+      const response = await this.client.put(`/webhooks/${id}.json`, payload)
+      return response.data?.webhook
+    } catch (error: any) {
+      const errorMsg = error?.response?.data || error.message
+      this.logger.error(`Lỗi khi cập nhật Webhook ID ${id} trên Sapo`, errorMsg)
+      throw new HttpException(
+        error?.response?.data?.message || `Không thể cập nhật Webhook ID ${id} trên Sapo`,
+        error?.response?.status || HttpStatus.BAD_GATEWAY,
+      )
+    }
+  }
+
+  /**
+   * Xóa một Webhook khỏi Sapo: DELETE /admin/webhooks/{id}.json
+   */
+  async deleteWebhook(id: string | number): Promise<boolean> {
+    try {
+      this.logger.log(`Xóa Webhook Sapo ID ${id}`)
+      await this.client.delete(`/webhooks/${id}.json`)
+      return true
+    } catch (error: any) {
+      this.logger.error(`Lỗi khi xóa Webhook ID ${id} trên Sapo`, error?.response?.data || error.message)
+      return false
+    }
+  }
+
+  /**
+   * Đăng ký đồng loạt tất cả các Webhook chuẩn cho hệ thống
+   */
+  async registerAllDefaultWebhooks(webhookAddress: string): Promise<any[]> {
+    const defaultTopics = [
+      'orders/create',
+      'orders/updated',
+      'orders/paid',
+      'orders/cancelled',
+      'orders/fulfilled',
+      'orders/partially_fulfilled',
+      'orders/delete',
+      'fulfillments/create',
+      'fulfillments/update',
+      'products/create',
+      'products/update',
+      'products/delete',
+      'collections/create',
+      'collections/update',
+      'collections/delete',
+      'customers/create',
+      'customers/update',
+      'customers/enable',
+      'customers/disable',
+      'customers/delete',
+      'refunds/create',
+      'order_transactions/create',
+      'store/update',
+      'app/uninstalled',
+    ]
+
+    const existingWebhooks = await this.getWebhooks()
+    const results = []
+
+    for (const topic of defaultTopics) {
+      const exists = existingWebhooks.find(
+        (w: any) => w.topic === topic && w.address === webhookAddress,
+      )
+      if (exists) {
+        results.push({ topic, status: 'already_exists', webhook: exists })
+      } else {
+        try {
+          const created = await this.createWebhook(topic, webhookAddress, 'json')
+          results.push({ topic, status: 'created', webhook: created })
+        } catch (err: any) {
+          results.push({ topic, status: 'failed', error: err.message })
+        }
+      }
+    }
+
+    return results
+  }
 }

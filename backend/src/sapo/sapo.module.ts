@@ -6,10 +6,11 @@ import { SapoService } from './sapo.service'
 import { SapoSyncService } from './sapo-sync.service'
 import { SapoSyncController } from './sapo-sync.controller'
 import { SapoWebhookController } from './sapo-webhook.controller'
+import { SapoWebhookAdminController } from './sapo-webhook-admin.controller'
 
 @Module({
   imports: [PrismaModule, RedisModule, UploadModule],
-  controllers: [SapoSyncController, SapoWebhookController],
+  controllers: [SapoSyncController, SapoWebhookController, SapoWebhookAdminController],
   providers: [SapoService, SapoSyncService],
   exports: [SapoService, SapoSyncService],
 })
