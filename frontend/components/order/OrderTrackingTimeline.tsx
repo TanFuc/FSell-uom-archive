@@ -32,7 +32,7 @@ interface TrackingTimelineProps {
 
 export function OrderTrackingTimeline({
   orderId,
-  sapoOrderId,
+  sapoOrderId: _sapoOrderId,
   status,
   trackingNumber,
   trackingCompany,

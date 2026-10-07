@@ -137,31 +137,36 @@ function CheckoutContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F9F7F1] text-[#4A4238] font-sans pb-24">
-      {/* Khoảng đệm bù chiều cao cho fixed main Header */}
-      <div className="h-20 lg:h-28" />
-
-      {/* Top Header Bar */}
-      <div className="sticky top-20 lg:top-28 z-20 bg-[#F9F7F1]/95 backdrop-blur-md border-b border-[#ECE8DF] px-4 sm:px-8 py-3.5 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Link href="/shop" className="p-1 -ml-1 text-[#4A4238] hover:text-[#8C7E6A] transition-colors">
-            <ArrowLeft className="w-5 h-5" />
+    <div className="min-h-screen bg-[#F9F7F1] text-[#4A4238] font-sans pb-24 pt-24 sm:pt-28 lg:pt-32">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6">
+        {/* Navigation Breadcrumb & Security */}
+        <div className="mb-6 flex items-center justify-between">
+          <Link
+            href="/shop"
+            className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.2em] font-medium text-stone-500 hover:text-[#4A4238] transition-colors"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Tiếp tục mua sắm</span>
           </Link>
-          <div className="border-l border-[#ECE8DF] pl-3">
-            <h1 className="font-serif text-sm uppercase tracking-[0.25em] font-semibold text-[#4A4238]">
-              Thanh toán đơn hàng
-            </h1>
-            <p className="text-[10px] text-stone-400">ƯƠM. Archive Minimalist Ceramic Studio</p>
+          <div className="flex items-center gap-1.5 text-xs text-[#8C7E6A]">
+            <ShieldCheck className="w-4 h-4" />
+            <span className="hidden sm:inline text-[11px] uppercase tracking-wider font-medium">Bảo mật thanh toán COD</span>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 text-xs text-[#8C7E6A]">
-          <ShieldCheck className="w-4 h-4" />
-          <span className="hidden sm:inline text-[11px] uppercase tracking-wider">Bảo mật thanh toán COD</span>
+        {/* Page Header */}
+        <div className="mb-8 pb-6 border-b border-[#ECE8DF]">
+          <span className="text-[10px] uppercase tracking-[0.25em] text-[#8C7E6A] font-semibold block mb-1.5 font-serif">
+            ƯƠM. Archive Minimalist Ceramic Studio
+          </span>
+          <h1 className="text-2xl sm:text-3xl font-serif font-bold tracking-tight text-[#4A4238]">
+            Thanh toán đơn hàng
+          </h1>
+          <p className="text-xs text-stone-500 mt-1 font-light">
+            Vui lòng xác nhận thông tin nhận hàng và phương thức thanh toán
+          </p>
         </div>
-      </div>
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-8">
         <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Cột Trái: Thông tin giao nhận */}
           <div className="lg:col-span-7 space-y-6">

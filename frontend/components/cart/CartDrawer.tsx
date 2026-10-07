@@ -113,28 +113,35 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
     selectedItemIds.length > 0 ? `/checkout?items=${selectedItemIds.join(',')}` : '#'
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden">
+    <div className="fixed inset-0 z-[100] overflow-hidden">
       {/* Backdrop */}
       <div
         onClick={onClose}
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
       />
 
       {/* Drawer Panel */}
       <div className="absolute inset-y-0 right-0 max-w-full flex pl-10">
         <div className="w-screen max-w-md bg-[#F9F7F1] border-l border-[#ECE8DF] shadow-2xl flex flex-col">
           {/* Header */}
-          <div className="px-6 py-4 border-b border-[#ECE8DF] flex items-center justify-between bg-[#F9F7F1]/95 backdrop-blur-sm sticky top-0 z-10">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <ShoppingBag className="w-4 h-4 text-[#8C7E6A] shrink-0" />
-              <h2 className="font-serif text-xs sm:text-sm uppercase tracking-[0.2em] font-semibold text-[#4A4238] truncate">
-                Giỏ hàng của bạn ({items.length})
-              </h2>
+          <div className="px-6 py-5 border-b border-[#ECE8DF] flex items-center justify-between bg-[#F9F7F1]/95 backdrop-blur-md sticky top-0 z-10">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-8 h-8 rounded-full bg-white border border-[#ECE8DF] flex items-center justify-center text-[#8C7E6A] shadow-xs shrink-0">
+                <ShoppingBag className="w-4 h-4" />
+              </div>
+              <div>
+                <h2 className="font-serif text-sm uppercase tracking-[0.2em] font-bold text-[#4A4238] truncate">
+                  Giỏ hàng của bạn
+                </h2>
+                <p className="text-[10px] text-stone-400 font-mono tracking-wider">
+                  {items.length} tác phẩm
+                </p>
+              </div>
             </div>
             <button
               onClick={onClose}
-              className="p-1.5 -mr-1 text-stone-400 hover:text-[#4A4238] hover:bg-stone-200/50 rounded-full transition-colors shrink-0"
-              aria-label="Đóng"
+              className="p-2 text-stone-400 hover:text-[#4A4238] hover:bg-stone-200/50 rounded-full transition-colors shrink-0"
+              aria-label="Đóng giỏ hàng"
             >
               <X className="w-5 h-5" />
             </button>

@@ -35,23 +35,41 @@ export default function MyOrdersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F9F7F1] text-[#4A4238] font-sans pb-20">
-      {/* Khoảng đệm bù chiều cao cho fixed main Header */}
-      <div className="h-20 lg:h-28" />
-
-      {/* Top Header */}
-      <div className="sticky top-20 lg:top-28 z-20 bg-[#F9F7F1]/95 backdrop-blur-md border-b border-[#ECE8DF] px-4 sm:px-8 py-3.5 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Link href="/shop" className="p-1 -ml-1 text-[#4A4238] hover:text-[#8C7E6A] transition-colors">
-            <ArrowLeft className="w-5 h-5" />
+    <div className="min-h-screen bg-[#F9F7F1] text-[#4A4238] font-sans pb-24 pt-24 sm:pt-28 lg:pt-32">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6">
+        {/* Navigation Breadcrumb */}
+        <div className="mb-6">
+          <Link
+            href="/shop"
+            className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.2em] font-medium text-stone-500 hover:text-[#4A4238] transition-colors"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Tiếp tục mua sắm</span>
           </Link>
-          <h1 className="text-sm font-serif uppercase tracking-widest font-semibold">
-            Đơn hàng của tôi
-          </h1>
         </div>
-      </div>
 
-      <div className="max-w-2xl mx-auto px-4 py-6 sm:py-8 space-y-4">
+        {/* Page Header */}
+        <div className="mb-8 pb-6 border-b border-[#ECE8DF] flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <span className="text-[10px] uppercase tracking-[0.25em] text-[#8C7E6A] font-semibold block mb-1.5 font-serif">
+              Tài khoản của bạn
+            </span>
+            <h1 className="text-2xl sm:text-3xl font-serif font-bold tracking-tight text-[#4A4238]">
+              Đơn hàng của tôi
+            </h1>
+            <p className="text-xs text-stone-500 mt-1 font-light">
+              Theo dõi trạng thái đóng gói và hành trình giao nhận đồ gốm của bạn
+            </p>
+          </div>
+          {orders.length > 0 && (
+            <span className="text-xs font-mono text-[#8C7E6A] uppercase tracking-wider">
+              {orders.length} đơn hàng
+            </span>
+          )}
+        </div>
+
+        {/* Orders List Container */}
+        <div className="space-y-4">
         {loading ? (
           <div className="min-h-[50vh] flex flex-col items-center justify-center">
             <div className="w-8 h-8 border-2 border-[#8C7E6A] border-t-transparent rounded-full animate-spin mb-3" />
@@ -116,6 +134,7 @@ export default function MyOrdersPage() {
             )
           })
         )}
+        </div>
       </div>
     </div>
   )
