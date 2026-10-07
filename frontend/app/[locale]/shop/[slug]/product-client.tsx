@@ -1,11 +1,12 @@
 'use client'
 
 import { motion, AnimatePresence, useMotionValue, useSpring } from 'framer-motion'
-import { Instagram, Facebook, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Instagram, Facebook, ArrowLeft, ChevronLeft, ChevronRight, ShoppingBag, Plus, Minus } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useLocale, useTranslations } from 'next-intl'
 import { useRef, useState, useEffect, useCallback } from 'react'
+import { toast } from 'sonner'
 import { ProductCard } from '@/components/ProductCard'
 import { LoadingScreen } from '@/components/ui/loading-screen'
 import { NetworkErrorState } from '@/components/ui/network-error-state'
@@ -15,6 +16,9 @@ import { getDisplayPrice } from '@/lib/currency'
 import { type Product } from '@/lib/types'
 import { optimizeProductImage, cn } from '@/lib/utils'
 import ProductImageLightbox from '@/components/ProductImageLightbox'
+import { api } from '@/lib/api'
+import { useCustomerStore } from '@/lib/customer-store'
+import { CartDrawer } from '@/components/cart/CartDrawer'
 
 interface ProductPageProps {
   params: {
@@ -266,6 +270,40 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
   const cursorYSpring = useSpring(cursorY, springConfig)
   const [isHoveringImage, setIsHoveringImage] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
+
+  // Customer Cart & Auth integration
+  const [quantity, setQuantity] = useState(1)
+  const [addingToCart, setAddingToCart] = useState(false)
+  const [isCartDrawerOpen, setIsCartDrawerOpen] = useState(false)
+  const { isAuthenticated, openAuthModal } = useCustomerStore()
+
+  const handleAddToCart = async (qty = quantity) => {
+    if (!product) return
+
+    if (!isAuthenticated) {
+      openAuthModal('Vui lòng đăng nhập tài khoản để thêm sản phẩm vào giỏ hàng', () => {
+        handleAddToCart(qty)
+      })
+      return
+    }
+
+    setAddingToCart(true)
+    try {
+      await api.addToCart(product.id, qty)
+      toast.success('Đã thêm sản phẩm vào giỏ hàng thành công!')
+      setIsCartDrawerOpen(true)
+    } catch (err: any) {
+      if (err?.response?.status === 401) {
+        openAuthModal('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại', () => {
+          handleAddToCart(qty)
+        })
+      } else {
+        toast.error(err?.response?.data?.message || 'Không thể thêm sản phẩm vào giỏ hàng')
+      }
+    } finally {
+      setAddingToCart(false)
+    }
+  }
 
   const handleMouseMoveCursor = useCallback(
     (e: React.MouseEvent) => {
@@ -580,8 +618,51 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                     </div>
                   </div>
 
+                  {/* Add to Cart Section - Enforcing Login */}
+                  <div className="space-y-3 pt-6 border-t border-foreground/10">
+                    <div className="flex items-center gap-3">
+                      {/* Quantity Selector */}
+                      <div className="flex items-center border border-foreground/20 bg-white">
+                        <button
+                          type="button"
+                          onClick={() => setQuantity((prev) => Math.max(1, prev - 1))}
+                          className="px-3 py-2.5 text-foreground/70 hover:text-foreground transition-colors"
+                          aria-label="Giảm số lượng"
+                        >
+                          <Minus className="w-3.5 h-3.5" />
+                        </button>
+                        <span className="font-mono text-xs px-2 min-w-[28px] text-center font-medium">
+                          {quantity}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setQuantity((prev) => prev + 1)}
+                          className="px-3 py-2.5 text-foreground/70 hover:text-foreground transition-colors"
+                          aria-label="Tăng số lượng"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
+                      {/* Add to Cart Button */}
+                      <button
+                        type="button"
+                        onClick={() => handleAddToCart(quantity)}
+                        disabled={addingToCart}
+                        className="flex-1 py-3 px-6 bg-[#4A4238] text-white hover:bg-[#8C7E6A] transition-colors uppercase tracking-[0.2em] text-xs font-medium flex items-center justify-center gap-2 shadow-sm disabled:opacity-60"
+                      >
+                        <ShoppingBag className="w-4 h-4" />
+                        <span>{addingToCart ? 'Đang thêm...' : 'Thêm vào giỏ hàng'}</span>
+                      </button>
+                    </div>
+
+                    <p className="text-[10px] text-foreground/50 tracking-wider">
+                      * Yêu cầu đăng nhập tài khoản để lưu giỏ hàng và đồng bộ thanh toán.
+                    </p>
+                  </div>
+
                   {/* Inquiry Buttons */}
-                  <div className="space-y-4 pt-6">
+                  <div className="space-y-4 pt-4">
                     <h4 className="text-[9px] font-bold uppercase tracking-[0.3em] text-foreground/40">
                       {t('orderInquiry')}
                     </h4>
@@ -704,6 +785,12 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
           productName={name}
         />
       )}
+
+      {/* Cart Drawer */}
+      <CartDrawer
+        isOpen={isCartDrawerOpen}
+        onClose={() => setIsCartDrawerOpen(false)}
+      />
     </div>
   )
 }

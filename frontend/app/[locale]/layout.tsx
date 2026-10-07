@@ -9,6 +9,7 @@ import { ConditionalLayout } from '@/components/layout/ConditionalLayout'
 import { QueryProvider } from '@/components/providers/QueryProvider'
 import { ConfirmationProvider } from '@/components/providers/ConfirmationProvider'
 import { Toaster } from '@/components/ui/toaster'
+import { CustomerAuthModal } from '@/components/customer/CustomerAuthModal'
 import { locales } from '@/i18n'
 import {
   buildAbsoluteUrl,
@@ -182,6 +183,7 @@ export default async function RootLayout({ children, params: { locale } }: RootL
               <ConditionalLayout>{children}</ConditionalLayout>
               <Toaster />
               <SonnerToaster />
+              <CustomerAuthModal />
             </ConfirmationProvider>
           </QueryProvider>
         </NextIntlClientProvider>
