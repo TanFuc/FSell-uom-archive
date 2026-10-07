@@ -1,9 +1,11 @@
 'use client'
 
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, X, Menu, Instagram, Facebook } from 'lucide-react'
+import { Search, X, Menu, Instagram, Facebook, ShoppingBag, User as UserIcon } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useCustomerStore } from '@/lib/customer-store'
+import { CartDrawer } from '@/components/cart/CartDrawer'
 import { usePathname, useRouter } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 import { useState, useEffect, useLayoutEffect, memo, useMemo, useRef } from 'react'
@@ -134,6 +136,8 @@ export function Header() {
   const [showSearch, setShowSearch] = useState(false)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [isCartOpen, setIsCartOpen] = useState(false)
+  const { customer, isAuthenticated, openAuthModal, logout: customerLogout } = useCustomerStore()
 
   useEffect(() => {
     setMounted(true)
@@ -674,6 +678,56 @@ export function Header() {
                 </span>
               </button>
 
+              {/* Cart Button */}
+              <button
+                onClick={() => {
+                  if (!isAuthenticated) {
+                    openAuthModal('Vui lòng đăng nhập để xem giỏ hàng', () => setIsCartOpen(true))
+                  } else {
+                    setIsCartOpen(true)
+                  }
+                }}
+                className="flex items-center gap-1.5 py-1 outline-none transition-opacity hover:opacity-60"
+                aria-label="Giỏ hàng"
+              >
+                <ShoppingBag className="h-5 w-5 lg:h-6 lg:w-6" />
+                <span className="hidden text-xs font-bold uppercase leading-none tracking-widest lg:inline">
+                  {locale === 'vi' ? 'Giỏ hàng' : 'Cart'}
+                </span>
+              </button>
+
+              {/* Customer Account Button */}
+              {isAuthenticated ? (
+                <div className="flex items-center gap-2">
+                  <Link
+                    href={`/${locale}/my-orders`}
+                    className="flex items-center gap-1.5 text-xs font-bold uppercase leading-none tracking-widest hover:text-[#8C7E6A] transition-colors"
+                  >
+                    <UserIcon className="h-4 w-4" />
+                    <span className="hidden md:inline">
+                      {customer?.fullName?.split(' ').slice(-1)[0] || 'Tài khoản'}
+                    </span>
+                  </Link>
+                  <button
+                    onClick={customerLogout}
+                    className="text-[9px] uppercase tracking-wider text-foreground/40 hover:text-foreground"
+                    title="Đăng xuất"
+                  >
+                    (Thoát)
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => openAuthModal('Đăng nhập tài khoản khách hàng')}
+                  className="flex items-center gap-1.5 py-1 text-xs font-bold uppercase leading-none tracking-widest transition-opacity hover:opacity-60"
+                >
+                  <UserIcon className="h-4 w-4 lg:h-5 lg:w-5" />
+                  <span className="hidden md:inline">
+                    {locale === 'vi' ? 'Đăng nhập' : 'Login'}
+                  </span>
+                </button>
+              )}
+
               <Link
                 href={newPath}
                 className="flex h-full items-center text-xs font-bold uppercase leading-none tracking-widest lg:text-sm"
@@ -1089,6 +1143,9 @@ export function Header() {
           </AnimatePresence>,
           document.body,
         )}
+
+      {/* Global Cart Drawer */}
+      <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
     </>
   )
 }
