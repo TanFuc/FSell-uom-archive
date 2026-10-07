@@ -83,8 +83,11 @@ export default function OrderTrackingDetailPage() {
 
   return (
     <div className="min-h-screen bg-[#F9F7F1] text-[#4A4238] font-sans pb-20">
+      {/* Khoảng đệm bù chiều cao cho fixed main Header */}
+      <div className="h-20 lg:h-28" />
+
       {/* Mobile-first Navigation bar */}
-      <div className="sticky top-0 z-20 bg-[#F9F7F1]/95 backdrop-blur-md border-b border-[#ECE8DF] px-4 sm:px-8 py-3.5 flex items-center justify-between">
+      <div className="sticky top-20 lg:top-28 z-20 bg-[#F9F7F1]/95 backdrop-blur-md border-b border-[#ECE8DF] px-4 sm:px-8 py-3.5 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Link
             href="/shop"
@@ -108,12 +111,12 @@ export default function OrderTrackingDetailPage() {
             {order.status === 'pending'
               ? 'Chờ xác nhận'
               : order.status === 'processing'
-              ? 'Đang chuẩn bị'
-              : order.status === 'shipped'
-              ? 'Đang vận chuyển'
-              : order.status === 'delivered'
-              ? 'Đã giao'
-              : 'Đã hủy'}
+                ? 'Đang chuẩn bị'
+                : order.status === 'shipped'
+                  ? 'Đang vận chuyển'
+                  : order.status === 'delivered'
+                    ? 'Đã giao'
+                    : 'Đã hủy'}
           </span>
         </div>
       </div>
@@ -142,7 +145,7 @@ export default function OrderTrackingDetailPage() {
                 className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium text-[#4A4238] bg-[#FAF8F2] hover:bg-[#F2ECE1] border border-[#ECE8DF] transition-colors disabled:opacity-50"
               >
                 <RefreshCw className={`w-3 h-3 text-[#8C7E6A] ${syncing ? 'animate-spin' : ''}`} />
-                <span>{syncing ? 'Đang kiểm tra...' : 'Cập nhật Sapo'}</span>
+                <span>{syncing ? 'Đang kiểm tra...' : 'Cập nhật'}</span>
               </button>
               <div className="hidden sm:flex items-center gap-1 text-[11px] text-[#8C7E6A]">
                 <ShieldCheck className="w-3.5 h-3.5" />

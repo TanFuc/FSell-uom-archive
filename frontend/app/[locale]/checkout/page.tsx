@@ -138,8 +138,11 @@ function CheckoutContent() {
 
   return (
     <div className="min-h-screen bg-[#F9F7F1] text-[#4A4238] font-sans pb-24">
+      {/* Khoảng đệm bù chiều cao cho fixed main Header */}
+      <div className="h-20 lg:h-28" />
+
       {/* Top Header Bar */}
-      <div className="sticky top-0 z-20 bg-[#F9F7F1]/95 backdrop-blur-md border-b border-[#ECE8DF] px-4 sm:px-8 py-3.5 flex items-center justify-between">
+      <div className="sticky top-20 lg:top-28 z-20 bg-[#F9F7F1]/95 backdrop-blur-md border-b border-[#ECE8DF] px-4 sm:px-8 py-3.5 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Link href="/shop" className="p-1 -ml-1 text-[#4A4238] hover:text-[#8C7E6A] transition-colors">
             <ArrowLeft className="w-5 h-5" />
@@ -275,29 +278,51 @@ function CheckoutContent() {
                 )}
               </div>
 
-              <div className="max-h-64 overflow-y-auto divide-y divide-[#F0EDE6] pr-1">
-                {itemsToCheckout.map((item: any) => (
-                  <div key={item.id} className="py-3 flex items-center justify-between text-xs gap-3">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-12 h-12 bg-[#FAF8F2] border border-[#ECE8DF] overflow-hidden shrink-0">
-                        {item.product?.images?.[0] && (
-                          <img
-                            src={item.product.images[0]}
-                            alt={item.product.nameVi}
-                            className="w-full h-full object-cover"
-                          />
-                        )}
+              <div className="max-h-72 overflow-y-auto divide-y divide-[#F0EDE6] pr-1">
+                {itemsToCheckout.map((item: any) => {
+                  const rawImages = item.product?.images
+                  let itemImg: string | null = null
+                  if (Array.isArray(rawImages) && rawImages.length > 0) {
+                    itemImg = typeof rawImages[0] === 'string' ? rawImages[0] : rawImages[0]?.src || null
+                  } else if (typeof rawImages === 'string') {
+                    try {
+                      const parsed = JSON.parse(rawImages)
+                      if (Array.isArray(parsed) && parsed.length > 0) itemImg = parsed[0]
+                    } catch {
+                      itemImg = rawImages
+                    }
+                  }
+                  if (!itemImg && item.product?.hoverImage) {
+                    itemImg = item.product.hoverImage
+                  }
+
+                  return (
+                    <div key={item.id} className="py-3 flex items-center justify-between text-xs gap-3">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className="w-12 h-12 bg-[#FAF8F2] border border-[#ECE8DF] overflow-hidden shrink-0 flex items-center justify-center">
+                          {itemImg ? (
+                            <img
+                              src={itemImg}
+                              alt={item.product?.nameVi || 'Sản phẩm'}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <ShoppingBag className="w-4 h-4 text-stone-300" />
+                          )}
+                        </div>
+                        <div className="min-w-0 pr-2">
+                          <p className="font-medium text-[#4A4238] truncate" title={item.product?.nameVi}>
+                            {item.product?.nameVi}
+                          </p>
+                          <p className="text-stone-400 text-[11px] mt-0.5">SL: {item.quantity}</p>
+                        </div>
                       </div>
-                      <div className="min-w-0">
-                        <p className="font-medium text-[#4A4238] truncate">{item.product?.nameVi}</p>
-                        <p className="text-stone-400 text-[11px]">SL: {item.quantity}</p>
+                      <div className="font-mono text-stone-800 font-medium shrink-0 whitespace-nowrap text-right pl-2">
+                        {(item.priceVND * item.quantity).toLocaleString('vi-VN')} ₫
                       </div>
                     </div>
-                    <div className="font-mono text-stone-800 font-medium shrink-0">
-                      {(item.priceVND * item.quantity).toLocaleString('vi-VN')} ₫
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
 
               <div className="border-t border-[#ECE8DF] pt-4 mt-4 space-y-2 text-xs">

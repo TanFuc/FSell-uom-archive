@@ -165,17 +165,22 @@ export class SapoWebhookController {
     }
 
     // 2. Trường hợp HỦY ĐƠN HÀNG: orders/cancelled
-    if (
+    const isCancelled =
       topic === 'orders/cancelled' ||
       orderStatus === 'cancelled' ||
-      financialStatus === 'voided'
-    ) {
+      orderStatus === 'closed' ||
+      Boolean(orderData?.cancel_reason) ||
+      Boolean(orderData?.cancelled_at) ||
+      financialStatus === 'voided' ||
+      (Array.isArray(orderData?.refunds) && orderData.refunds.length > 0 && Number(orderData?.current_total_price || 0) === 0)
+
+    if (isCancelled) {
       if (existingOrder) {
         await this.prisma.order.update({
           where: { id: existingOrder.id },
           data: {
             status: 'cancelled',
-            sapoFinancialStatus: financialStatus || 'voided',
+            sapoFinancialStatus: financialStatus === 'paid' ? 'refunded' : (financialStatus || 'voided'),
             updatedAt: new Date(),
           },
         })

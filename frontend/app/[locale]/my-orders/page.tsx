@@ -36,8 +36,11 @@ export default function MyOrdersPage() {
 
   return (
     <div className="min-h-screen bg-[#F9F7F1] text-[#4A4238] font-sans pb-20">
+      {/* Khoảng đệm bù chiều cao cho fixed main Header */}
+      <div className="h-20 lg:h-28" />
+
       {/* Top Header */}
-      <div className="sticky top-0 z-20 bg-[#F9F7F1]/95 backdrop-blur-md border-b border-[#ECE8DF] px-4 sm:px-8 py-3.5 flex items-center justify-between">
+      <div className="sticky top-20 lg:top-28 z-20 bg-[#F9F7F1]/95 backdrop-blur-md border-b border-[#ECE8DF] px-4 sm:px-8 py-3.5 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Link href="/shop" className="p-1 -ml-1 text-[#4A4238] hover:text-[#8C7E6A] transition-colors">
             <ArrowLeft className="w-5 h-5" />

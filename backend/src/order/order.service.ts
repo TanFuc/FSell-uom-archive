@@ -242,19 +242,48 @@ export class OrderService {
     }
 
     try {
-      // 1. Gọi GET /admin/orders/{id}/fulfillments.json để lấy thông tin giao vận
-      let fulfillments = await this.sapoService.getOrderFulfillments(order.sapoOrderId)
+      // 1. Gọi trực tiếp GET /admin/orders/{id}.json để lấy toàn cảnh trạng thái đơn hàng từ Sapo
+      const sapoOrder = await this.sapoService.getOrderDetail(order.sapoOrderId)
 
-      // 2. Nếu danh sách rỗng, gọi GET /admin/orders/{id}.json để kiểm tra order level
-      let sapoOrder: any = null
-      if (!fulfillments || fulfillments.length === 0) {
-        sapoOrder = await this.sapoService.getOrderDetail(order.sapoOrderId)
-        if (sapoOrder?.fulfillments && sapoOrder.fulfillments.length > 0) {
-          fulfillments = sapoOrder.fulfillments
-        }
+      if (!sapoOrder) {
+        this.logger.warn(`Không tìm thấy đơn hàng Sapo ID #${order.sapoOrderId}`)
+        return order
       }
 
-      // 3. Nếu tìm thấy fulfillment trên Sapo
+      // 2. Kiểm tra nếu đơn hàng đã bị hủy trên Sapo:
+      // Sapo biểu thị đơn hủy bằng status: 'closed' kèm cancel_reason (ví dụ: 'customer'),
+      // hoặc status: 'cancelled', cancelled_at, hoặc refunds toàn bộ.
+      const isCancelled = Boolean(
+        sapoOrder.status === 'cancelled' ||
+        sapoOrder.status === 'closed' ||
+        sapoOrder.cancel_reason ||
+        sapoOrder.cancelled_at ||
+        sapoOrder.financial_status === 'voided' ||
+        (Array.isArray(sapoOrder.refunds) && sapoOrder.refunds.length > 0 && Number(sapoOrder.current_total_price || 0) === 0),
+      )
+
+      if (isCancelled) {
+        const cancelledOrder = await this.prisma.order.update({
+          where: { id: order.id },
+          data: {
+            status: 'cancelled',
+            sapoFinancialStatus: sapoOrder.financial_status === 'paid' ? 'refunded' : 'voided',
+            updatedAt: new Date(),
+          },
+          include: {
+            items: { where: { deletedAt: null } },
+          },
+        })
+        this.logger.log(`Đã đồng bộ trạng thái HỦY từ Sapo cho đơn #${order.orderNumber}`)
+        return cancelledOrder
+      }
+
+      // 3. Trích xuất thông tin giao vận (Fulfillments)
+      let fulfillments = sapoOrder.fulfillments || []
+      if (!fulfillments || fulfillments.length === 0) {
+        fulfillments = await this.sapoService.getOrderFulfillments(order.sapoOrderId)
+      }
+
       if (fulfillments && fulfillments.length > 0) {
         const latestFulfillment =
           fulfillments.find((f: any) => Boolean(f.tracking_number)) ||
@@ -293,6 +322,7 @@ export class OrderService {
                 ? 'cancelled'
                 : 'shipped',
             sapoFulfillmentStatus,
+            sapoFinancialStatus: sapoOrder.financial_status || order.sapoFinancialStatus,
             trackingNumber: trackingNumber || null,
             trackingCompany: trackingCompany || null,
             trackingUrl: trackingUrl || null,
@@ -309,19 +339,23 @@ export class OrderService {
         return updatedOrder
       }
 
-      // 4. Nếu đơn đã bị hủy trên Sapo
-      if (sapoOrder?.status === 'cancelled' || sapoOrder?.cancelled_at) {
-        const cancelledOrder = await this.prisma.order.update({
+      // 4. Nếu đơn chưa có fulfillments nhưng có cập nhật financial_status từ Sapo
+      if (sapoOrder.financial_status && sapoOrder.financial_status !== order.sapoFinancialStatus) {
+        const updatedFinancial = await this.prisma.order.update({
           where: { id: order.id },
           data: {
-            status: 'cancelled',
+            sapoFinancialStatus: sapoOrder.financial_status,
+            status:
+              sapoOrder.financial_status === 'paid' && order.status === 'pending'
+                ? 'processing'
+                : order.status,
             updatedAt: new Date(),
           },
           include: {
             items: { where: { deletedAt: null } },
           },
         })
-        return cancelledOrder
+        return updatedFinancial
       }
     } catch (err: any) {
       this.logger.error(
@@ -410,9 +444,10 @@ export class OrderService {
 
   /**
    * Lấy danh sách đơn hàng của một Customer đã đăng nhập
+   * Tự động đồng bộ trạng thái mới nhất từ Sapo (Hủy, Giao vận, Thanh toán) cho các đơn chưa hoàn thành
    */
   async getCustomerOrders(customerId: string) {
-    return this.prisma.order.findMany({
+    const orders = await this.prisma.order.findMany({
       where: {
         customerId,
         deletedAt: null,
@@ -425,5 +460,26 @@ export class OrderService {
       },
       orderBy: { createdAt: 'desc' },
     })
+
+    // Đồng bộ tức thì các đơn chưa kết thúc từ Sapo
+    const syncedOrders = await Promise.all(
+      orders.map(async (order) => {
+        if (
+          order.sapoOrderId &&
+          order.status !== 'cancelled' &&
+          order.status !== 'delivered'
+        ) {
+          try {
+            const synced = await this.syncOrderFulfillmentFromSapo(order.id)
+            return synced || order
+          } catch {
+            return order
+          }
+        }
+        return order
+      }),
+    )
+
+    return syncedOrders
   }
 }

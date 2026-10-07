@@ -70,8 +70,8 @@ export function OrderTrackingTimeline({
         status === 'processing'
           ? 'Đang thực hiện'
           : ['shipped', 'delivered'].includes(status)
-          ? 'Đã hoàn thành'
-          : 'Chờ xử lý',
+            ? 'Đã hoàn thành'
+            : 'Chờ xử lý',
       description: 'Cửa hàng đang kiểm định chất lượng men và đóng gói chống sốc chuyên dụng.',
       icon: Package,
     },
@@ -82,8 +82,8 @@ export function OrderTrackingTimeline({
         status === 'shipped'
           ? 'Đang giao hàng'
           : status === 'delivered'
-          ? 'Đã hoàn thành'
-          : 'Chờ giao hàng',
+            ? 'Đã hoàn thành'
+            : 'Chờ giao hàng',
       description: trackingNumber
         ? `Kiện hàng đã bàn giao cho ${trackingCompany || 'đối tác giao vận'}. Mã vận đơn: ${trackingNumber}.`
         : 'Kiện hàng đang trên lộ trình trung chuyển đến bưu cục phát.',
@@ -178,13 +178,12 @@ export function OrderTrackingTimeline({
             <div key={step.key} className="relative group">
               {/* Stepper Dot / Icon với kích thước lớn và hiệu ứng hào quang */}
               <div
-                className={`absolute -left-[40px] sm:-left-[48px] top-0 w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${
-                  isDone
+                className={`absolute -left-[40px] sm:-left-[48px] top-0 w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${isDone
                     ? 'bg-[#8C7E6A] text-white'
                     : isCurrent
-                    ? 'bg-[#4A4238] text-white ring-4 ring-[#8C7E6A]/25 shadow-md scale-105'
-                    : 'bg-[#F2ECE1] text-[#A69B8D] border border-[#DDD6C8]'
-                }`}
+                      ? 'bg-[#4A4238] text-white ring-4 ring-[#8C7E6A]/25 shadow-md scale-105'
+                      : 'bg-[#F2ECE1] text-[#A69B8D] border border-[#DDD6C8]'
+                  }`}
               >
                 <Icon className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
               </div>
@@ -195,26 +194,24 @@ export function OrderTrackingTimeline({
                 <div className="flex flex-wrap items-center justify-between gap-2.5 pb-2 border-b border-[#ECE8DF]/60">
                   <div className="flex items-center gap-2.5 flex-wrap">
                     <h4
-                      className={`text-xs sm:text-sm uppercase tracking-[0.2em] font-serif font-bold ${
-                        isCurrent
+                      className={`text-xs sm:text-sm uppercase tracking-[0.2em] font-serif font-bold ${isCurrent
                           ? 'text-[#4A4238]'
                           : isDone
-                          ? 'text-[#4A4238]'
-                          : 'text-stone-400'
-                      }`}
+                            ? 'text-[#4A4238]'
+                            : 'text-stone-400'
+                        }`}
                     >
                       {step.title}
                     </h4>
 
                     {/* Badge trạng thái */}
                     <span
-                      className={`px-2 py-0.5 text-[9px] uppercase tracking-wider font-semibold rounded-xs border ${
-                        isCurrent
+                      className={`px-2 py-0.5 text-[9px] uppercase tracking-wider font-semibold rounded-xs border ${isCurrent
                           ? 'bg-[#4A4238] text-white border-[#4A4238]'
                           : isDone
-                          ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                          : 'bg-stone-100 text-stone-400 border-stone-200'
-                      }`}
+                            ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                            : 'bg-stone-100 text-stone-400 border-stone-200'
+                        }`}
                     >
                       {step.badge}
                     </span>
@@ -266,7 +263,7 @@ export function OrderTrackingTimeline({
                           title="Gọi Sapo API để cập nhật dữ liệu vận chuyển mới nhất"
                         >
                           <RefreshCw className={`w-3 h-3 text-[#8C7E6A] ${isSyncing ? 'animate-spin' : ''}`} />
-                          <span>{isSyncing ? 'Đang cập nhật Sapo...' : 'Làm mới hành trình'}</span>
+                          <span>{isSyncing ? 'Đang cập nhật...' : 'Làm mới hành trình'}</span>
                         </button>
                       )}
                     </div>
@@ -324,13 +321,12 @@ export function OrderTrackingTimeline({
                             {shippingStages.map((stg, sIdx) => (
                               <div
                                 key={sIdx}
-                                className={`p-3 rounded-xs border flex items-start gap-3 transition-colors ${
-                                  stg.isCurrent
+                                className={`p-3 rounded-xs border flex items-start gap-3 transition-colors ${stg.isCurrent
                                     ? 'bg-[#FAF8F2] border-[#8C7E6A]/50 ring-1 ring-[#8C7E6A]/20'
                                     : stg.isDone
-                                    ? 'bg-stone-50/70 border-stone-200'
-                                    : 'bg-white border-dashed border-stone-200 opacity-60'
-                                }`}
+                                      ? 'bg-stone-50/70 border-stone-200'
+                                      : 'bg-white border-dashed border-stone-200 opacity-60'
+                                  }`}
                               >
                                 <div className="mt-0.5 shrink-0">
                                   {stg.isDone ? (
