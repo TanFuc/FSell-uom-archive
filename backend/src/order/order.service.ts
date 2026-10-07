@@ -120,8 +120,10 @@ export class OrderService {
           inventory_behaviour: 'decrement_obeying_policy',
           send_receipt: false,
           send_webhooks: true,
-          source_name: process.env.SAPO_SOURCE_NAME || 'UOM Website',
-          note: dto.note || `Đơn hàng từ website: ${orderNumber}`,
+          source_name: 'UOM Website',
+          source: 'UOM Website',
+          tags: 'UOM Website',
+          note: dto.note || `Đơn hàng từ UOM Website: ${orderNumber}`,
           line_items: itemsToOrder.map((item) => ({
             title: item.product?.nameVi || 'Sản phẩm',
             price: item.priceVND,
@@ -140,17 +142,28 @@ export class OrderService {
       const sapoOrder = await this.sapoService.pushOrderToSapo(sapoPayload)
 
       if (sapoOrder && sapoOrder.id) {
+        const cleanSapoNumber = String(
+          sapoOrder.order_number || sapoOrder.name || '',
+        )
+          .replace('#', '')
+          .trim()
+        const finalOrderNumber = cleanSapoNumber
+          ? `UOM-${cleanSapoNumber}`
+          : orderNumber
+
         await this.prisma.order.update({
           where: { id: newOrder.id },
           data: {
+            orderNumber: finalOrderNumber,
             sapoOrderId: String(sapoOrder.id),
-            sapoOrderNumber: String(sapoOrder.order_number || ''),
+            sapoOrderNumber: cleanSapoNumber,
             sapoFinancialStatus: sapoOrder.financial_status || 'pending',
           },
         })
         this.logger.log(
-          `Đơn hàng web #${orderNumber} đã liên kết thành công với Sapo Order ID #${sapoOrder.id}`,
+          `Đơn hàng web #${finalOrderNumber} đã liên kết thành công với Sapo Order ID #${sapoOrder.id} (#${cleanSapoNumber})`,
         )
+        return this.getOrderByIdOrNumber(finalOrderNumber)
       }
     } catch (sapoError: any) {
       this.logger.error(

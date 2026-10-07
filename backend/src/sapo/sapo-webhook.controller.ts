@@ -305,7 +305,8 @@ export class SapoWebhookController {
           .join(', ') || 'Địa chỉ ghi nhận từ hệ thống Sapo'
 
       const totalVND = Math.round(Number(orderData?.total_price || 0))
-      const autoOrderNumber = `SAPO-${orderNumber || sapoOrderId || Date.now()}`
+      const cleanOrderNumber = String(orderNumber || sapoOrderId || Date.now()).replace('#', '').trim()
+      const autoOrderNumber = `UOM-${cleanOrderNumber}`
 
       // Tìm customer có sẵn để liên kết
       const customer = await this.prisma.customer.findUnique({
