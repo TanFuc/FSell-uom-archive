@@ -1,7 +1,8 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
+import { useLocale } from 'next-intl'
 import Link from 'next/link'
 import { ArrowLeft, MapPin, Phone, User, ShoppingBag, ShieldCheck, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
@@ -10,6 +11,8 @@ import { api } from '@/lib/api'
 
 export default function OrderTrackingDetailPage() {
   const params = useParams()
+  const router = useRouter()
+  const locale = useLocale()
   const idOrNumber = params?.id as string
 
   const [order, setOrder] = useState<any>(null)
@@ -53,6 +56,31 @@ export default function OrderTrackingDetailPage() {
     }
   }
 
+  const handleBack = () => {
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      router.back()
+    } else {
+      router.push(`/${locale}/my-orders`)
+    }
+  }
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return 'Chờ xác nhận'
+      case 'processing':
+        return 'Đang chuẩn bị'
+      case 'shipped':
+        return 'Đang vận chuyển'
+      case 'delivered':
+        return 'Đã hoàn thành'
+      case 'cancelled':
+        return 'Đã hủy'
+      default:
+        return 'Đang xử lý'
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-[70vh] bg-[#F9F7F1] flex flex-col items-center justify-center p-6 text-[#4A4238]">
@@ -82,64 +110,40 @@ export default function OrderTrackingDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F9F7F1] text-[#4A4238] font-sans pb-24 pt-24 sm:pt-28 lg:pt-32">
-      <div className="max-w-2xl mx-auto px-4 sm:px-6">
-        {/* Navigation Breadcrumb */}
-        <div className="mb-6 flex items-center justify-between">
-          <Link
-            href="/my-orders"
-            className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.2em] font-medium text-stone-500 hover:text-[#4A4238] transition-colors"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Đơn hàng của tôi</span>
-          </Link>
-          <span className="text-[11px] font-mono text-[#8C7E6A] tracking-wider">
-            #{order.orderNumber}
-          </span>
-        </div>
+    <div className="min-h-screen bg-[#F9F7F1] text-[#4A4238] font-sans pb-20">
+      {/* Khoảng đệm bù chiều cao cho fixed main Header */}
+      <div className="h-20 lg:h-28" />
 
-        {/* Page Header */}
-        <div className="mb-8 pb-6 border-b border-[#ECE8DF] flex flex-wrap items-end justify-between gap-4">
+      {/* Sticky Sub-Header Bar */}
+      <div className="sticky top-16 lg:top-20 z-20 bg-[#F9F7F1]/95 backdrop-blur-md border-b border-[#ECE8DF] px-4 sm:px-8 py-3.5 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleBack}
+            className="p-1.5 -ml-1 text-[#4A4238] hover:text-[#8C7E6A] transition-colors cursor-pointer"
+            aria-label="Quay lại"
+          >
+            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+          </button>
           <div>
-            <span className="text-[10px] uppercase tracking-[0.25em] text-[#8C7E6A] font-semibold block mb-1.5 font-serif">
-              Chi tiết hành trình
-            </span>
-            <h1 className="text-2xl sm:text-3xl font-serif font-bold tracking-tight text-[#4A4238]">
-              Đơn hàng #{order.orderNumber}
+            <h1 className="text-xs sm:text-sm font-serif uppercase tracking-widest font-semibold">
+              Chi tiết đơn hàng
             </h1>
-            <p className="text-xs text-stone-500 mt-1 font-light">
-              Đặt lúc {new Date(order.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} • {new Date(order.createdAt).toLocaleDateString('vi-VN')}
+            <p className="text-[11px] text-[#8C7E6A] font-mono tracking-tight">
+              #{order.orderNumber}
             </p>
           </div>
-          <div>
-            <span className={`inline-block px-3 py-1.5 text-[11px] uppercase tracking-wider font-semibold rounded-xs border ${
-              order.status === 'processing'
-                ? 'bg-[#4A4238] text-white border-[#4A4238]'
-                : order.status === 'shipped'
-                ? 'bg-[#8C7E6A] text-white border-[#8C7E6A]'
-                : order.status === 'delivered'
-                ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                : order.status === 'cancelled'
-                ? 'bg-red-50 text-red-700 border-red-200'
-                : 'bg-stone-100 text-stone-600 border-stone-200'
-            }`}>
-              {order.status === 'pending'
-                ? 'Chờ xác nhận'
-                : order.status === 'processing'
-                ? 'Đang đóng gói'
-                : order.status === 'shipped'
-                ? 'Đang vận chuyển'
-                : order.status === 'delivered'
-                ? 'Đã hoàn thành'
-                : order.status === 'cancelled'
-                ? 'Đã hủy'
-                : 'Đang xử lý'}
-            </span>
-          </div>
         </div>
 
-        {/* Main Content Space */}
-        <div className="space-y-6">
+        <div className="text-right">
+          <span className="inline-block px-2.5 py-1 text-[10px] sm:text-[11px] uppercase tracking-wider font-medium border border-[#8C7E6A]/30 text-[#8C7E6A] bg-[#8C7E6A]/10">
+            {getStatusLabel(order.status)}
+          </span>
+        </div>
+      </div>
+
+      {/* Main Content Container */}
+      <div className="max-w-2xl mx-auto px-4 py-6 sm:py-8 space-y-5">
         {/* Card 1: Stepper Timeline */}
         <div className="bg-white/90 backdrop-blur-sm border border-[#ECE8DF] p-5 sm:p-6 shadow-[0_4px_20px_rgba(74,66,56,0.04)]">
           <div className="flex items-center justify-between pb-4 mb-4 border-b border-[#F0EDE6]">
@@ -272,6 +276,5 @@ export default function OrderTrackingDetailPage() {
         </div>
       </div>
     </div>
-  </div>
-)
+  )
 }

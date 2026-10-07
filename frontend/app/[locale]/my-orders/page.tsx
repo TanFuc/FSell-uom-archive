@@ -101,8 +101,16 @@ export default function MyOrdersPage() {
                     <span className="font-mono text-xs font-semibold tracking-tight text-[#4A4238]">
                       #{order.orderNumber}
                     </span>
-                    <span className="text-[11px] text-stone-400 block sm:inline sm:ml-2">
-                      {new Date(order.createdAt).toLocaleDateString('vi-VN')}
+                    <span className="text-[11px] text-stone-400 block sm:inline sm:ml-2 font-mono">
+                      {new Date(order.createdAt).toLocaleTimeString('vi-VN', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}{' '}
+                      {new Date(order.createdAt).toLocaleDateString('vi-VN', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                      })}
                     </span>
                   </div>
                   <span
