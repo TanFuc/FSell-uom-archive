@@ -112,10 +112,10 @@ export default function OrderTrackingDetailPage() {
   return (
     <div className="min-h-screen bg-white text-[#4A4238] font-sans pb-20">
       {/* Khoảng đệm bù chiều cao cho fixed main Header */}
-      <div className="h-20 lg:h-28" />
+      <div className="h-16 lg:h-20" />
 
       {/* Sticky Sub-Header Bar */}
-      <div className="sticky top-16 lg:top-20 z-20 bg-white/95 backdrop-blur-md border-b border-stone-200 px-4 sm:px-8 py-3.5 flex items-center justify-between">
+      <div className="sticky top-16 lg:top-20 z-20 bg-white/95 backdrop-blur-md border-b border-stone-200 px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-xs">
         <div className="flex items-center gap-3">
           <button
             type="button"

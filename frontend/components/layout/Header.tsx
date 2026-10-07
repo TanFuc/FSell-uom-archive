@@ -561,16 +561,13 @@ export function Header() {
         className={cn(
           'fixed left-0 right-0 top-0 transition-[background-color,box-shadow,border-color] duration-300',
           showMobileMenu ? 'z-[60]' : 'z-50',
-          isHeaderOpaque ? 'shadow-xs bg-white/95 backdrop-blur-md' : 'bg-transparent',
+          'bg-white shadow-xs',
           isBorderVisible ? 'border-b border-foreground/[0.06]' : 'border-b-0',
         )}
         style={{ paddingRight: 'var(--scrollbar-compensation, 0px)' }}
       >
         <div
-          className={cn(
-            'relative z-[70] flex items-center bg-inherit px-4 transition-[height] duration-200 sm:px-6 lg:px-12',
-            isScrolled ? 'h-16 lg:h-20' : 'h-20 lg:h-28',
-          )}
+          className="relative z-[70] flex items-center bg-inherit px-4 h-16 lg:h-20 sm:px-6 lg:px-12"
         >
           <div className="flex w-full items-center justify-between">
             {/* Left */}
@@ -590,12 +587,7 @@ export function Header() {
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.18 }}
                       >
-                        <X
-                          className={cn(
-                            'transition-[height,width] duration-200',
-                            isScrolled ? 'h-5 w-5 lg:h-6 lg:w-6' : 'h-6 w-6 lg:h-8 lg:w-8',
-                          )}
-                        />
+                        <X className="h-5 w-5 lg:h-6 lg:w-6" />
                       </motion.div>
                     ) : (
                       <motion.div
@@ -605,12 +597,7 @@ export function Header() {
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.18 }}
                       >
-                        <Menu
-                          className={cn(
-                            'transition-[height,width] duration-200',
-                            isScrolled ? 'h-5 w-5 lg:h-6 lg:w-6' : 'h-6 w-6 lg:h-8 lg:w-8',
-                          )}
-                        />
+                        <Menu className="h-5 w-5 lg:h-6 lg:w-6" />
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -622,10 +609,7 @@ export function Header() {
             <div className="flex min-w-0 flex-1 justify-center px-2 text-center lg:w-1/3">
               <Link
                 href={`/${locale}`}
-                className={cn(
-                  'truncate max-w-[180px] sm:max-w-none font-playfair font-bold tracking-tighter transition-all duration-300 hover:opacity-80',
-                  isScrolled ? 'text-lg sm:text-xl lg:text-3xl' : 'text-xl sm:text-2xl lg:text-4xl',
-                )}
+                className="truncate max-w-[180px] sm:max-w-none font-playfair font-bold tracking-tighter text-xl sm:text-2xl lg:text-3xl transition-opacity hover:opacity-80"
                 tabIndex={0}
                 suppressHydrationWarning
               >
