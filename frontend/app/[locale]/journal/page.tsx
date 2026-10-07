@@ -133,7 +133,7 @@ export default async function JournalPage({ params }: PageProps) {
   const faqItems = getJournalFaq(locale)
 
   return (
-    <div className="safe-screen min-h-screen bg-[radial-gradient(circle_at_top,#efe6d8_0%,#f7f4ef_35%,#f8f6f2_100%)] pt-20">
+    <div className="safe-screen min-h-screen bg-white pt-20">
       <Script
         id="journal-faq-jsonld"
         strategy="beforeInteractive"

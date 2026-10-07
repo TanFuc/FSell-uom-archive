@@ -35,7 +35,7 @@ export default function MyOrdersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F9F7F1] text-[#4A4238] font-sans pb-24 pt-24 sm:pt-28 lg:pt-32">
+    <div className="min-h-screen bg-white text-[#4A4238] font-sans pb-24 pt-24 sm:pt-28 lg:pt-32">
       <div className="max-w-2xl mx-auto px-4 sm:px-6">
         {/* Navigation Breadcrumb */}
         <div className="mb-6">
@@ -49,7 +49,7 @@ export default function MyOrdersPage() {
         </div>
 
         {/* Page Header */}
-        <div className="mb-8 pb-6 border-b border-[#ECE8DF] flex flex-wrap items-end justify-between gap-3">
+        <div className="mb-8 pb-6 border-b border-stone-200 flex flex-wrap items-end justify-between gap-3">
           <div>
             <span className="text-[10px] uppercase tracking-[0.25em] text-[#8C7E6A] font-semibold block mb-1.5 font-serif">
               Tài khoản của bạn
@@ -76,7 +76,7 @@ export default function MyOrdersPage() {
             <p className="text-xs uppercase tracking-[0.2em] text-[#8C7E6A]">Đang tải danh sách đơn...</p>
           </div>
         ) : orders.length === 0 ? (
-          <div className="min-h-[50vh] bg-white/90 border border-[#ECE8DF] p-8 text-center flex flex-col items-center justify-center shadow-sm">
+          <div className="min-h-[50vh] bg-white border border-stone-200 p-8 text-center flex flex-col items-center justify-center shadow-sm">
             <ShoppingBag className="w-12 h-12 text-[#8C7E6A] stroke-[1.2] mb-3 opacity-60" />
             <h3 className="font-serif text-base uppercase tracking-wider mb-1">Chưa có đơn hàng nào</h3>
             <p className="text-xs text-stone-500 mb-5">Bạn chưa thực hiện đơn đặt hàng nào gần đây.</p>
@@ -94,9 +94,9 @@ export default function MyOrdersPage() {
               <Link
                 key={order.id}
                 href={`/order-tracking/${order.orderNumber || order.id}`}
-                className="block bg-white/90 backdrop-blur-sm border border-[#ECE8DF] p-4 sm:p-5 shadow-[0_4px_16px_rgba(74,66,56,0.03)] hover:border-[#8C7E6A]/50 transition-all duration-300"
+                className="block bg-white border border-stone-200 p-4 sm:p-5 shadow-[0_4px_16px_rgba(74,66,56,0.03)] hover:border-[#8C7E6A]/50 transition-all duration-300"
               >
-                <div className="flex items-center justify-between pb-3 border-b border-[#F0EDE6] mb-3">
+                <div className="flex items-center justify-between pb-3 border-b border-stone-200 mb-3">
                   <div>
                     <span className="font-mono text-xs font-semibold tracking-tight text-[#4A4238]">
                       #{order.orderNumber}
@@ -134,7 +134,7 @@ export default function MyOrdersPage() {
                   </div>
                 </div>
 
-                <div className="mt-3 pt-2.5 border-t border-[#F0EDE6] flex items-center justify-between text-[11px] text-[#8C7E6A] font-medium uppercase tracking-wider">
+                <div className="mt-3 pt-2.5 border-t border-stone-200 flex items-center justify-between text-[11px] text-[#8C7E6A] font-medium uppercase tracking-wider">
                   <span>Xem chi tiết & Tracking</span>
                   <ChevronRight className="w-3.5 h-3.5" />
                 </div>

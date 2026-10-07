@@ -103,9 +103,9 @@ export function CustomerAuthModal() {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="relative w-full max-w-md bg-[#F9F7F1] border border-[#ECE8DF] shadow-[0_20px_50px_rgba(74,66,56,0.15)] overflow-hidden">
+      <div className="relative w-full max-w-md bg-white border border-stone-200 shadow-[0_20px_50px_rgba(74,66,56,0.15)] overflow-hidden">
         {/* Header bar */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#ECE8DF] bg-white/60">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-stone-200 bg-white">
           <div>
             <h3 className="font-serif text-sm uppercase tracking-[0.2em] font-semibold text-[#4A4238]">
               {tab === 'login' ? 'Đăng nhập tài khoản' : 'Đăng ký thành viên'}
@@ -122,20 +122,20 @@ export function CustomerAuthModal() {
 
         {/* Notice alert */}
         {authModalMessage && (
-          <div className="px-6 py-2.5 bg-[#FAF8F2] border-b border-[#ECE8DF] flex items-center gap-2 text-xs text-[#8C7E6A]">
+          <div className="px-6 py-2.5 bg-stone-50 border-b border-stone-200 flex items-center gap-2 text-xs text-[#8C7E6A]">
             <CheckCircle2 className="w-4 h-4 shrink-0" />
             <span className="font-medium">{authModalMessage}</span>
           </div>
         )}
 
         {/* Tabs */}
-        <div className="flex border-b border-[#ECE8DF] bg-white/40">
+        <div className="flex border-b border-stone-200 bg-stone-50">
           <button
             type="button"
             onClick={() => setTab('login')}
             className={`flex-1 py-3 text-xs uppercase tracking-[0.15em] font-medium transition-all ${
               tab === 'login'
-                ? 'text-[#4A4238] border-b-2 border-[#4A4238] font-semibold bg-white/80'
+                ? 'text-[#4A4238] border-b-2 border-[#4A4238] font-semibold bg-white'
                 : 'text-stone-400 hover:text-stone-600'
             }`}
           >
@@ -146,7 +146,7 @@ export function CustomerAuthModal() {
             onClick={() => setTab('register')}
             className={`flex-1 py-3 text-xs uppercase tracking-[0.15em] font-medium transition-all ${
               tab === 'register'
-                ? 'text-[#4A4238] border-b-2 border-[#4A4238] font-semibold bg-white/80'
+                ? 'text-[#4A4238] border-b-2 border-[#4A4238] font-semibold bg-white'
                 : 'text-stone-400 hover:text-stone-600'
             }`}
           >
@@ -168,7 +168,7 @@ export function CustomerAuthModal() {
                   value={loginEmail}
                   onChange={(e) => setLoginEmail(e.target.value)}
                   placeholder="your.email@example.com"
-                  className="w-full border border-[#D5CFC4] bg-white px-3.5 py-2.5 text-xs text-[#4A4238] pl-9 focus:outline-none focus:border-[#4A4238] transition-colors"
+                  className="w-full border border-stone-200 bg-white px-3.5 py-2.5 text-xs text-[#4A4238] pl-9 focus:outline-none focus:border-[#4A4238] transition-colors"
                 />
                 <Mail className="w-4 h-4 text-stone-400 absolute left-3 top-3" />
               </div>
@@ -185,7 +185,7 @@ export function CustomerAuthModal() {
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full border border-[#D5CFC4] bg-white px-3.5 py-2.5 text-xs text-[#4A4238] pl-9 focus:outline-none focus:border-[#4A4238] transition-colors"
+                  className="w-full border border-stone-200 bg-white px-3.5 py-2.5 text-xs text-[#4A4238] pl-9 focus:outline-none focus:border-[#4A4238] transition-colors"
                 />
                 <Lock className="w-4 h-4 text-stone-400 absolute left-3 top-3" />
               </div>
@@ -225,7 +225,7 @@ export function CustomerAuthModal() {
                   value={regFullName}
                   onChange={(e) => setRegFullName(e.target.value)}
                   placeholder="Nguyễn Văn A"
-                  className="w-full border border-[#D5CFC4] bg-white px-3.5 py-2 text-xs text-[#4A4238] pl-9 focus:outline-none focus:border-[#4A4238] transition-colors"
+                  className="w-full border border-stone-200 bg-white px-3.5 py-2 text-xs text-[#4A4238] pl-9 focus:outline-none focus:border-[#4A4238] transition-colors"
                 />
                 <User className="w-4 h-4 text-stone-400 absolute left-3 top-2.5" />
               </div>
@@ -242,7 +242,7 @@ export function CustomerAuthModal() {
                   value={regEmail}
                   onChange={(e) => setRegEmail(e.target.value)}
                   placeholder="email@example.com"
-                  className="w-full border border-[#D5CFC4] bg-white px-3.5 py-2 text-xs text-[#4A4238] pl-9 focus:outline-none focus:border-[#4A4238] transition-colors"
+                  className="w-full border border-stone-200 bg-white px-3.5 py-2 text-xs text-[#4A4238] pl-9 focus:outline-none focus:border-[#4A4238] transition-colors"
                 />
                 <Mail className="w-4 h-4 text-stone-400 absolute left-3 top-2.5" />
               </div>
@@ -258,7 +258,7 @@ export function CustomerAuthModal() {
                   value={regPhone}
                   onChange={(e) => setRegPhone(e.target.value)}
                   placeholder="0988123456"
-                  className="w-full border border-[#D5CFC4] bg-white px-3.5 py-2 text-xs text-[#4A4238] pl-9 focus:outline-none focus:border-[#4A4238] transition-colors"
+                  className="w-full border border-stone-200 bg-white px-3.5 py-2 text-xs text-[#4A4238] pl-9 focus:outline-none focus:border-[#4A4238] transition-colors"
                 />
                 <Phone className="w-4 h-4 text-stone-400 absolute left-3 top-2.5" />
               </div>
@@ -276,7 +276,7 @@ export function CustomerAuthModal() {
                   value={regPassword}
                   onChange={(e) => setRegPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full border border-[#D5CFC4] bg-white px-3.5 py-2 text-xs text-[#4A4238] pl-9 focus:outline-none focus:border-[#4A4238] transition-colors"
+                  className="w-full border border-stone-200 bg-white px-3.5 py-2 text-xs text-[#4A4238] pl-9 focus:outline-none focus:border-[#4A4238] transition-colors"
                 />
                 <Lock className="w-4 h-4 text-stone-400 absolute left-3 top-2.5" />
               </div>

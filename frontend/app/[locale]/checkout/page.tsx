@@ -113,7 +113,7 @@ function CheckoutContent() {
 
   if (loadingCart) {
     return (
-      <div className="min-h-[70vh] bg-[#F9F7F1] flex flex-col items-center justify-center p-6 text-[#4A4238]">
+      <div className="min-h-[70vh] bg-white flex flex-col items-center justify-center p-6 text-[#4A4238]">
         <div className="w-8 h-8 border-2 border-[#8C7E6A] border-t-transparent rounded-full animate-spin mb-3" />
         <p className="text-xs uppercase tracking-[0.2em] text-[#8C7E6A]">Đang chuẩn bị thông tin thanh toán...</p>
       </div>
@@ -122,7 +122,7 @@ function CheckoutContent() {
 
   if (!cart || !cart.items || cart.items.length === 0 || itemsToCheckout.length === 0) {
     return (
-      <div className="min-h-[70vh] bg-[#F9F7F1] flex flex-col items-center justify-center p-6 text-center text-[#4A4238]">
+      <div className="min-h-[70vh] bg-white flex flex-col items-center justify-center p-6 text-center text-[#4A4238]">
         <ShoppingBag className="w-12 h-12 text-[#8C7E6A] stroke-[1.2] mb-3 opacity-60" />
         <h2 className="font-serif text-xl uppercase tracking-wider mb-2">Không có sản phẩm để thanh toán</h2>
         <p className="text-xs text-stone-500 mb-6">Hãy chọn những tác phẩm gốm sứ yêu thích trong giỏ hàng trước khi đặt hàng.</p>
@@ -137,7 +137,7 @@ function CheckoutContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F9F7F1] text-[#4A4238] font-sans pb-24 pt-24 sm:pt-28 lg:pt-32">
+    <div className="min-h-screen bg-white text-[#4A4238] font-sans pb-24 pt-24 sm:pt-28 lg:pt-32">
       <div className="max-w-5xl mx-auto px-4 sm:px-6">
         {/* Navigation Breadcrumb & Security */}
         <div className="mb-6 flex items-center justify-between">
@@ -155,7 +155,7 @@ function CheckoutContent() {
         </div>
 
         {/* Page Header */}
-        <div className="mb-8 pb-6 border-b border-[#ECE8DF]">
+        <div className="mb-8 pb-6 border-b border-stone-200">
           <span className="text-[10px] uppercase tracking-[0.25em] text-[#8C7E6A] font-semibold block mb-1.5 font-serif">
             ƯƠM. Archive Minimalist Ceramic Studio
           </span>
@@ -170,8 +170,8 @@ function CheckoutContent() {
         <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Cột Trái: Thông tin giao nhận */}
           <div className="lg:col-span-7 space-y-6">
-            <div className="bg-white/95 backdrop-blur-sm border border-[#ECE8DF] p-5 sm:p-6 shadow-[0_4px_20px_rgba(74,66,56,0.04)] space-y-4">
-              <h2 className="font-serif text-sm uppercase tracking-[0.2em] font-semibold text-[#4A4238] pb-3 border-b border-[#F0EDE6]">
+            <div className="bg-white border border-stone-200 p-5 sm:p-6 shadow-[0_4px_20px_rgba(74,66,56,0.04)] space-y-4">
+              <h2 className="font-serif text-sm uppercase tracking-[0.2em] font-semibold text-[#4A4238] pb-3 border-b border-stone-200">
                 1. Thông tin giao nhận
               </h2>
 
@@ -187,7 +187,7 @@ function CheckoutContent() {
                     onChange={handleChange}
                     required
                     placeholder="Nguyễn Văn A"
-                    className="w-full px-3.5 py-2.5 bg-[#FAF8F2] border border-[#ECE8DF] focus:border-[#8C7E6A] focus:outline-none transition-colors"
+                    className="w-full px-3.5 py-2.5 bg-white border border-stone-200 focus:border-[#8C7E6A] focus:outline-none transition-colors"
                   />
                 </div>
 
@@ -203,7 +203,7 @@ function CheckoutContent() {
                       onChange={handleChange}
                       required
                       placeholder="0912 345 678"
-                      className="w-full px-3.5 py-2.5 bg-[#FAF8F2] border border-[#ECE8DF] focus:border-[#8C7E6A] focus:outline-none transition-colors"
+                      className="w-full px-3.5 py-2.5 bg-white border border-stone-200 focus:border-[#8C7E6A] focus:outline-none transition-colors"
                     />
                   </div>
 
@@ -218,7 +218,7 @@ function CheckoutContent() {
                       onChange={handleChange}
                       required
                       placeholder="email@example.com"
-                      className="w-full px-3.5 py-2.5 bg-[#FAF8F2] border border-[#ECE8DF] focus:border-[#8C7E6A] focus:outline-none transition-colors"
+                      className="w-full px-3.5 py-2.5 bg-white border border-stone-200 focus:border-[#8C7E6A] focus:outline-none transition-colors"
                     />
                   </div>
                 </div>
@@ -234,7 +234,7 @@ function CheckoutContent() {
                     onChange={handleChange}
                     required
                     placeholder="Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố"
-                    className="w-full px-3.5 py-2.5 bg-[#FAF8F2] border border-[#ECE8DF] focus:border-[#8C7E6A] focus:outline-none transition-colors"
+                    className="w-full px-3.5 py-2.5 bg-white border border-stone-200 focus:border-[#8C7E6A] focus:outline-none transition-colors"
                   />
                 </div>
 
@@ -248,18 +248,18 @@ function CheckoutContent() {
                     onChange={handleChange}
                     rows={2}
                     placeholder="Ví dụ: Giao giờ hành chính, gọi điện trước khi giao..."
-                    className="w-full px-3.5 py-2.5 bg-[#FAF8F2] border border-[#ECE8DF] focus:border-[#8C7E6A] focus:outline-none transition-colors resize-none"
+                    className="w-full px-3.5 py-2.5 bg-white border border-stone-200 focus:border-[#8C7E6A] focus:outline-none transition-colors resize-none"
                   />
                 </div>
               </div>
             </div>
 
             {/* Phương thức thanh toán */}
-            <div className="bg-white/95 backdrop-blur-sm border border-[#ECE8DF] p-5 sm:p-6 shadow-[0_4px_20px_rgba(74,66,56,0.04)]">
+            <div className="bg-white border border-stone-200 p-5 sm:p-6 shadow-[0_4px_20px_rgba(74,66,56,0.04)]">
               <h3 className="font-serif text-xs uppercase tracking-[0.2em] font-semibold text-[#8C7E6A] mb-2">
                 Phương thức thanh toán
               </h3>
-              <div className="flex items-center gap-3 p-3 border border-[#8C7E6A]/30 bg-[#FAF8F2] text-xs">
+              <div className="flex items-center gap-3 p-3 border border-[#8C7E6A]/30 bg-stone-50 text-xs">
                 <CheckCircle2 className="w-4 h-4 text-[#8C7E6A] shrink-0" />
                 <div>
                   <p className="font-medium text-[#4A4238]">Thanh toán khi nhận hàng (COD)</p>
@@ -271,8 +271,8 @@ function CheckoutContent() {
 
           {/* Cột Phải: Tóm tắt đơn hàng */}
           <div className="lg:col-span-5 space-y-4">
-            <div className="bg-white/95 backdrop-blur-sm border border-[#ECE8DF] p-5 sm:p-6 shadow-[0_4px_20px_rgba(74,66,56,0.04)] sticky top-20">
-              <div className="flex items-center justify-between pb-3 border-b border-[#F0EDE6] mb-4">
+            <div className="bg-white border border-stone-200 p-5 sm:p-6 shadow-[0_4px_20px_rgba(74,66,56,0.04)] sticky top-20">
+              <div className="flex items-center justify-between pb-3 border-b border-stone-200 mb-4">
                 <h2 className="font-serif text-sm uppercase tracking-[0.2em] font-semibold text-[#4A4238]">
                   Đơn hàng ({itemsToCheckout.length})
                 </h2>
@@ -283,7 +283,7 @@ function CheckoutContent() {
                 )}
               </div>
 
-              <div className="max-h-72 overflow-y-auto divide-y divide-[#F0EDE6] pr-1">
+              <div className="max-h-72 overflow-y-auto divide-y divide-stone-100 pr-1">
                 {itemsToCheckout.map((item: any) => {
                   const rawImages = item.product?.images
                   let itemImg: string | null = null
@@ -304,7 +304,7 @@ function CheckoutContent() {
                   return (
                     <div key={item.id} className="py-3 flex items-center justify-between text-xs gap-3">
                       <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <div className="w-12 h-12 bg-[#FAF8F2] border border-[#ECE8DF] overflow-hidden shrink-0 flex items-center justify-center">
+                        <div className="w-12 h-12 bg-stone-50 border border-stone-200 overflow-hidden shrink-0 flex items-center justify-center">
                           {itemImg ? (
                             <img
                               src={itemImg}
@@ -330,7 +330,7 @@ function CheckoutContent() {
                 })}
               </div>
 
-              <div className="border-t border-[#ECE8DF] pt-4 mt-4 space-y-2 text-xs">
+              <div className="border-t border-stone-200 pt-4 mt-4 space-y-2 text-xs">
                 <div className="flex justify-between text-stone-500">
                   <span>Tạm tính</span>
                   <span className="font-mono text-stone-700">{totalAmount.toLocaleString('vi-VN')} ₫</span>
@@ -339,7 +339,7 @@ function CheckoutContent() {
                   <span>Phí vận chuyển</span>
                   <span className="text-stone-700">Miễn phí (Tiêu chuẩn)</span>
                 </div>
-                <div className="border-t border-[#ECE8DF] pt-3 flex justify-between items-baseline font-medium text-sm">
+                <div className="border-t border-stone-200 pt-3 flex justify-between items-baseline font-medium text-sm">
                   <span className="uppercase tracking-wider font-serif">Tổng cộng</span>
                   <span className="font-mono text-lg font-semibold text-[#8C7E6A]">
                     {totalAmount.toLocaleString('vi-VN')} ₫
@@ -370,7 +370,7 @@ export default function CheckoutPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-[70vh] bg-[#F9F7F1] flex flex-col items-center justify-center p-6 text-[#4A4238]">
+        <div className="min-h-[70vh] bg-white flex flex-col items-center justify-center p-6 text-[#4A4238]">
           <div className="w-8 h-8 border-2 border-[#8C7E6A] border-t-transparent rounded-full animate-spin mb-3" />
           <p className="text-xs uppercase tracking-[0.2em] text-[#8C7E6A]">Đang chuẩn bị thông tin thanh toán...</p>
         </div>

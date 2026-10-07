@@ -58,7 +58,7 @@ function HighlightedText({ text, query }: { text: string; query: string }) {
         return (
           <mark
             key={`${part}-${index}`}
-            className="rounded-[4px] bg-[#ece7dc] px-1 py-[1px] text-foreground"
+            className="rounded-[4px] bg-stone-100 px-1 py-[1px] text-foreground"
           >
             {part}
           </mark>
@@ -78,9 +78,9 @@ const SearchResultItem = memo(
         prefetch={false}
         onClick={onClick}
         className={cn(
-          'group block rounded-2xl border border-foreground/[0.08] bg-[linear-gradient(160deg,#ffffff_0%,#faf8f2_100%)] p-3 text-center shadow-[0_8px_20px_rgba(0,0,0,0.05)] transition-all duration-300 hover:-translate-y-1 hover:border-foreground/20 hover:shadow-[0_18px_34px_rgba(0,0,0,0.15)]',
+          'group block rounded-2xl border border-foreground/[0.08] bg-white p-3 text-center shadow-[0_8px_20px_rgba(0,0,0,0.05)] transition-all duration-300 hover:-translate-y-1 hover:border-foreground/20 hover:shadow-[0_18px_34px_rgba(0,0,0,0.15)]',
           isActive &&
-            'border-foreground/45 bg-[linear-gradient(160deg,#fffdfa_0%,#f4ecdd_100%)] shadow-[0_0_0_2px_rgba(66,56,42,0.16),0_16px_34px_rgba(0,0,0,0.15)]',
+            'border-foreground/45 bg-stone-50 shadow-[0_0_0_2px_rgba(66,56,42,0.16),0_16px_34px_rgba(0,0,0,0.15)]',
         )}
       >
         <div className="relative mx-auto mb-3 aspect-square w-20 overflow-hidden rounded-full border border-foreground/[0.08] bg-muted/5 md:w-24">
@@ -119,10 +119,10 @@ SearchResultItem.displayName = 'SearchResultItem'
 function SearchSkeletonItem() {
   return (
     <div className="rounded-2xl border border-foreground/[0.08] bg-white/90 p-3 shadow-[0_8px_20px_rgba(0,0,0,0.05)]">
-      <div className="mx-auto mb-3 h-20 w-20 animate-pulse rounded-full bg-gradient-to-r from-[#ece8df] via-[#f5f2eb] to-[#ece8df] bg-[length:220%_100%] md:h-24 md:w-24" />
+      <div className="mx-auto mb-3 h-20 w-20 animate-pulse rounded-full bg-gradient-to-r from-stone-100 via-stone-200 to-stone-100 bg-[length:220%_100%] md:h-24 md:w-24" />
       <div className="space-y-2">
-        <div className="h-2 animate-pulse rounded bg-gradient-to-r from-[#ece8df] via-[#f5f2eb] to-[#ece8df] bg-[length:220%_100%]" />
-        <div className="mx-auto h-2 w-2/3 animate-pulse rounded bg-gradient-to-r from-[#ece8df] via-[#f5f2eb] to-[#ece8df] bg-[length:220%_100%]" />
+        <div className="h-2 animate-pulse rounded bg-gradient-to-r from-stone-100 via-stone-200 to-stone-100 bg-[length:220%_100%]" />
+        <div className="mx-auto h-2 w-2/3 animate-pulse rounded bg-gradient-to-r from-stone-100 via-stone-200 to-stone-100 bg-[length:220%_100%]" />
       </div>
     </div>
   )
@@ -764,11 +764,11 @@ export function Header() {
                   onClick={closeSearchPanel}
                 >
                   <div
-                    className="relative mx-auto w-full max-w-[1160px] overflow-hidden rounded-2xl border border-black/10 bg-[#fcfcfa] shadow-[0_24px_70px_rgba(0,0,0,0.3)]"
+                    className="relative mx-auto w-full max-w-[1160px] overflow-hidden rounded-2xl border border-black/10 bg-white shadow-[0_24px_70px_rgba(0,0,0,0.3)]"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <div className="pointer-events-none absolute -right-16 -top-20 hidden h-52 w-52 rounded-full bg-[#d7cab3]/45 blur-3xl md:block" />
-                    <div className="pointer-events-none absolute -left-12 bottom-0 hidden h-40 w-40 rounded-full bg-[#e7dfcf]/55 blur-3xl md:block" />
+                    <div className="pointer-events-none absolute -right-16 -top-20 hidden h-52 w-52 rounded-full bg-stone-200/20 blur-3xl md:block" />
+                    <div className="pointer-events-none absolute -left-12 bottom-0 hidden h-40 w-40 rounded-full bg-stone-200/20 blur-3xl md:block" />
                     <div className="relative min-h-[300px] px-5 py-6 md:px-8 md:py-8 lg:px-10 lg:py-9">
                       <form
                         onSubmit={handleSearch}
@@ -881,7 +881,7 @@ export function Header() {
                                     key={`recent-${term}`}
                                     type="button"
                                     onClick={() => setSearchQuery(term)}
-                                    className="rounded-full border border-foreground/15 bg-[#f9f6ef] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground/70 transition-all hover:-translate-y-0.5 hover:border-foreground/35 hover:text-foreground"
+                                    className="rounded-full border border-foreground/15 bg-stone-50 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground/70 transition-all hover:-translate-y-0.5 hover:border-foreground/35 hover:text-foreground"
                                   >
                                     {term}
                                   </button>

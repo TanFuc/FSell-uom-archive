@@ -83,7 +83,7 @@ export default function OrderTrackingDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-[70vh] bg-[#F9F7F1] flex flex-col items-center justify-center p-6 text-[#4A4238]">
+      <div className="min-h-[70vh] bg-white flex flex-col items-center justify-center p-6 text-[#4A4238]">
         <div className="w-8 h-8 border-2 border-[#8C7E6A] border-t-transparent rounded-full animate-spin mb-3" />
         <p className="text-xs uppercase tracking-[0.2em] text-[#8C7E6A]">Đang tải dữ liệu đơn hàng...</p>
       </div>
@@ -92,7 +92,7 @@ export default function OrderTrackingDetailPage() {
 
   if (error || !order) {
     return (
-      <div className="min-h-[70vh] bg-[#F9F7F1] flex flex-col items-center justify-center p-6 text-center text-[#4A4238]">
+      <div className="min-h-[70vh] bg-white flex flex-col items-center justify-center p-6 text-center text-[#4A4238]">
         <h2 className="font-serif text-xl sm:text-2xl uppercase tracking-wider mb-2">
           Không tìm thấy đơn hàng
         </h2>
@@ -110,12 +110,12 @@ export default function OrderTrackingDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F9F7F1] text-[#4A4238] font-sans pb-20">
+    <div className="min-h-screen bg-white text-[#4A4238] font-sans pb-20">
       {/* Khoảng đệm bù chiều cao cho fixed main Header */}
       <div className="h-20 lg:h-28" />
 
       {/* Sticky Sub-Header Bar */}
-      <div className="sticky top-16 lg:top-20 z-20 bg-[#F9F7F1]/95 backdrop-blur-md border-b border-[#ECE8DF] px-4 sm:px-8 py-3.5 flex items-center justify-between">
+      <div className="sticky top-16 lg:top-20 z-20 bg-white/95 backdrop-blur-md border-b border-stone-200 px-4 sm:px-8 py-3.5 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <button
             type="button"
@@ -145,8 +145,8 @@ export default function OrderTrackingDetailPage() {
       {/* Main Content Container */}
       <div className="max-w-2xl mx-auto px-4 py-6 sm:py-8 space-y-5">
         {/* Card 1: Stepper Timeline */}
-        <div className="bg-white/90 backdrop-blur-sm border border-[#ECE8DF] p-5 sm:p-6 shadow-[0_4px_20px_rgba(74,66,56,0.04)]">
-          <div className="flex items-center justify-between pb-4 mb-4 border-b border-[#F0EDE6]">
+        <div className="bg-white border border-stone-200 p-5 sm:p-6 shadow-[0_4px_20px_rgba(74,66,56,0.04)]">
+          <div className="flex items-center justify-between pb-4 mb-4 border-b border-stone-200">
             <div>
               <h2 className="text-xs sm:text-sm uppercase tracking-[0.2em] font-serif font-semibold text-[#4A4238]">
                 Hành trình đơn hàng
@@ -163,7 +163,7 @@ export default function OrderTrackingDetailPage() {
                 onClick={handleSyncTracking}
                 disabled={syncing}
                 title="Cập nhật trạng thái vận chuyển mới nhất"
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium text-[#4A4238] bg-[#FAF8F2] hover:bg-[#F2ECE1] border border-[#ECE8DF] transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium text-[#4A4238] bg-stone-50 hover:bg-stone-100 border border-stone-200 transition-colors disabled:opacity-50"
               >
                 <RefreshCw className={`w-3 h-3 text-[#8C7E6A] ${syncing ? 'animate-spin' : ''}`} />
                 <span>{syncing ? 'Đang kiểm tra...' : 'Làm mới hành trình'}</span>
@@ -190,7 +190,7 @@ export default function OrderTrackingDetailPage() {
         </div>
 
         {/* Card 2: Thông tin giao hàng */}
-        <div className="bg-white/90 backdrop-blur-sm border border-[#ECE8DF] p-5 sm:p-6 shadow-[0_4px_20px_rgba(74,66,56,0.04)] space-y-3">
+        <div className="bg-white border border-stone-200 p-5 sm:p-6 shadow-[0_4px_20px_rgba(74,66,56,0.04)] space-y-3">
           <h2 className="text-xs uppercase tracking-[0.2em] font-serif font-semibold text-[#8C7E6A]">
             Thông tin người nhận
           </h2>
@@ -208,7 +208,7 @@ export default function OrderTrackingDetailPage() {
               <span className="leading-relaxed">{order.shippingAddress}</span>
             </div>
             {order.note && (
-              <div className="mt-2 pt-2 border-t border-[#F0EDE6] text-[11px] text-stone-500 italic">
+              <div className="mt-2 pt-2 border-t border-stone-200 text-[11px] text-stone-500 italic">
                 Ghi chú: {order.note}
               </div>
             )}
@@ -216,17 +216,17 @@ export default function OrderTrackingDetailPage() {
         </div>
 
         {/* Card 3: Danh sách sản phẩm & Tổng tiền */}
-        <div className="bg-white/90 backdrop-blur-sm border border-[#ECE8DF] p-5 sm:p-6 shadow-[0_4px_20px_rgba(74,66,56,0.04)]">
+        <div className="bg-white border border-stone-200 p-5 sm:p-6 shadow-[0_4px_20px_rgba(74,66,56,0.04)]">
           <h2 className="text-xs uppercase tracking-[0.2em] font-serif font-semibold text-[#8C7E6A] mb-4 flex items-center gap-2">
             <ShoppingBag className="w-3.5 h-3.5" />
             <span>Sản phẩm ({order.items?.length || 0})</span>
           </h2>
 
-          <div className="divide-y divide-[#F0EDE6]">
+          <div className="divide-y divide-stone-100">
             {order.items?.map((item: any) => (
               <div key={item.id} className="py-3.5 flex items-center justify-between text-xs gap-3">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-14 h-14 bg-[#FAF8F2] border border-[#ECE8DF] overflow-hidden shrink-0 flex items-center justify-center">
+                  <div className="w-14 h-14 bg-stone-50 border border-stone-200 overflow-hidden shrink-0 flex items-center justify-center">
                     {item.productImage ? (
                       <img
                         src={item.productImage}
@@ -252,7 +252,7 @@ export default function OrderTrackingDetailPage() {
             ))}
           </div>
 
-          <div className="border-t border-[#ECE8DF] pt-4 mt-3 flex justify-between items-baseline">
+          <div className="border-t border-stone-200 pt-4 mt-3 flex justify-between items-baseline">
             <span className="text-xs uppercase tracking-wider text-stone-500 font-medium">
               Tổng thanh toán
             </span>

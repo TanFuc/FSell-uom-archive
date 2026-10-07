@@ -122,11 +122,11 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
       {/* Drawer Panel */}
       <div className="absolute inset-y-0 right-0 max-w-full flex pl-10">
-        <div className="w-screen max-w-md bg-[#F9F7F1] border-l border-[#ECE8DF] shadow-2xl flex flex-col">
+        <div className="w-screen max-w-md bg-white border-l border-stone-200 shadow-2xl flex flex-col">
           {/* Header */}
-          <div className="px-6 py-5 border-b border-[#ECE8DF] flex items-center justify-between bg-[#F9F7F1]/95 backdrop-blur-md sticky top-0 z-10">
+          <div className="px-6 py-5 border-b border-stone-200 flex items-center justify-between bg-white/95 backdrop-blur-md sticky top-0 z-10">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-8 h-8 rounded-full bg-white border border-[#ECE8DF] flex items-center justify-center text-[#8C7E6A] shadow-xs shrink-0">
+              <div className="w-8 h-8 rounded-full bg-white border border-stone-200 flex items-center justify-center text-[#8C7E6A] shadow-xs shrink-0">
                 <ShoppingBag className="w-4 h-4" />
               </div>
               <div>
@@ -149,7 +149,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
           {/* Select all bar (chỉ hiển thị khi có sản phẩm) */}
           {items.length > 0 && (
-            <div className="px-6 py-2.5 bg-white/70 border-b border-[#ECE8DF] flex items-center justify-between text-xs">
+            <div className="px-6 py-2.5 bg-stone-50 border-b border-stone-200 flex items-center justify-between text-xs">
               <button
                 type="button"
                 onClick={toggleSelectAll}
@@ -170,14 +170,14 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
           )}
 
           {/* Items List */}
-          <div className="flex-1 overflow-y-auto p-6 divide-y divide-[#F0EDE6]">
+          <div className="flex-1 overflow-y-auto p-6 divide-y divide-stone-100">
             {loading ? (
               <div className="h-40 flex items-center justify-center">
                 <div className="w-6 h-6 border-2 border-[#8C7E6A] border-t-transparent rounded-full animate-spin" />
               </div>
             ) : items.length === 0 ? (
               <div className="h-full min-h-[300px] flex flex-col items-center justify-center text-center p-6 space-y-4">
-                <div className="w-16 h-16 rounded-full bg-white border border-[#ECE8DF] flex items-center justify-center shadow-xs">
+                <div className="w-16 h-16 rounded-full bg-white border border-stone-200 flex items-center justify-center shadow-xs">
                   <ShoppingBag className="w-7 h-7 text-[#8C7E6A] stroke-[1.2]" />
                 </div>
                 <div className="space-y-1">
@@ -223,7 +223,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                     </div>
 
                     {/* Ảnh sản phẩm */}
-                    <div className="w-16 h-16 bg-white border border-[#ECE8DF] overflow-hidden shrink-0 rounded-xs">
+                    <div className="w-16 h-16 bg-white border border-stone-200 overflow-hidden shrink-0 rounded-xs">
                       {item.product?.images?.[0] ? (
                         <img
                           src={item.product.images[0]}
@@ -250,7 +250,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
                       {/* Nút chỉnh số lượng & Xóa */}
                       <div className="flex items-center justify-between mt-2">
-                        <div className="flex items-center border border-[#D5CFC4] bg-white rounded-xs">
+                        <div className="flex items-center border border-stone-200 bg-white rounded-xs">
                           <button
                             type="button"
                             onClick={() => handleUpdateQuantity(item.id, item.quantity, -1)}
@@ -288,7 +288,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
           {/* Footer Checkout */}
           {items.length > 0 && (
-            <div className="p-6 border-t border-[#ECE8DF] bg-white/80 space-y-4">
+            <div className="p-6 border-t border-stone-200 bg-white space-y-4">
               <div className="flex justify-between items-baseline text-xs">
                 <div className="flex flex-col">
                   <span className="uppercase tracking-wider text-stone-500 font-medium">

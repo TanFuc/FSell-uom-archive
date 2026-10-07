@@ -259,7 +259,7 @@ export default async function StoryDetailPage({ params }: StoryDetailProps) {
   }
 
   return (
-    <div className="safe-screen min-h-screen bg-[radial-gradient(circle_at_top,#efe5d6_0%,#f7f4ef_40%,#f9f7f3_100%)] pt-20">
+    <div className="safe-screen min-h-screen bg-white pt-20">
       <Script
         id="article-jsonld"
         strategy="afterInteractive"

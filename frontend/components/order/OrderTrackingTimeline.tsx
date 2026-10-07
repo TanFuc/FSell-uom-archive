@@ -185,16 +185,16 @@ export function OrderTrackingTimeline({
                     ? 'bg-[#8C7E6A] text-white'
                     : isCurrent
                       ? 'bg-[#4A4238] text-white ring-4 ring-[#8C7E6A]/25 shadow-md scale-105'
-                      : 'bg-[#F2ECE1] text-[#A69B8D] border border-[#DDD6C8]'
+                      : 'bg-stone-100 text-stone-400 border border-stone-200'
                   }`}
               >
                 <Icon className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
               </div>
 
               {/* Step Content */}
-              <div className="bg-[#FAF8F2]/60 hover:bg-[#FAF8F2] border border-[#ECE8DF] p-4 sm:p-5 rounded-sm transition-all duration-200">
+              <div className="bg-stone-50/70 hover:bg-stone-50 border border-stone-200 p-4 sm:p-5 rounded-sm transition-all duration-200">
                 {/* Header hàng trạng thái */}
-                <div className="flex flex-wrap items-center justify-between gap-2.5 pb-2 border-b border-[#ECE8DF]/60">
+                <div className="flex flex-wrap items-center justify-between gap-2.5 pb-2 border-b border-stone-200/60">
                   <div className="flex items-center gap-2.5 flex-wrap">
                     <h4
                       className={`text-xs sm:text-sm uppercase tracking-[0.2em] font-serif font-bold ${isCurrent
@@ -241,7 +241,7 @@ export function OrderTrackingTimeline({
 
                 {/* NÚT & KHUNG XEM CHI TIẾT GIAI ĐOẠN VẬN CHUYỂN */}
                 {step.isShippedStage && (
-                  <div className="mt-4 pt-3 border-t border-[#ECE8DF] space-y-3">
+                  <div className="mt-4 pt-3 border-t border-stone-200 space-y-3">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <button
                         type="button"
@@ -262,7 +262,7 @@ export function OrderTrackingTimeline({
                           type="button"
                           onClick={() => onSyncTracking()}
                           disabled={isSyncing}
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-white border border-[#D5CFC4] hover:border-[#8C7E6A] text-stone-700 hover:text-[#4A4238] transition-colors text-[11px] font-medium"
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-white border border-stone-200 hover:border-[#8C7E6A] text-stone-700 hover:text-[#4A4238] transition-colors text-[11px] font-medium"
                           title="Cập nhật dữ liệu vận chuyển mới nhất"
                         >
                           <RefreshCw className={`w-3 h-3 text-[#8C7E6A] ${isSyncing ? 'animate-spin' : ''}`} />
@@ -273,9 +273,9 @@ export function OrderTrackingTimeline({
 
                     {/* Vùng chi tiết giai đoạn khi mở rộng */}
                     {isDetailOpen && (
-                      <div className="mt-3 p-4 bg-white border border-[#E5DFD4] rounded-xs shadow-xs space-y-4">
+                      <div className="mt-3 p-4 bg-white border border-stone-200 rounded-xs shadow-xs space-y-4">
                         {/* Hàng thông tin mã vận đơn & đơn vị */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-3 border-b border-[#F0EDE6] text-xs">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-3 border-b border-stone-200 text-xs">
                           <div>
                             <span className="text-[10px] text-stone-400 uppercase tracking-wider block">
                               Đối tác giao vận
@@ -325,7 +325,7 @@ export function OrderTrackingTimeline({
                               <div
                                 key={sIdx}
                                 className={`p-3 rounded-xs border flex items-start gap-3 transition-colors ${stg.isCurrent
-                                    ? 'bg-[#FAF8F2] border-[#8C7E6A]/50 ring-1 ring-[#8C7E6A]/20'
+                                    ? 'bg-stone-50 border-[#8C7E6A]/50 ring-1 ring-[#8C7E6A]/20'
                                     : stg.isDone
                                       ? 'bg-stone-50/70 border-stone-200'
                                       : 'bg-white border-dashed border-stone-200 opacity-60'

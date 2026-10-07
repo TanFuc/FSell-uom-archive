@@ -10,7 +10,7 @@ export default function manifest(): MetadataRoute.Manifest {
     description: 'Vietnamese handcrafted ceramics curated with care.',
     start_url: '/',
     display: 'standalone',
-    background_color: '#F9F7F1',
+    background_color: '#FFFFFF',
     theme_color: '#4A4238',
     orientation: 'portrait',
     icons: [
