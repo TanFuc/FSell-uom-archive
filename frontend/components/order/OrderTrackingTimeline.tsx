@@ -131,23 +131,26 @@ export function OrderTrackingTimeline({
     )
   }
 
-  // Các giai đoạn chi tiết giao vận bên Sapo / Đối tác bưu chính
+  // Các giai đoạn chi tiết giao vận bên Đối tác chuyển phát
+  const isHandedOver = Boolean(trackingNumber || (currentIdx >= 2 && status === 'shipped'))
   const shippingStages = [
     {
       stage: 'Chặng 1: Bàn giao bưu cục',
-      title: 'Bàn giao kiện hàng',
-      desc: `ƯƠM. Archive đã đóng gói và bàn giao kiện cho ${trackingCompany || 'đối tác vận chuyển'}.`,
-      isDone: currentIdx >= 2,
-      isCurrent: currentIdx === 2 && !trackingNumber,
-      time: createdAt,
+      title: isHandedOver ? 'Đã bàn giao kiện hàng' : 'Chờ bàn giao bưu cục',
+      desc: isHandedOver
+        ? `ƯƠM. Archive đã đóng gói và bàn giao kiện cho ${trackingCompany || 'đối tác vận chuyển'}.`
+        : 'Đơn hàng đang trong quy trình kiểm định men gốm và đóng gói niêm phong trước khi bàn giao.',
+      isDone: isHandedOver,
+      isCurrent: !isHandedOver && currentIdx === 1,
+      time: isHandedOver ? (updatedAt || createdAt) : undefined,
     },
     {
       stage: 'Chặng 2: Luân chuyển trung tâm',
       title: 'Xuất kho trung chuyển',
       desc: 'Kiện hàng đang trên xe chuyên dụng luân chuyển giữa các bưu cục trung tâm.',
       isDone: currentIdx >= 2 && Boolean(trackingNumber),
-      isCurrent: currentIdx === 2 && Boolean(trackingNumber),
-      time: updatedAt,
+      isCurrent: isHandedOver && currentIdx === 2,
+      time: currentIdx >= 2 && Boolean(trackingNumber) ? updatedAt : undefined,
     },
     {
       stage: 'Chặng 3: Đang phát hàng',
@@ -236,7 +239,7 @@ export function OrderTrackingTimeline({
                   {step.description}
                 </p>
 
-                {/* NÚT & KHUNG XEM CHI TIẾT GIAI ĐOẠN VẬN CHUYỂN SAPO */}
+                {/* NÚT & KHUNG XEM CHI TIẾT GIAI ĐOẠN VẬN CHUYỂN */}
                 {step.isShippedStage && (
                   <div className="mt-4 pt-3 border-t border-[#ECE8DF] space-y-3">
                     <div className="flex flex-wrap items-center justify-between gap-2">
@@ -246,7 +249,7 @@ export function OrderTrackingTimeline({
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#4A4238] text-white hover:bg-[#8C7E6A] transition-colors text-xs uppercase tracking-wider font-medium shadow-xs"
                       >
                         <Compass className="w-3.5 h-3.5 text-stone-200" />
-                        <span>{isDetailOpen ? 'Thu gọn hành trình Sapo' : 'Xem chi tiết giai đoạn vận chuyển'}</span>
+                        <span>{isDetailOpen ? 'Thu gọn hành trình' : 'Xem chi tiết giai đoạn vận chuyển'}</span>
                         {isDetailOpen ? (
                           <ChevronUp className="w-3.5 h-3.5 ml-1" />
                         ) : (
@@ -260,7 +263,7 @@ export function OrderTrackingTimeline({
                           onClick={() => onSyncTracking()}
                           disabled={isSyncing}
                           className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-white border border-[#D5CFC4] hover:border-[#8C7E6A] text-stone-700 hover:text-[#4A4238] transition-colors text-[11px] font-medium"
-                          title="Gọi Sapo API để cập nhật dữ liệu vận chuyển mới nhất"
+                          title="Cập nhật dữ liệu vận chuyển mới nhất"
                         >
                           <RefreshCw className={`w-3 h-3 text-[#8C7E6A] ${isSyncing ? 'animate-spin' : ''}`} />
                           <span>{isSyncing ? 'Đang cập nhật...' : 'Làm mới hành trình'}</span>
@@ -278,11 +281,11 @@ export function OrderTrackingTimeline({
                               Đối tác giao vận
                             </span>
                             <span className="font-medium text-[#4A4238]">
-                              {trackingCompany || 'Đơn vị vận chuyển liên kết Sapo'}
+                              {trackingCompany || 'Đối tác vận chuyển liên kết'}
                             </span>
                             {orderId && (
                               <span className="block text-[10px] text-stone-400 font-mono mt-0.5">
-                                Đơn hàng: #{orderId} {sapoOrderId ? `• Sapo #${sapoOrderId}` : ''}
+                                Đơn hàng: #{orderId}
                               </span>
                             )}
                           </div>
@@ -306,7 +309,7 @@ export function OrderTrackingTimeline({
                                 </button>
                               </div>
                             ) : (
-                              <span className="text-stone-400 italic">Đang cập nhật mã từ hệ thống Sapo</span>
+                              <span className="text-stone-400 italic">Đang cập nhật mã vận đơn</span>
                             )}
                           </div>
                         </div>

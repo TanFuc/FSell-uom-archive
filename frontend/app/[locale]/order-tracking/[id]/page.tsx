@@ -41,13 +41,13 @@ export default function OrderTrackingDetailPage() {
       if (updated) {
         setOrder(updated)
         if (updated.trackingNumber) {
-          toast.success(`Đã cập nhật mã vận đơn từ Sapo: ${updated.trackingNumber}`)
+          toast.success(`Đã cập nhật mã vận đơn: ${updated.trackingNumber}`)
         } else {
-          toast.info('Đã kiểm tra hệ thống Sapo: Đơn hàng đang được chuẩn bị.')
+          toast.info('Kiểm tra hành trình: Đơn hàng đang được đóng gói chuẩn bị.')
         }
       }
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Không thể đồng bộ vận chuyển từ Sapo lúc này')
+      toast.error(err?.response?.data?.message || 'Không thể cập nhật hành trình lúc này')
     } finally {
       setSyncing(false)
     }
@@ -130,9 +130,9 @@ export default function OrderTrackingDetailPage() {
               <h2 className="text-xs sm:text-sm uppercase tracking-[0.2em] font-serif font-semibold text-[#4A4238]">
                 Hành trình đơn hàng
               </h2>
-              {order.sapoOrderId && (
+              {order.sapoOrderNumber && (
                 <p className="text-[10px] text-stone-400 mt-0.5">
-                  Sapo Order #{order.sapoOrderNumber || order.sapoOrderId}
+                  Mã tham chiếu: #{order.sapoOrderNumber}
                 </p>
               )}
             </div>
@@ -141,11 +141,11 @@ export default function OrderTrackingDetailPage() {
                 type="button"
                 onClick={handleSyncTracking}
                 disabled={syncing}
-                title="Cập nhật trạng thái mới nhất từ Sapo (Dự phòng khi Webhook trễ)"
+                title="Cập nhật trạng thái vận chuyển mới nhất"
                 className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium text-[#4A4238] bg-[#FAF8F2] hover:bg-[#F2ECE1] border border-[#ECE8DF] transition-colors disabled:opacity-50"
               >
                 <RefreshCw className={`w-3 h-3 text-[#8C7E6A] ${syncing ? 'animate-spin' : ''}`} />
-                <span>{syncing ? 'Đang kiểm tra...' : 'Cập nhật'}</span>
+                <span>{syncing ? 'Đang kiểm tra...' : 'Làm mới hành trình'}</span>
               </button>
               <div className="hidden sm:flex items-center gap-1 text-[11px] text-[#8C7E6A]">
                 <ShieldCheck className="w-3.5 h-3.5" />

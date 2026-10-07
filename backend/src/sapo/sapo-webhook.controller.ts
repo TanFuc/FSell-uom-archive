@@ -387,13 +387,19 @@ export class SapoWebhookController {
     }
 
     if (sapoOrderId) {
+      const isActuallyShipped = Boolean(
+        effectiveTrackingNumber ||
+        fulfillmentData?.handed_over_at ||
+        (fulfillmentData?.shipment_status && fulfillmentData?.shipment_status !== 'ready_to_pick')
+      )
+
       await this.prisma.order.updateMany({
         where: {
           sapoOrderId,
           deletedAt: null,
         },
         data: {
-          status: 'shipped',
+          status: isActuallyShipped ? 'shipped' : 'processing',
           sapoFulfillmentStatus: fulfillmentData?.status || 'fulfilled',
           trackingCompany,
           trackingNumber: effectiveTrackingNumber,

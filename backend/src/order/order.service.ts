@@ -120,7 +120,7 @@ export class OrderService {
           inventory_behaviour: 'decrement_obeying_policy',
           send_receipt: false,
           send_webhooks: true,
-          source_name: process.env.SAPO_SOURCE_NAME || '3c8ff21cc73a476baf04d3d22e45c864',
+          source_name: process.env.SAPO_SOURCE_NAME || 'UOM Website',
           note: dto.note || `Đơn hàng từ website: ${orderNumber}`,
           line_items: itemsToOrder.map((item) => ({
             title: item.product?.nameVi || 'Sản phẩm',
@@ -312,15 +312,28 @@ export class OrderService {
 
         const sapoFulfillmentStatus = latestFulfillment?.status || 'fulfilled'
 
+        // Đơn hàng CHỈ thực sự chuyển sang 'shipped' (Đang vận chuyển) khi:
+        // Đã có mã vận đơn (tracking_number) HOẶC đã có mốc bàn giao thực tế (handed_over_at).
+        // Nếu mới chỉ tạo phiếu đóng gói nội bộ (FUN...) nhưng chưa bàn giao bưu cục thì trạng thái chính xác là 'processing' (Đang đóng gói).
+        const isActuallyShipped = Boolean(
+          trackingNumber ||
+          latestFulfillment?.handed_over_at ||
+          (latestFulfillment?.shipment_status && latestFulfillment?.shipment_status !== 'ready_to_pick')
+        )
+
+        const targetStatus =
+          order.status === 'delivered'
+            ? 'delivered'
+            : sapoFulfillmentStatus === 'cancelled'
+            ? 'cancelled'
+            : isActuallyShipped
+            ? 'shipped'
+            : 'processing'
+
         const updatedOrder = await this.prisma.order.update({
           where: { id: order.id },
           data: {
-            status:
-              order.status === 'delivered'
-                ? 'delivered'
-                : sapoFulfillmentStatus === 'cancelled'
-                ? 'cancelled'
-                : 'shipped',
+            status: targetStatus,
             sapoFulfillmentStatus,
             sapoFinancialStatus: sapoOrder.financial_status || order.sapoFinancialStatus,
             trackingNumber: trackingNumber || null,

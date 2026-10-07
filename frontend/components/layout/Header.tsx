@@ -687,11 +687,11 @@ export function Header() {
                     setIsCartOpen(true)
                   }
                 }}
-                className="flex items-center gap-1.5 p-1 outline-none transition-opacity hover:opacity-60 relative"
+                className="flex items-center gap-1.5 p-1 outline-none transition-opacity hover:opacity-60 relative whitespace-nowrap shrink-0"
                 aria-label="Giỏ hàng"
               >
                 <div className="relative flex items-center justify-center">
-                  <ShoppingBag className="h-5 w-5 lg:h-6 lg:w-6" />
+                  <ShoppingBag className="h-5 w-5 lg:h-6 lg:w-6 shrink-0" />
                 </div>
                 <span className="hidden text-xs font-bold uppercase leading-none tracking-widest lg:inline">
                   {locale === 'vi' ? 'Giỏ hàng' : 'Cart'}
@@ -700,19 +700,19 @@ export function Header() {
 
               {/* Customer Account Button */}
               {isAuthenticated ? (
-                <div className="flex items-center gap-1 sm:gap-2">
+                <div className="flex items-center gap-1 sm:gap-2 whitespace-nowrap shrink-0">
                   <Link
                     href={`/${locale}/my-orders`}
-                    className="flex items-center gap-1 p-1 text-xs font-bold uppercase leading-none tracking-widest hover:text-[#8C7E6A] transition-colors"
+                    className="flex items-center gap-1 p-1 text-xs font-bold uppercase leading-none tracking-widest hover:text-[#8C7E6A] transition-colors shrink-0"
                   >
-                    <UserIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+                    <UserIcon className="h-4 w-4 sm:h-5 sm:w-5 shrink-0" />
                     <span className="hidden md:inline">
                       {customer?.fullName?.split(' ').slice(-1)[0] || 'Tài khoản'}
                     </span>
                   </Link>
                   <button
                     onClick={customerLogout}
-                    className="hidden sm:inline text-[9px] uppercase tracking-wider text-foreground/40 hover:text-foreground"
+                    className="hidden sm:inline text-[9px] uppercase tracking-wider text-foreground/40 hover:text-foreground shrink-0"
                     title="Đăng xuất"
                   >
                     (Thoát)
@@ -721,9 +721,9 @@ export function Header() {
               ) : (
                 <button
                   onClick={() => openAuthModal('Đăng nhập tài khoản khách hàng')}
-                  className="flex items-center gap-1 p-1 text-xs font-bold uppercase leading-none tracking-widest transition-opacity hover:opacity-60"
+                  className="flex items-center gap-1 p-1 text-xs font-bold uppercase leading-none tracking-widest transition-opacity hover:opacity-60 whitespace-nowrap shrink-0"
                 >
-                  <UserIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <UserIcon className="h-4 w-4 sm:h-5 sm:w-5 shrink-0" />
                   <span className="hidden md:inline">
                     {locale === 'vi' ? 'Đăng nhập' : 'Login'}
                   </span>
