@@ -43,10 +43,75 @@ export class SapoSyncService {
   }
 
   /**
+   * Chuẩn hóa URL ảnh Sapo: Thêm https: nếu là protocol-relative (//bizweb.dktcdn.net/...)
+   */
+  private normalizeSapoImageUrl(rawUrl: any): string | null {
+    if (!rawUrl || typeof rawUrl !== 'string') return null
+    let trimmed = rawUrl.trim()
+    if (!trimmed) return null
+    if (trimmed.startsWith('//')) {
+      trimmed = `https:${trimmed}`
+    } else if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
+      trimmed = `https://${trimmed}`
+    }
+    return trimmed
+  }
+
+  /**
+   * Trích xuất tất cả URL ảnh của sản phẩm từ Sapo (từ mảng images, thuộc tính image, và các biến thể)
+   */
+  private extractAllSapoImageUrls(sapoProduct: any): string[] {
+    const urls: string[] = []
+
+    // 1. Mảng images
+    if (Array.isArray(sapoProduct.images)) {
+      for (const item of sapoProduct.images) {
+        if (typeof item === 'string') {
+          const u = this.normalizeSapoImageUrl(item)
+          if (u) urls.push(u)
+        } else if (item && typeof item === 'object') {
+          const u = this.normalizeSapoImageUrl(item.src || item.url || item.full_path)
+          if (u) urls.push(u)
+        }
+      }
+    }
+
+    // 2. Thuộc tính image đơn lẻ
+    if (sapoProduct.image) {
+      if (typeof sapoProduct.image === 'string') {
+        const u = this.normalizeSapoImageUrl(sapoProduct.image)
+        if (u) urls.push(u)
+      } else if (typeof sapoProduct.image === 'object') {
+        const u = this.normalizeSapoImageUrl(sapoProduct.image.src || sapoProduct.image.url)
+        if (u) urls.push(u)
+      }
+    }
+
+    // 3. Ảnh từ các biến thể (variants)
+    if (Array.isArray(sapoProduct.variants)) {
+      for (const v of sapoProduct.variants) {
+        if (v.image) {
+          if (typeof v.image === 'string') {
+            const u = this.normalizeSapoImageUrl(v.image)
+            if (u) urls.push(u)
+          } else if (typeof v.image === 'object') {
+            const u = this.normalizeSapoImageUrl(v.image.src || v.image.url)
+            if (u) urls.push(u)
+          }
+        }
+      }
+    }
+
+    // Khử trùng lặp URL và giữ nguyên thứ tự
+    return Array.from(new Set(urls))
+  }
+
+  /**
    * Đồng bộ 1 sản phẩm cụ thể:
    * 1. Kéo chi tiết từ Sapo qua GET /admin/products/{id}.json
-   * 2. Tải toàn bộ ảnh từ CDN Sapo về và re-upload vào storage nội bộ (R2/Cloudinary)
-   * 3. Đối chiếu DB: Insert mới hoặc Update
+   * 2. Tải toàn bộ ảnh từ CDN Sapo về và re-upload vào storage nội bộ (R2 / Local fallback)
+   * 3. Nếu tải/upload lỗi, luôn fallback giữ link gốc CDN Sapo để đảm bảo hình ảnh không bị mất
+   * 4. Đối chiếu DB: Insert mới hoặc Update
    */
   async syncSingleProduct(sapoProductId: string, userId?: string) {
     const sapoProduct = await this.sapoService.getProductDetail(sapoProductId)
@@ -59,22 +124,34 @@ export class SapoSyncService {
     const priceVND = Math.round(Number(firstVariant.price || 0))
     const stock = Number(firstVariant.inventory_quantity || 0)
 
-    // 1. Tải ảnh từ Sapo và Upload lên hệ thống lưu trữ nội bộ
-    const internalImageUrls: string[] = []
-    if (Array.isArray(sapoProduct.images) && sapoProduct.images.length > 0) {
-      for (const img of sapoProduct.images) {
-        if (!img.src) continue
-        try {
-          const imgResponse = await axios.get(img.src, {
-            responseType: 'arraybuffer',
-            timeout: 10000,
-          })
-          const buffer = Buffer.from(imgResponse.data)
-          const uploadRes = await this.uploadService.uploadImageFromBuffer(buffer, 'products')
-          internalImageUrls.push(uploadRes.url)
-        } catch (uploadErr: any) {
-          this.logger.warn(`Không thể tải/upload ảnh cho sản phẩm ${sapoProductId}: ${uploadErr.message}`)
+    // 1. Tải ảnh từ Sapo và Upload lên hệ thống lưu trữ nội bộ (hoặc fallback Sapo CDN)
+    const sapoImageUrls = this.extractAllSapoImageUrls(sapoProduct)
+    const finalImageUrls: string[] = []
+
+    for (const imgUrl of sapoImageUrls) {
+      try {
+        const imgResponse = await axios.get(imgUrl, {
+          responseType: 'arraybuffer',
+          timeout: 10000,
+          headers: {
+            'User-Agent':
+              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            Accept: 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+          },
+        })
+        const buffer = Buffer.from(imgResponse.data)
+        const uploadRes = await this.uploadService.uploadImageFromBuffer(buffer, 'products')
+        if (uploadRes?.url) {
+          finalImageUrls.push(uploadRes.url)
+        } else {
+          finalImageUrls.push(imgUrl)
         }
+      } catch (uploadErr: any) {
+        this.logger.warn(
+          `Không thể tải/upload ảnh cho sản phẩm ${sapoProductId} (${imgUrl}): ${uploadErr.message}. Sử dụng trực tiếp CDN Sapo.`,
+        )
+        // Fallback trực tiếp URL Sapo để đảm bảo sản phẩm luôn có hình ảnh hiển thị
+        finalImageUrls.push(imgUrl)
       }
     }
 
@@ -105,13 +182,13 @@ export class SapoSyncService {
           sapoProductId: String(sapoProductId),
           priceVND,
           stock,
-          images: internalImageUrls.length > 0 ? internalImageUrls : [],
-          hoverImage: internalImageUrls[1] || null,
+          images: finalImageUrls,
+          hoverImage: finalImageUrls[1] || finalImageUrls[0] || null,
           isActive: true,
           createdBy: userId || null,
         },
       })
-      this.logger.log(`Tạo mới sản phẩm từ Sapo thành công: ${newProduct.nameVi} (SKU: ${sku})`)
+      this.logger.log(`Tạo mới sản phẩm từ Sapo thành công: ${newProduct.nameVi} (SKU: ${sku}, Ảnh: ${finalImageUrls.length})`)
       return newProduct
     } else {
       // UPDATE SẢN PHẨM HIỆN TẠI
@@ -123,12 +200,12 @@ export class SapoSyncService {
           sapoProductId: String(sapoProductId),
           priceVND,
           stock,
-          images: internalImageUrls.length > 0 ? internalImageUrls : (existing.images as any),
-          hoverImage: internalImageUrls[1] || existing.hoverImage,
+          images: finalImageUrls.length > 0 ? finalImageUrls : (existing.images as any),
+          hoverImage: finalImageUrls[1] || finalImageUrls[0] || existing.hoverImage,
           updatedBy: userId || null,
         },
       })
-      this.logger.log(`Cập nhật sản phẩm từ Sapo thành công: ${updatedProduct.nameVi} (SKU: ${sku})`)
+      this.logger.log(`Cập nhật sản phẩm từ Sapo thành công: ${updatedProduct.nameVi} (SKU: ${sku}, Ảnh: ${finalImageUrls.length})`)
       return updatedProduct
     }
   }

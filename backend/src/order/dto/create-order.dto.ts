@@ -1,9 +1,13 @@
-import { IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator'
+import { IsEmail, IsNotEmpty, IsOptional, IsString, IsArray } from 'class-validator'
 
 export class CreateOrderCheckoutDto {
   @IsString({ message: 'cartId là bắt buộc' })
   @IsNotEmpty()
   cartId: string
+
+  @IsArray({ message: 'itemIds phải là một danh sách chuỗi ID' })
+  @IsOptional()
+  itemIds?: string[]
 
   @IsEmail({}, { message: 'Email không đúng định dạng' })
   @IsNotEmpty({ message: 'Email là bắt buộc' })

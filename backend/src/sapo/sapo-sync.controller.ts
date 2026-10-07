@@ -62,13 +62,28 @@ export class SapoSyncController {
       const isSynced =
         existingSapoIds.has(String(p.id)) || (sku ? existingSkus.has(sku) : false)
 
+      const rawImg =
+        p.image?.src ||
+        p.images?.[0]?.src ||
+        (typeof p.image === 'string' ? p.image : null) ||
+        (Array.isArray(p.images) && typeof p.images[0] === 'string' ? p.images[0] : null)
+      let previewImg = rawImg
+      if (previewImg && typeof previewImg === 'string') {
+        previewImg = previewImg.trim()
+        if (previewImg.startsWith('//')) {
+          previewImg = `https:${previewImg}`
+        } else if (!previewImg.startsWith('http://') && !previewImg.startsWith('https://')) {
+          previewImg = `https://${previewImg}`
+        }
+      }
+
       return {
         id: p.id,
         name: p.name || 'Chưa đặt tên',
         sku,
         price: Number(firstVariant.price || 0),
         stock: Number(firstVariant.inventory_quantity || 0),
-        image: p.image?.src || p.images?.[0]?.src || null,
+        image: previewImg || null,
         isSynced,
       }
     })

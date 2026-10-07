@@ -42,14 +42,24 @@ export class OrderService {
       throw new BadRequestException('Giỏ hàng trống hoặc đã được xử lý')
     }
 
-    // 2. Tính tổng tiền & sinh mã đơn hàng
-    const totalVND = cart.items.reduce(
+    // 2. Lọc các sản phẩm được chọn để đặt hàng (nếu khách chọn cụ thể qua checkbox)
+    const itemsToOrder =
+      dto.itemIds && dto.itemIds.length > 0
+        ? cart.items.filter((item) => dto.itemIds!.includes(item.id))
+        : cart.items
+
+    if (itemsToOrder.length === 0) {
+      throw new BadRequestException('Vui lòng chọn ít nhất một sản phẩm để đặt hàng')
+    }
+
+    // 3. Tính tổng tiền & sinh mã đơn hàng
+    const totalVND = itemsToOrder.reduce(
       (sum, item) => sum + item.priceVND * item.quantity,
       0,
     )
     const orderNumber = `UOM-${Date.now().toString().slice(-6)}`
 
-    // 3. Tạo Order & OrderItem
+    // 4. Tạo Order & OrderItem
     const newOrder = await this.prisma.order.create({
       data: {
         orderNumber,
@@ -63,7 +73,7 @@ export class OrderService {
         isDraft: false,
         status: 'pending',
         items: {
-          create: cart.items.map((ci) => ({
+          create: itemsToOrder.map((ci) => ({
             productId: ci.productId,
             productTitle: ci.product?.nameVi || 'Sản phẩm gốm sứ thủ công',
             productSku: ci.product?.sku || null,
@@ -81,20 +91,26 @@ export class OrderService {
       },
     })
 
-    // 4. SOFT DELETE giỏ hàng sau khi tạo đơn thành công (BẢO TOÀN DỮ LIỆU)
-    await this.prisma.cart.update({
-      where: { id: cart.id },
-      data: { deletedAt: new Date() },
-    })
-
-    for (const item of cart.items) {
+    // 5. SOFT DELETE các sản phẩm đã được đặt
+    for (const item of itemsToOrder) {
       await this.prisma.cartItem.update({
         where: { id: item.id },
         data: { deletedAt: new Date() },
       })
     }
 
-    // 5. Đẩy đơn sang Sapo (POST /admin/orders.json)
+    // Nếu toàn bộ item trong giỏ đã đặt thì soft-delete giỏ hàng, nếu còn item thì giữ giỏ hàng
+    const remainingItems = cart.items.filter(
+      (item) => !itemsToOrder.some((ordered) => ordered.id === item.id),
+    )
+    if (remainingItems.length === 0) {
+      await this.prisma.cart.update({
+        where: { id: cart.id },
+        data: { deletedAt: new Date() },
+      })
+    }
+
+    // 6. Đẩy đơn sang Sapo (POST /admin/orders.json)
     try {
       const sapoPayload = {
         order: {
@@ -104,8 +120,9 @@ export class OrderService {
           inventory_behaviour: 'decrement_obeying_policy',
           send_receipt: false,
           send_webhooks: true,
+          source_name: process.env.SAPO_SOURCE_NAME || '3c8ff21cc73a476baf04d3d22e45c864',
           note: dto.note || `Đơn hàng từ website: ${orderNumber}`,
-          line_items: cart.items.map((item) => ({
+          line_items: itemsToOrder.map((item) => ({
             title: item.product?.nameVi || 'Sản phẩm',
             price: item.priceVND,
             quantity: item.quantity,

@@ -1,4 +1,5 @@
 import { join } from 'path'
+import { existsSync } from 'fs'
 import { ValidationPipe, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { NestFactory } from '@nestjs/core'
@@ -240,7 +241,10 @@ async function startApplication(): Promise<void> {
   app.use('/auth/login', express.text({ type: '*/*', limit: '1mb' }))
   app.use('/auth/login', loginPayloadNormalizerMiddleware)
 
-  app.useStaticAssets(join(__dirname, '..', 'uploads'), {
+  const uploadsStaticPath = existsSync(join(process.cwd(), 'uploads'))
+    ? join(process.cwd(), 'uploads')
+    : join(__dirname, '..', 'uploads')
+  app.useStaticAssets(uploadsStaticPath, {
     prefix: '/uploads/',
   })
 

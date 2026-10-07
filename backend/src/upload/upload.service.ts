@@ -1,4 +1,6 @@
 import { randomUUID } from 'crypto'
+import { join } from 'path'
+import * as fs from 'fs'
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3'
 import { Injectable, BadRequestException, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
@@ -54,6 +56,44 @@ export class UploadService {
     }
   }
 
+  private isR2ProperlyConfigured(): boolean {
+    const accessKeyId = this.configService.get<string>('R2_KEY') ?? ''
+    const secretAccessKey = this.configService.get<string>('R2_SECRET') ?? ''
+    return Boolean(
+      this.uploadProvider === 'r2' &&
+      this.s3Client &&
+      this.r2Bucket &&
+      this.r2PublicUrl &&
+      accessKeyId &&
+      !accessKeyId.startsWith('dev_placeholder') &&
+      accessKeyId.length >= 20 &&
+      secretAccessKey &&
+      !secretAccessKey.startsWith('dev_placeholder'),
+    )
+  }
+
+  private async uploadToLocal(
+    fileBuffer: Buffer,
+    folder: string,
+  ): Promise<{ url: string; publicId: string }> {
+    const safeFolder = (folder ?? 'products').replace(/^\/+|\/+$/g, '')
+    const uploadDir = join(process.cwd(), 'uploads', safeFolder)
+    await fs.promises.mkdir(uploadDir, { recursive: true })
+
+    const filename = `${Date.now()}-${randomUUID()}.webp`
+    const filePath = join(uploadDir, filename)
+    await fs.promises.writeFile(filePath, fileBuffer)
+
+    const publicId = `local/${safeFolder}/${filename}`
+    const relativeUrl = `/uploads/${safeFolder}/${filename}`
+    this.logger.log(`Ảnh đã lưu vào storage cục bộ: ${relativeUrl}`)
+
+    return {
+      url: relativeUrl,
+      publicId,
+    }
+  }
+
   async uploadProductImage(
     file: Express.Multer.File,
     folder: string = 'products',
@@ -87,9 +127,18 @@ export class UploadService {
         .toBuffer()
 
       if (this.uploadProvider === 'r2') {
-        const result = await this.uploadToR2(optimizedBuffer, folder)
-        this.logger.log(`Image uploaded to R2: ${result.publicId}`)
-        return result
+        if (!this.isR2ProperlyConfigured()) {
+          this.logger.warn('R2 chưa được cấu hình hoặc key là placeholder, lưu ảnh vào storage cục bộ')
+          return await this.uploadToLocal(optimizedBuffer, folder)
+        }
+        try {
+          const result = await this.uploadToR2(optimizedBuffer, folder)
+          this.logger.log(`Image uploaded to R2: ${result.publicId}`)
+          return result
+        } catch (r2Err: any) {
+          this.logger.warn(`Upload lên R2 thất bại (${r2Err.message}), chuyển sang lưu cục bộ`)
+          return await this.uploadToLocal(optimizedBuffer, folder)
+        }
       }
 
       const optimizedFile: Express.Multer.File = {
@@ -98,14 +147,18 @@ export class UploadService {
         mimetype: 'image/webp',
       }
 
-      const result = await this.cloudinaryService.uploadFile(optimizedFile, folder)
-      this.logger.log(`Image uploaded to Cloudinary: ${result.public_id}`)
-
-      return {
-        url: result.secure_url,
-        publicId: result.public_id,
+      try {
+        const result = await this.cloudinaryService.uploadFile(optimizedFile, folder)
+        this.logger.log(`Image uploaded to Cloudinary: ${result.public_id}`)
+        return {
+          url: result.secure_url,
+          publicId: result.public_id,
+        }
+      } catch (cloudErr: any) {
+        this.logger.warn(`Upload lên Cloudinary thất bại (${cloudErr.message}), chuyển sang lưu cục bộ`)
+        return await this.uploadToLocal(optimizedBuffer, folder)
       }
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error('Failed to process/upload image', error)
       throw new BadRequestException('Không thể xử lý và upload ảnh')
     }
@@ -128,30 +181,44 @@ export class UploadService {
         .toBuffer()
 
       if (this.uploadProvider === 'r2') {
-        const result = await this.uploadToR2(optimizedBuffer, folder)
-        this.logger.log(`Image buffer uploaded to R2: ${result.publicId}`)
-        return result
+        if (!this.isR2ProperlyConfigured()) {
+          this.logger.warn('R2 chưa được cấu hình hoặc key là placeholder, lưu ảnh buffer vào storage cục bộ')
+          return await this.uploadToLocal(optimizedBuffer, folder)
+        }
+        try {
+          const result = await this.uploadToR2(optimizedBuffer, folder)
+          this.logger.log(`Image buffer uploaded to R2: ${result.publicId}`)
+          return result
+        } catch (r2Err: any) {
+          this.logger.warn(`Upload buffer lên R2 thất bại (${r2Err.message}), chuyển sang lưu cục bộ`)
+          return await this.uploadToLocal(optimizedBuffer, folder)
+        }
       }
 
-      const fakeFile: Express.Multer.File = {
-        fieldname: 'file',
-        originalname: `synced-${Date.now()}.webp`,
-        encoding: '7bit',
-        mimetype: 'image/webp',
-        size: optimizedBuffer.length,
-        buffer: optimizedBuffer,
-        destination: '',
-        filename: '',
-        path: '',
-        stream: null as any,
-      }
+      try {
+        const fakeFile: Express.Multer.File = {
+          fieldname: 'file',
+          originalname: `synced-${Date.now()}.webp`,
+          encoding: '7bit',
+          mimetype: 'image/webp',
+          size: optimizedBuffer.length,
+          buffer: optimizedBuffer,
+          destination: '',
+          filename: '',
+          path: '',
+          stream: null as any,
+        }
 
-      const result = await this.cloudinaryService.uploadFile(fakeFile, folder)
-      return {
-        url: result.secure_url,
-        publicId: result.public_id,
+        const result = await this.cloudinaryService.uploadFile(fakeFile, folder)
+        return {
+          url: result.secure_url,
+          publicId: result.public_id,
+        }
+      } catch (cloudErr: any) {
+        this.logger.warn(`Upload buffer Cloudinary thất bại (${cloudErr.message}), chuyển sang lưu cục bộ`)
+        return await this.uploadToLocal(optimizedBuffer, folder)
       }
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error('Failed to process/upload image from buffer', error)
       throw new BadRequestException('Không thể xử lý và upload ảnh từ buffer')
     }
@@ -247,6 +314,16 @@ export class UploadService {
 
   async deleteFile(publicIdOrUrl: string): Promise<{ success: boolean }> {
     try {
+      if (publicIdOrUrl.startsWith('local/') || publicIdOrUrl.startsWith('/uploads/') || publicIdOrUrl.includes('/uploads/')) {
+        const cleanPath = publicIdOrUrl.replace(/^local\//, '').replace(/^.*\/uploads\//, '')
+        const filePath = join(process.cwd(), 'uploads', cleanPath)
+        if (fs.existsSync(filePath)) {
+          await fs.promises.unlink(filePath)
+          this.logger.log(`Local file deleted: ${filePath}`)
+        }
+        return { success: true }
+      }
+
       if (this.uploadProvider === 'r2') {
         if (!this.s3Client || !this.r2Bucket) {
           throw new BadRequestException('R2 chưa được cấu hình đúng')
