@@ -41,7 +41,15 @@ class ApiClient {
     this.client.interceptors.request.use(
       (config) => {
         if (typeof window !== 'undefined') {
-          const token = localStorage.getItem('accessToken')
+          const isCustomerRoute =
+            config.url?.startsWith('/cart') ||
+            config.url?.startsWith('/orders') ||
+            config.url?.startsWith('/customer')
+
+          const customerToken = localStorage.getItem('customerAccessToken')
+          const adminToken = localStorage.getItem('accessToken')
+
+          const token = isCustomerRoute ? (customerToken || adminToken) : adminToken
           if (token) {
             config.headers.Authorization = `Bearer ${token}`
           }
@@ -591,6 +599,106 @@ class ApiClient {
     void pingSitewideSeo()
     return result
   }
+
+  // ==================== SAPO SYNC ====================
+  async getSapoPreview(page = 1): Promise<any[]> {
+    const res = await this.client.get(`/admin/sapo-sync/preview`, { params: { page } })
+    return res.data
+  }
+
+  async syncSapoProducts(productIds: (string | number)[]): Promise<any[]> {
+    const res = await this.client.post(`/admin/sapo-sync/sync`, { productIds })
+    return res.data
+  }
+
+  // ==================== CART & ORDER ====================
+  async getCart(sessionId?: string, customerId?: string): Promise<any> {
+    const res = await this.client.get(`/cart`, { params: { sessionId, customerId } })
+    return res.data
+  }
+
+  async addToCart(productId: string, quantity = 1, sessionId?: string, customerId?: string): Promise<any> {
+    const res = await this.client.post(`/cart/add`, { productId, quantity, sessionId }, { params: { customerId } })
+    return res.data
+  }
+
+  async updateCartItem(cartItemId: string, quantity: number): Promise<any> {
+    const res = await this.client.put(`/cart/item/${cartItemId}`, { quantity })
+    return res.data
+  }
+
+  async removeCartItem(cartItemId: string): Promise<any> {
+    const res = await this.client.delete(`/cart/item/${cartItemId}`)
+    return res.data
+  }
+
+  async checkoutOrder(data: {
+    cartId: string
+    customerEmail: string
+    customerName: string
+    phoneNumber: string
+    shippingAddress: string
+    note?: string
+  }): Promise<any> {
+    const res = await this.client.post(`/orders/checkout`, data)
+    return res.data
+  }
+
+  async getOrderTracking(idOrNumber: string): Promise<any> {
+    const res = await this.client.get(`/orders/${idOrNumber}`)
+    return res.data
+  }
+
+  async syncOrderTracking(idOrNumber: string): Promise<any> {
+    const res = await this.client.post(`/orders/${idOrNumber}/sync-tracking`)
+    return res.data
+  }
+
+  async fulfillOrder(
+    idOrNumber: string,
+    data: {
+      trackingNumber?: string
+      trackingCompany?: string
+      trackingUrl?: string
+      sendNotificationEmail?: boolean
+    },
+  ): Promise<any> {
+    const res = await this.client.post(`/orders/${idOrNumber}/fulfill`, data)
+    return res.data
+  }
+
+  async getMyOrders(): Promise<any[]> {
+    const res = await this.client.get(`/orders/my-orders`)
+    return res.data
+  }
+
+  // ==================== CUSTOMER AUTH ====================
+  async customerRegister(data: {
+    email: string
+    password: string
+    fullName: string
+    phone?: string
+    address?: string
+  }): Promise<any> {
+    const res = await this.client.post(`/customer/auth/register`, data)
+    return res.data
+  }
+
+  async customerLogin(data: { email: string; password: string }): Promise<any> {
+    const res = await this.client.post(`/customer/auth/login`, data)
+    return res.data
+  }
+
+  async customerLogout(): Promise<any> {
+    const res = await this.client.post(`/customer/auth/logout`)
+    return res.data
+  }
+
+  async customerGetMe(): Promise<any> {
+    const res = await this.client.get(`/customer/auth/me`)
+    return res.data
+  }
 }
+
 
 export const api = new ApiClient(API_BASE_URL)
