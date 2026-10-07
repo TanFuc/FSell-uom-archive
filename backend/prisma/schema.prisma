@@ -122,6 +122,14 @@ model Product {
   relatedProducts Product[] @relation("RelatedProducts")
   relatedTo       Product[] @relation("RelatedProducts")
 
+  // Sapo & E-commerce integration
+  sku           String?   @unique
+  sapoProductId String?   @unique
+
+  // Relations for Cart & Order
+  cartItems     CartItem[]
+  orderItems    OrderItem[]
+
   // Audit fields
   createdAt     DateTime  @default(now())
   createdBy     String? // User ID who created this product
@@ -173,37 +181,163 @@ model Banner {
   @@map("banners")
 }
 
-// Orders removed - Customers will contact via social media
-// Use "Inquiry" feature instead - customers click button to message via Facebook/Instagram
+// ==============================================================================
+// CUSTOMER & AUTH
+// ==============================================================================
+model Customer {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  fullName     String
+  phone        String?
+  address      String?   @db.Text
+  isActive     Boolean   @default(true)
 
-// model Order {
-//   id              String      @id @default(cuid())
-//   orderNumber     String      @unique
-//   userId          String?
-//   customerEmail   String
-//   customerName    String
-//   shippingAddress String      @db.Text
-//   phoneNumber     String
-//   totalVND        Int
-//   language        Language    @default(VI)
-//   status          String      @default("pending")
-//   createdAt       DateTime    @default(now())
-//   updatedAt       DateTime    @updatedAt
-//   user            User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
-//   items           OrderItem[]
-//   @@map("orders")
-// }
+  // Audit fields
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime? // Soft delete
+  hardDeletedAt DateTime? // Hard delete timestamp
 
-// model OrderItem {
-//   id        String  @id @default(cuid())
-//   orderId   String
-//   productId String
-//   quantity  Int
-//   priceVND  Int
-//   order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-//   product   Product @relation(fields: [productId], references: [id], onDelete: Restrict)
-//   @@map("order_items")
-// }
+  // Relations
+  carts  Cart[]
+  orders Order[]
+
+  @@map("customers")
+}
+
+// ==============================================================================
+// CART & CART ITEMS
+// ==============================================================================
+model Cart {
+  id         String   @id @default(cuid())
+  customerId String?
+  sessionId  String?  @unique
+
+  // Audit fields
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+  hardDeletedAt DateTime?
+
+  // Relations
+  customer Customer?  @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  items    CartItem[]
+
+  @@index([sessionId])
+  @@index([customerId])
+  @@map("carts")
+}
+
+model CartItem {
+  id        String @id @default(cuid())
+  cartId    String
+  productId String
+  quantity  Int    @default(1)
+  priceVND  Int
+
+  // Audit fields
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+  hardDeletedAt DateTime?
+
+  // Relations
+  cart    Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([cartId])
+  @@index([productId])
+  @@map("cart_items")
+}
+
+// ==============================================================================
+// ORDER & ORDER ITEMS (Sapo Integrated)
+// ==============================================================================
+model Order {
+  id              String   @id @default(cuid())
+  orderNumber     String   @unique
+  customerId      String?
+  customerEmail   String
+  customerName    String
+  shippingAddress String   @db.Text
+  phoneNumber     String
+  note            String?  @db.Text
+  totalVND        Int
+  status          String   @default("pending") // pending | processing | shipped | delivered | cancelled
+  isDraft         Boolean  @default(false)     // cờ phân biệt đơn nháp và đơn đã đặt
+
+  // Sapo Integration fields
+  sapoOrderId           String?   @unique
+  sapoOrderNumber       String?
+  sapoFulfillmentStatus String?
+  sapoFinancialStatus   String?   @default("pending")
+  trackingCompany       String?
+  trackingNumber        String?
+  trackingUrl           String?   @db.Text
+
+  // Audit fields
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+  hardDeletedAt DateTime?
+
+  // Relations
+  customer Customer?   @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  items    OrderItem[]
+
+  @@index([customerId])
+  @@index([sapoOrderId])
+  @@map("orders")
+}
+
+model OrderItem {
+  id             String  @id @default(cuid())
+  orderId        String
+  productId      String?
+  productTitle   String
+  productSku     String?
+  productImage   String?
+  quantity       Int
+  priceVND       Int
+  sapoVariantId  String?
+
+  // Audit fields
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+  hardDeletedAt DateTime?
+
+  // Relations
+  order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
+}
+
+// ==============================================================================
+// SAPO WEBHOOK LOGS
+// ==============================================================================
+model SapoWebhookLog {
+  id           String   @id @default(cuid())
+  topic        String
+  sapoOrderId  String?
+  payload      Json
+  status       String   @default("processed")
+  errorMessage String?  @db.Text
+
+  // Audit fields
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+  hardDeletedAt DateTime?
+
+  @@index([topic])
+  @@index([sapoOrderId])
+  @@map("sapo_webhook_logs")
+}
 
 model SiteSettings {
   id    String @id @default("singleton")
