@@ -111,6 +111,53 @@ export class UploadService {
     }
   }
 
+  async uploadImageFromBuffer(
+    buffer: Buffer,
+    folder: string = 'products',
+  ): Promise<{ url: string; publicId: string }> {
+    try {
+      const optimizedBuffer = await sharp(buffer)
+        .rotate()
+        .resize(1600, 1600, {
+          fit: 'inside',
+          withoutEnlargement: true,
+          kernel: sharp.kernel.lanczos3,
+        })
+        .sharpen({ sigma: 1.1, m1: 1, m2: 2, x1: 2, y2: 10, y3: 20 })
+        .webp({ quality: 88, effort: 4, smartSubsample: true })
+        .toBuffer()
+
+      if (this.uploadProvider === 'r2') {
+        const result = await this.uploadToR2(optimizedBuffer, folder)
+        this.logger.log(`Image buffer uploaded to R2: ${result.publicId}`)
+        return result
+      }
+
+      const fakeFile: Express.Multer.File = {
+        fieldname: 'file',
+        originalname: `synced-${Date.now()}.webp`,
+        encoding: '7bit',
+        mimetype: 'image/webp',
+        size: optimizedBuffer.length,
+        buffer: optimizedBuffer,
+        destination: '',
+        filename: '',
+        path: '',
+        stream: null as any,
+      }
+
+      const result = await this.cloudinaryService.uploadFile(fakeFile, folder)
+      return {
+        url: result.secure_url,
+        publicId: result.public_id,
+      }
+    } catch (error) {
+      this.logger.error('Failed to process/upload image from buffer', error)
+      throw new BadRequestException('Không thể xử lý và upload ảnh từ buffer')
+    }
+  }
+
+
   private async uploadToR2(
     fileBuffer: Buffer,
     folder: string,

@@ -115,4 +115,21 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   async mset(keyValues: Record<string, string>): Promise<void> {
     await this.client.mSet(keyValues)
   }
+
+  async incr(key: string): Promise<number> {
+    return this.client.incr(key)
+  }
+
+  async expire(key: string, seconds: number): Promise<boolean> {
+    return this.client.expire(key, seconds)
+  }
+
+  async ttl(key: string): Promise<number> {
+    return this.client.ttl(key)
+  }
+
+  async setWithTtl(key: string, value: string, ttlSeconds: number): Promise<void> {
+    await this.client.setEx(key, ttlSeconds, value)
+  }
 }
+

@@ -43,6 +43,8 @@ describe('ProductsService', () => {
     deletedAt: null,
     deletedBy: null,
     hardDeletedAt: null,
+    sku: null,
+    sapoProductId: null,
   }
 
   beforeEach(async () => {
