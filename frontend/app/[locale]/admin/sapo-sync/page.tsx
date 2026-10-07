@@ -77,12 +77,13 @@ export default function AdminSapoSyncPage() {
     setSyncingIds((prev) => [...prev, id])
     try {
       const res = await api.syncSapoProducts([id])
-      const item = res?.[0]
+      const resList = Array.isArray(res) ? res : Array.isArray((res as any)?.data) ? (res as any).data : []
+      const item = resList?.[0]
       if (item?.status === 'success') {
         toast.success(`Đã đồng bộ sản phẩm ID #${id} thành công!`)
         // Cập nhật state nội bộ
         setProducts((prev) =>
-          prev.map((p) => (p.id === id ? { ...p, isSynced: true } : p)),
+          (Array.isArray(prev) ? prev : []).map((p) => (p.id === id ? { ...p, isSynced: true } : p)),
         )
       } else {
         toast.error(`Đồng bộ thất bại: ${item?.error || 'Lỗi không xác định'}`)
@@ -100,8 +101,9 @@ export default function AdminSapoSyncPage() {
     setIsBatchSyncing(true)
     try {
       const res = await api.syncSapoProducts(selectedIds)
-      const successCount = res.filter((r: any) => r.status === 'success').length
-      const failedCount = res.length - successCount
+      const resList = Array.isArray(res) ? res : Array.isArray((res as any)?.data) ? (res as any).data : []
+      const successCount = resList.filter((r: any) => r.status === 'success').length
+      const failedCount = resList.length - successCount
 
       if (successCount > 0) {
         toast.success(`Đã đồng bộ thành công ${successCount}/${selectedIds.length} sản phẩm`)
@@ -112,10 +114,10 @@ export default function AdminSapoSyncPage() {
 
       // Đánh dấu đã sync cho các sản phẩm thành công
       const successIds = new Set(
-        res.filter((r: any) => r.status === 'success').map((r: any) => Number(r.sapoId)),
+        resList.filter((r: any) => r.status === 'success').map((r: any) => Number(r.sapoId)),
       )
       setProducts((prev) =>
-        prev.map((p) => (successIds.has(p.id) ? { ...p, isSynced: true } : p)),
+        (Array.isArray(prev) ? prev : []).map((p) => (successIds.has(p.id) ? { ...p, isSynced: true } : p)),
       )
       setSelectedIds([])
     } catch (err: any) {
