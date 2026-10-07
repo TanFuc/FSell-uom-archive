@@ -115,7 +115,7 @@ export default function OrderTrackingDetailPage() {
       <div className="h-16 lg:h-20" />
 
       {/* Sticky Sub-Header Bar */}
-      <div className="sticky top-16 lg:top-20 z-20 bg-white/95 backdrop-blur-md border-b border-stone-200 px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-xs">
+      <div className="sticky top-16 lg:top-20 z-20 bg-white/95 backdrop-blur-md px-4 sm:px-8 py-3.5 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <button
             type="button"
