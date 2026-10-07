@@ -37,11 +37,17 @@ export default function AdminSapoSyncPage() {
     setLoading(true)
     try {
       const data = await api.getSapoPreview(1)
-      setProducts(data || [])
+      const list = Array.isArray(data)
+        ? data
+        : Array.isArray((data as any)?.data)
+        ? (data as any).data
+        : []
+      setProducts(list)
     } catch (err: any) {
       toast.error('Không thể tải danh sách sản phẩm từ Sapo', {
         description: err?.response?.data?.message || err.message,
       })
+      setProducts([])
     } finally {
       setLoading(false)
     }
@@ -119,7 +125,9 @@ export default function AdminSapoSyncPage() {
     }
   }
 
-  const filteredProducts = products.filter((p) => {
+  const productList = Array.isArray(products) ? products : []
+
+  const filteredProducts = productList.filter((p) => {
     if (filterSynced === 'synced') return p.isSynced
     if (filterSynced === 'not_synced') return !p.isSynced
     return true
@@ -172,7 +180,7 @@ export default function AdminSapoSyncPage() {
               : 'bg-muted/50 text-muted-foreground hover:bg-muted'
           }`}
         >
-          Tất cả ({products.length})
+          Tất cả ({productList.length})
         </button>
         <button
           onClick={() => setFilterSynced('not_synced')}
@@ -182,7 +190,7 @@ export default function AdminSapoSyncPage() {
               : 'bg-muted/50 text-muted-foreground hover:bg-muted'
           }`}
         >
-          Chưa đồng bộ ({products.filter((p) => !p.isSynced).length})
+          Chưa đồng bộ ({productList.filter((p) => !p.isSynced).length})
         </button>
         <button
           onClick={() => setFilterSynced('synced')}
@@ -192,7 +200,7 @@ export default function AdminSapoSyncPage() {
               : 'bg-muted/50 text-muted-foreground hover:bg-muted'
           }`}
         >
-          Đã có trên Web ({products.filter((p) => p.isSynced).length})
+          Đã có trên Web ({productList.filter((p) => p.isSynced).length})
         </button>
       </div>
 

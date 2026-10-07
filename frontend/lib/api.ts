@@ -603,33 +603,33 @@ class ApiClient {
   // ==================== SAPO SYNC ====================
   async getSapoPreview(page = 1): Promise<any[]> {
     const res = await this.client.get(`/admin/sapo-sync/preview`, { params: { page } })
-    return res.data
+    return res.data?.data !== undefined ? res.data.data : res.data
   }
 
   async syncSapoProducts(productIds: (string | number)[]): Promise<any[]> {
     const res = await this.client.post(`/admin/sapo-sync/sync`, { productIds })
-    return res.data
+    return res.data?.data !== undefined ? res.data.data : res.data
   }
 
   // ==================== CART & ORDER ====================
   async getCart(sessionId?: string, customerId?: string): Promise<any> {
     const res = await this.client.get(`/cart`, { params: { sessionId, customerId } })
-    return res.data
+    return res.data?.data !== undefined ? res.data.data : res.data
   }
 
   async addToCart(productId: string, quantity = 1, sessionId?: string, customerId?: string): Promise<any> {
     const res = await this.client.post(`/cart/add`, { productId, quantity, sessionId }, { params: { customerId } })
-    return res.data
+    return res.data?.data !== undefined ? res.data.data : res.data
   }
 
   async updateCartItem(cartItemId: string, quantity: number): Promise<any> {
     const res = await this.client.put(`/cart/item/${cartItemId}`, { quantity })
-    return res.data
+    return res.data?.data !== undefined ? res.data.data : res.data
   }
 
   async removeCartItem(cartItemId: string): Promise<any> {
     const res = await this.client.delete(`/cart/item/${cartItemId}`)
-    return res.data
+    return res.data?.data !== undefined ? res.data.data : res.data
   }
 
   async checkoutOrder(data: {
@@ -641,17 +641,17 @@ class ApiClient {
     note?: string
   }): Promise<any> {
     const res = await this.client.post(`/orders/checkout`, data)
-    return res.data
+    return res.data?.data !== undefined ? res.data.data : res.data
   }
 
   async getOrderTracking(idOrNumber: string): Promise<any> {
     const res = await this.client.get(`/orders/${idOrNumber}`)
-    return res.data
+    return res.data?.data !== undefined ? res.data.data : res.data
   }
 
   async syncOrderTracking(idOrNumber: string): Promise<any> {
     const res = await this.client.post(`/orders/${idOrNumber}/sync-tracking`)
-    return res.data
+    return res.data?.data !== undefined ? res.data.data : res.data
   }
 
   async fulfillOrder(
@@ -664,12 +664,12 @@ class ApiClient {
     },
   ): Promise<any> {
     const res = await this.client.post(`/orders/${idOrNumber}/fulfill`, data)
-    return res.data
+    return res.data?.data !== undefined ? res.data.data : res.data
   }
 
   async getMyOrders(): Promise<any[]> {
     const res = await this.client.get(`/orders/my-orders`)
-    return res.data
+    return res.data?.data !== undefined ? res.data.data : res.data
   }
 
   // ==================== CUSTOMER AUTH ====================
@@ -681,22 +681,22 @@ class ApiClient {
     address?: string
   }): Promise<any> {
     const res = await this.client.post(`/customer/auth/register`, data)
-    return res.data
+    return res.data?.data !== undefined ? res.data.data : res.data
   }
 
   async customerLogin(data: { email: string; password: string }): Promise<any> {
     const res = await this.client.post(`/customer/auth/login`, data)
-    return res.data
+    return res.data?.data !== undefined ? res.data.data : res.data
   }
 
   async customerLogout(): Promise<any> {
     const res = await this.client.post(`/customer/auth/logout`)
-    return res.data
+    return res.data?.data !== undefined ? res.data.data : res.data
   }
 
   async customerGetMe(): Promise<any> {
     const res = await this.client.get(`/customer/auth/me`)
-    return res.data
+    return res.data?.data !== undefined ? res.data.data : res.data
   }
 }
 
