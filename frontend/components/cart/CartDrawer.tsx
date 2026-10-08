@@ -22,7 +22,7 @@ interface CartDrawerProps {
 }
 
 export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
-  const { isAuthenticated, openAuthModal } = useCustomerStore()
+  const { isAuthenticated, openAuthModal, setCartCount } = useCustomerStore()
   const [cart, setCart] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const [selectedItemIds, setSelectedItemIds] = useState<string[]>([])
@@ -33,6 +33,11 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
     try {
       const data = await api.getCart()
       setCart(data)
+      const totalQty = (data?.items || []).reduce(
+        (sum: number, item: any) => sum + (item.quantity || 1),
+        0,
+      )
+      setCartCount(totalQty)
     } catch (err: any) {
       console.error('Lỗi khi tải giỏ hàng:', err)
     } finally {
@@ -103,6 +108,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   if (!isOpen) return null
 
   const items = cart?.items || []
+  const totalQuantity = items.reduce((sum: number, item: any) => sum + (item.quantity || 1), 0)
   const selectedItems = items.filter((item: any) => selectedItemIds.includes(item.id))
   const subtotal = selectedItems.reduce(
     (sum: number, item: any) => sum + item.priceVND * item.quantity,
@@ -134,7 +140,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                   Giỏ hàng của bạn
                 </h2>
                 <p className="text-[10px] text-stone-400 font-mono tracking-wider">
-                  {items.length} tác phẩm
+                  {items.length} loại sản phẩm • Tổng {totalQuantity} món
                 </p>
               </div>
             </div>

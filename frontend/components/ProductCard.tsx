@@ -50,6 +50,7 @@ export function ProductCard({ product, locale, priority }: ProductCardProps) {
     try {
       await api.addToCart(product.id, 1)
       setIsAdded(true)
+      useCustomerStore.getState().fetchCartCount()
       toast.success(
         locale === 'vi'
           ? `Đã thêm vào giỏ hàng: ${name}`

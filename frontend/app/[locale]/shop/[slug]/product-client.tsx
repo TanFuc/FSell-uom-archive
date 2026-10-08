@@ -290,6 +290,7 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
     setAddingToCart(true)
     try {
       await api.addToCart(product.id, qty)
+      useCustomerStore.getState().fetchCartCount()
       toast.success('Đã thêm sản phẩm vào giỏ hàng!', {
         action: {
           label: 'Xem giỏ',

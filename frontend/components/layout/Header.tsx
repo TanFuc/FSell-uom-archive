@@ -137,11 +137,14 @@ export function Header() {
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [isCartOpen, setIsCartOpen] = useState(false)
-  const { customer, isAuthenticated, openAuthModal, logout: customerLogout } = useCustomerStore()
+  const { customer, isAuthenticated, openAuthModal, logout: customerLogout, cartCount, fetchCartCount } = useCustomerStore()
 
   useEffect(() => {
     setMounted(true)
-  }, [])
+    if (isAuthenticated) {
+      fetchCartCount()
+    }
+  }, [isAuthenticated, fetchCartCount])
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const [isScrolled, setIsScrolled] = useState(false)
@@ -692,6 +695,11 @@ export function Header() {
               >
                 <div className="relative flex items-center justify-center">
                   <ShoppingBag className="h-5 w-5 lg:h-6 lg:w-6 shrink-0" />
+                  {isAuthenticated && cartCount > 0 && (
+                    <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#4A4238] px-1 font-mono text-[9px] font-bold leading-none text-white shadow-xs animate-in zoom-in-50 duration-200">
+                      {cartCount > 99 ? '99+' : cartCount}
+                    </span>
+                  )}
                 </div>
               </button>
 

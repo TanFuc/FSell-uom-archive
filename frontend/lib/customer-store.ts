@@ -17,16 +17,19 @@ interface CustomerAuthState {
   isAuthModalOpen: boolean
   authModalMessage?: string
   postLoginAction?: (() => void) | null
+  cartCount: number
 
   setCustomerAuth: (data: { customer: CustomerUser; accessToken: string; refreshToken?: string }) => void
   logout: () => void
   openAuthModal: (message?: string, postAction?: () => void) => void
   closeAuthModal: () => void
+  setCartCount: (count: number) => void
+  fetchCartCount: () => Promise<void>
 }
 
 export const useCustomerStore = create<CustomerAuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       customer: null,
       accessToken: null,
       refreshToken: null,
@@ -34,6 +37,7 @@ export const useCustomerStore = create<CustomerAuthState>()(
       isAuthModalOpen: false,
       authModalMessage: undefined,
       postLoginAction: null,
+      cartCount: 0,
 
       setCustomerAuth: ({ customer, accessToken, refreshToken }) => {
         if (typeof window !== 'undefined') {
@@ -49,6 +53,7 @@ export const useCustomerStore = create<CustomerAuthState>()(
           isAuthenticated: true,
           isAuthModalOpen: false,
         })
+        get().fetchCartCount()
       },
 
       logout: () => {
@@ -61,6 +66,7 @@ export const useCustomerStore = create<CustomerAuthState>()(
           accessToken: null,
           refreshToken: null,
           isAuthenticated: false,
+          cartCount: 0,
         })
       },
 
@@ -79,6 +85,28 @@ export const useCustomerStore = create<CustomerAuthState>()(
           postLoginAction: null,
         })
       },
+
+      setCartCount: (count: number) => {
+        set({ cartCount: Math.max(0, count) })
+      },
+
+      fetchCartCount: async () => {
+        if (!get().isAuthenticated) {
+          set({ cartCount: 0 })
+          return
+        }
+        try {
+          const { api } = await import('@/lib/api')
+          const cart = await api.getCart()
+          const totalQty = (cart?.items || []).reduce(
+            (sum: number, item: any) => sum + (item.quantity || 1),
+            0,
+          )
+          set({ cartCount: totalQty })
+        } catch {
+          // ignore error
+        }
+      },
     }),
     {
       name: 'uom-customer-auth',
@@ -87,6 +115,7 @@ export const useCustomerStore = create<CustomerAuthState>()(
         accessToken: state.accessToken,
         refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
+        cartCount: state.cartCount,
       }),
     },
   ),
