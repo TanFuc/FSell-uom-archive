@@ -572,9 +572,9 @@ export function Header() {
             isScrolled ? 'h-16 lg:h-20' : 'h-20 lg:h-28',
           )}
         >
-          <div className="flex w-full items-center justify-between">
+          <div className="grid w-full grid-cols-3 items-center">
             {/* Left */}
-            <div className="flex w-auto shrink-0 items-center lg:w-1/3">
+            <div className="flex items-center justify-start">
               <button
                 onClick={toggleMobileMenu}
                 aria-label={showMobileMenu ? t('closeMenu') : t('openMenu')}
@@ -618,12 +618,12 @@ export function Header() {
               </button>
             </div>
 
-            {/* Middle Logo */}
-            <div className="flex min-w-0 flex-1 justify-center px-2 text-center lg:w-1/3">
+            {/* Middle Logo (Centered) */}
+            <div className="flex min-w-0 justify-center px-2 text-center">
               <Link
                 href={`/${locale}`}
                 className={cn(
-                  'truncate max-w-[180px] sm:max-w-none font-playfair font-bold tracking-tighter transition-all duration-300 hover:opacity-80',
+                  'truncate max-w-[200px] sm:max-w-none font-playfair font-bold tracking-tighter transition-all duration-300 hover:opacity-80',
                   isScrolled ? 'text-lg sm:text-xl lg:text-3xl' : 'text-xl sm:text-2xl lg:text-4xl',
                 )}
                 tabIndex={0}
@@ -633,10 +633,10 @@ export function Header() {
               </Link>
             </div>
 
-            {/* Right Socials + Search + Cart + Auth + Lang */}
-            <div className="flex w-auto shrink-0 items-center justify-end gap-2 sm:gap-3.5 lg:w-1/3 lg:gap-7">
+            {/* Right Actions: Socials + Search + Cart + Auth + Lang (Icon Only) */}
+            <div className="flex items-center justify-end gap-2.5 sm:gap-4 lg:gap-5">
               {/* Desktop Socials */}
-              <div className="mr-2 hidden items-center gap-5 lg:flex">
+              <div className="mr-1 hidden items-center gap-4 lg:flex">
                 {socialLinks?.instagramUsername && (
                   <a
                     href={`https://instagram.com/${socialLinks.instagramUsername}`}
@@ -661,21 +661,20 @@ export function Header() {
                 )}
               </div>
 
+              {/* Search Button */}
               <button
                 onClick={() => {
                   showSearch ? closeSearchPanel() : openSearchPanel()
                 }}
-                className="flex items-center gap-1.5 p-1 outline-none transition-opacity hover:opacity-60"
+                className="p-1 outline-none transition-opacity hover:opacity-60"
                 aria-label={showSearch ? t('closeSearch') : t('openSearch')}
+                title={showSearch ? t('close') : t('search')}
               >
                 {showSearch ? (
                   <X className="h-5 w-5 lg:h-6 lg:w-6" />
                 ) : (
                   <Search className="h-5 w-5 lg:h-6 lg:w-6" />
                 )}
-                <span className="hidden text-xs font-bold uppercase leading-none tracking-widest lg:inline">
-                  {showSearch ? t('close') : t('search')}
-                </span>
               </button>
 
               {/* Cart Button */}
@@ -687,32 +686,29 @@ export function Header() {
                     setIsCartOpen(true)
                   }
                 }}
-                className="flex items-center gap-1.5 p-1 outline-none transition-opacity hover:opacity-60 relative whitespace-nowrap shrink-0"
+                className="p-1 outline-none transition-opacity hover:opacity-60 relative whitespace-nowrap shrink-0"
                 aria-label="Giỏ hàng"
+                title={locale === 'vi' ? 'Giỏ hàng' : 'Cart'}
               >
                 <div className="relative flex items-center justify-center">
                   <ShoppingBag className="h-5 w-5 lg:h-6 lg:w-6 shrink-0" />
                 </div>
-                <span className="hidden text-xs font-bold uppercase leading-none tracking-widest lg:inline">
-                  {locale === 'vi' ? 'Giỏ hàng' : 'Cart'}
-                </span>
               </button>
 
               {/* Customer Account Button */}
               {isAuthenticated ? (
-                <div className="flex items-center gap-1 sm:gap-2 whitespace-nowrap shrink-0">
+                <div className="flex items-center gap-1.5 whitespace-nowrap shrink-0">
                   <Link
                     href={`/${locale}/my-orders`}
-                    className="flex items-center gap-1 p-1 text-xs font-bold uppercase leading-none tracking-widest hover:text-[#8C7E6A] transition-colors shrink-0"
+                    className="p-1 hover:text-[#8C7E6A] transition-colors shrink-0"
+                    title={customer?.fullName || 'Đơn hàng của tôi'}
+                    aria-label="Đơn hàng của tôi"
                   >
-                    <UserIcon className="h-4 w-4 sm:h-5 sm:w-5 shrink-0" />
-                    <span className="hidden md:inline">
-                      {customer?.fullName?.split(' ').slice(-1)[0] || 'Tài khoản'}
-                    </span>
+                    <UserIcon className="h-5 w-5 lg:h-6 lg:w-6 shrink-0" />
                   </Link>
                   <button
                     onClick={customerLogout}
-                    className="hidden sm:inline text-[9px] uppercase tracking-wider text-foreground/40 hover:text-foreground shrink-0"
+                    className="hidden text-[9px] uppercase tracking-wider text-foreground/40 hover:text-foreground shrink-0 sm:inline"
                     title="Đăng xuất"
                   >
                     (Thoát)
@@ -721,18 +717,18 @@ export function Header() {
               ) : (
                 <button
                   onClick={() => openAuthModal('Đăng nhập tài khoản khách hàng')}
-                  className="flex items-center gap-1 p-1 text-xs font-bold uppercase leading-none tracking-widest transition-opacity hover:opacity-60 whitespace-nowrap shrink-0"
+                  className="p-1 transition-opacity hover:opacity-60 whitespace-nowrap shrink-0"
+                  title={locale === 'vi' ? 'Đăng nhập' : 'Login'}
+                  aria-label={locale === 'vi' ? 'Đăng nhập' : 'Login'}
                 >
-                  <UserIcon className="h-4 w-4 sm:h-5 sm:w-5 shrink-0" />
-                  <span className="hidden md:inline">
-                    {locale === 'vi' ? 'Đăng nhập' : 'Login'}
-                  </span>
+                  <UserIcon className="h-5 w-5 lg:h-6 lg:w-6 shrink-0" />
                 </button>
               )}
 
+              {/* Language Switch */}
               <Link
                 href={newPath}
-                className="flex h-full items-center p-1 text-xs font-bold uppercase leading-none tracking-widest lg:text-sm shrink-0"
+                className="p-1 text-xs font-bold uppercase leading-none tracking-widest transition-opacity hover:opacity-60 lg:text-sm shrink-0"
                 aria-label={locale === 'vi' ? 'Switch to English' : 'Chuyển sang Tiếng Việt'}
               >
                 {switchLocale}
