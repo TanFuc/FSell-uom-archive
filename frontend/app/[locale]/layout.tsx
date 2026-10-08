@@ -182,7 +182,7 @@ export default async function RootLayout({ children, params: { locale } }: RootL
             <ConfirmationProvider>
               <ConditionalLayout>{children}</ConditionalLayout>
               <Toaster />
-              <SonnerToaster />
+              <SonnerToaster duration={2200} />
               <CustomerAuthModal />
             </ConfirmationProvider>
           </QueryProvider>

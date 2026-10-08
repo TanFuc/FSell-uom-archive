@@ -55,8 +55,9 @@ export function ProductCard({ product, locale, priority }: ProductCardProps) {
         locale === 'vi'
           ? `Đã thêm vào giỏ hàng: ${name}`
           : `Added to cart: ${name}`,
+        { duration: 1500 },
       )
-      setTimeout(() => setIsAdded(false), 2000)
+      setTimeout(() => setIsAdded(false), 1200)
     } catch (err: any) {
       if (err?.response?.status === 401) {
         openAuthModal('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại')

@@ -42,9 +42,9 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
         },
         ...(isTlsRedis
           ? {
-              tls: true,
-              rejectUnauthorized: true,
-            }
+            tls: true,
+            rejectUnauthorized: true,
+          }
           : {}),
       },
     })
