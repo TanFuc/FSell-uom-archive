@@ -181,17 +181,28 @@ model Banner {
   @@map("banners")
 }
 
+enum AuthProvider {
+  LOCAL
+  FACEBOOK
+  INSTAGRAM
+}
+
 // ==============================================================================
 // CUSTOMER & AUTH
 // ==============================================================================
 model Customer {
-  id           String    @id @default(cuid())
-  email        String    @unique
-  passwordHash String
+  id           String        @id @default(cuid())
+  email        String?       @unique
+  passwordHash String?
   fullName     String
+  avatarUrl    String?       @db.Text
   phone        String?
-  address      String?   @db.Text
-  isActive     Boolean   @default(true)
+  address      String?       @db.Text
+  isActive     Boolean       @default(true)
+  authProvider AuthProvider  @default(LOCAL)
+
+  facebookId   String?       @unique
+  instagramId  String?       @unique
 
   // Audit fields
   createdAt     DateTime  @default(now())

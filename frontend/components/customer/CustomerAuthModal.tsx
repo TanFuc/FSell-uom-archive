@@ -5,6 +5,7 @@ import { X, Lock, Mail, User, Phone, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useCustomerStore } from '@/lib/customer-store'
 import { api } from '@/lib/api'
+import { SocialLoginButtons } from './SocialLoginButtons'
 
 export function CustomerAuthModal() {
   const {
@@ -301,6 +302,18 @@ export function CustomerAuthModal() {
             </div>
           </form>
         )}
+
+        {/* Hoặc tiếp tục với mạng xã hội (Facebook / Instagram) */}
+        <div className="px-6 pb-6 pt-0">
+          <div className="relative my-3 flex items-center justify-center">
+            <div className="w-full border-t border-stone-200" />
+            <span className="absolute bg-white px-3 font-mono text-[9px] uppercase tracking-widest text-stone-400">
+              Hoặc tiếp tục với
+            </span>
+          </div>
+
+          <SocialLoginButtons />
+        </div>
       </div>
     </div>
   )

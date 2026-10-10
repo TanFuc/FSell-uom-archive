@@ -3,10 +3,12 @@ import { persist } from 'zustand/middleware'
 
 export interface CustomerUser {
   id: string
-  email: string
+  email: string | null
   fullName: string
   phone?: string | null
   address?: string | null
+  avatarUrl?: string | null
+  authProvider?: string | null
 }
 
 interface CustomerAuthState {
