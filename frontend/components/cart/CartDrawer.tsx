@@ -27,9 +27,9 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const [loading, setLoading] = useState(false)
   const [selectedItemIds, setSelectedItemIds] = useState<string[]>([])
 
-  const fetchCart = async () => {
+  const fetchCart = async (silent = false) => {
     if (!isAuthenticated) return
-    setLoading(true)
+    if (!silent) setLoading(true)
     try {
       const data = await api.getCart()
       setCart(data)
@@ -41,7 +41,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
     } catch (err: any) {
       console.error('Lỗi khi tải giỏ hàng:', err)
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
   }
 
@@ -87,20 +87,60 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
   const handleUpdateQuantity = async (cartItemId: string, currentQty: number, delta: number) => {
     const newQty = currentQty + delta
+    if (newQty < 1) return
+
+    // Optimistic UI Update: Cập nhật ngay trên state để không bị nháy giỏ hàng
+    const previousCart = cart
+    setCart((prev: any) => {
+      if (!prev?.items) return prev
+      const updatedItems = prev.items.map((item: any) =>
+        item.id === cartItemId ? { ...item, quantity: newQty } : item,
+      )
+      return { ...prev, items: updatedItems }
+    })
+
+    // Cập nhật tổng số lượng lên navbar badge ngay tức thì
+    const nextTotalQty = ((cart?.items || []) as any[]).reduce(
+      (sum: number, item: any) =>
+        sum + (item.id === cartItemId ? newQty : item.quantity || 1),
+      0,
+    )
+    setCartCount(nextTotalQty)
+
     try {
       await api.updateCartItem(cartItemId, newQty)
-      fetchCart()
+      // Đồng bộ ngầm không hiển thị loading spinner
+      fetchCart(true)
     } catch (err) {
+      // Rollback nếu có lỗi mạng
+      setCart(previousCart)
+      const rollbackQty = (previousCart?.items || []).reduce(
+        (sum: number, item: any) => sum + (item.quantity || 1),
+        0,
+      )
+      setCartCount(rollbackQty)
       toast.error('Không thể cập nhật số lượng')
     }
   }
 
   const handleRemoveItem = async (cartItemId: string) => {
+    const previousCart = cart
+    // Optimistic UI: Xóa ngay khỏi list
+    setCart((prev: any) => {
+      if (!prev?.items) return prev
+      return {
+        ...prev,
+        items: prev.items.filter((item: any) => item.id !== cartItemId),
+      }
+    })
+    setSelectedItemIds((prev) => prev.filter((id) => id !== cartItemId))
+
     try {
       await api.removeCartItem(cartItemId)
-      toast.success('Đã xóa sản phẩm khỏi giỏ hàng')
-      fetchCart()
+      toast.success('Đã xóa sản phẩm khỏi giỏ hàng', { duration: 1500 })
+      fetchCart(true)
     } catch (err) {
+      setCart(previousCart)
       toast.error('Không thể xóa sản phẩm')
     }
   }
