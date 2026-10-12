@@ -100,11 +100,8 @@ export const useCustomerStore = create<CustomerAuthState>()(
         try {
           const { api } = await import('@/lib/api')
           const cart = await api.getCart()
-          const totalQty = (cart?.items || []).reduce(
-            (sum: number, item: any) => sum + (item.quantity || 1),
-            0,
-          )
-          set({ cartCount: totalQty })
+          const productTypesCount = (cart?.items || []).length
+          set({ cartCount: productTypesCount })
         } catch {
           // ignore error
         }

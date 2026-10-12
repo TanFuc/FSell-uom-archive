@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { ArrowLeft, ShoppingBag, ShieldCheck, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { api } from '@/lib/api'
+import { useCustomerStore } from '@/lib/customer-store'
 
 function CheckoutContent() {
   const router = useRouter()
@@ -102,6 +103,7 @@ function CheckoutContent() {
       })
 
       toast.success('Đặt hàng thành công!')
+      useCustomerStore.getState().fetchCartCount()
       // Chuyển hướng sang trang theo dõi đơn hàng
       router.push(`/order-tracking/${order.orderNumber || order.id}`)
     } catch (err: any) {

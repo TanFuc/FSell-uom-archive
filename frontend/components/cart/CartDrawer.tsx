@@ -33,11 +33,8 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
     try {
       const data = await api.getCart()
       setCart(data)
-      const totalQty = (data?.items || []).reduce(
-        (sum: number, item: any) => sum + (item.quantity || 1),
-        0,
-      )
-      setCartCount(totalQty)
+      const productTypesCount = (data?.items || []).length
+      setCartCount(productTypesCount)
     } catch (err: any) {
       console.error('Lỗi khi tải giỏ hàng:', err)
     } finally {
@@ -51,24 +48,21 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
         onClose()
         openAuthModal('Vui lòng đăng nhập để xem giỏ hàng của bạn')
       } else {
+        setSelectedItemIds([])
         fetchCart()
       }
+    } else {
+      setSelectedItemIds([])
     }
   }, [isOpen, isAuthenticated])
 
-  // Tự động chọn tất cả sản phẩm khi tải giỏ hàng lần đầu hoặc bảo toàn mục đang chọn
+  // Khi danh sách sản phẩm thay đổi (ví dụ có sản phẩm bị xóa), chỉ loại bỏ các ID không còn tồn tại
   useEffect(() => {
     if (cart?.items) {
       const validIds = new Set(cart.items.map((i: any) => i.id))
-      setSelectedItemIds((prev) => {
-        if (prev.length === 0) {
-          return cart.items.map((i: any) => i.id)
-        }
-        const remaining = prev.filter((id) => validIds.has(id))
-        return remaining.length > 0 ? remaining : cart.items.map((i: any) => i.id)
-      })
+      setSelectedItemIds((prev) => prev.filter((id) => validIds.has(id)))
     }
-  }, [cart])
+  }, [cart?.items])
 
   const toggleSelectItem = (id: string) => {
     setSelectedItemIds((prev) =>
@@ -99,14 +93,6 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
       return { ...prev, items: updatedItems }
     })
 
-    // Cập nhật tổng số lượng lên navbar badge ngay tức thì
-    const nextTotalQty = ((cart?.items || []) as any[]).reduce(
-      (sum: number, item: any) =>
-        sum + (item.id === cartItemId ? newQty : item.quantity || 1),
-      0,
-    )
-    setCartCount(nextTotalQty)
-
     try {
       await api.updateCartItem(cartItemId, newQty)
       // Đồng bộ ngầm không hiển thị loading spinner
@@ -114,26 +100,23 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
     } catch (err) {
       // Rollback nếu có lỗi mạng
       setCart(previousCart)
-      const rollbackQty = (previousCart?.items || []).reduce(
-        (sum: number, item: any) => sum + (item.quantity || 1),
-        0,
-      )
-      setCartCount(rollbackQty)
       toast.error('Không thể cập nhật số lượng')
     }
   }
 
   const handleRemoveItem = async (cartItemId: string) => {
     const previousCart = cart
+    const updatedItems = (cart?.items || []).filter((item: any) => item.id !== cartItemId)
     // Optimistic UI: Xóa ngay khỏi list
     setCart((prev: any) => {
       if (!prev?.items) return prev
       return {
         ...prev,
-        items: prev.items.filter((item: any) => item.id !== cartItemId),
+        items: updatedItems,
       }
     })
     setSelectedItemIds((prev) => prev.filter((id) => id !== cartItemId))
+    setCartCount(updatedItems.length)
 
     try {
       await api.removeCartItem(cartItemId)
@@ -141,6 +124,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
       fetchCart(true)
     } catch (err) {
       setCart(previousCart)
+      setCartCount((previousCart?.items || []).length)
       toast.error('Không thể xóa sản phẩm')
     }
   }
