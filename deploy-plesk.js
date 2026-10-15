@@ -1,6 +1,6 @@
 'use strict'
 
-const { cpSync, existsSync, mkdirSync, writeFileSync } = require('node:fs')
+const { cpSync, existsSync, mkdirSync, writeFileSync, renameSync } = require('node:fs')
 const path = require('node:path')
 const { spawnSync } = require('node:child_process')
 
@@ -12,7 +12,7 @@ const bundledNpm = path.join(path.dirname(process.execPath), npmFilename)
 const npmCommand = existsSync(bundledNpm) ? bundledNpm : npmFilename
 const npmCli = path.join(path.dirname(process.execPath), 'node_modules', 'npm', 'bin', 'npm-cli.js')
 
-function runBuild(projectRoot, label) {
+function runBuild(projectRoot, label, customEnv = {}) {
   console.log(`Building ${label}...`)
   const command = existsSync(npmCli) ? process.execPath : npmCommand
   const args = existsSync(npmCli) ? [npmCli, 'run', 'build'] : ['run', 'build']
@@ -21,9 +21,10 @@ function runBuild(projectRoot, label) {
     env: {
       ...process.env,
       NODE_ENV: 'production',
-      NODE_OPTIONS: process.env.BUILD_NODE_OPTIONS || '--max-old-space-size=1024 --v8-pool-size=1',
+      NODE_OPTIONS: process.env.BUILD_NODE_OPTIONS || '--max-old-space-size=4096',
       UV_THREADPOOL_SIZE: '1',
       NEXT_TELEMETRY_DISABLED: '1',
+      ...customEnv,
     },
     stdio: 'inherit',
   })
@@ -66,7 +67,40 @@ function triggerPassengerRestart(projectRoot) {
 
 try {
   runBuild(backendRoot, 'NestJS backend')
-  runBuild(frontendRoot, 'Next.js frontend')
+
+  // Shield frontend local env file during production build
+  const frontendEnvLocal = path.join(frontendRoot, '.env.local')
+  const frontendEnvLocalBak = path.join(frontendRoot, '.env.local.build-bak')
+  let renamedEnvLocal = false
+  if (existsSync(frontendEnvLocal)) {
+    try {
+      renameSync(frontendEnvLocal, frontendEnvLocalBak)
+      renamedEnvLocal = true
+    } catch (e) {
+      console.warn('Could not rename .env.local temporarily:', e)
+    }
+  }
+
+  try {
+    runBuild(frontendRoot, 'Next.js frontend', {
+      NEXT_PUBLIC_API_URL: 'https://api.uomarchive.com',
+      NEXT_PUBLIC_API_BASE_URL: 'https://api.uomarchive.com',
+      NEXT_PUBLIC_IMAGE_BASE_URL: 'https://images.uomarchive.com',
+      NEXT_PUBLIC_R2_PUBLIC_URL: 'https://images.uomarchive.com',
+      NEXT_PUBLIC_APP_URL: 'https://uomarchive.com',
+      SERVER_API_URL: 'https://api.uomarchive.com',
+      SITEMAP_API_URL: 'https://api.uomarchive.com',
+    })
+  } finally {
+    if (renamedEnvLocal && existsSync(frontendEnvLocalBak)) {
+      try {
+        renameSync(frontendEnvLocalBak, frontendEnvLocal)
+      } catch (e) {
+        console.warn('Could not restore .env.local:', e)
+      }
+    }
+  }
+
   copyFrontendAssets()
   triggerPassengerRestart(backendRoot)
   triggerPassengerRestart(frontendRoot)

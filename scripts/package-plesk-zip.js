@@ -46,6 +46,8 @@ function createZipArchive(sourceMappings, outputZipPath) {
 
 async function main() {
   console.log('Packaging Plesk Production Archives...')
+  console.log('✓ Backend includes pre-packaged node_modules with Linux sharp binaries.')
+  console.log('✓ Frontend uses Next.js standalone runtime (.next/standalone/node_modules).')
 
   // 1. Backend files to include
   const backendMappings = [
@@ -56,7 +58,10 @@ async function main() {
       source: path.join(backendDir, 'node_modules'),
       target: 'node_modules',
       filter: (entry) => {
-        if (entry.name && entry.name.includes('.cache')) return false
+        const p = (entry.name || '').replace(/\\/g, '/')
+        if (p === '.cache' || p.startsWith('.cache/') || p.includes('/.cache/')) {
+          return false
+        }
         return entry
       },
     },
@@ -67,13 +72,32 @@ async function main() {
     { type: 'file', source: path.join(backendDir, 'litespeed-entry.js'), target: 'litespeed-entry.js' },
     { type: 'file', source: path.join(backendDir, 'passenger-backend.js'), target: 'passenger-backend.js' },
     { type: 'file', source: path.join(backendDir, '.env.example'), target: '.env.example' },
+    { type: 'string', content: '20\n', target: '.node-version' },
     { type: 'string', content: `${new Date().toISOString()}\n`, target: 'tmp/restart.txt' },
   ]
 
   // 2. Frontend files to include
   const frontendMappings = [
-    { type: 'directory', source: path.join(frontendDir, '.next'), target: '.next' },
+    {
+      type: 'directory',
+      source: path.join(frontendDir, '.next'),
+      target: '.next',
+      filter: (entry) => {
+        const p = (entry.name || '').replace(/\\/g, '/')
+        if (
+          p === 'cache' ||
+          p.startsWith('cache/') ||
+          p === '.cache' ||
+          p.startsWith('.cache/') ||
+          p.includes('/.cache/')
+        ) {
+          return false
+        }
+        return entry
+      },
+    },
     { type: 'directory', source: path.join(frontendDir, 'public'), target: 'public' },
+    { type: 'directory', source: path.join(frontendDir, 'messages'), target: 'messages' },
     { type: 'file', source: path.join(frontendDir, 'package.json'), target: 'package.json' },
     { type: 'file', source: path.join(frontendDir, 'package-lock.json'), target: 'package-lock.json' },
     { type: 'file', source: path.join(frontendDir, 'next.config.js'), target: 'next.config.js' },
@@ -81,6 +105,8 @@ async function main() {
     { type: 'file', source: path.join(frontendDir, 'litespeed-entry.js'), target: 'litespeed-entry.js' },
     { type: 'file', source: path.join(frontendDir, 'passenger-frontend.js'), target: 'passenger-frontend.js' },
     { type: 'file', source: path.join(frontendDir, '.env.example'), target: '.env.example' },
+    { type: 'file', source: path.join(frontendDir, '.env.production'), target: '.env.production' },
+    { type: 'string', content: '20\n', target: '.node-version' },
     { type: 'string', content: `${new Date().toISOString()}\n`, target: 'tmp/restart.txt' },
   ]
 

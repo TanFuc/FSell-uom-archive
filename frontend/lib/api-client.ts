@@ -41,8 +41,24 @@ interface AuthResponse {
   user: User
 }
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888'
+function getEffectiveApiBaseUrl(): string {
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname
+    if (hostname.endsWith('uomarchive.com')) {
+      return 'https://api.uomarchive.com'
+    }
+  }
+  const envUrl = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL
+  if (
+    process.env.NODE_ENV === 'production' &&
+    (!envUrl || envUrl.includes('localhost') || envUrl.includes('127.0.0.1'))
+  ) {
+    return 'https://api.uomarchive.com'
+  }
+  return envUrl || 'http://localhost:8888'
+}
+
+const API_BASE_URL = getEffectiveApiBaseUrl()
 
 class ApiClient {
   private client: AxiosInstance
@@ -59,6 +75,18 @@ class ApiClient {
 
     this.client.interceptors.request.use(
       (config) => {
+        const effectiveBase = getEffectiveApiBaseUrl()
+        if (
+          config.baseURL &&
+          (config.baseURL.includes('localhost') || config.baseURL.includes('127.0.0.1')) &&
+          effectiveBase.startsWith('https://')
+        ) {
+          config.baseURL = effectiveBase
+        }
+        if (config.url && (config.url.startsWith('http://localhost') || config.url.startsWith('http://127.0.0.1'))) {
+          config.url = config.url.replace(/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?/, effectiveBase)
+        }
+
         if (typeof window !== 'undefined') {
           const token = localStorage.getItem('accessToken')
           if (token) {

@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   RefreshCw,
   Check,
@@ -14,6 +15,8 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { api } from '@/lib/api'
+import { productKeys } from '@/hooks/use-products'
+import { triggerPublicRevalidation } from '@/lib/revalidate'
 
 interface SapoProductPreview {
   id: number
@@ -26,6 +29,7 @@ interface SapoProductPreview {
 }
 
 export default function AdminSapoSyncPage() {
+  const queryClient = useQueryClient()
   const [products, setProducts] = useState<SapoProductPreview[]>([])
   const [selectedIds, setSelectedIds] = useState<number[]>([])
   const [loading, setLoading] = useState(true)
@@ -85,6 +89,10 @@ export default function AdminSapoSyncPage() {
         setProducts((prev) =>
           (Array.isArray(prev) ? prev : []).map((p) => (p.id === id ? { ...p, isSynced: true } : p)),
         )
+        // Lập tức làm mới cache React Query và revalidate trang public
+        queryClient.invalidateQueries({ queryKey: productKeys.all })
+        void triggerPublicRevalidation(['/', '/shop'])
+        void fetchPreview()
       } else {
         toast.error(`Đồng bộ thất bại: ${item?.error || 'Lỗi không xác định'}`)
       }
@@ -107,6 +115,10 @@ export default function AdminSapoSyncPage() {
 
       if (successCount > 0) {
         toast.success(`Đã đồng bộ thành công ${successCount}/${selectedIds.length} sản phẩm`)
+        // Lập tức làm mới cache React Query và revalidate trang public
+        queryClient.invalidateQueries({ queryKey: productKeys.all })
+        void triggerPublicRevalidation(['/', '/shop'])
+        void fetchPreview()
       }
       if (failedCount > 0) {
         toast.error(`${failedCount} sản phẩm đồng bộ thất bại`)

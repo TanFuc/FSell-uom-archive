@@ -5,6 +5,7 @@ import FilePondPluginFileValidateType from 'filepond-plugin-file-validate-type'
 import FilePondPluginImagePreview from 'filepond-plugin-image-preview'
 import React, { useState } from 'react'
 import { FilePond, registerPlugin } from 'react-filepond'
+import { getEffectiveApiBaseUrl } from '@/lib/api'
 
 import 'filepond/dist/filepond.min.css'
 import 'filepond-plugin-image-preview/dist/filepond-plugin-image-preview.min.css'
@@ -38,10 +39,7 @@ export function FileUpload({
 }: FileUploadProps) {
   const [files, setFiles] = useState<any[]>([])
 
-  const API_URL =
-    process.env.NEXT_PUBLIC_API_BASE_URL ||
-    process.env.NEXT_PUBLIC_API_URL ||
-    'http://localhost:8888'
+  const API_URL = getEffectiveApiBaseUrl()
 
   return (
     <div className={className}>
@@ -108,10 +106,7 @@ export function MultipleFileUpload({
   const [uploadedUrls, setUploadedUrls] = useState<string[]>([])
   const [uploadedPublicIds, setUploadedPublicIds] = useState<string[]>([])
 
-  const API_URL =
-    process.env.NEXT_PUBLIC_API_BASE_URL ||
-    process.env.NEXT_PUBLIC_API_URL ||
-    'http://localhost:8888'
+  const API_URL = getEffectiveApiBaseUrl()
 
   return (
     <div className={className}>

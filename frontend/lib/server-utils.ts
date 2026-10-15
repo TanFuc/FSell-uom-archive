@@ -1,11 +1,21 @@
 import { cache } from 'react'
 import { BRANDING_REVALIDATE_SECONDS } from '@/lib/cache-config'
 
-const API_URL =
-  process.env.SERVER_API_URL ||
-  process.env.NEXT_PUBLIC_API_BASE_URL ||
-  process.env.NEXT_PUBLIC_API_URL ||
-  'http://localhost:8888'
+export function getServerApiUrl(): string {
+  const envApiUrl =
+    process.env.SERVER_API_URL ||
+    process.env.NEXT_PUBLIC_API_BASE_URL ||
+    process.env.NEXT_PUBLIC_API_URL
+  if (
+    process.env.NODE_ENV === 'production' &&
+    (!envApiUrl || envApiUrl.includes('localhost') || envApiUrl.includes('127.0.0.1'))
+  ) {
+    return 'https://api.uomarchive.com'
+  }
+  return envApiUrl || 'http://localhost:8888'
+}
+
+const API_URL = getServerApiUrl()
 const BRANDING_FETCH_TIMEOUT_MS = Number.parseInt(
   process.env.BRANDING_FETCH_TIMEOUT_MS || process.env.SERVER_FETCH_TIMEOUT_MS || '1200',
   10,

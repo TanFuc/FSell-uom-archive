@@ -21,9 +21,9 @@ import {
 } from './common/security/probe-paths'
 import { MonitoringService } from './monitoring/monitoring.service'
 
-const DEFAULT_PUBLIC_CACHE_MAX_AGE_SECONDS = 300
-const DEFAULT_PUBLIC_CACHE_S_MAXAGE_SECONDS = 3600
-const DEFAULT_PUBLIC_CACHE_STALE_WHILE_REVALIDATE_SECONDS = 86400
+const DEFAULT_PUBLIC_CACHE_MAX_AGE_SECONDS = 0
+const DEFAULT_PUBLIC_CACHE_S_MAXAGE_SECONDS = 60
+const DEFAULT_PUBLIC_CACHE_STALE_WHILE_REVALIDATE_SECONDS = 120
 
 function readPositiveInt(value: string | undefined, fallback: number): number {
   const parsed = Number(value)
@@ -108,6 +108,8 @@ async function startApplication(): Promise<void> {
         'https://www.uomarchive.com',
         'http://uomarchive.com',
         'http://www.uomarchive.com',
+        'https://staging.uomarchive.com',
+        'http://staging.uomarchive.com',
       ]
         .map((url) => url?.trim().replace(/\/$/, ''))
         .filter(Boolean) as string[],
@@ -194,7 +196,11 @@ async function startApplication(): Promise<void> {
         return callback(null, true)
       }
 
-      if (frontendUrls.includes(origin.replace(/\/$/, ''))) {
+      const cleanOrigin = origin.replace(/\/$/, '')
+      if (
+        frontendUrls.includes(cleanOrigin) ||
+        /^https?:\/\/([a-z0-9-]+\.)?uomarchive\.com$/i.test(cleanOrigin)
+      ) {
         return callback(null, true)
       }
 

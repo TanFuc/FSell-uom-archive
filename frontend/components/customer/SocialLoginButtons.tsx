@@ -2,13 +2,17 @@
 
 import React, { useState } from 'react'
 import Image from 'next/image'
+import { getEffectiveApiBaseUrl } from '@/lib/api'
 
 interface SocialLoginButtonsProps {
   className?: string
   onActionStart?: () => void
 }
 
-export function SocialLoginButtons({ className = '', onActionStart }: SocialLoginButtonsProps) {
+export const SocialLoginButtons = React.memo(function SocialLoginButtons({
+  className = '',
+  onActionStart,
+}: SocialLoginButtonsProps) {
   const [loadingProvider, setLoadingProvider] = useState<'facebook' | 'instagram' | null>(null)
 
   const handleSocialLogin = (provider: 'facebook' | 'instagram') => {
@@ -17,10 +21,7 @@ export function SocialLoginButtons({ className = '', onActionStart }: SocialLogi
       onActionStart()
     }
 
-    const apiBase =
-      process.env.NEXT_PUBLIC_API_URL ||
-      process.env.NEXT_PUBLIC_API_BASE_URL ||
-      'http://localhost:3006'
+    const apiBase = getEffectiveApiBaseUrl()
     const currentOrigin = typeof window !== 'undefined' ? window.location.origin : ''
 
     const targetUrl = `${apiBase}/customer/auth/${provider}?origin=${encodeURIComponent(currentOrigin)}`
@@ -78,4 +79,4 @@ export function SocialLoginButtons({ className = '', onActionStart }: SocialLogi
       </button>
     </div>
   )
-}
+})

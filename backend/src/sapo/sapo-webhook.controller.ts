@@ -421,82 +421,76 @@ export class SapoWebhookController {
     const sapoProductId = String(productData?.id || '')
     if (!sapoProductId) return
 
-    // 1. XÓA SẢN PHẨM: products/delete (Soft delete)
+    // 1. TẠO MỚI SẢN PHẨM TRÊN SAPO: products/create -> BỎ QUA HOÀN TOÀN
+    // Sản phẩm từ Sapo chỉ được đồng bộ vào website khi Quản trị viên chủ động chọn trong trang /admin/sapo-sync
+    if (topic === 'products/create') {
+      this.logger.log(
+        `Webhook Sapo [products/create]: Bỏ qua tự động thêm sản phẩm Sapo ID ${sapoProductId} vào website (Chỉ đồng bộ khi Admin chọn thủ công).`,
+      )
+      return
+    }
+
+    const firstVariant = productData.variants?.[0] || {}
+    const sku = firstVariant.sku ? String(firstVariant.sku).trim() : null
+
+    // Kiểm tra sản phẩm đã có trên website hay chưa
+    const existing = await this.prisma.product.findFirst({
+      where: {
+        OR: [
+          { sapoProductId },
+          sku ? { sku } : undefined,
+        ].filter(Boolean) as any,
+        deletedAt: null,
+      },
+    })
+
+    // Nếu sản phẩm CHƯA CÓ trên website -> BỎ QUA, tuyệt đối không tự động tạo mới
+    if (!existing) {
+      this.logger.log(
+        `Webhook Sapo [${topic}]: Sản phẩm Sapo ID ${sapoProductId} (SKU: ${sku || 'N/A'}) chưa tồn tại trên website. Bỏ qua, không tự động tạo mới.`,
+      )
+      return
+    }
+
+    // 2. XÓA SẢN PHẨM: products/delete (Chỉ soft delete khi sản phẩm ĐÃ TỒN TẠI trên website)
     if (topic === 'products/delete') {
-      const sku = productData?.variants?.[0]?.sku ? String(productData.variants[0].sku).trim() : null
-      await this.prisma.product.updateMany({
-        where: {
-          OR: [
-            { sapoProductId },
-            sku ? { sku } : undefined,
-          ].filter(Boolean) as any,
-          deletedAt: null,
-        },
+      await this.prisma.product.update({
+        where: { id: existing.id },
         data: {
           deletedAt: new Date(),
           isActive: false,
           updatedAt: new Date(),
         },
       })
-      this.logger.log(`Webhook Sapo: Đã soft delete sản phẩm Sapo ID ${sapoProductId}`)
+      await this.syncService.invalidateProductCache(existing.id, existing.slug)
+      this.logger.log(`Webhook Sapo: Đã soft delete sản phẩm trên website: ${existing.nameVi} (Sapo ID ${sapoProductId})`)
       return
     }
 
-    // 2. TẠO MỚI HOẶC CẬP NHẬT SẢN PHẨM: products/create, products/update
-    try {
-      // Ưu tiên gọi cơ chế sync đầy đủ (tải ảnh, mapping biến thể và kho hàng)
-      await this.syncService.syncSingleProduct(sapoProductId)
-      this.logger.log(`Webhook Sapo: Đã đồng bộ chi tiết sản phẩm Sapo ID ${sapoProductId}`)
-    } catch (syncErr: any) {
-      this.logger.warn(
-        `Đồng bộ qua API Sapo thất bại (${syncErr.message}), tiến hành upsert trực tiếp từ payload webhook`,
-      )
-      // Fallback: Cập nhật trực tiếp từ payload dữ liệu webhook cung cấp
-      const firstVariant = productData.variants?.[0] || {}
-      const sku = firstVariant.sku ? String(firstVariant.sku).trim() : `SAPO-${sapoProductId}`
-      const priceVND = Math.round(Number(firstVariant.price || 0))
-      const stock = Number(firstVariant.inventory_quantity || 0)
-      const name = productData.name || 'Sản phẩm Sapo'
-      const description = productData.content || ''
+    // 3. CẬP NHẬT SẢN PHẨM: products/update (Chỉ cập nhật cho sản phẩm ĐÃ TỒN TẠI trên website)
+    if (topic === 'products/update') {
+      try {
+        await this.syncService.syncSingleProduct(sapoProductId, undefined, { onlyUpdateExisting: true })
+        this.logger.log(`Webhook Sapo: Đã cập nhật sản phẩm hiện có trên website: ${existing.nameVi} (Sapo ID ${sapoProductId})`)
+      } catch (syncErr: any) {
+        this.logger.warn(
+          `Đồng bộ qua API Sapo thất bại (${syncErr.message}), tiến hành cập nhật trực tiếp từ payload webhook`,
+        )
+        const priceVND = Math.round(Number(firstVariant.price || 0))
+        const stock = Number(firstVariant.inventory_quantity || 0)
+        const name = productData.name || existing.nameVi
 
-      const existing = await this.prisma.product.findFirst({
-        where: {
-          OR: [{ sapoProductId }, { sku }],
-          deletedAt: null,
-        },
-      })
-
-      if (existing) {
         await this.prisma.product.update({
           where: { id: existing.id },
           data: {
             nameVi: name,
-            sku,
-            priceVND,
+            sku: sku || existing.sku,
+            priceVND: priceVND > 0 ? priceVND : existing.priceVND,
             stock,
             updatedAt: new Date(),
           },
         })
-      } else {
-        const slug = productData.alias
-          ? `${productData.alias}-${Date.now().toString().slice(-4)}`
-          : `sp-${sapoProductId}-${Date.now().toString().slice(-4)}`
-
-        await this.prisma.product.create({
-          data: {
-            slug,
-            nameVi: name,
-            nameEn: name,
-            descriptionVi: description,
-            descriptionEn: description,
-            sku,
-            sapoProductId,
-            priceVND,
-            stock,
-            images: [],
-            isActive: true,
-          },
-        })
+        await this.syncService.invalidateProductCache(existing.id, existing.slug)
       }
     }
   }
