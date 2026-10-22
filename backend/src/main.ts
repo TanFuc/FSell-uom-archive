@@ -68,7 +68,7 @@ let bootstrapPromise: Promise<void> | undefined
 
 async function startApplication(): Promise<void> {
   const logger = new Logger('Bootstrap')
-  const app = await NestFactory.create<NestExpressApplication>(AppModule)
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { rawBody: true })
   app.enableShutdownHooks()
 
   const configService = app.get(ConfigService)

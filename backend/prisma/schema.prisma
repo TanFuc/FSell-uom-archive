@@ -278,6 +278,16 @@ model Order {
   status          String   @default("pending") // pending | processing | shipped | delivered | cancelled
   isDraft         Boolean  @default(false)     // cờ phân biệt đơn nháp và đơn đã đặt
 
+  // Payment fields
+  paymentMethod           String    @default("bank_transfer") // non-cod: bank_transfer
+  paymentStatus           String    @default("unpaid")        // unpaid | pending_approval | paid
+  paymentProofUrl         String?   @db.Text
+  paymentProofUploadedAt  DateTime?
+  transferClaimedAt       DateTime?
+  paymentConfirmedAt      DateTime?
+  confirmedAt             DateTime?
+  confirmationEmailSentAt DateTime?
+
   // Sapo Integration fields
   sapoOrderId           String?   @unique
   sapoOrderNumber       String?
@@ -299,6 +309,8 @@ model Order {
 
   @@index([customerId])
   @@index([sapoOrderId])
+  @@index([status])
+  @@index([paymentStatus])
   @@map("orders")
 }
 
@@ -350,6 +362,16 @@ model SapoWebhookLog {
   @@map("sapo_webhook_logs")
 }
 
+model SapoProductInbox {
+  sapoProductId String   @id
+  topic         String
+  payload       Json
+  receivedAt    DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("sapo_product_inbox")
+}
+
 model SiteSettings {
   id    String @id @default("singleton")
   key   String @unique
@@ -390,4 +412,21 @@ model SocialSettings {
   updatedBy String? // User ID who last updated
 
   @@map("social_settings")
+}
+
+model PaymentSettings {
+  id                  String   @id @default("singleton")
+  qrCodeUrl           String?  @db.Text
+  bankName            String?  @default("")
+  accountNumber       String?  @default("")
+  accountHolder       String?  @default("")
+  transferInstruction String?  @db.Text
+  transferTemplates   Json?
+  activeTemplateId    String?
+  note                String?  @db.Text
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  updatedBy           String?
+
+  @@map("payment_settings")
 }

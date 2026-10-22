@@ -7,8 +7,15 @@ import {
   HttpStatus,
   Logger,
   UseGuards,
+  Req,
+  RawBodyRequest,
+  UnauthorizedException,
+  ServiceUnavailableException,
 } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import * as bcrypt from 'bcryptjs'
+import { createHash, createHmac, timingSafeEqual } from 'crypto'
+import { Request } from 'express'
 import { PrismaService } from '../prisma/prisma.service'
 import { RedisService } from '../redis/redis.service'
 import { SapoSyncService } from './sapo-sync.service'
@@ -24,6 +31,7 @@ export class SapoWebhookController {
     private readonly prisma: PrismaService,
     private readonly redisService: RedisService,
     private readonly syncService: SapoSyncService,
+    private readonly configService: ConfigService,
   ) {}
 
   @Post()
@@ -31,9 +39,19 @@ export class SapoWebhookController {
   @RateLimit({ limit: 120, ttl: 60 }) // Chống DDoS/Spam webhook
   async handleWebhook(
     @Body() payload: any,
+    @Req() request: RawBodyRequest<Request>,
     @Headers('x-sapo-topic') topicHeader?: string,
-    @Headers('x-sapo-hmac-sha256') _hmacHeader?: string,
+    @Headers('x-sapo-hmac-sha256') hmacHeader?: string,
   ) {
+    const secret = this.configService.get<string>('SAPO_WEBHOOK_SECRET') || this.configService.get<string>('SAPO_API_SECRET')
+    if (!secret) throw new ServiceUnavailableException('Chưa cấu hình secret để xác thực webhook Sapo')
+    const rawBody = request.rawBody
+    if (!rawBody || !hmacHeader) throw new UnauthorizedException('Webhook Sapo thiếu chữ ký')
+    const expected = Buffer.from(createHmac('sha256', secret).update(rawBody).digest('base64'))
+    const actual = Buffer.from(hmacHeader.trim())
+    if (actual.length !== expected.length || !timingSafeEqual(actual, expected)) {
+      throw new UnauthorizedException('Chữ ký webhook Sapo không hợp lệ')
+    }
     // 1. Xác định topic và resource ID
     const topic = (topicHeader || payload?.topic || 'unknown').toLowerCase().trim()
     const resourceData =
@@ -65,7 +83,8 @@ export class SapoWebhookController {
 
     // 3. Chống xử lý trùng lặp (Idempotency) bằng Redis Lock TTL 10 phút
     const resourceId = resourceData?.id || payload?.id || Date.now()
-    const idempotencyKey = `sapo:webhook:idempotency:${topic}:${sapoOrderId || resourceId}:${resourceId}`
+    const payloadHash = createHash('sha256').update(JSON.stringify(payload ?? {})).digest('hex')
+    const idempotencyKey = `sapo:webhook:idempotency:${topic}:${sapoOrderId || resourceId}:${payloadHash}`
     const alreadyProcessed = await this.redisService.exists(idempotencyKey)
 
     if (alreadyProcessed) {
@@ -116,6 +135,7 @@ export class SapoWebhookController {
       return { success: true, topic }
     } catch (err: any) {
       this.logger.error(`Lỗi khi thực thi xử lý Webhook Sapo [${topic}]`, err)
+      await this.redisService.del(idempotencyKey)
       await this.prisma.sapoWebhookLog.update({
         where: { id: log.id },
         data: {
@@ -196,7 +216,7 @@ export class SapoWebhookController {
           where: { id: existingOrder.id },
           data: {
             sapoFinancialStatus: 'paid',
-            status: existingOrder.status === 'pending' ? 'processing' : existingOrder.status,
+            status: existingOrder.paymentStatus === 'paid' && existingOrder.status === 'pending' ? 'processing' : existingOrder.status,
             updatedAt: new Date(),
           },
         })
@@ -211,7 +231,7 @@ export class SapoWebhookController {
         await this.prisma.order.update({
           where: { id: existingOrder.id },
           data: {
-            status: 'shipped',
+            status: existingOrder.paymentStatus === 'paid' ? 'shipped' : existingOrder.status,
             sapoFulfillmentStatus: 'fulfilled',
             updatedAt: new Date(),
           },
@@ -271,7 +291,7 @@ export class SapoWebhookController {
           sapoOrderNumber: orderNumber || existingOrder.sapoOrderNumber,
           sapoFinancialStatus: financialStatus || existingOrder.sapoFinancialStatus,
           sapoFulfillmentStatus: fulfillmentStatus || existingOrder.sapoFulfillmentStatus,
-          status: calculatedStatus,
+          status: existingOrder.paymentStatus === 'paid' ? calculatedStatus : existingOrder.status,
           trackingNumber,
           trackingCompany,
           trackingUrl,
@@ -400,13 +420,16 @@ export class SapoWebhookController {
           deletedAt: null,
         },
         data: {
-          status: isActuallyShipped ? 'shipped' : 'processing',
           sapoFulfillmentStatus: fulfillmentData?.status || 'fulfilled',
           trackingCompany,
           trackingNumber: effectiveTrackingNumber,
           trackingUrl,
           updatedAt: new Date(),
         },
+      })
+      await this.prisma.order.updateMany({
+        where: { sapoOrderId, deletedAt: null, paymentStatus: 'paid' },
+        data: { status: isActuallyShipped ? 'shipped' : 'processing' },
       })
       this.logger.log(
         `Webhook Sapo [${topic}]: Đã cập nhật giao vận cho đơn hàng Sapo #${sapoOrderId}, mã vận đơn: ${effectiveTrackingNumber}`,
@@ -421,33 +444,24 @@ export class SapoWebhookController {
     const sapoProductId = String(productData?.id || '')
     if (!sapoProductId) return
 
-    // 1. TẠO MỚI SẢN PHẨM TRÊN SAPO: products/create -> BỎ QUA HOÀN TOÀN
-    // Sản phẩm từ Sapo chỉ được đồng bộ vào website khi Quản trị viên chủ động chọn trong trang /admin/sapo-sync
-    if (topic === 'products/create') {
-      this.logger.log(
-        `Webhook Sapo [products/create]: Bỏ qua tự động thêm sản phẩm Sapo ID ${sapoProductId} vào website (Chỉ đồng bộ khi Admin chọn thủ công).`,
-      )
-      return
-    }
+    // Keep every product event visible to the admin, including products not published here.
+    await this.prisma.sapoProductInbox.upsert({
+      where: { sapoProductId },
+      update: { topic, payload: productData, receivedAt: new Date() },
+      create: { sapoProductId, topic, payload: productData },
+    })
 
     const firstVariant = productData.variants?.[0] || {}
-    const sku = firstVariant.sku ? String(firstVariant.sku).trim() : null
 
-    // Kiểm tra sản phẩm đã có trên website hay chưa
+    // A matching SKU is not proof that an admin approved this Sapo product.
     const existing = await this.prisma.product.findFirst({
-      where: {
-        OR: [
-          { sapoProductId },
-          sku ? { sku } : undefined,
-        ].filter(Boolean) as any,
-        deletedAt: null,
-      },
+      where: { sapoProductId, deletedAt: null },
     })
 
     // Nếu sản phẩm CHƯA CÓ trên website -> BỎ QUA, tuyệt đối không tự động tạo mới
     if (!existing) {
       this.logger.log(
-        `Webhook Sapo [${topic}]: Sản phẩm Sapo ID ${sapoProductId} (SKU: ${sku || 'N/A'}) chưa tồn tại trên website. Bỏ qua, không tự động tạo mới.`,
+        `Webhook Sapo [${topic}]: Sản phẩm Sapo ID ${sapoProductId} chưa được admin đồng bộ. Chỉ lưu tại mục đồng bộ.`,
       )
       return
     }
@@ -469,29 +483,16 @@ export class SapoWebhookController {
 
     // 3. CẬP NHẬT SẢN PHẨM: products/update (Chỉ cập nhật cho sản phẩm ĐÃ TỒN TẠI trên website)
     if (topic === 'products/update') {
-      try {
-        await this.syncService.syncSingleProduct(sapoProductId, undefined, { onlyUpdateExisting: true })
-        this.logger.log(`Webhook Sapo: Đã cập nhật sản phẩm hiện có trên website: ${existing.nameVi} (Sapo ID ${sapoProductId})`)
-      } catch (syncErr: any) {
-        this.logger.warn(
-          `Đồng bộ qua API Sapo thất bại (${syncErr.message}), tiến hành cập nhật trực tiếp từ payload webhook`,
-        )
-        const priceVND = Math.round(Number(firstVariant.price || 0))
-        const stock = Number(firstVariant.inventory_quantity || 0)
-        const name = productData.name || existing.nameVi
-
-        await this.prisma.product.update({
-          where: { id: existing.id },
-          data: {
-            nameVi: name,
-            sku: sku || existing.sku,
-            priceVND: priceVND > 0 ? priceVND : existing.priceVND,
-            stock,
-            updatedAt: new Date(),
-          },
-        })
-        await this.syncService.invalidateProductCache(existing.id, existing.slug)
-      }
+      const price = Number(firstVariant.price)
+      const inventory = Number(firstVariant.inventory_quantity)
+      await this.prisma.product.update({
+        where: { id: existing.id },
+        data: {
+          ...(Number.isFinite(price) && price >= 0 ? { priceVND: Math.round(price) } : {}),
+          ...(Number.isFinite(inventory) && inventory >= 0 ? { stock: inventory } : {}),
+        },
+      })
+      await this.syncService.invalidateProductCache(existing.id, existing.slug)
     }
   }
 

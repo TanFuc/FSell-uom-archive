@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common'
+import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { Prisma } from '@prisma/client'
 import { PrismaService } from '../prisma/prisma.service'
 import { RedisService } from '../redis/redis.service'
@@ -7,6 +7,7 @@ import {
   UpdateSiteContentDto,
   UpdateSocialLinksDto,
   UpdateBrandingDto,
+  UpdatePaymentSettingsDto,
 } from './dto'
 
 const CACHE_TTL = 3600 // 1 hour in seconds
@@ -138,6 +139,37 @@ export class SettingsService {
   }
 
   async updateSiteContent(dto: UpdateSiteContentDto, userId?: string) {
+    for (const key of ['site.pages', 'site.sections'] as const) {
+      if (dto[key] !== undefined) {
+        try {
+          const parsed: unknown = JSON.parse(dto[key] as string)
+          if (!Array.isArray(parsed) || parsed.length > 40) throw new Error('invalid array')
+          const entries = parsed as unknown[]
+          const isRecord = (entry: unknown): entry is Record<string, unknown> =>
+            entry !== null && typeof entry === 'object' && !Array.isArray(entry)
+          if (key === 'site.pages' && entries.some((entry) =>
+            !isRecord(entry) || typeof entry.slug !== 'string' ||
+            !/^[a-z0-9-]{1,60}$/.test(entry.slug) ||
+            typeof entry.isVisible !== 'boolean' || typeof entry.titleVi !== 'string' ||
+            typeof entry.titleEn !== 'string' || typeof entry.descriptionVi !== 'string' ||
+            typeof entry.descriptionEn !== 'string' || typeof entry.contentVi !== 'string' ||
+            typeof entry.contentEn !== 'string' || entry.contentVi.length > 20000 ||
+            entry.contentEn.length > 20000,
+          )) throw new Error('invalid page')
+          if (key === 'site.sections' && entries.some((entry) =>
+            !isRecord(entry) || typeof entry.key !== 'string' ||
+            !(/^custom-[a-z0-9-]{1,60}$/.test(entry.key) || ['hero', 'products', 'journal', 'explore'].includes(entry.key)) ||
+            typeof entry.isVisible !== 'boolean' || typeof entry.titleVi !== 'string' ||
+            typeof entry.titleEn !== 'string' || typeof entry.subtitleVi !== 'string' ||
+            typeof entry.subtitleEn !== 'string' ||
+            (entry.bodyVi !== undefined && typeof entry.bodyVi !== 'string') ||
+            (entry.bodyEn !== undefined && typeof entry.bodyEn !== 'string'),
+          )) throw new Error('invalid section')
+        } catch {
+          throw new BadRequestException(`Cấu hình ${key} không hợp lệ`)
+        }
+      }
+    }
     const updates = Object.entries(dto)
       .filter(([, value]) => value !== undefined)
       .map(([key, value]) => {
@@ -413,5 +445,80 @@ export class SettingsService {
 
     this.logger.log('Branding settings updated')
     return this.getBranding()
+  }
+
+  async getPaymentSettings() {
+    const cached = await this.redis.get('payment_settings')
+    if (cached) {
+      const parsed = this.parseCachedJson<any>(cached)
+      if (parsed) return parsed
+    }
+
+    let settings = await this.prisma.paymentSettings.findUnique({
+      where: { id: 'singleton' },
+    })
+
+    if (!settings) {
+      settings = await this.prisma.paymentSettings.create({
+        data: {
+          id: 'singleton',
+          qrCodeUrl: null,
+          bankName: 'MB Bank',
+          accountNumber: '',
+          accountHolder: '',
+          transferInstruction:
+            'Vui lòng ghi rõ nội dung chuyển khoản là [Mã đơn hàng] để hệ thống xử lý nhanh chóng.',
+        },
+      })
+    }
+
+    await this.redis.set('payment_settings', JSON.stringify(settings), CACHE_TTL)
+    return settings
+  }
+
+  async updatePaymentSettings(dto: UpdatePaymentSettingsDto, userId?: string) {
+    const templates = dto.transferTemplates?.map((template) => ({
+      id: String(template.id || '').trim().slice(0, 80),
+      name: String(template.name || '').trim().slice(0, 100),
+      content: String(template.content || '').trim().slice(0, 300),
+    }))
+    if (templates && (templates.length > 20 || templates.some((item) => !item.id || !item.name || !item.content))) {
+      throw new BadRequestException('Danh sách mẫu nội dung chuyển khoản không hợp lệ')
+    }
+    if (dto.activeTemplateId && templates && !templates.some((item) => item.id === dto.activeTemplateId)) {
+      throw new BadRequestException('Mẫu nội dung chuyển khoản đang chọn không tồn tại')
+    }
+    const settings = await this.prisma.paymentSettings.upsert({
+      where: { id: 'singleton' },
+      update: {
+        ...(dto.qrCodeUrl !== undefined && { qrCodeUrl: dto.qrCodeUrl }),
+        ...(dto.bankName !== undefined && { bankName: dto.bankName }),
+        ...(dto.accountNumber !== undefined && { accountNumber: dto.accountNumber }),
+        ...(dto.accountHolder !== undefined && { accountHolder: dto.accountHolder }),
+        ...(dto.transferInstruction !== undefined && {
+          transferInstruction: dto.transferInstruction,
+        }),
+        ...(templates !== undefined && { transferTemplates: templates }),
+        ...(dto.activeTemplateId !== undefined && { activeTemplateId: dto.activeTemplateId || null }),
+        ...(dto.note !== undefined && { note: dto.note }),
+        updatedBy: userId,
+      },
+      create: {
+        id: 'singleton',
+        qrCodeUrl: dto.qrCodeUrl || null,
+        bankName: dto.bankName || '',
+        accountNumber: dto.accountNumber || '',
+        accountHolder: dto.accountHolder || '',
+        transferInstruction: dto.transferInstruction || '',
+        transferTemplates: templates || [],
+        activeTemplateId: dto.activeTemplateId || null,
+        note: dto.note || '',
+        updatedBy: userId,
+      },
+    })
+
+    await this.redis.del('payment_settings')
+    this.logger.log('Payment settings updated')
+    return settings
   }
 }

@@ -2,6 +2,15 @@ import { ApiPropertyOptional } from '@nestjs/swagger'
 import { IsString, IsOptional } from 'class-validator'
 
 export class UpdateSiteContentDto {
+  @ApiPropertyOptional({ description: 'JSON configuration of website pages and navigation' })
+  @IsString()
+  @IsOptional()
+  'site.pages'?: string
+
+  @ApiPropertyOptional({ description: 'JSON configuration of homepage sections' })
+  @IsString()
+  @IsOptional()
+  'site.sections'?: string
   @ApiPropertyOptional({ example: 'SẢN PHẨM' })
   @IsString()
   @IsOptional()

@@ -125,6 +125,12 @@ export class SapoSyncService {
     userId?: string,
     options?: { onlyUpdateExisting?: boolean },
   ) {
+    if (options?.onlyUpdateExisting) {
+      const linked = await this.prisma.product.findFirst({
+        where: { sapoProductId, deletedAt: null },
+      })
+      if (!linked) return null
+    }
     const sapoProduct = await this.sapoService.getProductDetail(sapoProductId)
     if (!sapoProduct) {
       throw new Error(`Không tìm thấy sản phẩm trên Sapo với ID ${sapoProductId}`)
@@ -135,8 +141,19 @@ export class SapoSyncService {
     const priceVND = Math.round(Number(firstVariant.price || 0))
     const stock = Number(firstVariant.inventory_quantity || 0)
 
+    const linkedProduct = await this.prisma.product.findFirst({
+      where: { sapoProductId: String(sapoProductId), hardDeletedAt: null, ...(options?.onlyUpdateExisting ? { deletedAt: null } : {}) },
+    })
+    const skuProduct = !linkedProduct && !options?.onlyUpdateExisting
+      ? await this.prisma.product.findFirst({ where: { sku, deletedAt: null } })
+      : null
+    if (skuProduct?.sapoProductId && skuProduct.sapoProductId !== String(sapoProductId)) {
+      throw new Error(`SKU ${sku} đã liên kết với sản phẩm Sapo khác`)
+    }
+    const existing = linkedProduct || skuProduct
+
     // 1. Tải ảnh từ Sapo và Upload lên hệ thống lưu trữ nội bộ (hoặc fallback Sapo CDN)
-    const sapoImageUrls = this.extractAllSapoImageUrls(sapoProduct)
+    const sapoImageUrls = existing ? [] : this.extractAllSapoImageUrls(sapoProduct)
     const finalImageUrls: string[] = []
 
     for (const imgUrl of sapoImageUrls) {
@@ -165,14 +182,6 @@ export class SapoSyncService {
         finalImageUrls.push(imgUrl)
       }
     }
-
-    // 2. Đối chiếu DB: Tìm theo sapoProductId hoặc SKU
-    const existing = await this.prisma.product.findFirst({
-      where: {
-        OR: [{ sapoProductId: String(sapoProductId) }, { sku }],
-        deletedAt: null,
-      },
-    })
 
     const name = sapoProduct.name || 'Sản phẩm Sapo'
     const slug = sapoProduct.alias
@@ -212,13 +221,10 @@ export class SapoSyncService {
       const updatedProduct = await this.prisma.product.update({
         where: { id: existing.id },
         data: {
-          nameVi: name,
-          sku,
           sapoProductId: String(sapoProductId),
           priceVND,
           stock,
-          images: finalImageUrls.length > 0 ? finalImageUrls : (existing.images as any),
-          hoverImage: finalImageUrls[1] || finalImageUrls[0] || existing.hoverImage,
+          ...(existing.deletedAt ? { deletedAt: null, isActive: true } : {}),
           updatedBy: userId || null,
         },
       })
