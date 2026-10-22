@@ -1,46 +1,71 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
-import { useLocale } from 'next-intl'
 import Link from 'next/link'
-import { ArrowLeft, MapPin, Phone, User, ShoppingBag, ShieldCheck, RefreshCw } from 'lucide-react'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
+import { useLocale } from 'next-intl'
+import {
+  ArrowLeft,
+  MapPin,
+  Phone,
+  User,
+  ShoppingBag,
+  ShieldCheck,
+  RefreshCw,
+  CreditCard,
+  CheckCircle2,
+  Clock,
+  ExternalLink,
+  QrCode,
+  X,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { OrderTrackingTimeline } from '@/components/order/OrderTrackingTimeline'
+import { PaymentTransferModal } from '@/components/order/PaymentTransferModal'
 import { api } from '@/lib/api'
 
 export default function OrderTrackingDetailPage() {
   const params = useParams()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const locale = useLocale()
   const idOrNumber = params?.id as string
+  const paymentAccessToken = searchParams.get('access') || undefined
 
   const [order, setOrder] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [syncing, setSyncing] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [paymentSettings, setPaymentSettings] = useState<any>(null)
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
+  const [viewProofModalOpen, setViewProofModalOpen] = useState(false)
 
   useEffect(() => {
     if (!idOrNumber) return
     setLoading(true)
     api
-      .getOrderTracking(idOrNumber)
+      .getOrderTracking(idOrNumber, paymentAccessToken)
       .then((data) => {
         setOrder(data)
         setError(null)
       })
       .catch((err) => {
         console.error('Lỗi tải đơn hàng:', err)
-        setError('Không tìm thấy thông tin đơn hàng hoặc mã đơn không chính xác')
+        setError('Không tìm thấy đơn hàng hoặc liên kết truy cập không hợp lệ. Hãy mở đơn từ email xác nhận hoặc mục Đơn của tôi.')
       })
       .finally(() => setLoading(false))
-  }, [idOrNumber])
+
+    api
+      .getPaymentSettings()
+      .then(setPaymentSettings)
+      .catch(() => {})
+  }, [idOrNumber, paymentAccessToken])
 
   const handleSyncTracking = async () => {
     if (!idOrNumber || syncing) return
     setSyncing(true)
     try {
-      const updated = await api.syncOrderTracking(idOrNumber)
+      const updated = await api.syncOrderTracking(idOrNumber, paymentAccessToken)
       if (updated) {
         setOrder(updated)
         if (updated.trackingNumber) {
@@ -215,6 +240,97 @@ export default function OrderTrackingDetailPage() {
           </div>
         </div>
 
+        {/* Card 2b: Thanh toán & Biên nhận chuyển khoản */}
+        <div className="bg-white border border-stone-200 p-5 sm:p-6 shadow-[0_4px_20px_rgba(74,66,56,0.04)] space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-stone-200">
+            <h2 className="text-xs uppercase tracking-[0.2em] font-serif font-semibold text-[#8C7E6A] flex items-center gap-1.5">
+              <CreditCard className="w-4 h-4 text-[#8C7E6A]" />
+              <span>Thanh toán chuyển khoản (Non-COD)</span>
+            </h2>
+
+            {order.paymentStatus === 'paid' ? (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-semibold tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-200">
+                <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                ĐÃ THANH TOÁN
+              </span>
+            ) : order.paymentStatus === 'pending_approval' || order.paymentProofUrl ? (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-semibold tracking-wider text-amber-800 bg-amber-50 border border-amber-200">
+                <Clock className="w-3 h-3 text-amber-600" />
+                {order.paymentProofUrl ? 'ĐÃ GỬI BIÊN LAI • CHỜ DUYỆT' : 'ĐÃ XÁC NHẬN CHUYỂN KHOẢN • CHỜ DUYỆT'}
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-semibold tracking-wider text-red-700 bg-red-50 border border-red-200">
+                CHƯA CHUYỂN KHOẢN
+              </span>
+            )}
+          </div>
+
+          <div className="text-xs space-y-3">
+            {order.paymentStatus === 'paid' ? (
+              <div className="p-3 bg-emerald-50/50 border border-emerald-200 text-emerald-800 text-[11px] leading-relaxed">
+                Đơn hàng đã được xác nhận thanh toán thành công. ƯƠM. Archive đang đóng gói và chuẩn bị bàn giao cho đơn vị vận chuyển.
+              </div>
+            ) : order.paymentProofUrl ? (
+              <div className="space-y-3">
+                <div className="p-3 bg-amber-50/60 border border-amber-200 text-amber-900 text-[11px] leading-relaxed">
+                  Chúng tôi đã nhận được ảnh biên nhận chuyển khoản của bạn và đang tiến hành kiểm tra xác minh. Email xác nhận chi tiết đơn hàng đã được gửi tới hòm thư của bạn.
+                </div>
+                <div className="flex items-center gap-4">
+                  <div
+                    onClick={() => setViewProofModalOpen(true)}
+                    className="relative cursor-pointer group border border-stone-200 overflow-hidden w-20 h-20 bg-stone-100 flex items-center justify-center shrink-0"
+                    title="Nhấp để xem ảnh lớn"
+                  >
+                    <img
+                      src={order.paymentProofUrl}
+                      alt="Ảnh biên nhận chuyển khoản"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                    />
+                    <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                      <ExternalLink className="w-4 h-4" />
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setViewProofModalOpen(true)}
+                      className="text-xs font-medium text-[#4A4238] hover:text-[#8C7E6A] underline underline-offset-2 flex items-center gap-1"
+                    >
+                      <span>Xem ảnh biên lai đã gửi</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsPaymentModalOpen(true)}
+                      className="text-[11px] text-stone-500 hover:text-[#4A4238] block"
+                    >
+                      Tải lại ảnh biên lai khác &rarr;
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : order.transferClaimedAt ? (
+              <div className="space-y-3">
+                <div className="border border-amber-200 bg-amber-50/60 p-3 text-[11px] leading-relaxed text-amber-900">Đã ghi nhận bạn xác nhận chuyển khoản. Cửa hàng sẽ kiểm tra giao dịch; bạn có thể bổ sung ảnh biên nhận bên dưới.</div>
+                <button type="button" onClick={() => setIsPaymentModalOpen(true)} className="flex w-full items-center justify-center gap-2 bg-[#4A4238] px-4 py-3 text-xs font-medium uppercase tracking-[0.2em] text-white hover:bg-[#8C7E6A]"><QrCode className="h-4 w-4" />Xem QR & bổ sung ảnh</button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="p-3 bg-stone-50 border border-stone-200 text-stone-600 text-[11px] leading-relaxed">
+                  Đơn hàng của bạn đang chờ thanh toán chuyển khoản. Vui lòng quét mã QR hoặc chuyển khoản theo thông tin của shop và tải ảnh biên lai để hoàn tất xác nhận.
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsPaymentModalOpen(true)}
+                  className="w-full py-3 px-4 bg-[#4A4238] text-white hover:bg-[#8C7E6A] transition-colors text-xs uppercase tracking-[0.2em] font-medium flex items-center justify-center gap-2"
+                >
+                  <QrCode className="w-4 h-4 text-[#D8CFBE]" />
+                  <span>Quét mã QR & Tải ảnh biên nhận ngay</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Card 3: Danh sách sản phẩm & Tổng tiền */}
         <div className="bg-white border border-stone-200 p-5 sm:p-6 shadow-[0_4px_20px_rgba(74,66,56,0.04)]">
           <h2 className="text-xs uppercase tracking-[0.2em] font-serif font-semibold text-[#8C7E6A] mb-4 flex items-center gap-2">
@@ -275,6 +391,48 @@ export default function OrderTrackingDetailPage() {
           </Link>
         </div>
       </div>
+
+      {/* Modal Chuyển khoản & Tải ảnh biên lai */}
+      <PaymentTransferModal
+        isOpen={isPaymentModalOpen}
+        onClose={() => setIsPaymentModalOpen(false)}
+        orderNumber={order.orderNumber}
+        paymentAccessToken={paymentAccessToken}
+        totalVND={order.totalVND}
+        paymentSettings={paymentSettings}
+        onSuccess={(updated) => {
+          setOrder(updated)
+          setIsPaymentModalOpen(false)
+        }}
+        onSkip={() => setIsPaymentModalOpen(false)}
+      />
+
+      {/* Modal Xem ảnh biên nhận kích thước lớn */}
+      {viewProofModalOpen && order.paymentProofUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="relative max-w-2xl w-full bg-white p-4 shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-stone-200 mb-3">
+              <span className="text-xs font-serif uppercase tracking-wider font-semibold text-[#4A4238]">
+                Ảnh biên nhận đơn hàng #{order.orderNumber}
+              </span>
+              <button
+                type="button"
+                onClick={() => setViewProofModalOpen(false)}
+                className="p-1 text-stone-400 hover:text-stone-800"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="max-h-[75vh] overflow-auto flex items-center justify-center bg-stone-50">
+              <img
+                src={order.paymentProofUrl}
+                alt="Biên nhận thanh toán"
+                className="max-w-full max-h-[70vh] object-contain shadow-sm"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

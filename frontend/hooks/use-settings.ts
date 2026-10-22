@@ -61,7 +61,7 @@ export const settingsKeys = {
 type SiteContentQueryOptions = {
   staleTime?: number
   refetchOnMount?: boolean | 'always'
-  initialData?: any
+  initialData?: SiteContent
   enabled?: boolean
 }
 

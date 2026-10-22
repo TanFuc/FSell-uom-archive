@@ -1,5 +1,7 @@
 ﻿import { type Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import { fetchSiteContentServer } from '@/lib/server-utils'
+import { parseSitePages } from '@/lib/site-structure'
 import Script from 'next/script'
 import { getLocale } from 'next-intl/server'
 import { cache } from 'react'
@@ -218,6 +220,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function ProductPage({ params }: Props) {
+  if (parseSitePages(await fetchSiteContentServer()).find((page) => page.slug === 'shop')?.isVisible === false) notFound()
   const locale = await getLocale()
   const [result, branding] = await Promise.all([fetchProduct(params.slug), fetchBranding()])
 

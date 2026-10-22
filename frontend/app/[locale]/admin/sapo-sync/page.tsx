@@ -26,11 +26,15 @@ interface SapoProductPreview {
   stock: number
   image: string | null
   isSynced: boolean
+  webhookTopic?: string | null
+  webhookReceivedAt?: string | null
 }
 
 export default function AdminSapoSyncPage() {
   const queryClient = useQueryClient()
   const [products, setProducts] = useState<SapoProductPreview[]>([])
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(false)
   const [selectedIds, setSelectedIds] = useState<number[]>([])
   const [loading, setLoading] = useState(true)
   const [syncingIds, setSyncingIds] = useState<number[]>([])
@@ -40,13 +44,9 @@ export default function AdminSapoSyncPage() {
   const fetchPreview = useCallback(async () => {
     setLoading(true)
     try {
-      const data = await api.getSapoPreview(1)
-      const list = Array.isArray(data)
-        ? data
-        : Array.isArray((data as any)?.data)
-        ? (data as any).data
-        : []
-      setProducts(list)
+      const data = await api.getSapoPreview(page)
+      setProducts(data.items)
+      setHasMore(data.hasMore)
     } catch (err: any) {
       toast.error('Không thể tải danh sách sản phẩm từ Sapo', {
         description: err?.response?.data?.message || err.message,
@@ -55,7 +55,7 @@ export default function AdminSapoSyncPage() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [page])
 
   useEffect(() => {
     fetchPreview()
@@ -69,10 +69,10 @@ export default function AdminSapoSyncPage() {
 
   const toggleSelectAll = () => {
     const visibleProducts = filteredProducts
-    if (selectedIds.length === visibleProducts.length && visibleProducts.length > 0) {
-      setSelectedIds([])
+    if (visibleProducts.length > 0 && visibleProducts.every((product) => selectedIds.includes(product.id))) {
+      setSelectedIds((current) => current.filter((id) => !visibleProducts.some((product) => product.id === id)))
     } else {
-      setSelectedIds(visibleProducts.map((p) => p.id))
+      setSelectedIds((current) => Array.from(new Set([...current, ...visibleProducts.map((p) => p.id)])))
     }
   }
 
@@ -226,7 +226,7 @@ export default function AdminSapoSyncPage() {
               <tr>
                 <th className="p-3 w-10 text-center">
                   <button onClick={toggleSelectAll} className="p-1 focus:outline-none">
-                    {selectedIds.length === filteredProducts.length && filteredProducts.length > 0 ? (
+                    {filteredProducts.length > 0 && filteredProducts.every((product) => selectedIds.includes(product.id)) ? (
                       <CheckSquare className="w-4 h-4 text-[#8C7E6A]" />
                     ) : (
                       <Square className="w-4 h-4 text-muted-foreground/60" />
@@ -294,8 +294,9 @@ export default function AdminSapoSyncPage() {
                           )}
                         </div>
                       </td>
-                      <td className="p-3 font-medium max-w-[200px] sm:max-w-xs truncate">
-                        {item.name}
+                      <td className="p-3 font-medium max-w-[200px] sm:max-w-xs">
+                        <span className="block truncate">{item.name}</span>
+                        {item.webhookTopic && <span className="block text-[10px] font-normal text-[#8C7E6A]">Webhook: {item.webhookTopic} · {item.webhookReceivedAt ? new Date(item.webhookReceivedAt).toLocaleString('vi-VN') : ''}</span>}
                       </td>
                       <td className="p-3 font-mono text-muted-foreground hidden sm:table-cell">
                         {item.sku || '---'}
@@ -330,7 +331,7 @@ export default function AdminSapoSyncPage() {
                           variant="outline"
                           size="sm"
                           onClick={() => handleSyncSingle(item.id)}
-                          disabled={isSyncing}
+                          disabled={isSyncing || item.webhookTopic === 'products/delete'}
                           className="h-8 px-3 text-xs uppercase tracking-wider hover:bg-[#8C7E6A] hover:text-white hover:border-[#8C7E6A] transition-colors"
                         >
                           {isSyncing ? (
@@ -351,6 +352,11 @@ export default function AdminSapoSyncPage() {
           </table>
         </div>
       </Card>
+      <div className="flex items-center justify-end gap-3 text-xs text-muted-foreground">
+        <Button type="button" size="sm" variant="outline" disabled={page <= 1 || loading} onClick={() => setPage((current) => current - 1)}>Trang trước</Button>
+        <span>Trang {page}</span>
+        <Button type="button" size="sm" variant="outline" disabled={!hasMore || loading} onClick={() => setPage((current) => current + 1)}>Trang sau</Button>
+      </div>
     </div>
   )
 }

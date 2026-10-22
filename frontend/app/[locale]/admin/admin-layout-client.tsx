@@ -19,6 +19,7 @@ import {
   User as UserIcon,
   KeyRound,
   RefreshCw,
+  ShoppingBag,
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
@@ -184,12 +185,14 @@ export default function AdminLayoutClient({ children }: AdminLayoutProps) {
 
   const navItems = [
     { href: `/${locale}/admin/dashboard`, label: t('dashboard'), icon: LayoutDashboard },
+    { href: `/${locale}/admin/orders`, label: t('orders'), icon: ShoppingBag },
     { href: `/${locale}/admin/products`, label: t('products'), icon: Package },
     { href: `/${locale}/admin/sapo-sync`, label: 'Sapo Sync', icon: RefreshCw },
     { href: `/${locale}/admin/banners`, label: 'Banners', icon: ImageIcon },
     { href: `/${locale}/admin/categories`, label: t('categories'), icon: LayoutGrid },
     { href: `/${locale}/admin/branding`, label: t('branding.navLabel'), icon: Brush },
     { href: `/${locale}/admin/stories`, label: t('stories.navLabel'), icon: BookOpen },
+    { href: `/${locale}/admin/pages`, label: 'Pages & Sections', icon: FileText },
     { href: `/${locale}/admin/trending`, label: t('trending.navLabel'), icon: Sparkles },
     { href: `/${locale}/admin/about`, label: t('aboutPage'), icon: FileText },
     { href: `/${locale}/admin/settings`, label: t('settings'), icon: Settings },

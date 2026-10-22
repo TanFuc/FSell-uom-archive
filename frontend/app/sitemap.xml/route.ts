@@ -6,9 +6,11 @@ import {
   buildSitemapXml,
   fetchAllProducts,
   fetchStories,
+  fetchSitemapSiteContent,
   SITEMAP_REVALIDATE,
   type SitemapUrlEntry,
 } from '@/lib/sitemap-data'
+import { parseSitePages } from '@/lib/site-structure'
 
 export const revalidate = SITEMAP_REVALIDATE
 
@@ -16,13 +18,16 @@ export async function GET(): Promise<Response> {
   // Fetch all data sources in parallel.
   // Stories failures are NON-FATAL — we degrade gracefully to an empty story list
   // rather than serving a broken/empty sitemap that deindexes pages.
-  const [productsResult, storiesResult] = await Promise.allSettled([
+  const [productsResult, storiesResult, contentResult] = await Promise.allSettled([
     fetchAllProducts(),
     fetchStories(),
+    fetchSitemapSiteContent(),
   ])
 
   const products = productsResult.status === 'fulfilled' ? productsResult.value : []
   const stories = storiesResult.status === 'fulfilled' ? storiesResult.value : []
+  const pages = parseSitePages(contentResult.status === 'fulfilled' ? contentResult.value : {})
+  const visible = (slug: string) => pages.find((page) => page.slug === slug)?.isVisible !== false
 
   if (productsResult.status === 'rejected') {
     console.error('[sitemap] fetchAllProducts failed:', productsResult.reason)
@@ -36,9 +41,24 @@ export async function GET(): Promise<Response> {
 
   // Merge all URL entries: static pages → product pages → journal pages
   const allEntries: SitemapUrlEntry[] = [
-    ...buildStaticEntries(products, stories),
-    ...buildProductEntries(products),
-    ...buildStoryEntries(stories),
+    ...buildStaticEntries(products, stories).filter((entry) => {
+      const path = new URL(entry.loc).pathname
+      const slug = path.split('/')[2] || 'home'
+      return visible(slug)
+    }),
+    ...(visible('shop') ? buildProductEntries(products) : []),
+    ...(visible('journal') ? buildStoryEntries(stories) : []),
+    ...pages.filter((page) => page.isVisible && !['home', 'shop', 'about', 'journal', 'contact'].includes(page.slug)).flatMap((page) => ['vi', 'en'].map((locale) => ({
+      loc: `${BASE_URL}/${locale}/pages/${encodeURIComponent(page.slug)}`,
+      lastmod: new Date().toISOString(),
+      changefreq: 'monthly' as const,
+      priority: 0.5,
+      alternates: {
+        vi: `${BASE_URL}/vi/pages/${encodeURIComponent(page.slug)}`,
+        en: `${BASE_URL}/en/pages/${encodeURIComponent(page.slug)}`,
+        'x-default': `${BASE_URL}/vi/pages/${encodeURIComponent(page.slug)}`,
+      },
+    }))),
   ]
 
   // Deduplicate by canonical loc (keeps first occurrence = highest priority entries first)

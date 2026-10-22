@@ -3,13 +3,15 @@
 import Link from 'next/link'
 import { useLocale, useTranslations } from 'next-intl'
 import { useEffect, useState } from 'react'
-import { useBranding, useSocialLinks } from '@/hooks/use-settings'
+import { useBranding, useSiteContent, useSocialLinks } from '@/hooks/use-settings'
+import { pageHref, parseSitePages } from '@/lib/site-structure'
 
 export function Footer() {
   const locale = useLocale() as 'vi' | 'en'
   const t = useTranslations('Footer')
   const { data: branding } = useBranding()
   const { data: socialLinks } = useSocialLinks()
+  const { data: siteContent } = useSiteContent()
   const BRANDING_CACHE_KEY = 'uom_branding_cache'
 
   const getCachedBranding = () => {
@@ -67,13 +69,10 @@ export function Footer() {
       : branding?.brandTaglineEn || cachedBranding?.brandTaglineEn || t('description')
 
   const copyrightYear = 2026
-  const navigationItems = [
-    { label: locale === 'vi' ? 'Trang chủ' : 'Home', href: `/${locale}` },
-    { label: t('shop'), href: `/${locale}/shop` },
-    { label: t('about'), href: `/${locale}/about` },
-    { label: t('journal'), href: `/${locale}/journal` },
-    { label: locale === 'vi' ? 'Liên hệ' : 'Contact', href: `/${locale}/about#contact` },
-  ]
+  const sitePages = parseSitePages(siteContent)
+  const navigationItems = sitePages
+    .filter((page) => page.isVisible && (page.slug !== 'contact' || sitePages.find((item) => item.slug === 'about')?.isVisible))
+    .map((page) => ({ label: locale === 'vi' ? page.titleVi : page.titleEn, href: pageHref(locale, page.slug) }))
 
   return (
     <footer className="safe-screen border-t border-foreground/[0.04] bg-white px-4 py-8 text-foreground sm:px-6 sm:py-10 lg:px-12 lg:py-12">

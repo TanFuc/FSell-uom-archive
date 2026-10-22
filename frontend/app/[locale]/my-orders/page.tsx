@@ -93,7 +93,7 @@ export default function MyOrdersPage() {
             return (
               <Link
                 key={order.id}
-                href={`/order-tracking/${order.orderNumber || order.id}`}
+                href={`/order-tracking/${order.orderNumber || order.id}?access=${order.paymentAccessToken}`}
                 className="block bg-white border border-stone-200 p-4 sm:p-5 shadow-[0_4px_16px_rgba(74,66,56,0.03)] hover:border-[#8C7E6A]/50 transition-all duration-300"
               >
                 <div className="flex items-center justify-between pb-3 border-b border-stone-200 mb-3">

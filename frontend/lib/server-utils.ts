@@ -82,3 +82,16 @@ export const fetchBranding = cache(async (): Promise<BrandingData | null> => {
 export async function fetchBrandingNoStore(): Promise<BrandingData | null> {
   return fetchBrandingInternal('no-store')
 }
+
+export const fetchSiteContentServer = cache(async (): Promise<Record<string, string>> => {
+  try {
+    const response = await fetch(`${API_URL}/settings/site-content`, {
+      next: { revalidate: 60 },
+      signal: AbortSignal.timeout(1800),
+    })
+    if (!response.ok) return {}
+    const payload = await response.json()
+    const content = payload?.data && typeof payload.data === 'object' ? payload.data : payload
+    return content && typeof content === 'object' ? content : {}
+  } catch { return {} }
+})

@@ -629,7 +629,7 @@ class ApiClient {
   }
 
   // ==================== SAPO SYNC ====================
-  async getSapoPreview(page = 1): Promise<any[]> {
+  async getSapoPreview(page = 1): Promise<{ items: any[]; page: number; hasMore: boolean }> {
     const res = await this.client.get(`/admin/sapo-sync/preview`, { params: { page } })
     return res.data?.data !== undefined ? res.data.data : res.data
   }
@@ -673,13 +673,17 @@ class ApiClient {
     return res.data?.data !== undefined ? res.data.data : res.data
   }
 
-  async getOrderTracking(idOrNumber: string): Promise<any> {
-    const res = await this.client.get(`/orders/${idOrNumber}`)
+  async getOrderTracking(idOrNumber: string, accessToken?: string): Promise<any> {
+    const res = await this.client.get(`/orders/${idOrNumber}`, {
+      headers: accessToken ? { 'x-order-payment-token': accessToken } : {},
+    })
     return res.data?.data !== undefined ? res.data.data : res.data
   }
 
-  async syncOrderTracking(idOrNumber: string): Promise<any> {
-    const res = await this.client.post(`/orders/${idOrNumber}/sync-tracking`)
+  async syncOrderTracking(idOrNumber: string, accessToken?: string): Promise<any> {
+    const res = await this.client.post(`/orders/${idOrNumber}/sync-tracking`, null, {
+      headers: accessToken ? { 'x-order-payment-token': accessToken } : {},
+    })
     return res.data?.data !== undefined ? res.data.data : res.data
   }
 
@@ -727,7 +731,98 @@ class ApiClient {
     const res = await this.client.get(`/customer/auth/me`)
     return res.data?.data !== undefined ? res.data.data : res.data
   }
-}
 
+  // ==================== PAYMENT SETTINGS & ORDER PROOF ====================
+  async getPaymentSettings(): Promise<{
+    id: string
+    qrCodeUrl: string | null
+    bankName: string
+    accountNumber: string
+    accountHolder: string
+    transferInstruction: string
+    transferTemplates?: { id: string; name: string; content: string }[]
+    activeTemplateId?: string | null
+    note?: string | null
+  }> {
+    const res = await this.client.get(`/settings/payment`)
+    return res.data?.data !== undefined ? res.data.data : res.data
+  }
+
+  async updatePaymentSettings(data: {
+    qrCodeUrl?: string
+    bankName?: string
+    accountNumber?: string
+    accountHolder?: string
+    transferInstruction?: string
+    transferTemplates?: { id: string; name: string; content: string }[]
+    activeTemplateId?: string | null
+    note?: string
+  }): Promise<any> {
+    const res = await this.client.put(`/settings/payment`, data)
+    return res.data?.data !== undefined ? res.data.data : res.data
+  }
+
+  async uploadPaymentProof(idOrNumber: string, file: File, accessToken: string): Promise<any> {
+    const formData = new FormData()
+    formData.append('file', file)
+    const res = await this.client.post(`/orders/${idOrNumber}/payment-proof`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'x-order-payment-token': accessToken,
+      },
+    })
+    return res.data?.data !== undefined ? res.data.data : res.data
+  }
+
+  async confirmOrderTransfer(idOrNumber: string, accessToken: string): Promise<any> {
+    const res = await this.client.post(`/orders/${idOrNumber}/confirm-transfer`, null, {
+      headers: { 'x-order-payment-token': accessToken },
+    })
+    return res.data?.data !== undefined ? res.data.data : res.data
+  }
+
+  // ==================== ADMIN ORDERS ====================
+  async getAdminOrders(params?: {
+    page?: number
+    limit?: number
+    status?: string
+    paymentStatus?: string
+    search?: string
+  }): Promise<{
+    items: any[]
+    total: number
+    page: number
+    limit: number
+    totalPages: number
+  }> {
+    const res = await this.client.get(`/orders/admin/list`, { params })
+    return res.data?.data !== undefined ? res.data.data : res.data
+  }
+
+  async getAdminOrder(idOrNumber: string): Promise<any> {
+    const res = await this.client.get(`/orders/admin/${idOrNumber}`)
+    return res.data?.data !== undefined ? res.data.data : res.data
+  }
+
+  async updateOrderStatus(idOrNumber: string, status: string): Promise<any> {
+    const res = await this.client.put(`/orders/admin/${idOrNumber}/status`, { status })
+    return res.data?.data !== undefined ? res.data.data : res.data
+  }
+
+  async updateOrderPaymentStatus(idOrNumber: string, paymentStatus: string): Promise<any> {
+    const res = await this.client.put(`/orders/admin/${idOrNumber}/payment-status`, { paymentStatus })
+    return res.data?.data !== undefined ? res.data.data : res.data
+  }
+
+  async sendOrderConfirmationEmail(idOrNumber: string): Promise<{
+    success: boolean
+    customerEmail: string
+    messageId?: string
+    error?: string
+  }> {
+    const res = await this.client.post(`/orders/admin/${idOrNumber}/send-confirmation-email`)
+    return res.data?.data !== undefined ? res.data.data : res.data
+  }
+}
 
 export const api = new ApiClient(API_BASE_URL)

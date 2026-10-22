@@ -3,10 +3,11 @@
 import React, { useState, useEffect, useMemo, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, ShoppingBag, ShieldCheck, CheckCircle2 } from 'lucide-react'
+import { ArrowLeft, ShoppingBag, ShieldCheck, CheckCircle2, QrCode } from 'lucide-react'
 import { toast } from 'sonner'
 import { api } from '@/lib/api'
 import { useCustomerStore } from '@/lib/customer-store'
+import { PaymentTransferModal } from '@/components/order/PaymentTransferModal'
 
 function CheckoutContent() {
   const router = useRouter()
@@ -16,6 +17,9 @@ function CheckoutContent() {
   const [cart, setCart] = useState<any>(null)
   const [loadingCart, setLoadingCart] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+  const [paymentSettings, setPaymentSettings] = useState<any>(null)
+  const [createdOrder, setCreatedOrder] = useState<any>(null)
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
 
   const [formData, setFormData] = useState({
     customerEmail: '',
@@ -48,6 +52,14 @@ function CheckoutContent() {
         console.error('Lỗi tải giỏ hàng:', err)
       })
       .finally(() => setLoadingCart(false))
+
+    // Tải cấu hình thanh toán chuyển khoản (Mã QR admin, STK, Ngân hàng)
+    api
+      .getPaymentSettings()
+      .then((settings) => {
+        setPaymentSettings(settings)
+      })
+      .catch(() => {})
   }, [])
 
   // Lọc các mặt hàng được chọn để đặt
@@ -102,10 +114,11 @@ function CheckoutContent() {
         note: formData.note,
       })
 
-      toast.success('Đặt hàng thành công!')
+      toast.success('Đặt hàng thành công! Vui lòng chuyển khoản thanh toán.')
       useCustomerStore.getState().fetchCartCount()
-      // Chuyển hướng sang trang theo dõi đơn hàng
-      router.push(`/order-tracking/${order.orderNumber || order.id}`)
+      // Mở modal quét mã QR chuyển khoản và tải bill
+      setCreatedOrder(order)
+      setIsPaymentModalOpen(true)
     } catch (err: any) {
       toast.error(err?.response?.data?.message || 'Có lỗi xảy ra khi tạo đơn hàng')
     } finally {
@@ -152,7 +165,7 @@ function CheckoutContent() {
           </Link>
           <div className="flex items-center gap-1.5 text-xs text-[#8C7E6A]">
             <ShieldCheck className="w-4 h-4" />
-            <span className="hidden sm:inline text-[11px] uppercase tracking-wider font-medium">Bảo mật thanh toán COD</span>
+            <span className="hidden sm:inline text-[11px] uppercase tracking-wider font-medium">Thanh toán chuyển khoản trước</span>
           </div>
         </div>
 
@@ -256,16 +269,20 @@ function CheckoutContent() {
               </div>
             </div>
 
-            {/* Phương thức thanh toán */}
+            {/* Phương thức thanh toán - Chỉ có Non-COD chuyển khoản */}
             <div className="bg-white border border-stone-200 p-5 sm:p-6 shadow-[0_4px_20px_rgba(74,66,56,0.04)]">
               <h3 className="font-serif text-xs uppercase tracking-[0.2em] font-semibold text-[#8C7E6A] mb-2">
                 Phương thức thanh toán
               </h3>
-              <div className="flex items-center gap-3 p-3 border border-[#8C7E6A]/30 bg-stone-50 text-xs">
-                <CheckCircle2 className="w-4 h-4 text-[#8C7E6A] shrink-0" />
-                <div>
-                  <p className="font-medium text-[#4A4238]">Thanh toán khi nhận hàng (COD)</p>
-                  <p className="text-[11px] text-stone-500">Quý khách thanh toán trực tiếp cho nhân viên bưu tá khi nhận kiện hàng.</p>
+              <div className="flex items-start gap-3 p-3.5 border border-[#8C7E6A] bg-[#FAF8F5] text-xs">
+                <CheckCircle2 className="w-4 h-4 text-[#8C7E6A] shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <p className="font-semibold text-[#4A4238]">
+                    Chuyển khoản ngân hàng (Thanh toán trước / Non-COD)
+                  </p>
+                  <p className="text-[11px] text-stone-500 leading-relaxed">
+                    Sau khi bấm đặt hàng, hệ thống sẽ hiển thị mã QR và số tài khoản để quý khách chuyển tiền. Quý khách vui lòng tải ảnh biên nhận chuyển khoản để được xác nhận đơn nhanh nhất.
+                  </p>
                 </div>
               </div>
             </div>
@@ -352,17 +369,52 @@ function CheckoutContent() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full mt-6 py-3.5 px-4 bg-[#4A4238] text-white hover:bg-[#8C7E6A] disabled:bg-stone-400 transition-colors uppercase tracking-[0.25em] text-xs font-medium text-center shadow-sm"
+                className="w-full mt-6 py-3.5 px-4 bg-[#4A4238] text-white hover:bg-[#8C7E6A] disabled:bg-stone-400 transition-colors uppercase tracking-[0.25em] text-xs font-medium text-center shadow-sm flex items-center justify-center gap-2"
               >
-                {submitting ? 'Đang khởi tạo đơn hàng...' : `Xác nhận Đặt hàng (${itemsToCheckout.length})`}
+                {submitting ? (
+                  <>
+                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Đang tạo đơn hàng...</span>
+                  </>
+                ) : (
+                  <>
+                    <QrCode className="w-4 h-4 text-[#D8CFBE]" />
+                    <span>Đặt hàng & Chuyển khoản ({itemsToCheckout.length})</span>
+                  </>
+                )}
               </button>
 
               <p className="text-[10px] text-stone-400 text-center mt-3 leading-relaxed">
-                Nhấn "Xác nhận Đặt hàng" đồng nghĩa với việc bạn đồng ý với chính sách mua hàng và bảo mật của ƯƠM. Archive.
+                Nhấn "Đặt hàng & Chuyển khoản" đồng nghĩa với việc bạn đồng ý với chính sách mua hàng và bảo mật của ƯƠM. Archive.
               </p>
             </div>
           </div>
         </form>
+
+        {/* Modal Quét mã QR & Tải ảnh biên nhận */}
+        {createdOrder && (
+          <PaymentTransferModal
+            isOpen={isPaymentModalOpen}
+            onClose={() => {
+              setIsPaymentModalOpen(false)
+              router.push(`/order-tracking/${createdOrder.orderNumber || createdOrder.id}?access=${createdOrder.paymentAccessToken}`)
+            }}
+            orderNumber={createdOrder.orderNumber || createdOrder.id}
+            paymentAccessToken={createdOrder.paymentAccessToken}
+            totalVND={createdOrder.totalVND || totalAmount}
+            paymentSettings={paymentSettings}
+            onSuccess={(updated) => {
+              setIsPaymentModalOpen(false)
+              router.push(
+                `/order-tracking/${updated?.orderNumber || createdOrder.orderNumber || createdOrder.id}?access=${createdOrder.paymentAccessToken}`,
+              )
+            }}
+            onSkip={() => {
+              setIsPaymentModalOpen(false)
+              router.push(`/order-tracking/${createdOrder.orderNumber || createdOrder.id}?access=${createdOrder.paymentAccessToken}`)
+            }}
+          />
+        )}
       </div>
     </div>
   )
