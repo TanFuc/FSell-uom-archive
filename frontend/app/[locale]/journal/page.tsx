@@ -173,16 +173,16 @@ export default async function JournalPage({ params }: PageProps) {
       />
       <section className="px-4 py-16 sm:px-6 lg:px-12">
         <div className="mx-auto max-w-5xl text-center">
-          <p className="text-mobile-safe mb-3 text-[10px] uppercase tracking-[0.24em] text-foreground/50 sm:tracking-[0.35em]">
+          <p className="text-mobile-safe mb-3 text-[10px] font-thin uppercase tracking-[0.24em] text-foreground/50 sm:tracking-[0.35em]">
             {tNav('journal')}
           </p>
-          <h1 className="text-mobile-safe font-playfair text-4xl font-semibold tracking-tight text-foreground md:text-6xl">
+          <h1 className="text-mobile-safe font-playfair text-4xl font-light tracking-tight text-foreground md:text-6xl">
             {t('heroTitle')}
           </h1>
-          <p className="mx-auto mt-5 max-w-2xl text-sm leading-relaxed text-foreground/70 md:text-base">
+          <p className="mx-auto mt-5 max-w-2xl text-sm font-thin leading-relaxed text-foreground/70 md:text-base">
             {t('heroDescription')}
           </p>
-          <div className="mt-6 flex flex-wrap justify-center gap-3 text-[9px] font-semibold uppercase tracking-[0.18em] text-foreground/55 sm:tracking-[0.28em]">
+          <div className="mt-6 flex flex-wrap justify-center gap-3 text-[9px] font-light uppercase tracking-[0.18em] text-foreground/55 sm:tracking-[0.28em]">
             <Link
               href={`/${locale}/shop`}
               className="rounded-full border border-foreground/15 px-4 py-2 transition-all hover:border-foreground/40 hover:text-foreground"
@@ -202,7 +202,7 @@ export default async function JournalPage({ params }: PageProps) {
 
       <section id="stories" className="scroll-mt-24 px-4 pb-20 sm:px-6 lg:px-12">
         {stories.length === 0 ? (
-          <div className="rounded-2xl border border-black/10 bg-white/85 p-12 text-center text-sm text-foreground/60 shadow-sm backdrop-blur-sm">
+          <div className="rounded-2xl border border-black/10 bg-white/85 p-12 text-center text-sm font-thin text-foreground/60 shadow-sm backdrop-blur-sm">
             {t('empty')}
           </div>
         ) : (
@@ -229,19 +229,19 @@ export default async function JournalPage({ params }: PageProps) {
                 <div className="flex flex-1 flex-col space-y-3 p-5">
                   <div className="min-h-[1.5rem]">
                     {story.publishedAt ? (
-                      <p className="inline-flex max-w-full rounded-full border border-foreground/10 bg-foreground/[0.03] px-2.5 py-1 text-[10px] uppercase tracking-[0.12em] text-foreground/55 sm:tracking-[0.18em]">
+                      <p className="inline-flex max-w-full rounded-full border border-foreground/10 bg-foreground/[0.03] px-2.5 py-1 text-[10px] font-thin uppercase tracking-[0.12em] text-foreground/55 sm:tracking-[0.18em]">
                         {story.publishedAt}
                       </p>
                     ) : null}
                   </div>
-                  <h2 className="text-mobile-safe line-clamp-2 min-h-[3.25rem] font-playfair text-xl leading-tight text-foreground">
+                  <h2 className="text-mobile-safe line-clamp-2 min-h-[3.25rem] font-playfair text-xl font-light leading-tight text-foreground">
                     {locale === 'vi' ? story.titleVi : story.titleEn}
                   </h2>
-                  <p className="line-clamp-3 min-h-[3.75rem] text-sm leading-relaxed text-foreground/70">
+                  <p className="line-clamp-3 min-h-[3.75rem] text-sm font-thin leading-relaxed text-foreground/70">
                     {locale === 'vi' ? story.summaryVi : story.summaryEn}
                   </p>
                   <div className="mt-auto pt-3">
-                    <span className="text-[9px] font-semibold uppercase tracking-[0.18em] text-foreground/55 sm:tracking-[0.28em]">
+                    <span className="text-[9px] font-light uppercase tracking-[0.18em] text-foreground/55 sm:tracking-[0.28em]">
                       {storyCta}
                     </span>
                   </div>
@@ -257,10 +257,10 @@ export default async function JournalPage({ params }: PageProps) {
           <div className="grid gap-6 md:grid-cols-2">
             {faqItems.map((item) => (
               <div key={item.question}>
-                <h3 className="text-mobile-safe text-sm font-semibold uppercase tracking-[0.1em] text-foreground sm:tracking-[0.15em]">
+                <h3 className="text-mobile-safe text-sm font-light uppercase tracking-[0.1em] text-foreground sm:tracking-[0.15em]">
                   {item.question}
                 </h3>
-                <p className="mt-3 text-sm leading-relaxed text-foreground/70">{item.answer}</p>
+                <p className="mt-3 text-sm font-thin leading-relaxed text-foreground/70">{item.answer}</p>
               </div>
             ))}
           </div>

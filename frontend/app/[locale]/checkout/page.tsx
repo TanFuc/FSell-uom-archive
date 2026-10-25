@@ -139,11 +139,11 @@ function CheckoutContent() {
     return (
       <div className="min-h-[70vh] bg-white flex flex-col items-center justify-center p-6 text-center text-[#4A4238]">
         <ShoppingBag className="w-12 h-12 text-[#8C7E6A] stroke-[1.2] mb-3 opacity-60" />
-        <h2 className="font-serif text-xl uppercase tracking-wider mb-2">Không có sản phẩm để thanh toán</h2>
-        <p className="text-xs text-stone-500 mb-6">Hãy chọn những tác phẩm gốm sứ yêu thích trong giỏ hàng trước khi đặt hàng.</p>
+        <h2 className="font-serif text-xl font-light uppercase tracking-wider mb-2">Không có sản phẩm để thanh toán</h2>
+        <p className="text-xs text-stone-500 mb-6 font-thin">Hãy chọn những tác phẩm gốm sứ yêu thích trong giỏ hàng trước khi đặt hàng.</p>
         <Link
           href="/shop"
-          className="btn text-xs tracking-[0.2em] uppercase px-8 py-3 bg-[#4A4238] text-white hover:bg-[#8C7E6A] transition-colors"
+          className="btn text-xs tracking-[0.2em] uppercase px-8 py-3 bg-[#4A4238] text-white hover:bg-[#8C7E6A] transition-colors font-light"
         >
           Tiếp tục mua sắm
         </Link>
@@ -158,26 +158,26 @@ function CheckoutContent() {
         <div className="mb-6 flex items-center justify-between">
           <Link
             href="/shop"
-            className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.2em] font-medium text-stone-500 hover:text-[#4A4238] transition-colors"
+            className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.2em] font-light text-stone-500 hover:text-[#4A4238] transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Tiếp tục mua sắm</span>
           </Link>
           <div className="flex items-center gap-1.5 text-xs text-[#8C7E6A]">
             <ShieldCheck className="w-4 h-4" />
-            <span className="hidden sm:inline text-[11px] uppercase tracking-wider font-medium">Thanh toán chuyển khoản trước</span>
+            <span className="hidden sm:inline text-[11px] uppercase tracking-wider font-thin">Thanh toán chuyển khoản trước</span>
           </div>
         </div>
 
         {/* Page Header */}
         <div className="mb-8 pb-6 border-b border-stone-200">
-          <span className="text-[10px] uppercase tracking-[0.25em] text-[#8C7E6A] font-semibold block mb-1.5 font-serif">
+          <span className="text-[10px] uppercase tracking-[0.25em] text-[#8C7E6A] font-thin block mb-1.5 font-serif">
             ƯƠM. Archive Minimalist Ceramic Studio
           </span>
-          <h1 className="text-2xl sm:text-3xl font-serif font-bold tracking-tight text-[#4A4238]">
+          <h1 className="text-2xl sm:text-3xl font-serif font-light tracking-tight text-[#4A4238]">
             Thanh toán đơn hàng
           </h1>
-          <p className="text-xs text-stone-500 mt-1 font-light">
+          <p className="text-xs text-stone-500 mt-1 font-thin">
             Vui lòng xác nhận thông tin nhận hàng và phương thức thanh toán
           </p>
         </div>
@@ -186,13 +186,13 @@ function CheckoutContent() {
           {/* Cột Trái: Thông tin giao nhận */}
           <div className="lg:col-span-7 space-y-6">
             <div className="bg-white border border-stone-200 p-5 sm:p-6 shadow-[0_4px_20px_rgba(74,66,56,0.04)] space-y-4">
-              <h2 className="font-serif text-sm uppercase tracking-[0.2em] font-semibold text-[#4A4238] pb-3 border-b border-stone-200">
+              <h2 className="font-serif text-sm uppercase tracking-[0.2em] font-light text-[#4A4238] pb-3 border-b border-stone-200">
                 1. Thông tin giao nhận
               </h2>
 
               <div className="space-y-4 text-xs">
                 <div>
-                  <label className="block uppercase tracking-wider text-stone-600 mb-1.5 font-medium">
+                  <label className="block uppercase tracking-wider text-stone-600 mb-1.5 font-thin">
                     Họ và tên người nhận <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -202,13 +202,13 @@ function CheckoutContent() {
                     onChange={handleChange}
                     required
                     placeholder="Nguyễn Văn A"
-                    className="w-full px-3.5 py-2.5 bg-white border border-stone-200 focus:border-[#8C7E6A] focus:outline-none transition-colors"
+                    className="w-full px-3.5 py-2.5 bg-white border border-stone-200 font-thin focus:border-[#8C7E6A] focus:outline-none transition-colors"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block uppercase tracking-wider text-stone-600 mb-1.5 font-medium">
+                    <label className="block uppercase tracking-wider text-stone-600 mb-1.5 font-thin">
                       Số điện thoại <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -218,12 +218,12 @@ function CheckoutContent() {
                       onChange={handleChange}
                       required
                       placeholder="0912 345 678"
-                      className="w-full px-3.5 py-2.5 bg-white border border-stone-200 focus:border-[#8C7E6A] focus:outline-none transition-colors"
+                      className="w-full px-3.5 py-2.5 bg-white border border-stone-200 font-thin focus:border-[#8C7E6A] focus:outline-none transition-colors"
                     />
                   </div>
 
                   <div>
-                    <label className="block uppercase tracking-wider text-stone-600 mb-1.5 font-medium">
+                    <label className="block uppercase tracking-wider text-stone-600 mb-1.5 font-thin">
                       Địa chỉ Email <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -233,13 +233,13 @@ function CheckoutContent() {
                       onChange={handleChange}
                       required
                       placeholder="email@example.com"
-                      className="w-full px-3.5 py-2.5 bg-white border border-stone-200 focus:border-[#8C7E6A] focus:outline-none transition-colors"
+                      className="w-full px-3.5 py-2.5 bg-white border border-stone-200 font-thin focus:border-[#8C7E6A] focus:outline-none transition-colors"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block uppercase tracking-wider text-stone-600 mb-1.5 font-medium">
+                  <label className="block uppercase tracking-wider text-stone-600 mb-1.5 font-thin">
                     Địa chỉ nhận hàng chi tiết <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -249,12 +249,12 @@ function CheckoutContent() {
                     onChange={handleChange}
                     required
                     placeholder="Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố"
-                    className="w-full px-3.5 py-2.5 bg-white border border-stone-200 focus:border-[#8C7E6A] focus:outline-none transition-colors"
+                    className="w-full px-3.5 py-2.5 bg-white border border-stone-200 font-thin focus:border-[#8C7E6A] focus:outline-none transition-colors"
                   />
                 </div>
 
                 <div>
-                  <label className="block uppercase tracking-wider text-stone-600 mb-1.5 font-medium">
+                  <label className="block uppercase tracking-wider text-stone-600 mb-1.5 font-thin">
                     Ghi chú đơn hàng (Tùy chọn)
                   </label>
                   <textarea
@@ -263,7 +263,7 @@ function CheckoutContent() {
                     onChange={handleChange}
                     rows={2}
                     placeholder="Ví dụ: Giao giờ hành chính, gọi điện trước khi giao..."
-                    className="w-full px-3.5 py-2.5 bg-white border border-stone-200 focus:border-[#8C7E6A] focus:outline-none transition-colors resize-none"
+                    className="w-full px-3.5 py-2.5 bg-white border border-stone-200 font-thin focus:border-[#8C7E6A] focus:outline-none transition-colors resize-none"
                   />
                 </div>
               </div>
@@ -271,16 +271,16 @@ function CheckoutContent() {
 
             {/* Phương thức thanh toán - Chỉ có Non-COD chuyển khoản */}
             <div className="bg-white border border-stone-200 p-5 sm:p-6 shadow-[0_4px_20px_rgba(74,66,56,0.04)]">
-              <h3 className="font-serif text-xs uppercase tracking-[0.2em] font-semibold text-[#8C7E6A] mb-2">
+              <h3 className="font-serif text-xs uppercase tracking-[0.2em] font-light text-[#8C7E6A] mb-2">
                 Phương thức thanh toán
               </h3>
               <div className="flex items-start gap-3 p-3.5 border border-[#8C7E6A] bg-[#FAF8F5] text-xs">
                 <CheckCircle2 className="w-4 h-4 text-[#8C7E6A] shrink-0 mt-0.5" />
                 <div className="space-y-1">
-                  <p className="font-semibold text-[#4A4238]">
+                  <p className="font-light text-[#4A4238]">
                     Chuyển khoản ngân hàng (Thanh toán trước / Non-COD)
                   </p>
-                  <p className="text-[11px] text-stone-500 leading-relaxed">
+                  <p className="text-[11px] text-stone-500 leading-relaxed font-thin">
                     Sau khi bấm đặt hàng, hệ thống sẽ hiển thị mã QR và số tài khoản để quý khách chuyển tiền. Quý khách vui lòng tải ảnh biên nhận chuyển khoản để được xác nhận đơn nhanh nhất.
                   </p>
                 </div>
@@ -292,11 +292,11 @@ function CheckoutContent() {
           <div className="lg:col-span-5 space-y-4">
             <div className="bg-white border border-stone-200 p-5 sm:p-6 shadow-[0_4px_20px_rgba(74,66,56,0.04)] sticky top-20">
               <div className="flex items-center justify-between pb-3 border-b border-stone-200 mb-4">
-                <h2 className="font-serif text-sm uppercase tracking-[0.2em] font-semibold text-[#4A4238]">
+                <h2 className="font-serif text-sm uppercase tracking-[0.2em] font-light text-[#4A4238]">
                   Đơn hàng ({itemsToCheckout.length})
                 </h2>
                 {selectedItemIds && selectedItemIds.length > 0 && cart.items.length > itemsToCheckout.length && (
-                  <span className="text-[10px] text-[#8C7E6A] bg-[#8C7E6A]/10 px-2 py-0.5 font-medium">
+                  <span className="text-[10px] text-[#8C7E6A] bg-[#8C7E6A]/10 px-2 py-0.5 font-thin">
                     Chọn {itemsToCheckout.length}/{cart.items.length} món
                   </span>
                 )}
@@ -335,13 +335,13 @@ function CheckoutContent() {
                           )}
                         </div>
                         <div className="min-w-0 pr-2">
-                          <p className="font-medium text-[#4A4238] truncate" title={item.product?.nameVi}>
+                          <p className="font-light text-[#4A4238] truncate" title={item.product?.nameVi}>
                             {item.product?.nameVi}
                           </p>
-                          <p className="text-stone-400 text-[11px] mt-0.5">SL: {item.quantity}</p>
+                          <p className="text-stone-400 text-[11px] mt-0.5 font-thin">SL: {item.quantity}</p>
                         </div>
                       </div>
-                      <div className="font-mono text-stone-800 font-medium shrink-0 whitespace-nowrap text-right pl-2">
+                      <div className="font-mono text-stone-800 font-light shrink-0 whitespace-nowrap text-right pl-2">
                         {(item.priceVND * item.quantity).toLocaleString('vi-VN')} ₫
                       </div>
                     </div>
@@ -349,7 +349,7 @@ function CheckoutContent() {
                 })}
               </div>
 
-              <div className="border-t border-stone-200 pt-4 mt-4 space-y-2 text-xs">
+              <div className="border-t border-stone-200 pt-4 mt-4 space-y-2 text-xs font-thin">
                 <div className="flex justify-between text-stone-500">
                   <span>Tạm tính</span>
                   <span className="font-mono text-stone-700">{totalAmount.toLocaleString('vi-VN')} ₫</span>
@@ -358,9 +358,9 @@ function CheckoutContent() {
                   <span>Phí vận chuyển</span>
                   <span className="text-stone-700">Miễn phí (Tiêu chuẩn)</span>
                 </div>
-                <div className="border-t border-stone-200 pt-3 flex justify-between items-baseline font-medium text-sm">
+                <div className="border-t border-stone-200 pt-3 flex justify-between items-baseline font-light text-sm">
                   <span className="uppercase tracking-wider font-serif">Tổng cộng</span>
-                  <span className="font-mono text-lg font-semibold text-[#8C7E6A]">
+                  <span className="font-mono text-lg font-light text-[#8C7E6A]">
                     {totalAmount.toLocaleString('vi-VN')} ₫
                   </span>
                 </div>
@@ -369,7 +369,7 @@ function CheckoutContent() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full mt-6 py-3.5 px-4 bg-[#4A4238] text-white hover:bg-[#8C7E6A] disabled:bg-stone-400 transition-colors uppercase tracking-[0.25em] text-xs font-medium text-center shadow-sm flex items-center justify-center gap-2"
+                className="w-full mt-6 py-3.5 px-4 bg-[#4A4238] text-white hover:bg-[#8C7E6A] disabled:bg-stone-400 transition-colors uppercase tracking-[0.25em] text-xs font-light text-center shadow-sm flex items-center justify-center gap-2"
               >
                 {submitting ? (
                   <>
@@ -384,7 +384,7 @@ function CheckoutContent() {
                 )}
               </button>
 
-              <p className="text-[10px] text-stone-400 text-center mt-3 leading-relaxed">
+              <p className="text-[10px] text-stone-400 text-center mt-3 leading-relaxed font-thin">
                 Nhấn "Đặt hàng & Chuyển khoản" đồng nghĩa với việc bạn đồng ý với chính sách mua hàng và bảo mật của ƯƠM. Archive.
               </p>
             </div>

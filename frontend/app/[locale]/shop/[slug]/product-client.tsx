@@ -527,13 +527,13 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                 <div className="w-full space-y-6 pb-12 pt-6 md:space-y-8 md:pb-0 md:pt-0">
                   {/* Info Header */}
                   <div className="space-y-2">
-                    <h1 className="text-mobile-safe font-sans text-sm font-bold leading-tight tracking-[0.08em] text-foreground sm:text-base sm:tracking-[0.1em]">
+                    <h1 className="text-mobile-safe font-sans text-sm font-light leading-tight tracking-[0.08em] text-foreground sm:text-base sm:tracking-[0.1em]">
                       {name}
                     </h1>
                     <div className="flex flex-wrap items-center gap-2.5">
                       <p
                         className={cn(
-                          'font-sans text-xs font-semibold tracking-[0.05em] sm:text-sm',
+                          'font-sans text-xs font-light tracking-[0.05em] sm:text-sm',
                           priceDisplay.hasDiscount ? 'text-[#991b1b]' : 'text-foreground',
                         )}
                       >
@@ -545,7 +545,7 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                             {priceDisplay.originalPrice}
                           </p>
                           {priceDisplay.discountPercentage && (
-                            <span className="rounded-sm bg-[#991b1b]/10 px-1.5 py-0.5 text-[9px] font-bold tracking-wide text-[#991b1b]">
+                            <span className="rounded-sm bg-[#991b1b]/10 px-1.5 py-0.5 text-[9px] font-light tracking-wide text-[#991b1b]">
                               −{priceDisplay.discountPercentage}%
                             </span>
                           )}
@@ -556,22 +556,22 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
 
                   {/* Details Section */}
                   <div className="space-y-4">
-                    <h4 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-foreground">
+                    <h4 className="text-[11px] font-light uppercase tracking-[0.14em] text-foreground">
                       {t('details')}
                     </h4>
 
                     {shortDescription ? (
-                      <p className="text-[12px] font-medium leading-[1.75] tracking-[0.02em] text-foreground/90">
+                      <p className="text-[12px] font-thin leading-[1.75] tracking-[0.02em] text-foreground/90">
                         {shortDescription}
                       </p>
                     ) : null}
 
                     {/* Chất liệu & Kích thước */}
                     {(product.material || product.dimensions) && (
-                      <div className="flex flex-col gap-1 text-[12px] font-normal leading-[1.7] tracking-[0.02em] text-foreground/90">
+                      <div className="flex flex-col gap-1 text-[12px] font-thin leading-[1.7] tracking-[0.02em] text-foreground/90">
                         {product.material && (
                           <p>
-                            <span className="font-semibold uppercase tracking-[0.08em]">
+                            <span className="font-light uppercase tracking-[0.08em]">
                               {locale === 'vi' ? 'Chất liệu' : 'Material'}:{' '}
                             </span>
                             {product.material}
@@ -579,7 +579,7 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                         )}
                         {product.dimensions && (
                           <p>
-                            <span className="font-semibold uppercase tracking-[0.08em]">
+                            <span className="font-light uppercase tracking-[0.08em]">
                               {locale === 'vi' ? 'Kích thước' : 'Dimensions'}:{' '}
                             </span>
                             {product.dimensions}
@@ -590,10 +590,10 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
 
                     {/* Combined Description & Technical Specs */}
                     {variants.groups.length > 0 && (
-                      <div className="flex flex-col gap-1.5 text-[12px] font-normal leading-[1.7] tracking-[0.02em] text-foreground/90">
+                      <div className="flex flex-col gap-1.5 text-[12px] font-thin leading-[1.7] tracking-[0.02em] text-foreground/90">
                         {variants.groups.map((group) => (
                           <p key={group.label}>
-                            <span className="font-semibold uppercase">{group.label}: </span>
+                            <span className="font-light uppercase">{group.label}: </span>
                             <span>{group.values.join(', ')}</span>
                           </p>
                         ))}
@@ -603,7 +603,7 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                     {/* HTML Description */}
                     {description && (
                       <div
-                        className="prose prose-sm max-w-none overflow-hidden font-sans text-[12px] font-normal tracking-[0.02em] text-foreground/90 [overflow-wrap:anywhere] [&_a]:underline [&_a]:underline-offset-2 [&_blockquote]:border-l [&_blockquote]:border-foreground/30 [&_blockquote]:pl-4 [&_h1]:text-base [&_h1]:font-bold [&_h2]:text-sm [&_h2]:font-bold [&_h3]:text-xs [&_h3]:font-semibold [&_img]:my-4 [&_img]:h-auto [&_img]:max-w-full [&_img]:rounded-lg [&_li]:leading-[1.7] [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:leading-[1.75] [&_ul]:list-disc [&_ul]:pl-5"
+                        className="prose prose-sm max-w-none overflow-hidden font-sans text-[12px] font-thin tracking-[0.02em] text-foreground/90 [overflow-wrap:anywhere] [&_a]:underline [&_a]:underline-offset-2 [&_blockquote]:border-l [&_blockquote]:border-foreground/30 [&_blockquote]:pl-4 [&_h1]:text-base [&_h1]:font-light [&_h2]:text-sm [&_h2]:font-light [&_h3]:text-xs [&_h3]:font-light [&_img]:my-4 [&_img]:h-auto [&_img]:max-w-full [&_img]:rounded-lg [&_li]:leading-[1.7] [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:leading-[1.75] [&_ul]:list-disc [&_ul]:pl-5"
                         dangerouslySetInnerHTML={{ __html: description }}
                       />
                     )}
@@ -611,13 +611,13 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                     <div className="flex flex-wrap gap-4 pt-2">
                       <Link
                         href={`/${locale}/journal`}
-                        className="text-[9px] font-bold uppercase tracking-[0.3em] text-foreground underline decoration-foreground/15 underline-offset-8 transition hover:opacity-70"
+                        className="text-[9px] font-light uppercase tracking-[0.3em] text-foreground underline decoration-foreground/15 underline-offset-8 transition hover:opacity-70"
                       >
                         {journalCta}
                       </Link>
                       <Link
                         href={`/${locale}/shop`}
-                        className="text-[9px] font-bold uppercase tracking-[0.3em] text-foreground underline decoration-foreground/15 underline-offset-8 transition hover:opacity-70"
+                        className="text-[9px] font-light uppercase tracking-[0.3em] text-foreground underline decoration-foreground/15 underline-offset-8 transition hover:opacity-70"
                       >
                         {shopCta}
                       </Link>
@@ -637,7 +637,7 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                         >
                           <Minus className="w-3.5 h-3.5" />
                         </button>
-                        <span className="font-mono text-xs px-2 min-w-[28px] text-center font-medium">
+                        <span className="font-mono text-xs px-2 min-w-[28px] text-center font-light">
                           {quantity}
                         </span>
                         <button
@@ -655,21 +655,21 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                         type="button"
                         onClick={() => handleAddToCart(quantity)}
                         disabled={addingToCart}
-                        className="flex-1 py-3 px-6 bg-[#4A4238] text-white hover:bg-[#8C7E6A] transition-colors uppercase tracking-[0.2em] text-xs font-medium flex items-center justify-center gap-2 shadow-sm disabled:opacity-60"
+                        className="flex-1 py-3 px-6 bg-[#4A4238] text-white hover:bg-[#8C7E6A] transition-colors uppercase tracking-[0.2em] text-xs font-light flex items-center justify-center gap-2 shadow-sm disabled:opacity-60"
                       >
                         <ShoppingBag className="w-4 h-4" />
                         <span>{addingToCart ? 'Đang thêm...' : 'Thêm vào giỏ hàng'}</span>
                       </button>
                     </div>
 
-                    <p className="text-[10px] text-foreground/50 tracking-wider">
+                    <p className="text-[10px] text-foreground/50 tracking-wider font-thin">
                       * Yêu cầu đăng nhập tài khoản để lưu giỏ hàng và đồng bộ thanh toán.
                     </p>
                   </div>
 
                   {/* Inquiry Buttons */}
                   <div className="space-y-4 pt-4">
-                    <h4 className="text-[9px] font-bold uppercase tracking-[0.3em] text-foreground/40">
+                    <h4 className="text-[9px] font-light uppercase tracking-[0.3em] text-foreground/40">
                       {t('orderInquiry')}
                     </h4>
                     <div className="flex max-w-sm flex-col gap-2.5">
@@ -681,7 +681,7 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                           className="group flex w-full items-center justify-between gap-4 border border-foreground/15 bg-white px-5 py-3.5 transition-all duration-200 hover:border-foreground hover:bg-foreground hover:text-white"
                           aria-label="Instagram Inquiry"
                         >
-                          <span className="min-w-0 text-[10px] font-bold uppercase tracking-[0.2em] sm:tracking-[0.25em]">
+                          <span className="min-w-0 text-[10px] font-light uppercase tracking-[0.2em] sm:tracking-[0.25em]">
                             Instagram
                           </span>
                           <Instagram className="h-4 w-4 shrink-0 transition-transform duration-200 group-hover:scale-110" />
@@ -695,7 +695,7 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                           className="group flex w-full items-center justify-between gap-4 border border-foreground/15 bg-white px-5 py-3.5 transition-all duration-200 hover:border-foreground hover:bg-foreground hover:text-white"
                           aria-label="Facebook Inquiry"
                         >
-                          <span className="min-w-0 text-[10px] font-bold uppercase tracking-[0.2em] sm:tracking-[0.25em]">
+                          <span className="min-w-0 text-[10px] font-light uppercase tracking-[0.2em] sm:tracking-[0.25em]">
                             Facebook
                           </span>
                           <Facebook className="h-4 w-4 shrink-0 transition-transform duration-200 group-hover:scale-110" />
@@ -714,16 +714,16 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
       <section className="w-full bg-white px-4 py-24 sm:px-6 lg:px-12">
         <div className="mb-16 flex flex-wrap items-end justify-between gap-4">
           <div className="min-w-0 space-y-3">
-            <h2 className="text-mobile-safe text-[8px] font-bold uppercase tracking-[0.28em] text-foreground/40 sm:tracking-[0.4em]">
+            <h2 className="text-mobile-safe text-[8px] font-light uppercase tracking-[0.28em] text-foreground/40 sm:tracking-[0.4em]">
               {locale === 'vi' ? 'CÓ THỂ BẠN THÍCH' : 'YOU MAY ALSO LIKE'}
             </h2>
-            <p className="text-mobile-safe font-sans text-lg font-bold uppercase tracking-[0.08em] sm:tracking-[0.1em]">
+            <p className="text-mobile-safe font-sans text-lg font-light uppercase tracking-[0.08em] sm:tracking-[0.1em]">
               {locale === 'vi' ? 'Sản phẩm tương tự' : 'Related pieces'}
             </p>
           </div>
           <Link
             href={`/${locale}/shop`}
-            className="group flex items-center gap-2 text-[8px] font-bold uppercase tracking-[0.2em] transition-colors hover:opacity-60"
+            className="group flex items-center gap-2 text-[8px] font-light uppercase tracking-[0.2em] transition-colors hover:opacity-60"
           >
             <span>{tHome('viewAll')}</span>
             <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>

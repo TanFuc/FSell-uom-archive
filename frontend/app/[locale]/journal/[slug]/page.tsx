@@ -278,25 +278,25 @@ export default async function StoryDetailPage({ params }: StoryDetailProps) {
       <article className="mx-auto w-full max-w-5xl px-4 py-12 sm:px-6 lg:px-10">
         <Link
           href={`/${params.locale}/journal#stories`}
-          className="mb-6 inline-flex text-[11px] uppercase tracking-[0.14em] text-foreground/55 transition hover:text-foreground sm:tracking-[0.2em]"
+          className="mb-6 inline-flex text-[11px] font-thin uppercase tracking-[0.14em] text-foreground/55 transition hover:text-foreground sm:tracking-[0.2em]"
         >
           {t('backToJournal')}
         </Link>
 
         <div className="rounded-2xl border border-black/10 bg-white/80 p-5 shadow-sm backdrop-blur-sm sm:p-6 md:p-10">
           <div className="space-y-5">
-            <p className="text-mobile-safe text-[10px] uppercase tracking-[0.22em] text-foreground/45 sm:tracking-[0.35em]">
+            <p className="text-mobile-safe text-[10px] font-thin uppercase tracking-[0.22em] text-foreground/45 sm:tracking-[0.35em]">
               JOURNAL STORY
             </p>
-            <h1 className="text-mobile-safe font-playfair text-3xl leading-tight text-foreground md:text-5xl">
+            <h1 className="text-mobile-safe font-playfair text-3xl font-light leading-tight text-foreground md:text-5xl">
               {title}
             </h1>
             {story.publishedAt && (
-              <p className="inline-flex max-w-full rounded-full border border-foreground/10 bg-foreground/[0.03] px-3 py-1 text-[10px] uppercase tracking-[0.14em] text-foreground/55 sm:tracking-[0.2em]">
+              <p className="inline-flex max-w-full rounded-full border border-foreground/10 bg-foreground/[0.03] px-3 py-1 text-[10px] font-thin uppercase tracking-[0.14em] text-foreground/55 sm:tracking-[0.2em]">
                 {story.publishedAt}
               </p>
             )}
-            <p className="max-w-3xl text-sm leading-relaxed text-foreground/75 md:text-base">
+            <p className="max-w-3xl text-sm font-thin leading-relaxed text-foreground/75 md:text-base">
               {summary}
             </p>
           </div>
@@ -316,13 +316,13 @@ export default async function StoryDetailPage({ params }: StoryDetailProps) {
         <JournalRichContent
           content={content}
           fallbackAlt={`${title} - ƯƠM. Archive Journal`}
-          className="prose prose-neutral prose-headings:font-playfair prose-headings:text-foreground prose-p:text-foreground/85 prose-li:text-foreground/85 mt-10 max-w-none overflow-hidden rounded-2xl border border-black/10 bg-white/85 p-5 leading-relaxed shadow-sm backdrop-blur-sm [overflow-wrap:anywhere] sm:rounded-3xl sm:p-6 md:p-10"
+          className="prose prose-neutral prose-headings:font-playfair prose-headings:font-light prose-p:text-foreground/85 prose-p:font-thin prose-li:text-foreground/85 prose-li:font-thin mt-10 max-w-none overflow-hidden rounded-2xl border border-black/10 bg-white/85 p-5 leading-relaxed shadow-sm backdrop-blur-sm [overflow-wrap:anywhere] sm:rounded-3xl sm:p-6 md:p-10 font-thin"
         />
 
         <div className="mt-10 flex justify-center">
           <Link
             href={`/${params.locale}/shop`}
-            className="text-[10px] font-bold uppercase tracking-[0.3em] text-foreground underline decoration-foreground/15 underline-offset-8 transition hover:opacity-70"
+            className="text-[10px] font-light uppercase tracking-[0.3em] text-foreground underline decoration-foreground/15 underline-offset-8 transition hover:opacity-70"
           >
             {shopCta}
           </Link>
@@ -332,16 +332,16 @@ export default async function StoryDetailPage({ params }: StoryDetailProps) {
           <section className="mt-16 border-t border-black/10 pt-12">
             <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
               <div>
-                <p className="text-[10px] uppercase tracking-[0.18em] text-foreground/45 sm:tracking-[0.28em]">
+                <p className="text-[10px] font-thin uppercase tracking-[0.18em] text-foreground/45 sm:tracking-[0.28em]">
                   JOURNAL
                 </p>
-                <h2 className="text-mobile-safe mt-2 font-playfair text-2xl text-foreground">
+                <h2 className="text-mobile-safe mt-2 font-playfair text-2xl font-light text-foreground">
                   {t('relatedStories')}
                 </h2>
               </div>
               <Link
                 href={`/${params.locale}/journal#stories`}
-                className="text-[10px] uppercase tracking-[0.14em] text-foreground/60 transition hover:text-foreground sm:tracking-[0.2em]"
+                className="text-[10px] font-thin uppercase tracking-[0.14em] text-foreground/60 transition hover:text-foreground sm:tracking-[0.2em]"
               >
                 {t('viewAllStories')}
               </Link>
@@ -371,10 +371,10 @@ export default async function StoryDetailPage({ params }: StoryDetailProps) {
                       />
                     </div>
                     <div className="space-y-2 p-4">
-                      <h3 className="text-mobile-safe font-playfair text-xl leading-tight text-foreground">
+                      <h3 className="text-mobile-safe font-playfair text-xl font-light leading-tight text-foreground">
                         {itemTitle}
                       </h3>
-                      <p className="line-clamp-3 text-sm text-foreground/70">{itemSummary}</p>
+                      <p className="line-clamp-3 text-sm font-thin text-foreground/70">{itemSummary}</p>
                     </div>
                   </Link>
                 )
