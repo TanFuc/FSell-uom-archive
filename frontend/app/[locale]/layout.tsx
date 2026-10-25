@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
-import { Lora, Montserrat, Playfair_Display } from 'next/font/google'
+import localFont from 'next/font/local'
+import { Montserrat } from 'next/font/google'
 import { notFound } from 'next/navigation'
 import { NextIntlClientProvider } from 'next-intl'
 import { getMessages, unstable_setRequestLocale } from 'next-intl/server'
@@ -20,15 +21,85 @@ import {
   getSeoSiteTitle,
   getSeoSocialImageUrl,
 } from '@/lib/seo'
-import { fetchBranding } from '@/lib/server-utils'
+import { fetchBranding, fetchSiteContentServer } from '@/lib/server-utils'
 import '@/styles/globals.css'
 import '@/styles/loading-animations.css'
 
-const lora = Lora({
-  subsets: ['latin', 'vietnamese'],
-  variable: '--font-lora',
+const abcArizona = localFont({
+  src: [
+    {
+      path: '../../public/fonts/VL ABCArizonaFlare-Thin.otf',
+      weight: '100',
+      style: 'normal',
+    },
+    {
+      path: '../../public/fonts/VL ABCArizonaFlare-Thin.otf',
+      weight: '200',
+      style: 'normal',
+    },
+    {
+      path: '../../public/fonts/VL ABCArizonaFlare-ThinItalic.otf',
+      weight: '100',
+      style: 'italic',
+    },
+    {
+      path: '../../public/fonts/VL ABCArizonaFlare-ThinItalic.otf',
+      weight: '200',
+      style: 'italic',
+    },
+    {
+      path: '../../public/fonts/VL ABCArizonaFlare-Light.otf',
+      weight: '300',
+      style: 'normal',
+    },
+    {
+      path: '../../public/fonts/VL ABCArizonaFlare-Light.otf',
+      weight: '400',
+      style: 'normal',
+    },
+    {
+      path: '../../public/fonts/VL ABCArizonaFlare-Light.otf',
+      weight: '500',
+      style: 'normal',
+    },
+    {
+      path: '../../public/fonts/VL ABCArizonaFlare-Light.otf',
+      weight: '600',
+      style: 'normal',
+    },
+    {
+      path: '../../public/fonts/VL ABCArizonaFlare-Light.otf',
+      weight: '700',
+      style: 'normal',
+    },
+    {
+      path: '../../public/fonts/VL ABCArizonaFlare-LightItalic.otf',
+      weight: '300',
+      style: 'italic',
+    },
+    {
+      path: '../../public/fonts/VL ABCArizonaFlare-LightItalic.otf',
+      weight: '400',
+      style: 'italic',
+    },
+    {
+      path: '../../public/fonts/VL ABCArizonaFlare-LightItalic.otf',
+      weight: '500',
+      style: 'italic',
+    },
+    {
+      path: '../../public/fonts/VL ABCArizonaFlare-LightItalic.otf',
+      weight: '600',
+      style: 'italic',
+    },
+    {
+      path: '../../public/fonts/VL ABCArizonaFlare-LightItalic.otf',
+      weight: '700',
+      style: 'italic',
+    },
+  ],
+  variable: '--font-arizona',
   display: 'swap',
-  weight: ['400', '500', '600', '700'],
 })
 
 const montserrat = Montserrat({
@@ -36,13 +107,6 @@ const montserrat = Montserrat({
   variable: '--font-montserrat',
   display: 'swap',
   weight: ['300', '400', '500', '600', '700'],
-})
-
-const playfair = Playfair_Display({
-  subsets: ['latin', 'vietnamese'],
-  variable: '--font-playfair',
-  display: 'block',
-  weight: ['400', '500', '600', '700'],
 })
 
 export const viewport: Viewport = {
@@ -156,6 +220,7 @@ export default async function RootLayout({ children, params: { locale } }: RootL
   }
 
   unstable_setRequestLocale(locale)
+  const siteContent = await fetchSiteContentServer()
   let messages: any = {}
   try {
     messages = await getMessages({ locale })
@@ -175,13 +240,13 @@ export default async function RootLayout({ children, params: { locale } }: RootL
       </head>
       <body
         suppressHydrationWarning
-        className={`${lora.variable} ${montserrat.variable} ${playfair.variable} flex min-h-screen flex-col bg-background font-serif antialiased`}
+        className={`${abcArizona.variable} ${montserrat.variable} flex min-h-screen flex-col bg-background font-serif font-thin antialiased`}
       >
         <DisableRightClick />
         <NextIntlClientProvider messages={messages}>
           <QueryProvider>
             <ConfirmationProvider>
-              <ConditionalLayout>{children}</ConditionalLayout>
+              <ConditionalLayout initialSiteContent={siteContent}>{children}</ConditionalLayout>
               <Toaster />
               <SonnerToaster duration={2200} />
               <CustomerAuthModal />

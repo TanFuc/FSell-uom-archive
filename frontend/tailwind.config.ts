@@ -56,9 +56,11 @@ const config: Config = {
         sm: 'calc(var(--radius) - 4px)',
       },
       fontFamily: {
-        serif: ['var(--font-montserrat)', '"Montserrat"', 'Helvetica', 'sans-serif'],
-        sans: ['var(--font-montserrat)', '"Montserrat"', 'Helvetica', 'sans-serif'],
-        playfair: ['var(--font-playfair)', '"Playfair Display"', 'serif'],
+        serif: ['var(--font-arizona)', 'serif'],
+        sans: ['var(--font-arizona)', 'serif'],
+        arizona: ['var(--font-arizona)', 'serif'],
+        playfair: ['var(--font-arizona)', 'serif'],
+        admin: ['var(--font-montserrat)', 'sans-serif'],
       },
       fontSize: {
         base: ['0.875rem', { lineHeight: '1.5' }],
