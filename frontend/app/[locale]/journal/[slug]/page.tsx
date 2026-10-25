@@ -335,13 +335,13 @@ export default async function StoryDetailPage({ params }: StoryDetailProps) {
                 <p className="text-[10px] font-thin uppercase tracking-[0.18em] text-foreground/45 sm:tracking-[0.28em]">
                   JOURNAL
                 </p>
-                <h2 className="text-mobile-safe mt-2 font-playfair text-2xl font-light text-foreground">
+                <h2 className="text-mobile-safe mt-2 font-serif text-2xl font-normal text-[#4A4238]">
                   {t('relatedStories')}
                 </h2>
               </div>
               <Link
                 href={`/${params.locale}/journal#stories`}
-                className="text-[10px] font-thin uppercase tracking-[0.14em] text-foreground/60 transition hover:text-foreground sm:tracking-[0.2em]"
+                className="font-sans text-xs font-semibold uppercase tracking-[0.15em] text-[#8C7E6A] transition-colors hover:text-[#4A4238]"
               >
                 {t('viewAllStories')}
               </Link>
@@ -371,7 +371,7 @@ export default async function StoryDetailPage({ params }: StoryDetailProps) {
                       />
                     </div>
                     <div className="space-y-2 p-4">
-                      <h3 className="text-mobile-safe font-playfair text-xl font-light leading-tight text-foreground">
+                      <h3 className="text-mobile-safe font-serif text-lg sm:text-xl font-normal leading-tight text-[#4A4238] group-hover:text-[#8C7E6A] transition-colors">
                         {itemTitle}
                       </h3>
                       <p className="line-clamp-3 text-sm font-thin text-foreground/70">{itemSummary}</p>

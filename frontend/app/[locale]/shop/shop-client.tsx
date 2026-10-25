@@ -186,10 +186,10 @@ export default function ShopClient({ initialProducts, initialCategories }: ShopC
                 setPage(1)
               }}
               className={cn(
-                'max-w-full rounded-full border px-4 py-2 text-[10px] font-light uppercase tracking-[0.18em] transition-all duration-300 sm:px-6 sm:tracking-[0.3em]',
+                'max-w-full rounded-full border px-4 py-2 font-sans text-xs uppercase tracking-[0.15em] transition-all duration-300 sm:px-6',
                 !categoryId
-                  ? 'border-foreground bg-foreground text-white font-medium'
-                  : 'border-foreground/10 text-foreground/40 hover:border-foreground/30',
+                  ? 'border-[#4A4238] bg-[#4A4238] text-white font-semibold shadow-xs'
+                  : 'border-stone-200 text-stone-500 font-medium hover:border-[#4A4238] hover:text-[#4A4238]',
               )}
             >
               {t('allCategories')}
@@ -203,10 +203,10 @@ export default function ShopClient({ initialProducts, initialCategories }: ShopC
                   setPage(1)
                 }}
                 className={cn(
-                  'max-w-full rounded-full border px-4 py-2 text-[10px] font-light uppercase tracking-[0.18em] transition-all duration-300 sm:px-6 sm:tracking-[0.3em]',
+                  'max-w-full rounded-full border px-4 py-2 font-sans text-xs uppercase tracking-[0.15em] transition-all duration-300 sm:px-6',
                   categoryId === category.id
-                    ? 'border-foreground bg-foreground text-white font-medium'
-                    : 'border-foreground/10 text-foreground/40 hover:border-foreground/30',
+                    ? 'border-[#4A4238] bg-[#4A4238] text-white font-semibold shadow-xs'
+                    : 'border-stone-200 text-stone-500 font-medium hover:border-[#4A4238] hover:text-[#4A4238]',
                 )}
               >
                 {locale === 'vi' ? category.nameVi : category.nameEn}
@@ -253,12 +253,12 @@ export default function ShopClient({ initialProducts, initialCategories }: ShopC
                       window.scrollTo({ top: 0, behavior: 'smooth' })
                     }}
                     disabled={page === 1}
-                    className="group flex items-center gap-2 text-[10px] font-light uppercase tracking-[0.22em] transition-all disabled:cursor-not-allowed disabled:opacity-20 sm:gap-4 sm:tracking-[0.4em]"
+                    className="group flex items-center gap-2 font-sans text-xs font-semibold uppercase tracking-[0.15em] text-[#4A4238] transition-all disabled:cursor-not-allowed disabled:opacity-30 sm:gap-4"
                   >
                     <span className="transition-transform group-hover:translate-x-[-4px]">←</span>
                     {tCommon('previous')}
                   </button>
-                  <span className="text-[10px] font-light tracking-[0.24em] text-foreground/30 sm:tracking-[0.4em]">
+                  <span className="font-sans text-xs font-medium tracking-[0.2em] text-stone-500">
                     {page} / {data.meta.totalPages}
                   </span>
                   <button
@@ -267,7 +267,7 @@ export default function ShopClient({ initialProducts, initialCategories }: ShopC
                       window.scrollTo({ top: 0, behavior: 'smooth' })
                     }}
                     disabled={page === data.meta.totalPages}
-                    className="group flex items-center gap-2 text-[10px] font-light uppercase tracking-[0.22em] transition-all disabled:cursor-not-allowed disabled:opacity-20 sm:gap-4 sm:tracking-[0.4em]"
+                    className="group flex items-center gap-2 font-sans text-xs font-semibold uppercase tracking-[0.15em] text-[#4A4238] transition-all disabled:cursor-not-allowed disabled:opacity-30 sm:gap-4"
                   >
                     {tCommon('next')}
                     <span className="transition-transform group-hover:translate-x-[4px]">→</span>

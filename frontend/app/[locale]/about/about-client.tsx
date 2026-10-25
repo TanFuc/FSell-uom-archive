@@ -114,7 +114,7 @@ export default function AboutClient() {
       <section className="container-custom spacing-md">
         <div className="stagger-children grid gap-12 md:grid-cols-3 md:gap-16">
           <div className="space-y-4 text-center">
-            <h3 className="text-mobile-safe uppercase tracking-wider font-light">
+            <h3 className="text-mobile-safe font-sans text-sm font-semibold uppercase tracking-wider text-[#4A4238]">
               {getVal('about.values.craft.title', 'THỦ CÔNG')}
             </h3>
             <p className="text-mobile-safe whitespace-pre-line leading-relaxed text-muted-foreground font-thin">
@@ -122,7 +122,7 @@ export default function AboutClient() {
             </p>
           </div>
           <div className="space-y-4 text-center">
-            <h3 className="text-mobile-safe uppercase tracking-wider font-light">
+            <h3 className="text-mobile-safe font-sans text-sm font-semibold uppercase tracking-wider text-[#4A4238]">
               {getVal('about.values.sustainability.title', 'BỀN VỮNG')}
             </h3>
             <p className="text-mobile-safe whitespace-pre-line leading-relaxed text-muted-foreground font-thin">
@@ -133,7 +133,7 @@ export default function AboutClient() {
             </p>
           </div>
           <div className="space-y-4 text-center">
-            <h3 className="text-mobile-safe uppercase tracking-wider font-light">
+            <h3 className="text-mobile-safe font-sans text-sm font-semibold uppercase tracking-wider text-[#4A4238]">
               {getVal('about.values.essence.title', 'TINH TẾ')}
             </h3>
             <p className="text-mobile-safe whitespace-pre-line leading-relaxed text-muted-foreground font-thin">
@@ -146,12 +146,12 @@ export default function AboutClient() {
       {/* FAQ Section */}
       <section className="container-custom spacing-md">
         <div className="mx-auto max-w-4xl space-y-8">
-          <h2 className="text-mobile-safe text-center uppercase tracking-[0.16em] font-light sm:tracking-[0.25em]">
+          <h2 className="text-mobile-safe text-center font-sans text-sm sm:text-base font-semibold uppercase tracking-[0.16em] text-[#4A4238] sm:tracking-[0.25em]">
             {faqTitle}
           </h2>
           <div className="grid gap-6 md:grid-cols-2">
             <div className="rounded-2xl border border-black/10 bg-white/90 p-6">
-              <h3 className="text-mobile-safe text-sm font-light uppercase tracking-[0.1em] sm:tracking-[0.15em]">
+              <h3 className="text-mobile-safe font-sans text-xs sm:text-sm font-semibold tracking-normal text-[#4A4238]">
                 {locale === 'vi' ? 'ƯƠM. là gì?' : 'What is ƯƠM.?'}
               </h3>
               <p className="mt-3 text-sm font-thin leading-relaxed text-foreground/70">
@@ -161,7 +161,7 @@ export default function AboutClient() {
               </p>
             </div>
             <div className="rounded-2xl border border-black/10 bg-white/90 p-6">
-              <h3 className="text-mobile-safe text-sm font-light uppercase tracking-[0.1em] sm:tracking-[0.15em]">
+              <h3 className="text-mobile-safe font-sans text-xs sm:text-sm font-semibold tracking-normal text-[#4A4238]">
                 {locale === 'vi'
                   ? 'Tôi có thể xem bộ sưu tập ở đâu?'
                   : 'Where can I view the collection?'}
@@ -173,7 +173,7 @@ export default function AboutClient() {
               </p>
             </div>
             <div className="rounded-2xl border border-black/10 bg-white/90 p-6">
-              <h3 className="text-mobile-safe text-sm font-light uppercase tracking-[0.1em] sm:tracking-[0.15em]">
+              <h3 className="text-mobile-safe font-sans text-xs sm:text-sm font-semibold tracking-normal text-[#4A4238]">
                 {locale === 'vi'
                   ? 'Làm sao để đặt hàng hoặc tư vấn?'
                   : 'How can I inquire or place an order?'}
@@ -185,7 +185,7 @@ export default function AboutClient() {
               </p>
             </div>
             <div className="rounded-2xl border border-black/10 bg-white/90 p-6">
-              <h3 className="text-mobile-safe text-sm font-light uppercase tracking-[0.1em] sm:tracking-[0.15em]">
+              <h3 className="text-mobile-safe font-sans text-xs sm:text-sm font-semibold tracking-normal text-[#4A4238]">
                 {locale === 'vi' ? 'Tôi nên bắt đầu từ đâu?' : 'Where should I start?'}
               </h3>
               <p className="mt-3 text-sm font-thin leading-relaxed text-foreground/70">

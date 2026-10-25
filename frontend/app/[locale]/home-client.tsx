@@ -301,13 +301,13 @@ export default function HomeClient({
             <h2 className="text-mobile-safe text-[8px] font-light uppercase tracking-[0.28em] text-foreground/40 sm:tracking-[0.4em]">
               {sectionText('products', 'title')}
             </h2>
-            <p className="text-mobile-safe font-sans text-lg font-light uppercase tracking-[0.08em] sm:tracking-[0.1em]">
+            <p className="text-mobile-safe font-sans text-lg sm:text-xl font-semibold uppercase tracking-[0.08em] sm:tracking-[0.1em] text-[#4A4238]">
               {sectionText('products', 'subtitle')}
             </p>
           </div>
           <Link
             href={`/${locale}/shop`}
-            className="group flex items-center gap-2 text-[8px] font-light uppercase tracking-[0.2em] transition-colors hover:opacity-60"
+            className="group flex items-center gap-2 font-sans text-xs font-semibold uppercase tracking-[0.15em] text-[#8C7E6A] transition-colors hover:text-[#4A4238]"
           >
             <span>{t('showMore')}</span>
             <span className="sr-only">{tNav('shop')}</span>
@@ -368,13 +368,13 @@ export default function HomeClient({
             <h2 className="text-mobile-safe text-[9px] font-light uppercase tracking-[0.28em] text-foreground/40 sm:tracking-[0.35em] md:text-[10px]">
               {sectionText('journal', 'title')}
             </h2>
-            <p className="text-mobile-safe font-sans text-base font-light uppercase tracking-[0.08em] md:text-lg md:tracking-[0.1em]">
+            <p className="text-mobile-safe font-sans text-lg sm:text-xl font-semibold uppercase tracking-[0.08em] md:tracking-[0.1em] text-[#4A4238]">
               {sectionText('journal', 'subtitle')}
             </p>
           </div>
           <Link
             href={`/${locale}/journal`}
-            className="group flex items-center gap-2 text-[9px] font-light uppercase tracking-[0.18em] transition-colors hover:opacity-60 md:text-[10px]"
+            className="group flex items-center gap-2 font-sans text-xs font-semibold uppercase tracking-[0.15em] text-[#8C7E6A] transition-colors hover:text-[#4A4238]"
           >
             <span>{t('showMore')}</span>
             <span className="sr-only">{tNav('journal')}</span>
@@ -455,13 +455,13 @@ export default function HomeClient({
                           )}
                         </div>
                         <div className="space-y-2 p-4 md:p-5">
-                          <h3 className="line-clamp-2 min-h-[2.4rem] font-sans text-sm font-light uppercase leading-tight tracking-[0.08em] text-foreground transition-colors group-hover:text-foreground/85 md:min-h-[2.8rem] md:text-base">
+                          <h3 className="line-clamp-2 min-h-[2.4rem] font-serif text-base sm:text-lg font-normal leading-tight text-[#4A4238] transition-colors group-hover:text-[#8C7E6A] md:min-h-[2.8rem]">
                             {locale === 'vi' ? story.titleVi : story.titleEn}
                           </h3>
                           <p className="line-clamp-3 text-[10px] leading-relaxed tracking-[0.04em] text-foreground/65 md:text-xs font-thin">
                             {locale === 'vi' ? story.summaryVi : story.summaryEn}
                           </p>
-                          <span className="text-[9px] font-light uppercase tracking-[0.28em] text-foreground/55">
+                          <span className="font-sans text-xs font-semibold uppercase tracking-[0.15em] text-[#8C7E6A]">
                             {storyCta}
                           </span>
                         </div>
@@ -482,7 +482,7 @@ export default function HomeClient({
               <h2 className="text-mobile-safe text-[9px] font-light uppercase tracking-[0.28em] text-foreground/40 sm:tracking-[0.35em] md:text-[10px]">
                 {sectionText('explore', 'title')}
               </h2>
-              <p className="text-mobile-safe font-sans text-base font-light uppercase tracking-[0.08em] md:text-lg md:tracking-[0.1em]">
+              <p className="text-mobile-safe font-sans text-lg sm:text-xl font-semibold uppercase tracking-[0.08em] md:tracking-[0.1em] text-[#4A4238]">
                 {sectionText('explore', 'subtitle')}
               </p>
             </div>
@@ -496,7 +496,7 @@ export default function HomeClient({
                   href={item.href}
                   className="group block rounded-md border border-foreground/10 bg-white p-5 transition duration-300 hover:-translate-y-1 hover:border-foreground/25 hover:shadow-sm"
                 >
-                  <span className="text-mobile-safe block font-sans text-xs font-light uppercase tracking-[0.12em] text-foreground">
+                  <span className="text-mobile-safe block font-sans text-xs sm:text-sm font-semibold uppercase tracking-[0.12em] text-[#4A4238]">
                     {item.title}
                   </span>
                   <span className="mt-3 block text-xs leading-relaxed text-foreground/60 font-thin">

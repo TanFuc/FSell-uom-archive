@@ -556,7 +556,7 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
 
                   {/* Details Section */}
                   <div className="space-y-4">
-                    <h4 className="text-[11px] font-light uppercase tracking-[0.14em] text-foreground">
+                    <h4 className="font-sans text-xs font-semibold uppercase tracking-wider text-[#4A4238]">
                       {t('details')}
                     </h4>
 
@@ -571,7 +571,7 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                       <div className="flex flex-col gap-1 text-[12px] font-thin leading-[1.7] tracking-[0.02em] text-foreground/90">
                         {product.material && (
                           <p>
-                            <span className="font-light uppercase tracking-[0.08em]">
+                            <span className="font-sans font-medium uppercase tracking-[0.05em] text-[#4A4238]">
                               {locale === 'vi' ? 'Chất liệu' : 'Material'}:{' '}
                             </span>
                             <span className="font-serif italic font-normal text-[#8C7E6A]">
@@ -581,10 +581,10 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                         )}
                         {product.dimensions && (
                           <p>
-                            <span className="font-light uppercase tracking-[0.08em]">
+                            <span className="font-sans font-medium uppercase tracking-[0.05em] text-[#4A4238]">
                               {locale === 'vi' ? 'Kích thước' : 'Dimensions'}:{' '}
                             </span>
-                            {product.dimensions}
+                            <span className="text-[#4A4238] font-normal">{product.dimensions}</span>
                           </p>
                         )}
                       </div>
@@ -595,7 +595,7 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                       <div className="flex flex-col gap-1.5 text-[12px] font-thin leading-[1.7] tracking-[0.02em] text-foreground/90">
                         {variants.groups.map((group) => (
                           <p key={group.label}>
-                            <span className="font-light uppercase">{group.label}: </span>
+                            <span className="font-sans font-medium uppercase text-[#4A4238]">{group.label}: </span>
                             <span>{group.values.join(', ')}</span>
                           </p>
                         ))}
@@ -639,7 +639,7 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                         >
                           <Minus className="w-3.5 h-3.5" />
                         </button>
-                        <span className="font-mono text-xs px-2 min-w-[28px] text-center font-light">
+                        <span className="font-sans text-xs px-2 min-w-[28px] text-center font-semibold text-[#4A4238]">
                           {quantity}
                         </span>
                         <button
@@ -657,7 +657,7 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                         type="button"
                         onClick={() => handleAddToCart(quantity)}
                         disabled={addingToCart}
-                        className="flex-1 py-3 px-6 bg-[#4A4238] text-white hover:bg-[#8C7E6A] transition-colors uppercase tracking-[0.2em] text-xs font-medium flex items-center justify-center gap-2 shadow-sm disabled:opacity-60"
+                        className="flex-1 py-3 px-6 bg-[#4A4238] text-white hover:bg-[#8C7E6A] transition-colors uppercase tracking-[0.2em] text-xs font-semibold flex items-center justify-center gap-2 shadow-sm disabled:opacity-60"
                       >
                         <ShoppingBag className="w-4 h-4" />
                         <span>{addingToCart ? 'Đang thêm...' : 'Thêm vào giỏ hàng'}</span>
@@ -671,7 +671,7 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
 
                   {/* Inquiry Buttons */}
                   <div className="space-y-4 pt-4">
-                    <h4 className="text-[9px] font-light uppercase tracking-[0.3em] text-foreground/40">
+                    <h4 className="font-sans text-xs font-semibold uppercase tracking-[0.15em] text-[#4A4238]">
                       {t('orderInquiry')}
                     </h4>
                     <div className="flex max-w-sm flex-col gap-2.5">
@@ -683,7 +683,7 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                           className="group flex w-full items-center justify-between gap-4 border border-foreground/15 bg-white px-5 py-3.5 transition-all duration-200 hover:border-foreground hover:bg-foreground hover:text-white"
                           aria-label="Instagram Inquiry"
                         >
-                          <span className="min-w-0 text-[10px] font-light uppercase tracking-[0.2em] sm:tracking-[0.25em]">
+                          <span className="min-w-0 font-sans text-xs font-semibold uppercase tracking-[0.15em]">
                             Instagram
                           </span>
                           <Instagram className="h-4 w-4 shrink-0 transition-transform duration-200 group-hover:scale-110" />
@@ -697,7 +697,7 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                           className="group flex w-full items-center justify-between gap-4 border border-foreground/15 bg-white px-5 py-3.5 transition-all duration-200 hover:border-foreground hover:bg-foreground hover:text-white"
                           aria-label="Facebook Inquiry"
                         >
-                          <span className="min-w-0 text-[10px] font-light uppercase tracking-[0.2em] sm:tracking-[0.25em]">
+                          <span className="min-w-0 font-sans text-xs font-semibold uppercase tracking-[0.15em]">
                             Facebook
                           </span>
                           <Facebook className="h-4 w-4 shrink-0 transition-transform duration-200 group-hover:scale-110" />
@@ -719,13 +719,13 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
             <h2 className="text-mobile-safe text-[8px] font-light uppercase tracking-[0.28em] text-foreground/40 sm:tracking-[0.4em]">
               {locale === 'vi' ? 'CÓ THỂ BẠN THÍCH' : 'YOU MAY ALSO LIKE'}
             </h2>
-            <p className="text-mobile-safe font-sans text-lg font-light uppercase tracking-[0.08em] sm:tracking-[0.1em]">
+            <p className="text-mobile-safe font-sans text-lg sm:text-xl font-semibold uppercase tracking-[0.08em] sm:tracking-[0.1em] text-[#4A4238]">
               {locale === 'vi' ? 'Sản phẩm tương tự' : 'Related pieces'}
             </p>
           </div>
           <Link
             href={`/${locale}/shop`}
-            className="group flex items-center gap-2 text-[8px] font-light uppercase tracking-[0.2em] transition-colors hover:opacity-60"
+            className="group flex items-center gap-2 font-sans text-xs font-medium uppercase tracking-[0.15em] transition-colors hover:text-[#8C7E6A]"
           >
             <span>{tHome('viewAll')}</span>
             <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
@@ -767,16 +767,16 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
 
       <section className="w-full bg-white px-4 pb-24 sm:px-6 lg:px-12">
         <div className="mx-auto max-w-4xl rounded-2xl border border-foreground/10 bg-foreground/[0.02] p-5 shadow-sm sm:p-8">
-          <h2 className="text-mobile-safe text-center text-[10px] font-bold uppercase tracking-[0.22em] text-foreground/70 sm:tracking-[0.35em]">
+          <h2 className="text-mobile-safe text-center font-sans text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] text-[#4A4238]">
             {faqTitle}
           </h2>
           <div className="mt-8 grid gap-6 md:grid-cols-2">
             {faqItems.map((item) => (
               <div key={item.question} className="space-y-3">
-                <h3 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-foreground">
+                <h3 className="font-sans text-xs sm:text-sm font-semibold tracking-normal text-[#4A4238]">
                   {item.question}
                 </h3>
-                <p className="text-[11px] leading-relaxed text-foreground/70">{item.answer}</p>
+                <p className="text-xs leading-relaxed text-stone-600 font-thin">{item.answer}</p>
               </div>
             ))}
           </div>

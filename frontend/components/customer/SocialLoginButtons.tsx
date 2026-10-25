@@ -35,7 +35,7 @@ export const SocialLoginButtons = React.memo(function SocialLoginButtons({
         type="button"
         disabled={loadingProvider !== null}
         onClick={() => handleSocialLogin('facebook')}
-        className="group relative flex w-full items-center justify-center gap-3 rounded-none border border-stone-200 bg-white px-4 py-2.5 text-xs font-light text-[#4A4238] transition-all duration-200 hover:border-[#1877F2]/60 hover:bg-stone-50/60 hover:shadow-xs active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+        className="group relative flex w-full items-center justify-center gap-3 rounded-none border border-stone-200 bg-white px-4 py-2.5 font-sans text-xs font-semibold text-[#4A4238] transition-all duration-200 hover:border-[#1877F2]/60 hover:bg-stone-50/60 hover:shadow-xs active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
         title="Tiếp tục với Facebook"
       >
         {loadingProvider === 'facebook' ? (
@@ -59,7 +59,7 @@ export const SocialLoginButtons = React.memo(function SocialLoginButtons({
         type="button"
         disabled={loadingProvider !== null}
         onClick={() => handleSocialLogin('instagram')}
-        className="group relative flex w-full items-center justify-center gap-3 rounded-none border border-stone-200 bg-white px-4 py-2.5 text-xs font-light text-[#4A4238] transition-all duration-200 hover:border-[#E1306C]/60 hover:bg-stone-50/60 hover:shadow-xs active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+        className="group relative flex w-full items-center justify-center gap-3 rounded-none border border-stone-200 bg-white px-4 py-2.5 font-sans text-xs font-semibold text-[#4A4238] transition-all duration-200 hover:border-[#E1306C]/60 hover:bg-stone-50/60 hover:shadow-xs active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
         title="Tiếp tục với Instagram"
       >
         {loadingProvider === 'instagram' ? (

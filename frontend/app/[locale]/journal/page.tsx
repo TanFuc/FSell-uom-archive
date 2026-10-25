@@ -234,14 +234,14 @@ export default async function JournalPage({ params }: PageProps) {
                       </p>
                     ) : null}
                   </div>
-                  <h2 className="text-mobile-safe line-clamp-2 min-h-[3.25rem] font-playfair text-xl font-light leading-tight text-foreground">
+                  <h2 className="text-mobile-safe line-clamp-2 min-h-[3.25rem] font-serif text-xl font-normal leading-tight text-[#4A4238] group-hover:text-[#8C7E6A] transition-colors">
                     {locale === 'vi' ? story.titleVi : story.titleEn}
                   </h2>
                   <p className="line-clamp-3 min-h-[3.75rem] text-sm font-thin leading-relaxed text-foreground/70">
                     {locale === 'vi' ? story.summaryVi : story.summaryEn}
                   </p>
                   <div className="mt-auto pt-3">
-                    <span className="text-[9px] font-light uppercase tracking-[0.18em] text-foreground/55 sm:tracking-[0.28em]">
+                    <span className="font-sans text-[11px] font-semibold uppercase tracking-[0.15em] text-[#8C7E6A] group-hover:text-[#4A4238] transition-colors">
                       {storyCta}
                     </span>
                   </div>
@@ -257,7 +257,7 @@ export default async function JournalPage({ params }: PageProps) {
           <div className="grid gap-6 md:grid-cols-2">
             {faqItems.map((item) => (
               <div key={item.question}>
-                <h3 className="text-mobile-safe text-sm font-light uppercase tracking-[0.1em] text-foreground sm:tracking-[0.15em]">
+                <h3 className="text-mobile-safe font-sans text-xs sm:text-sm font-semibold tracking-normal text-[#4A4238]">
                   {item.question}
                 </h3>
                 <p className="mt-3 text-sm font-thin leading-relaxed text-foreground/70">{item.answer}</p>
