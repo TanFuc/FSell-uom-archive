@@ -97,8 +97,8 @@ export default function AboutClient() {
             <h2 className="text-mobile-safe uppercase tracking-wider font-light">
               {getVal('about.philosophyTitle', 'TRIẾT LÝ THIẾT KẾ')}
             </h2>
-            <p className="text-mobile-safe text-lg font-light leading-relaxed text-muted-foreground">
-              {getVal('about.philosophyDescription', 'Tối giản, chân thật, bền vững.')}
+            <p className="text-mobile-safe font-serif italic font-normal text-xl sm:text-2xl leading-relaxed text-[#4A4238]">
+              “{getVal('about.philosophyDescription', 'Tối giản, chân thật, bền vững.')}”
             </p>
             <p className="text-mobile-safe whitespace-pre-line leading-relaxed text-muted-foreground font-thin">
               {getVal(

@@ -154,7 +154,7 @@ export default function OrderTrackingDetailPage() {
             <h1 className="text-xs sm:text-sm font-serif uppercase tracking-widest font-light">
               Chi tiết đơn hàng
             </h1>
-            <p className="text-[11px] text-[#8C7E6A] font-mono tracking-tight font-thin">
+            <p className="text-[11px] text-[#8C7E6A] font-mono tracking-tight font-medium">
               #{order.orderNumber}
             </p>
           </div>
@@ -249,17 +249,17 @@ export default function OrderTrackingDetailPage() {
             </h2>
 
             {order.paymentStatus === 'paid' ? (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-light tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-200">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-medium tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-200">
                 <CheckCircle2 className="w-3 h-3 text-emerald-600" />
                 ĐÃ THANH TOÁN
               </span>
             ) : order.paymentStatus === 'pending_approval' || order.paymentProofUrl ? (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-light tracking-wider text-amber-800 bg-amber-50 border border-amber-200">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-medium tracking-wider text-amber-800 bg-amber-50 border border-amber-200">
                 <Clock className="w-3 h-3 text-amber-600" />
                 {order.paymentProofUrl ? 'ĐÃ GỬI BIÊN LAI • CHỜ DUYỆT' : 'ĐÃ XÁC NHẬN CHUYỂN KHOẢN • CHỜ DUYỆT'}
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-light tracking-wider text-red-700 bg-red-50 border border-red-200">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-medium tracking-wider text-red-700 bg-red-50 border border-red-200">
                 CHƯA CHUYỂN KHOẢN
               </span>
             )}
@@ -354,13 +354,13 @@ export default function OrderTrackingDetailPage() {
                     )}
                   </div>
                   <div className="min-w-0">
-                    <p className="font-light text-[#4A4238] truncate">{item.productTitle}</p>
+                    <p className="font-medium text-[#4A4238] truncate">{item.productTitle}</p>
                     <p className="text-stone-400 font-thin text-[11px] mt-0.5">Số lượng: {item.quantity}</p>
                   </div>
                 </div>
 
                 <div className="text-right shrink-0">
-                  <div className="font-mono text-[#4A4238] font-light text-xs sm:text-sm">
+                  <div className="font-mono text-[#4A4238] font-medium text-xs sm:text-sm">
                     {(item.priceVND * item.quantity).toLocaleString('vi-VN')} ₫
                   </div>
                 </div>
@@ -372,7 +372,7 @@ export default function OrderTrackingDetailPage() {
             <span className="text-xs uppercase tracking-wider text-stone-500 font-light">
               Tổng thanh toán
             </span>
-            <span className="font-mono text-base sm:text-lg font-light text-[#8C7E6A]">
+            <span className="font-mono text-base sm:text-lg font-semibold text-[#8C7E6A]">
               {Number(order.totalVND).toLocaleString('vi-VN')} ₫
             </span>
           </div>

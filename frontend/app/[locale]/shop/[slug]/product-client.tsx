@@ -533,19 +533,19 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                     <div className="flex flex-wrap items-center gap-2.5">
                       <p
                         className={cn(
-                          'font-sans text-xs font-light tracking-[0.05em] sm:text-sm',
-                          priceDisplay.hasDiscount ? 'text-[#991b1b]' : 'text-foreground',
+                          'font-sans text-sm sm:text-base font-medium tracking-[0.05em]',
+                          priceDisplay.hasDiscount ? 'text-[#991b1b] font-semibold' : 'text-foreground',
                         )}
                       >
                         {priceDisplay.currentPrice}
                       </p>
                       {priceDisplay.hasDiscount && priceDisplay.originalPrice && (
                         <>
-                          <p className="text-xs font-light text-foreground/30 line-through">
+                          <p className="text-xs font-thin text-foreground/40 line-through">
                             {priceDisplay.originalPrice}
                           </p>
                           {priceDisplay.discountPercentage && (
-                            <span className="rounded-sm bg-[#991b1b]/10 px-1.5 py-0.5 text-[9px] font-light tracking-wide text-[#991b1b]">
+                            <span className="rounded-sm bg-[#991b1b]/10 px-1.5 py-0.5 text-[9px] font-medium tracking-wide text-[#991b1b]">
                               −{priceDisplay.discountPercentage}%
                             </span>
                           )}
@@ -574,7 +574,9 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                             <span className="font-light uppercase tracking-[0.08em]">
                               {locale === 'vi' ? 'Chất liệu' : 'Material'}:{' '}
                             </span>
-                            {product.material}
+                            <span className="font-serif italic font-normal text-[#8C7E6A]">
+                              {product.material}
+                            </span>
                           </p>
                         )}
                         {product.dimensions && (
@@ -655,7 +657,7 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                         type="button"
                         onClick={() => handleAddToCart(quantity)}
                         disabled={addingToCart}
-                        className="flex-1 py-3 px-6 bg-[#4A4238] text-white hover:bg-[#8C7E6A] transition-colors uppercase tracking-[0.2em] text-xs font-light flex items-center justify-center gap-2 shadow-sm disabled:opacity-60"
+                        className="flex-1 py-3 px-6 bg-[#4A4238] text-white hover:bg-[#8C7E6A] transition-colors uppercase tracking-[0.2em] text-xs font-medium flex items-center justify-center gap-2 shadow-sm disabled:opacity-60"
                       >
                         <ShoppingBag className="w-4 h-4" />
                         <span>{addingToCart ? 'Đang thêm...' : 'Thêm vào giỏ hàng'}</span>

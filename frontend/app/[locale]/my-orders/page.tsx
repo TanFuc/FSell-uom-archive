@@ -98,7 +98,7 @@ export default function MyOrdersPage() {
               >
                 <div className="flex items-center justify-between pb-3 border-b border-stone-200 mb-3">
                   <div>
-                    <span className="font-mono text-xs font-light tracking-tight text-[#4A4238]">
+                    <span className="font-mono text-xs font-medium tracking-tight text-[#4A4238]">
                       #{order.orderNumber}
                     </span>
                     <span className="text-[11px] text-stone-400 block sm:inline sm:ml-2 font-mono font-thin">
@@ -114,7 +114,7 @@ export default function MyOrdersPage() {
                     </span>
                   </div>
                   <span
-                    className={`px-2 py-0.5 text-[10px] uppercase tracking-wider font-light border ${badge.color}`}
+                    className={`px-2 py-0.5 text-[10px] uppercase tracking-wider font-medium border ${badge.color}`}
                   >
                     {badge.label}
                   </span>
@@ -128,7 +128,7 @@ export default function MyOrdersPage() {
                     <span className="text-[11px] text-stone-400 font-thin">
                       Tổng số {order.items?.length || 0} sản phẩm
                     </span>
-                    <span className="font-mono text-sm font-light text-[#8C7E6A]">
+                    <span className="font-mono text-sm font-semibold text-[#8C7E6A]">
                       {Number(order.totalVND).toLocaleString('vi-VN')} ₫
                     </span>
                   </div>

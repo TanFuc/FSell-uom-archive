@@ -188,7 +188,7 @@ export default function ShopClient({ initialProducts, initialCategories }: ShopC
               className={cn(
                 'max-w-full rounded-full border px-4 py-2 text-[10px] font-light uppercase tracking-[0.18em] transition-all duration-300 sm:px-6 sm:tracking-[0.3em]',
                 !categoryId
-                  ? 'border-foreground bg-foreground text-white'
+                  ? 'border-foreground bg-foreground text-white font-medium'
                   : 'border-foreground/10 text-foreground/40 hover:border-foreground/30',
               )}
             >
@@ -205,7 +205,7 @@ export default function ShopClient({ initialProducts, initialCategories }: ShopC
                 className={cn(
                   'max-w-full rounded-full border px-4 py-2 text-[10px] font-light uppercase tracking-[0.18em] transition-all duration-300 sm:px-6 sm:tracking-[0.3em]',
                   categoryId === category.id
-                    ? 'border-foreground bg-foreground text-white'
+                    ? 'border-foreground bg-foreground text-white font-medium'
                     : 'border-foreground/10 text-foreground/40 hover:border-foreground/30',
                 )}
               >

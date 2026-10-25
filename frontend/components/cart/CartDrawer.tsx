@@ -285,10 +285,10 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                     {/* Thông tin sản phẩm */}
                     <div className="flex-1 min-w-0 flex flex-col justify-between">
                       <div>
-                        <h4 className="text-xs font-light text-[#4A4238] truncate" title={item.product?.nameVi}>
+                        <h4 className="text-xs font-medium text-[#4A4238] truncate" title={item.product?.nameVi}>
                           {item.product?.nameVi}
                         </h4>
-                        <p className="font-mono text-xs font-light text-[#8C7E6A] mt-0.5">
+                        <p className="font-mono text-xs font-medium text-[#8C7E6A] mt-0.5">
                           {Number(item.priceVND).toLocaleString('vi-VN')} ₫
                         </p>
                       </div>
@@ -343,7 +343,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                     ({selectedItemIds.length} sản phẩm được chọn)
                   </span>
                 </div>
-                <span className="font-mono text-base font-light text-[#8C7E6A]">
+                <span className="font-mono text-base font-semibold text-[#8C7E6A]">
                   {subtotal.toLocaleString('vi-VN')} ₫
                 </span>
               </div>
@@ -352,7 +352,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 <Link
                   href={checkoutHref}
                   onClick={onClose}
-                  className="w-full py-3.5 px-4 bg-[#4A4238] text-white hover:bg-[#8C7E6A] transition-colors uppercase tracking-[0.25em] text-xs font-light text-center shadow-sm flex items-center justify-center gap-2"
+                  className="w-full py-3.5 px-4 bg-[#4A4238] text-white hover:bg-[#8C7E6A] transition-colors uppercase tracking-[0.25em] text-xs font-medium text-center shadow-sm flex items-center justify-center gap-2"
                 >
                   <span>Tiến hành đặt hàng ({selectedItemIds.length})</span>
                   <ArrowRight className="w-4 h-4" />

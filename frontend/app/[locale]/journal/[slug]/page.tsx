@@ -296,7 +296,7 @@ export default async function StoryDetailPage({ params }: StoryDetailProps) {
                 {story.publishedAt}
               </p>
             )}
-            <p className="max-w-3xl text-sm font-thin leading-relaxed text-foreground/75 md:text-base">
+            <p className="max-w-3xl font-serif italic font-normal text-sm sm:text-base leading-relaxed text-foreground/80">
               {summary}
             </p>
           </div>
@@ -316,7 +316,7 @@ export default async function StoryDetailPage({ params }: StoryDetailProps) {
         <JournalRichContent
           content={content}
           fallbackAlt={`${title} - ƯƠM. Archive Journal`}
-          className="prose prose-neutral prose-headings:font-playfair prose-headings:font-light prose-p:text-foreground/85 prose-p:font-thin prose-li:text-foreground/85 prose-li:font-thin mt-10 max-w-none overflow-hidden rounded-2xl border border-black/10 bg-white/85 p-5 leading-relaxed shadow-sm backdrop-blur-sm [overflow-wrap:anywhere] sm:rounded-3xl sm:p-6 md:p-10 font-thin"
+          className="prose prose-neutral prose-headings:font-playfair prose-headings:font-light prose-p:text-foreground/85 prose-p:font-thin prose-li:text-foreground/85 prose-li:font-thin prose-blockquote:font-serif prose-blockquote:italic prose-blockquote:font-normal prose-blockquote:text-[#4A4238] prose-em:font-serif prose-em:italic prose-em:font-normal prose-strong:font-semibold prose-strong:text-foreground mt-10 max-w-none overflow-hidden rounded-2xl border border-black/10 bg-white/85 p-5 leading-relaxed shadow-sm backdrop-blur-sm [overflow-wrap:anywhere] sm:rounded-3xl sm:p-6 md:p-10 font-thin"
         />
 
         <div className="mt-10 flex justify-center">

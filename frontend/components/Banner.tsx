@@ -43,7 +43,7 @@ export function Banner({ banner, locale, className = '' }: BannerProps) {
                 </h2>
               )}
               {subtitle && (
-                <p className="text-xs font-thin uppercase tracking-[0.25em] opacity-90 md:text-sm">
+                <p className="font-serif italic font-normal text-xs uppercase tracking-[0.25em] text-white/95 md:text-sm">
                   {subtitle}
                 </p>
               )}

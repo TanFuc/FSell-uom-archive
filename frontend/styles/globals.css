@@ -81,6 +81,12 @@
     letter-spacing: 0.04em;
   }
 
+  strong,
+  b {
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
   main,
   section,
   header,
@@ -223,7 +229,7 @@
     font-variant-numeric: tabular-nums;
     letter-spacing: 0.01em;
     font-size: 1.125rem; /* 18px - larger price text */
-    font-weight: 300;
+    font-weight: 500;
   }
 
   .aspect-hero {

@@ -143,7 +143,7 @@ export function BannerCarousel({ banners, locale, autoPlayInterval = 6500 }: Ban
                       style={{ color: textColor }}
                     >
                       {subtitle && (
-                        <p className="inline-block rounded-full bg-white/10 px-3 py-1 font-serif text-[8px] font-light uppercase tracking-[0.24em] text-white/90 backdrop-blur-md sm:text-[9px] md:tracking-[0.3em]">
+                        <p className="inline-block rounded-full bg-white/10 px-3.5 py-1 font-serif italic font-normal text-[9px] uppercase tracking-[0.24em] text-white/95 backdrop-blur-md sm:text-[10px] md:tracking-[0.3em]">
                           {subtitle}
                         </p>
                       )}

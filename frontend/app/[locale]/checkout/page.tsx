@@ -277,7 +277,7 @@ function CheckoutContent() {
               <div className="flex items-start gap-3 p-3.5 border border-[#8C7E6A] bg-[#FAF8F5] text-xs">
                 <CheckCircle2 className="w-4 h-4 text-[#8C7E6A] shrink-0 mt-0.5" />
                 <div className="space-y-1">
-                  <p className="font-light text-[#4A4238]">
+                  <p className="font-medium text-[#4A4238]">
                     Chuyển khoản ngân hàng (Thanh toán trước / Non-COD)
                   </p>
                   <p className="text-[11px] text-stone-500 leading-relaxed font-thin">
@@ -358,9 +358,9 @@ function CheckoutContent() {
                   <span>Phí vận chuyển</span>
                   <span className="text-stone-700">Miễn phí (Tiêu chuẩn)</span>
                 </div>
-                <div className="border-t border-stone-200 pt-3 flex justify-between items-baseline font-light text-sm">
+                <div className="border-t border-stone-200 pt-3 flex justify-between items-baseline font-medium text-sm">
                   <span className="uppercase tracking-wider font-serif">Tổng cộng</span>
-                  <span className="font-mono text-lg font-light text-[#8C7E6A]">
+                  <span className="font-mono text-lg font-semibold text-[#8C7E6A]">
                     {totalAmount.toLocaleString('vi-VN')} ₫
                   </span>
                 </div>
@@ -369,7 +369,7 @@ function CheckoutContent() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full mt-6 py-3.5 px-4 bg-[#4A4238] text-white hover:bg-[#8C7E6A] disabled:bg-stone-400 transition-colors uppercase tracking-[0.25em] text-xs font-light text-center shadow-sm flex items-center justify-center gap-2"
+                className="w-full mt-6 py-3.5 px-4 bg-[#4A4238] text-white hover:bg-[#8C7E6A] disabled:bg-stone-400 transition-colors uppercase tracking-[0.25em] text-xs font-medium text-center shadow-sm flex items-center justify-center gap-2"
               >
                 {submitting ? (
                   <>

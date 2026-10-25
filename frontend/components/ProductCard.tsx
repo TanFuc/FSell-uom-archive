@@ -133,14 +133,14 @@ export function ProductCard({ product, locale, priority }: ProductCardProps) {
         )}
         {/* Sale badge */}
         {priceDisplay.hasDiscount && priceDisplay.discountPercentage && (
-          <div className="absolute left-2 top-2 z-20 rounded-sm bg-[#991b1b]/90 px-2 py-0.5 text-[9px] font-light tracking-wide text-white backdrop-blur-sm md:text-[10px]">
+          <div className="absolute left-2 top-2 z-20 rounded-sm bg-[#991b1b]/95 px-2 py-0.5 text-[9px] font-medium tracking-wide text-white backdrop-blur-sm md:text-[10px]">
             -{priceDisplay.discountPercentage}%
           </div>
         )}
 
         {/* Featured badge */}
         {product.isFeatured && (
-          <div className="absolute right-2 top-2 z-20 flex items-center gap-1 rounded-sm border border-[#d4af37]/40 bg-black/80 px-2 py-0.5 text-[8px] font-light uppercase tracking-[0.14em] text-[#e5c158] shadow-sm backdrop-blur-md md:text-[9px]">
+          <div className="absolute right-2 top-2 z-20 flex items-center gap-1 rounded-sm border border-[#d4af37]/40 bg-black/85 px-2 py-0.5 text-[8px] font-medium uppercase tracking-[0.14em] text-[#e5c158] shadow-sm backdrop-blur-md md:text-[9px]">
             <span className="text-[10px] leading-none">★</span>
             <span>{locale === 'vi' ? 'Nổi bật' : 'Featured'}</span>
           </div>
@@ -177,14 +177,14 @@ export function ProductCard({ product, locale, priority }: ProductCardProps) {
         <div className="flex flex-wrap items-center gap-2">
           <p
             className={cn(
-              'font-serif text-[10px] font-thin uppercase tracking-wide md:text-xs',
-              priceDisplay.hasDiscount ? 'font-light text-[#991b1b]' : 'text-foreground',
+              'font-serif text-[11px] sm:text-xs md:text-sm font-medium tracking-wide',
+              priceDisplay.hasDiscount ? 'text-[#991b1b] font-semibold' : 'text-[#4A4238]',
             )}
           >
             {priceDisplay.currentPrice}
           </p>
           {priceDisplay.hasDiscount && priceDisplay.originalPrice && (
-            <p className="text-[8px] font-thin text-muted-foreground/40 line-through md:text-[10px]">
+            <p className="text-[8px] font-thin text-muted-foreground/50 line-through md:text-[10px]">
               {priceDisplay.originalPrice}
             </p>
           )}
