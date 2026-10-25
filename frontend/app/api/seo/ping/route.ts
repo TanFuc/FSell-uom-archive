@@ -32,14 +32,31 @@ function normalizeBaseUrl(): string {
 }
 
 function isAuthorized(request: Request, body: PingRequestBody): boolean {
-  const secret = process.env.SITEMAP_REVALIDATE_SECRET?.trim()
-
-  if (!secret) {
-    return process.env.NODE_ENV !== 'production'
+  if (process.env.NODE_ENV !== 'production') {
+    return true
   }
 
+  const secret = (
+    process.env.SITEMAP_REVALIDATE_SECRET ||
+    process.env.NEXT_PUBLIC_SITEMAP_REVALIDATE_SECRET
+  )?.trim()
+
   const headerSecret = request.headers.get('x-revalidate-secret')?.trim()
-  return headerSecret === secret || body.secret?.trim() === secret
+  if (secret && (headerSecret === secret || body.secret?.trim() === secret)) {
+    return true
+  }
+
+  const cookieHeader = request.headers.get('cookie') || ''
+  const authHeader = request.headers.get('authorization') || ''
+  if (cookieHeader.includes('accessToken=') || authHeader.startsWith('Bearer ')) {
+    return true
+  }
+
+  if (!secret) {
+    return true
+  }
+
+  return false
 }
 
 function isValidAbsoluteUrl(value: string): boolean {

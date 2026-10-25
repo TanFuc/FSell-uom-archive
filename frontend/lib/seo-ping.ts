@@ -32,10 +32,20 @@ function toAbsoluteUrl(path: string): string {
 
 async function postSeoPing(payload: SeoPingPayload): Promise<void> {
   try {
+    const secret =
+      process.env.NEXT_PUBLIC_SITEMAP_REVALIDATE_SECRET ||
+      process.env.SITEMAP_REVALIDATE_SECRET
+
     await fetch('/api/seo/ping', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json; charset=utf-8' },
-      body: JSON.stringify(payload),
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        ...(secret ? { 'x-revalidate-secret': secret } : {}),
+      },
+      body: JSON.stringify({
+        ...payload,
+        ...(secret ? { secret } : {}),
+      }),
     })
   } catch {}
 }

@@ -2,6 +2,8 @@
 
 import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -91,9 +93,9 @@ export default function AdminPagesPage() {
           !/^[a-z0-9-]{1,60}$/.test(item.slug) || !item.titleVi.trim() || !item.titleEn.trim(),
       )
     ) {
-      setMessage(
-        'Đường dẫn trang phải duy nhất, chỉ gồm chữ thường, số và dấu gạch ngang; tiêu đề không được trống.',
-      )
+      const err = 'Đường dẫn trang phải duy nhất, chỉ gồm chữ thường, số và dấu gạch ngang; tiêu đề không được trống.'
+      setMessage(err)
+      toast.error(err)
       return
     }
     setSaving(true)
@@ -118,9 +120,13 @@ export default function AdminPagesPage() {
           .flatMap((slug) => [`/vi/pages/${slug}`, `/en/pages/${slug}`]),
       ])
       setPersistedSlugs(pages.map((page) => page.slug))
-      setMessage('Đã lưu pages và sections.')
+      const successMsg = 'Đã lưu cấu hình Pages & Sections thành công.'
+      setMessage(successMsg)
+      toast.success(successMsg)
     } catch {
-      setMessage('Không thể lưu cấu hình.')
+      const failMsg = 'Không thể lưu cấu hình. Vui lòng thử lại.'
+      setMessage(failMsg)
+      toast.error(failMsg)
     } finally {
       setSaving(false)
     }
@@ -142,7 +148,15 @@ export default function AdminPagesPage() {
         </Button>
       </div>
       {message && (
-        <p role="status" className="rounded border border-neutral-200 bg-white p-3 text-sm">
+        <p
+          role="status"
+          className={cn(
+            'rounded-md border p-3 text-sm font-medium transition-all',
+            message.includes('thành công')
+              ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+              : 'border-red-200 bg-red-50 text-red-800',
+          )}
+        >
           {message}
         </p>
       )}

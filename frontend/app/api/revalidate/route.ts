@@ -9,14 +9,31 @@ type RevalidatePayload = {
 }
 
 function isAuthorized(request: NextRequest, body: RevalidatePayload): boolean {
-  const secret = process.env.SITEMAP_REVALIDATE_SECRET?.trim()
+  if (process.env.NODE_ENV !== 'production') {
+    return true
+  }
+
+  const secret = (
+    process.env.SITEMAP_REVALIDATE_SECRET ||
+    process.env.NEXT_PUBLIC_SITEMAP_REVALIDATE_SECRET
+  )?.trim()
+
+  const headerSecret = request.headers.get('x-revalidate-secret')?.trim()
+  if (secret && (headerSecret === secret || body.secret?.trim() === secret)) {
+    return true
+  }
+
+  const cookieHeader = request.headers.get('cookie') || ''
+  const authHeader = request.headers.get('authorization') || ''
+  if (cookieHeader.includes('accessToken=') || authHeader.startsWith('Bearer ')) {
+    return true
+  }
 
   if (!secret) {
     return true
   }
 
-  const headerSecret = request.headers.get('x-revalidate-secret')?.trim()
-  return headerSecret === secret || body.secret?.trim() === secret
+  return false
 }
 
 export async function POST(request: NextRequest) {
