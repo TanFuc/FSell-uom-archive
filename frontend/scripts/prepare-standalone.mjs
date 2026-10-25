@@ -74,6 +74,12 @@ copyDirIfNeeded(publicSrc, publicDest)
 copyDirIfNeeded(staticSrc, standalonePublicNextStaticDest)
 copyDirIfNeeded(serverSrc, serverDest)
 
+const imgModuleSrc = path.join(root, 'node_modules', '@img')
+const imgModuleDest = path.join(standaloneDir, 'node_modules', '@img')
+if (existsSync(imgModuleSrc)) {
+  copyDirIfNeeded(imgModuleSrc, imgModuleDest)
+}
+
 for (const envFile of envFiles) {
   const envPath = path.join(standaloneDir, envFile)
   if (existsSync(envPath)) {
