@@ -155,10 +155,10 @@ export function PaymentTransferModal({
         {/* Header */}
         <div className="bg-[#4A4238] text-white px-6 py-5 flex items-center justify-between">
           <div>
-            <span className="text-[10px] uppercase tracking-[0.25em] text-[#D8CFBE] font-serif block">
+            <span className="text-[10px] uppercase tracking-[0.25em] text-[#D8CFBE] font-serif font-thin block">
               Thanh toán chuyển khoản • Non-COD
             </span>
-            <h2 className="text-lg font-serif font-bold tracking-tight text-white mt-0.5">
+            <h2 className="text-lg font-serif font-light tracking-tight text-white mt-0.5">
               Đơn hàng #{orderNumber}
             </h2>
           </div>
@@ -179,17 +179,17 @@ export function PaymentTransferModal({
                 <CheckCircle2 className="w-8 h-8" />
               </div>
               <div>
-                <h3 className="font-serif text-lg font-bold text-[#4A4238]">
+                <h3 className="font-serif text-lg font-light text-[#4A4238]">
                   {selectedFile ? 'Đã tiếp nhận biên nhận chuyển khoản!' : 'Đã ghi nhận bạn xác nhận chuyển khoản!'}
                 </h3>
-                <p className="text-xs text-stone-500 max-w-md mx-auto mt-1 leading-relaxed">
+                <p className="text-xs text-stone-500 max-w-md mx-auto mt-1 leading-relaxed font-thin">
                   Cảm ơn bạn. ƯƠM. Archive sẽ xác minh giao dịch và gửi email xác nhận chi tiết đơn hàng tới hòm thư của bạn.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={onClose}
-                className="mt-4 px-8 py-3 bg-[#4A4238] text-white text-xs uppercase tracking-[0.2em] font-medium hover:bg-[#8C7E6A] transition-colors"
+                className="mt-4 px-8 py-3 bg-[#4A4238] text-white text-xs uppercase tracking-[0.2em] font-light hover:bg-[#8C7E6A] transition-colors"
               >
                 Xem hành trình đơn hàng
               </button>
@@ -215,30 +215,30 @@ export function PaymentTransferModal({
                         <span className="text-[11px] text-center">Chuyển khoản theo STK bên cạnh</span>
                       </div>
                     )}
-                    <p className="text-[11px] text-stone-500 mt-2 font-medium flex items-center gap-1">
+                    <p className="text-[11px] text-stone-500 mt-2 font-thin flex items-center gap-1">
                       <QrCode className="w-3.5 h-3.5 text-[#8C7E6A]" />
                       Quét mã để thanh toán nhanh
                     </p>
                   </div>
 
                   {/* Thông tin tài khoản */}
-                  <div className="sm:col-span-7 space-y-2.5 text-xs">
+                  <div className="sm:col-span-7 space-y-2.5 text-xs font-thin">
                     <div>
-                      <span className="text-[10px] uppercase tracking-wider text-stone-400 block">
+                      <span className="text-[10px] uppercase tracking-wider text-stone-400 block font-thin">
                         Ngân hàng
                       </span>
-                      <div className="font-semibold text-[#4A4238] flex items-center gap-1.5 mt-0.5">
+                      <div className="font-light text-[#4A4238] flex items-center gap-1.5 mt-0.5">
                         <Building className="w-3.5 h-3.5 text-[#8C7E6A]" />
                         <span>{bankName}</span>
                       </div>
                     </div>
 
                     <div>
-                      <span className="text-[10px] uppercase tracking-wider text-stone-400 block">
+                      <span className="text-[10px] uppercase tracking-wider text-stone-400 block font-thin">
                         Số tài khoản
                       </span>
                       <div className="flex items-center justify-between bg-white px-2.5 py-1.5 border border-stone-200 mt-0.5">
-                        <span className="font-mono font-bold text-sm text-[#4A4238]">
+                        <span className="font-mono font-light text-sm text-[#4A4238]">
                           {accountNumber || '(Liên hệ Admin)'}
                         </span>
                         {accountNumber && (
@@ -259,21 +259,21 @@ export function PaymentTransferModal({
                     </div>
 
                     <div>
-                      <span className="text-[10px] uppercase tracking-wider text-stone-400 block">
+                      <span className="text-[10px] uppercase tracking-wider text-stone-400 block font-thin">
                         Chủ tài khoản
                       </span>
-                      <div className="font-semibold uppercase tracking-wider text-[#4A4238] flex items-center gap-1.5 mt-0.5">
+                      <div className="font-light uppercase tracking-wider text-[#4A4238] flex items-center gap-1.5 mt-0.5">
                         <User className="w-3.5 h-3.5 text-[#8C7E6A]" />
                         <span>{accountHolder}</span>
                       </div>
                     </div>
 
                     <div>
-                      <span className="text-[10px] uppercase tracking-wider text-stone-400 block">
+                      <span className="text-[10px] uppercase tracking-wider text-stone-400 block font-thin">
                         Số tiền cần chuyển
                       </span>
                       <div className="flex items-center justify-between bg-white px-2.5 py-1.5 border border-stone-200 mt-0.5">
-                        <span className="font-mono font-bold text-sm text-[#8C7E6A]">
+                        <span className="font-mono font-light text-sm text-[#8C7E6A]">
                           {totalVND.toLocaleString('vi-VN')} ₫
                         </span>
                         <button
@@ -292,11 +292,11 @@ export function PaymentTransferModal({
                     </div>
 
                     <div>
-                      <span className="text-[10px] uppercase tracking-wider text-stone-400 block">
+                      <span className="text-[10px] uppercase tracking-wider text-stone-400 block font-thin">
                         Nội dung chuyển khoản (Bắt buộc)
                       </span>
                       <div className="flex items-center justify-between bg-amber-50/70 border border-amber-200 px-2.5 py-1.5 mt-0.5">
-                        <span className="font-mono font-bold text-xs text-amber-900">
+                        <span className="font-mono font-light text-xs text-amber-900">
                           {transferContent}
                         </span>
                         <button
@@ -317,7 +317,7 @@ export function PaymentTransferModal({
                 </div>
 
                 {paymentSettings?.transferInstruction && (
-                  <p className="mt-4 pt-3 border-t border-stone-200 text-[11px] text-stone-500 italic">
+                  <p className="mt-4 pt-3 border-t border-stone-200 text-[11px] text-stone-500 italic font-thin">
                     {paymentSettings.transferInstruction}
                   </p>
                 )}
@@ -326,16 +326,16 @@ export function PaymentTransferModal({
               {/* Box 2: Tải lên ảnh biên nhận chuyển khoản */}
               <div className="space-y-3">
                 {!paymentAccessToken && (
-                  <p className="border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+                  <p className="border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 font-thin">
                     Để xác nhận chuyển khoản, hãy mở đơn hàng từ email xác nhận hoặc mục Đơn của tôi.
                   </p>
                 )}
                 <div className="flex items-center justify-between">
-                  <h3 className="font-serif text-xs uppercase tracking-[0.2em] font-semibold text-[#4A4238] flex items-center gap-1.5">
+                  <h3 className="font-serif text-xs uppercase tracking-[0.2em] font-light text-[#4A4238] flex items-center gap-1.5">
                     <Upload className="w-4 h-4 text-[#8C7E6A]" />
                     <span>Tải ảnh biên lai / Bill chuyển khoản</span>
                   </h3>
-                  <span className="text-[10px] text-stone-400">Tối đa 10MB (PNG, JPG)</span>
+                  <span className="text-[10px] text-stone-400 font-thin">Tối đa 10MB (PNG, JPG)</span>
                 </div>
 
                 {previewUrl ? (
@@ -347,8 +347,8 @@ export function PaymentTransferModal({
                         className="w-16 h-16 object-cover border border-stone-200 shrink-0"
                       />
                       <div className="min-w-0 text-xs">
-                        <p className="font-medium text-[#4A4238] truncate">{selectedFile?.name}</p>
-                        <p className="text-stone-400 text-[10px]">
+                        <p className="font-light text-[#4A4238] truncate">{selectedFile?.name}</p>
+                        <p className="text-stone-400 text-[10px] font-thin">
                           {selectedFile?.size ? (selectedFile.size / 1024).toFixed(1) + ' KB' : ''}
                         </p>
                       </div>
@@ -368,10 +368,10 @@ export function PaymentTransferModal({
                 ) : (
                   <label className="border-2 border-dashed border-stone-200 hover:border-[#8C7E6A] bg-stone-50/50 hover:bg-stone-50 transition-colors p-6 flex flex-col items-center justify-center cursor-pointer text-center">
                     <ImageIcon className="w-8 h-8 text-stone-400 stroke-[1.2] mb-2" />
-                    <span className="text-xs font-medium text-[#4A4238]">
+                    <span className="text-xs font-light text-[#4A4238]">
                       Nhấp để tải lên ảnh chụp màn hình chuyển khoản
                     </span>
-                    <span className="text-[10px] text-stone-400 mt-1">
+                    <span className="text-[10px] text-stone-400 mt-1 font-thin">
                       Hỗ trợ định dạng JPG, PNG, WebP
                     </span>
                     <input
@@ -388,7 +388,7 @@ export function PaymentTransferModal({
                     type="button"
                     disabled={uploading || !paymentAccessToken}
                     onClick={selectedFile ? handleUploadProof : handleConfirmWithoutProof}
-                    className="w-full sm:flex-1 py-3 px-4 bg-[#4A4238] text-white hover:bg-[#8C7E6A] disabled:bg-stone-300 disabled:cursor-not-allowed transition-colors text-xs uppercase tracking-[0.2em] font-medium text-center flex items-center justify-center gap-2"
+                    className="w-full sm:flex-1 py-3 px-4 bg-[#4A4238] text-white hover:bg-[#8C7E6A] disabled:bg-stone-300 disabled:cursor-not-allowed transition-colors text-xs uppercase tracking-[0.2em] font-light text-center flex items-center justify-center gap-2"
                   >
                     {uploading ? (
                       <>
@@ -412,7 +412,7 @@ export function PaymentTransferModal({
                         onClose()
                       }
                     }}
-                    className="w-full sm:w-auto py-3 px-4 text-xs uppercase tracking-wider text-stone-500 hover:text-[#4A4238] transition-colors font-medium text-center"
+                    className="w-full sm:w-auto py-3 px-4 text-xs uppercase tracking-wider text-stone-500 hover:text-[#4A4238] transition-colors font-thin text-center"
                   >
                     Tôi sẽ tải biên nhận sau
                   </button>

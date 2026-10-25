@@ -5,13 +5,20 @@ import { useLocale, useTranslations } from 'next-intl'
 import { useEffect, useState } from 'react'
 import { useBranding, useSiteContent, useSocialLinks } from '@/hooks/use-settings'
 import { pageHref, parseSitePages } from '@/lib/site-structure'
+import type { SiteContent } from '@/lib/types'
 
-export function Footer() {
+interface FooterProps {
+  initialSiteContent?: SiteContent
+}
+
+export function Footer({ initialSiteContent }: FooterProps) {
   const locale = useLocale() as 'vi' | 'en'
   const t = useTranslations('Footer')
   const { data: branding } = useBranding()
   const { data: socialLinks } = useSocialLinks()
-  const { data: siteContent } = useSiteContent()
+  const { data: siteContent } = useSiteContent({
+    initialData: initialSiteContent,
+  })
   const BRANDING_CACHE_KEY = 'uom_branding_cache'
 
   const getCachedBranding = () => {
@@ -83,13 +90,13 @@ export function Footer() {
           <div className="col-span-3 space-y-2 border-b border-foreground/[0.06] pb-5 sm:col-span-1 sm:border-b-0 sm:pb-0">
             <Link
               href={`/${locale}`}
-              className="text-mobile-safe inline-block font-playfair text-xl font-bold tracking-tighter text-foreground transition-opacity hover:opacity-70 sm:text-2xl"
+              className="text-mobile-safe inline-block font-serif text-xl font-light tracking-tight text-foreground transition-opacity hover:opacity-70 sm:text-2xl"
               suppressHydrationWarning
             >
               {brandName}
             </Link>
             <p
-              className="max-w-[24rem] text-[9px] font-medium uppercase leading-relaxed tracking-[0.12em] text-foreground/40 sm:hidden md:block md:tracking-[0.2em]"
+              className="max-w-[24rem] text-[9px] font-thin uppercase leading-relaxed tracking-[0.12em] text-foreground/40 sm:hidden md:block md:tracking-[0.2em]"
               suppressHydrationWarning
             >
               {brandTagline}
@@ -98,7 +105,7 @@ export function Footer() {
 
           {/* Navigation - Compact */}
           <div className="space-y-3">
-            <h4 className="text-[9px] font-bold uppercase tracking-[0.18em] text-foreground sm:text-[10px] sm:tracking-[0.28em] lg:tracking-[0.4em]">
+            <h4 className="text-[9px] font-light uppercase tracking-[0.18em] text-foreground sm:text-[10px] sm:tracking-[0.28em] lg:tracking-[0.4em]">
               {t('navigation')}
             </h4>
             <nav aria-label={locale === 'vi' ? 'Điều hướng chân trang' : 'Footer navigation'}>
@@ -108,7 +115,8 @@ export function Footer() {
                     <Link
                       href={item.href}
                       title={item.label}
-                      className="block text-[9px] font-medium uppercase tracking-[0.1em] transition-all hover:opacity-60 sm:text-[10px] sm:tracking-[0.15em]"
+                      className="block text-[9px] font-thin uppercase tracking-[0.1em] transition-all hover:opacity-60 sm:text-[10px] sm:tracking-[0.15em]"
+                      suppressHydrationWarning
                     >
                       {item.label}
                     </Link>
@@ -120,7 +128,7 @@ export function Footer() {
 
           {/* Connect - Compact */}
           <div className="space-y-3">
-            <h4 className="text-[9px] font-bold uppercase tracking-[0.18em] text-foreground sm:text-[10px] sm:tracking-[0.28em] lg:tracking-[0.4em]">
+            <h4 className="text-[9px] font-light uppercase tracking-[0.18em] text-foreground sm:text-[10px] sm:tracking-[0.28em] lg:tracking-[0.4em]">
               {t('connect')}
             </h4>
             <div className="flex flex-col gap-2">
@@ -129,7 +137,7 @@ export function Footer() {
                   href={`https://instagram.com/${socialLinks.instagramUsername}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[9px] font-medium uppercase tracking-[0.1em] transition-all hover:opacity-60 sm:text-[10px] sm:tracking-[0.15em]"
+                  className="text-[9px] font-thin uppercase tracking-[0.1em] transition-all hover:opacity-60 sm:text-[10px] sm:tracking-[0.15em]"
                   aria-label="Instagram"
                 >
                   Instagram
@@ -140,7 +148,7 @@ export function Footer() {
                   href={socialLinks.facebookPageUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[9px] font-medium uppercase tracking-[0.1em] transition-all hover:opacity-60 sm:text-[10px] sm:tracking-[0.15em]"
+                  className="text-[9px] font-thin uppercase tracking-[0.1em] transition-all hover:opacity-60 sm:text-[10px] sm:tracking-[0.15em]"
                   aria-label="Facebook"
                 >
                   Facebook
@@ -151,14 +159,14 @@ export function Footer() {
 
           {/* Legal - Compact */}
           <div className="space-y-3">
-            <h4 className="text-[9px] font-bold uppercase tracking-[0.18em] text-foreground sm:text-[10px] sm:tracking-[0.28em] lg:tracking-[0.4em]">
+            <h4 className="text-[9px] font-light uppercase tracking-[0.18em] text-foreground sm:text-[10px] sm:tracking-[0.28em] lg:tracking-[0.4em]">
               LEGAL
             </h4>
             <div className="flex flex-col gap-2">
-              <span className="text-[9px] font-medium uppercase tracking-[0.1em] text-foreground/30 sm:text-[10px] sm:tracking-[0.15em]">
+              <span className="text-[9px] font-thin uppercase tracking-[0.1em] text-foreground/30 sm:text-[10px] sm:tracking-[0.15em]">
                 Terms
               </span>
-              <span className="text-[9px] font-medium uppercase tracking-[0.1em] text-foreground/30 sm:text-[10px] sm:tracking-[0.15em]">
+              <span className="text-[9px] font-thin uppercase tracking-[0.1em] text-foreground/30 sm:text-[10px] sm:tracking-[0.15em]">
                 Privacy
               </span>
             </div>
@@ -168,14 +176,14 @@ export function Footer() {
         {/* Bottom Bar: Merged into the flow, no border */}
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-foreground/[0.04] pt-4">
           <p
-            className="text-[8px] font-bold uppercase tracking-[0.16em] text-foreground/30 sm:tracking-[0.3em] lg:tracking-[0.4em]"
+            className="text-[8px] font-thin uppercase tracking-[0.16em] text-foreground/30 sm:tracking-[0.3em] lg:tracking-[0.4em]"
             suppressHydrationWarning
           >
-            © {copyrightYear} <span className="font-playfair text-xs lowercase">ƯƠM.</span>
+            © {copyrightYear} <span className="font-serif text-xs lowercase">ƯƠM.</span>
           </p>
           <div className="flex gap-4 opacity-20 sm:gap-6">
-            <span className="text-[8px] font-bold tracking-[0.3em] sm:tracking-[0.5em]">VI</span>
-            <span className="text-[8px] font-bold tracking-[0.3em] sm:tracking-[0.5em]">EN</span>
+            <span className="text-[8px] font-thin tracking-[0.3em] sm:tracking-[0.5em]">VI</span>
+            <span className="text-[8px] font-thin tracking-[0.3em] sm:tracking-[0.5em]">EN</span>
           </div>
         </div>
       </div>

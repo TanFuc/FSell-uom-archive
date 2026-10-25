@@ -85,19 +85,19 @@ export function NetworkErrorState({
       <div className="container-custom relative z-10">
         <div className="grid items-center gap-14 lg:grid-cols-[minmax(0,1.05fr)_minmax(300px,0.75fr)] lg:gap-20">
           <div className="animate-fade-in max-w-2xl">
-            <div className="mb-8 flex items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.32em] text-muted-foreground sm:text-xs">
+            <div className="mb-8 flex items-center gap-3 text-[10px] font-light uppercase tracking-[0.32em] text-muted-foreground sm:text-xs">
               <span className="h-px w-8 bg-foreground sm:w-12" />
               {offline ? t('offlineLabel') : t('serviceLabel')}
             </div>
 
             <h1
               id="network-error-title"
-              className="text-mobile-safe font-playfair text-[clamp(2.65rem,8vw,6.75rem)] font-normal leading-[0.92] tracking-[-0.04em]"
+              className="text-mobile-safe font-playfair text-[clamp(2.65rem,8vw,6.75rem)] font-light leading-[0.92] tracking-[-0.04em]"
             >
               {offline ? t('offlineTitle') : t('serviceTitle')}
             </h1>
 
-            <p className="mt-7 max-w-xl text-sm font-normal leading-7 tracking-[0.02em] text-muted-foreground sm:mt-9 sm:text-base sm:leading-8">
+            <p className="mt-7 max-w-xl text-sm font-thin leading-7 tracking-[0.02em] text-muted-foreground sm:mt-9 sm:text-base sm:leading-8">
               {offline ? t('offlineDescription') : t('serviceDescription')}
             </p>
 
@@ -106,7 +106,7 @@ export function NetworkErrorState({
                 type="button"
                 onClick={() => void handleRetry()}
                 disabled={retrying}
-                className="group inline-flex min-h-12 items-center justify-center gap-3 border border-foreground bg-foreground px-6 text-xs font-semibold uppercase tracking-[0.2em] text-background transition-colors hover:bg-background hover:text-foreground disabled:cursor-wait disabled:opacity-60 sm:px-8"
+                className="group inline-flex min-h-12 items-center justify-center gap-3 border border-foreground bg-foreground px-6 text-xs font-light uppercase tracking-[0.2em] text-background transition-colors hover:bg-background hover:text-foreground disabled:cursor-wait disabled:opacity-60 sm:px-8"
               >
                 <RefreshCw
                   className={cn('h-4 w-4', retrying && 'animate-spin')}
@@ -116,7 +116,7 @@ export function NetworkErrorState({
               </button>
               <Link
                 href={`/${locale}`}
-                className="group inline-flex min-h-12 items-center justify-center gap-3 border border-foreground/30 px-6 text-xs font-semibold uppercase tracking-[0.2em] transition-colors hover:border-foreground sm:px-8"
+                className="group inline-flex min-h-12 items-center justify-center gap-3 border border-foreground/30 px-6 text-xs font-light uppercase tracking-[0.2em] transition-colors hover:border-foreground sm:px-8"
               >
                 <ArrowLeft
                   className="h-4 w-4 transition-transform group-hover:-translate-x-1"
@@ -126,7 +126,7 @@ export function NetworkErrorState({
               </Link>
             </div>
 
-            <p className="mt-7 flex items-start gap-2 text-xs font-normal leading-5 tracking-normal text-muted-foreground">
+            <p className="mt-7 flex items-start gap-2 text-xs font-thin leading-5 tracking-normal text-muted-foreground">
               <span className="mt-1.5 block h-1.5 w-1.5 shrink-0 rounded-full bg-foreground/50" />
               {t('hint')}
             </p>
@@ -148,7 +148,7 @@ export function NetworkErrorState({
             <span className="absolute right-[18%] top-[20%] h-2 w-2 rounded-full border border-foreground bg-background" />
             <span className="absolute bottom-[17%] right-[25%] h-3 w-3 rounded-full bg-foreground" />
 
-            <div className="absolute bottom-[3%] left-1/2 flex -translate-x-1/2 items-center gap-2 whitespace-nowrap border border-foreground/15 bg-background px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.22em]">
+            <div className="absolute bottom-[3%] left-1/2 flex -translate-x-1/2 items-center gap-2 whitespace-nowrap border border-foreground/15 bg-background px-4 py-2 text-[10px] font-light uppercase tracking-[0.22em]">
               {offline ? <WifiOff className="h-3.5 w-3.5" /> : <Check className="h-3.5 w-3.5" />}
               {offline ? t('offlineStatus') : t('checkingStatus')}
             </div>

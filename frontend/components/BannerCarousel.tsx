@@ -143,19 +143,19 @@ export function BannerCarousel({ banners, locale, autoPlayInterval = 6500 }: Ban
                       style={{ color: textColor }}
                     >
                       {subtitle && (
-                        <p className="inline-block rounded-full bg-white/10 px-3 py-1 font-sans text-[8px] font-semibold uppercase tracking-[0.24em] text-white/90 backdrop-blur-md sm:text-[9px] md:tracking-[0.3em]">
+                        <p className="inline-block rounded-full bg-white/10 px-3 py-1 font-serif text-[8px] font-light uppercase tracking-[0.24em] text-white/90 backdrop-blur-md sm:text-[9px] md:tracking-[0.3em]">
                           {subtitle}
                         </p>
                       )}
 
                       {title && (
-                        <h2 className="font-playfair text-2xl font-normal uppercase leading-[1.12] tracking-[0.06em] drop-shadow-[0_2px_12px_rgba(0,0,0,0.55)] sm:text-4xl sm:tracking-[0.1em] md:text-5xl lg:text-6xl">
+                        <h2 className="font-serif text-2xl font-light uppercase leading-[1.12] tracking-[0.06em] drop-shadow-[0_2px_12px_rgba(0,0,0,0.55)] sm:text-4xl sm:tracking-[0.1em] md:text-5xl lg:text-6xl">
                           {title}
                         </h2>
                       )}
 
                       {description && (
-                        <p className="line-clamp-2 max-w-2xl font-serif text-xs font-light leading-relaxed tracking-[0.02em] text-white/85 drop-shadow-[0_1px_6px_rgba(0,0,0,0.4)] md:line-clamp-none md:text-sm lg:text-base">
+                        <p className="line-clamp-2 max-w-2xl font-serif text-xs font-thin leading-relaxed tracking-[0.02em] text-white/85 drop-shadow-[0_1px_6px_rgba(0,0,0,0.4)] md:line-clamp-none md:text-sm lg:text-base">
                           {description}
                         </p>
                       )}

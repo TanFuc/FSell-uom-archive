@@ -43,12 +43,12 @@ export function Banner({ banner, locale, className = '' }: BannerProps) {
                 </h2>
               )}
               {subtitle && (
-                <p className="text-xs font-light uppercase tracking-[0.25em] opacity-90 md:text-sm">
+                <p className="text-xs font-thin uppercase tracking-[0.25em] opacity-90 md:text-sm">
                   {subtitle}
                 </p>
               )}
               {description && (
-                <p className="max-w-2xl pt-2 text-sm font-light opacity-80 md:text-base">
+                <p className="max-w-2xl pt-2 text-sm font-thin opacity-80 md:text-base">
                   {description}
                 </p>
               )}

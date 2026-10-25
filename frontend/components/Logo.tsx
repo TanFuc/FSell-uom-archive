@@ -27,7 +27,7 @@ export default function Logo({
     if (variant === 'text') {
       return (
         <span
-          className={`text-mobile-safe font-serif uppercase tracking-[0.18em] text-foreground sm:tracking-[0.3em] ${className}`}
+          className={`text-mobile-safe font-serif font-light uppercase tracking-[0.18em] text-foreground sm:tracking-[0.3em] ${className}`}
         >
           ƯƠM.
         </span>

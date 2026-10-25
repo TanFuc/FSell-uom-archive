@@ -20,7 +20,7 @@ import {
   SEARCH_TRENDING_EN_KEY,
   SEARCH_TRENDING_VI_KEY,
 } from '@/lib/search-trending'
-import { type Product } from '@/lib/types'
+import { type Product, type SiteContent } from '@/lib/types'
 import { cn, optimizeProductImage } from '@/lib/utils'
 
 function escapeRegExp(value: string): string {
@@ -101,13 +101,13 @@ const SearchResultItem = memo(
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/15 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
         </div>
         <div className="space-y-1">
-          <p className="line-clamp-2 min-h-[2.15rem] text-[9px] font-bold uppercase leading-tight tracking-[0.13em] text-foreground/90">
+          <p className="line-clamp-2 min-h-[2.15rem] text-[9px] font-light uppercase leading-tight tracking-[0.13em] text-foreground/90">
             <HighlightedText
               text={locale === 'vi' ? product.nameVi : product.nameEn}
               query={query}
             />
           </p>
-          <p className="text-[8px] font-semibold uppercase tracking-[0.16em] text-foreground/45">
+          <p className="text-[8px] font-thin uppercase tracking-[0.16em] text-foreground/45">
             {getDisplayPrice(product, locale, exchangeRate).currentPrice}
           </p>
         </div>
@@ -129,7 +129,11 @@ function SearchSkeletonItem() {
   )
 }
 
-export function Header() {
+interface HeaderProps {
+  initialSiteContent?: SiteContent
+}
+
+export function Header({ initialSiteContent }: HeaderProps = {}) {
   const pathname = usePathname()
   const locale = useLocale() as 'vi' | 'en'
   const router = useRouter()
@@ -159,6 +163,7 @@ export function Header() {
   const { data: exchangeRate } = useExchangeRate({ enabled: showSearch })
   const { data: socialLinks } = useSocialLinks()
   const { data: siteContent } = useSiteContent({
+    initialData: initialSiteContent,
     staleTime: 15 * 1000,
     refetchOnMount: true,
   })
@@ -571,9 +576,9 @@ export function Header() {
             isScrolled ? 'h-16 lg:h-20' : 'h-20 lg:h-28',
           )}
         >
-          <div className="grid w-full grid-cols-3 items-center">
+          <div className="flex w-full items-center justify-between">
             {/* Left */}
-            <div className="flex items-center justify-start">
+            <div className="flex shrink-0 items-center justify-start lg:min-w-[220px]">
               <button
                 onClick={toggleMobileMenu}
                 aria-label={showMobileMenu ? t('closeMenu') : t('openMenu')}
@@ -617,23 +622,34 @@ export function Header() {
               </button>
             </div>
 
-            {/* Middle Logo (Centered) */}
-            <div className="flex min-w-0 justify-center px-2 text-center">
+            {/* Middle Logo (Never clipped or covered by buttons) */}
+            <div className="flex min-w-0 flex-1 items-center justify-center px-1 xs:px-2">
               <Link
                 href={`/${locale}`}
                 className={cn(
-                  'truncate max-w-[200px] sm:max-w-none font-playfair font-bold tracking-tighter transition-all duration-300 hover:opacity-80',
-                  isScrolled ? 'text-lg sm:text-xl lg:text-3xl' : 'text-xl sm:text-2xl lg:text-4xl',
+                  'block max-w-full font-serif font-light tracking-tight transition-all duration-300 hover:opacity-80 text-center truncate',
+                  isScrolled ? 'text-sm sm:text-lg lg:text-3xl' : 'text-base sm:text-xl lg:text-4xl',
                 )}
                 tabIndex={0}
                 suppressHydrationWarning
               >
-                {brandText}
+                {branding?.logoUrl ? (
+                  <img
+                    src={branding.logoUrl}
+                    alt={brandText}
+                    className={cn(
+                      'mx-auto h-auto max-h-7 max-w-full object-contain sm:max-h-9 lg:max-h-12',
+                      isScrolled && 'max-h-5 sm:max-h-8',
+                    )}
+                  />
+                ) : (
+                  <span className="block truncate">{brandText}</span>
+                )}
               </Link>
             </div>
 
             {/* Right Actions: Socials + Search + Cart + Auth + Lang (Icon Only) */}
-            <div className="flex items-center justify-end gap-2.5 sm:gap-4 lg:gap-5">
+            <div className="flex shrink-0 items-center justify-end gap-2 xs:gap-2.5 sm:gap-4 lg:gap-5 lg:min-w-[220px]">
               {/* Desktop Socials */}
               <div className="mr-1 hidden items-center gap-4 lg:flex">
                 {socialLinks?.instagramUsername && (
@@ -692,7 +708,7 @@ export function Header() {
                 <div className="relative flex items-center justify-center">
                   <ShoppingBag className="h-5 w-5 lg:h-6 lg:w-6 shrink-0" />
                   {isAuthenticated && cartCount > 0 && (
-                    <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#4A4238] px-1 font-mono text-[9px] font-bold leading-none text-white shadow-xs animate-in zoom-in-50 duration-200">
+                    <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#4A4238] px-1 font-mono text-[9px] font-light leading-none text-white shadow-xs animate-in zoom-in-50 duration-200">
                       {cartCount > 99 ? '99+' : cartCount}
                     </span>
                   )}
@@ -712,7 +728,7 @@ export function Header() {
                   </Link>
                   <button
                     onClick={customerLogout}
-                    className="hidden text-[9px] uppercase tracking-wider text-foreground/40 hover:text-foreground shrink-0 sm:inline"
+                    className="hidden text-[9px] uppercase tracking-wider text-foreground/40 hover:text-foreground shrink-0 sm:inline font-thin"
                     title="Đăng xuất"
                   >
                     (Thoát)
@@ -732,7 +748,7 @@ export function Header() {
               {/* Language Switch */}
               <Link
                 href={newPath}
-                className="p-1 text-xs font-bold uppercase leading-none tracking-widest transition-opacity hover:opacity-60 lg:text-sm shrink-0"
+                className="p-1 text-xs font-light uppercase leading-none tracking-widest transition-opacity hover:opacity-60 lg:text-sm shrink-0"
                 aria-label={locale === 'vi' ? 'Switch to English' : 'Chuyển sang Tiếng Việt'}
               >
                 {switchLocale}
@@ -775,11 +791,11 @@ export function Header() {
                         className="relative mb-8 rounded-xl border border-foreground/10 bg-white px-4 py-3 shadow-sm transition-all duration-300 focus-within:border-foreground/30 focus-within:shadow-[0_10px_26px_rgba(0,0,0,0.08)] md:px-5"
                       >
                         <div className="mb-2 flex items-center justify-between">
-                          <p className="text-[9px] font-bold uppercase tracking-[0.3em] text-foreground/35">
+                          <p className="text-[9px] font-light uppercase tracking-[0.3em] text-foreground/35">
                             {locale === 'vi' ? 'Tìm Kiếm Nhanh' : 'Quick Search'}
                           </p>
                           <div className="flex items-center gap-2">
-                            <p className="text-[9px] uppercase tracking-[0.22em] text-foreground/30">
+                            <p className="text-[9px] uppercase tracking-[0.22em] text-foreground/30 font-thin">
                               {hasQuery
                                 ? `${foundSuggestions.length} ${locale === 'vi' ? 'kết quả' : 'results'}`
                                 : 'ENTER'}
@@ -787,7 +803,7 @@ export function Header() {
                             <button
                               type="button"
                               onClick={closeSearchPanel}
-                              className="inline-flex items-center gap-1 rounded-full border border-foreground/15 px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.16em] text-foreground/55 transition-all hover:border-foreground/35 hover:text-foreground"
+                              className="inline-flex items-center gap-1 rounded-full border border-foreground/15 px-2 py-1 text-[9px] font-light uppercase tracking-[0.16em] text-foreground/55 transition-all hover:border-foreground/35 hover:text-foreground"
                             >
                               <X className="h-3 w-3" />
                               {t('close')}
@@ -806,7 +822,7 @@ export function Header() {
                                 ? 'Nhập tên sản phẩm, chất liệu...'
                                 : 'Type product name, material...'
                             }
-                            className="w-full bg-transparent py-1.5 font-sans text-base font-semibold tracking-[0.01em] text-foreground placeholder:text-foreground/35 focus:outline-none md:text-lg"
+                            className="w-full bg-transparent py-1.5 font-sans text-base font-light tracking-[0.01em] text-foreground placeholder:text-foreground/35 focus:outline-none md:text-lg"
                             autoFocus
                             aria-label={locale === 'vi' ? 'Nhập nội dung tìm kiếm' : 'Search query'}
                           />
@@ -814,7 +830,7 @@ export function Header() {
                         {isSearching && searchQuery && globalLoadingText && (
                           <div className="absolute right-4 top-1/2 -translate-y-1/2">
                             <span
-                              className="animate-pulse text-[10px] font-bold uppercase tracking-[0.25em] text-foreground/40"
+                              className="animate-pulse text-[10px] font-light uppercase tracking-[0.25em] text-foreground/40"
                               suppressHydrationWarning
                             >
                               {globalLoadingText}
@@ -831,7 +847,7 @@ export function Header() {
                               animate={{ opacity: 1 }}
                               className="mb-6 rounded-xl border border-foreground/10 bg-[linear-gradient(120deg,rgba(255,255,255,0.95)_0%,rgba(244,237,224,0.95)_100%)] p-4 shadow-sm"
                             >
-                              <p className="mb-3 text-[9px] font-bold uppercase tracking-[0.28em] text-foreground/40">
+                              <p className="mb-3 text-[9px] font-light uppercase tracking-[0.28em] text-foreground/40">
                                 {locale === 'vi' ? 'Trending Searches' : 'Trending Searches'}
                               </p>
                               <div className="flex flex-wrap gap-2.5">
@@ -840,7 +856,7 @@ export function Header() {
                                     key={term}
                                     type="button"
                                     onClick={() => setSearchQuery(term)}
-                                    className="rounded-full border border-foreground/15 bg-white/80 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground/70 transition-all hover:-translate-y-0.5 hover:border-foreground/35 hover:text-foreground"
+                                    className="rounded-full border border-foreground/15 bg-white/80 px-3 py-1.5 text-[10px] font-light uppercase tracking-[0.12em] text-foreground/70 transition-all hover:-translate-y-0.5 hover:border-foreground/35 hover:text-foreground"
                                   >
                                     {term}
                                   </button>
@@ -857,7 +873,7 @@ export function Header() {
                               className="mb-6 rounded-xl border border-foreground/10 bg-white/90 p-4 shadow-sm"
                             >
                               <div className="mb-3 flex items-center justify-between gap-2">
-                                <p className="text-[9px] font-bold uppercase tracking-[0.28em] text-foreground/40">
+                                <p className="text-[9px] font-light uppercase tracking-[0.28em] text-foreground/40">
                                   {locale === 'vi' ? 'Recent Searches' : 'Recent Searches'}
                                 </p>
                                 <button
@@ -870,7 +886,7 @@ export function Header() {
                                       } catch {}
                                     }
                                   }}
-                                  className="border-foreground/12 rounded-full border px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-foreground/45 transition-colors hover:border-foreground/30 hover:text-foreground"
+                                  className="border-foreground/12 rounded-full border px-2 py-1 text-[9px] font-thin uppercase tracking-[0.14em] text-foreground/45 transition-colors hover:border-foreground/30 hover:text-foreground"
                                 >
                                   {locale === 'vi' ? 'Xóa' : 'Clear'}
                                 </button>
@@ -881,7 +897,7 @@ export function Header() {
                                     key={`recent-${term}`}
                                     type="button"
                                     onClick={() => setSearchQuery(term)}
-                                    className="rounded-full border border-foreground/15 bg-stone-50 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground/70 transition-all hover:-translate-y-0.5 hover:border-foreground/35 hover:text-foreground"
+                                    className="rounded-full border border-foreground/15 bg-stone-50 px-3 py-1.5 text-[10px] font-light uppercase tracking-[0.12em] text-foreground/70 transition-all hover:-translate-y-0.5 hover:border-foreground/35 hover:text-foreground"
                                   >
                                     {term}
                                   </button>
@@ -893,10 +909,10 @@ export function Header() {
                           {hasQuery && (
                             <>
                               <div className="mb-5 flex items-center justify-between gap-3">
-                                <h4 className="text-[9px] font-bold uppercase tracking-[0.34em] text-foreground/35">
+                                <h4 className="text-[9px] font-light uppercase tracking-[0.34em] text-foreground/35">
                                   {locale === 'vi' ? 'KẾT QUẢ TÌM ĐƯỢC' : 'FOUND RESULTS'}
                                 </h4>
-                                <span className="rounded-full border border-foreground/15 bg-white/80 px-3 py-1 text-[9px] font-semibold uppercase tracking-[0.2em] text-foreground/40">
+                                <span className="rounded-full border border-foreground/15 bg-white/80 px-3 py-1 text-[9px] font-thin uppercase tracking-[0.2em] text-foreground/40">
                                   {foundSuggestions.length}
                                 </span>
                               </div>
@@ -956,7 +972,7 @@ export function Header() {
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
                                     exit={{ opacity: 0 }}
-                                    className="mb-8 rounded-lg border border-dashed border-foreground/15 bg-white/70 px-4 py-4 text-xs uppercase tracking-[0.16em] text-foreground/45"
+                                    className="mb-8 rounded-lg border border-dashed border-foreground/15 bg-white/70 px-4 py-4 text-xs font-thin uppercase tracking-[0.16em] text-foreground/45"
                                   >
                                     {locale === 'vi'
                                       ? 'Không tìm thấy kết quả phù hợp.'
@@ -968,11 +984,11 @@ export function Header() {
                           )}
 
                           <div className="mb-5 flex items-center justify-between gap-3 border-t border-foreground/10 pt-5">
-                            <h4 className="text-[9px] font-bold uppercase tracking-[0.34em] text-foreground/35">
+                            <h4 className="text-[9px] font-light uppercase tracking-[0.34em] text-foreground/35">
                               {locale === 'vi' ? 'GỢI Ý' : 'SUGGESTED'}
                             </h4>
                             {hasQuery && (
-                              <span className="rounded-full border border-foreground/15 bg-white/80 px-3 py-1 text-[9px] font-semibold uppercase tracking-[0.2em] text-foreground/40">
+                              <span className="rounded-full border border-foreground/15 bg-white/80 px-3 py-1 text-[9px] font-thin uppercase tracking-[0.2em] text-foreground/40">
                                 {locale === 'vi' ? 'Đề xuất thêm' : 'More to explore'}
                               </span>
                             )}
@@ -1027,13 +1043,13 @@ export function Header() {
                               )}
                             </AnimatePresence>
                           ) : (
-                            <p className="rounded-lg border border-dashed border-foreground/15 bg-white/70 px-4 py-4 text-xs uppercase tracking-[0.16em] text-foreground/45">
+                            <p className="rounded-lg border border-dashed border-foreground/15 bg-white/70 px-4 py-4 text-xs font-thin uppercase tracking-[0.16em] text-foreground/45">
                               {locale === 'vi' ? 'Chưa có gợi ý phù hợp.' : 'No suggestions yet.'}
                             </p>
                           )}
                         </div>
                         <div className="space-y-5">
-                          <h4 className="mb-5 text-[9px] font-bold uppercase tracking-[0.34em] text-foreground/35">
+                          <h4 className="mb-5 text-[9px] font-light uppercase tracking-[0.34em] text-foreground/35">
                             CATEGORIES
                           </h4>
                           <motion.nav
@@ -1048,7 +1064,7 @@ export function Header() {
                                   <Link
                                     href={`/${locale}/shop?categoryId=${cat.id}`}
                                     onClick={closeSearchPanel}
-                                    className="border-foreground/12 block rounded-full border bg-white px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] transition-all hover:border-foreground/35 hover:bg-foreground hover:text-white md:w-fit"
+                                    className="border-foreground/12 block rounded-full border bg-white px-3 py-1.5 text-[10px] font-light uppercase tracking-[0.12em] transition-all hover:border-foreground/35 hover:bg-foreground hover:text-white md:w-fit"
                                   >
                                     {locale === 'vi' ? cat.nameVi : cat.nameEn}
                                   </Link>
@@ -1103,7 +1119,8 @@ export function Header() {
                               href={item.href}
                               title={item.name}
                               onClick={closeMobileMenu}
-                              className="block text-3xl font-bold uppercase tracking-tighter transition-colors hover:text-primary"
+                              className="block text-2xl sm:text-3xl font-light uppercase tracking-wider transition-colors hover:text-primary"
+                              suppressHydrationWarning
                             >
                               {item.name}
                             </Link>
@@ -1111,7 +1128,41 @@ export function Header() {
                         ))}
                       </motion.ul>
                     </nav>
-                    <div className="space-y-8">
+                    <div className="space-y-6">
+                      <div className="border-t border-foreground/10 pt-6">
+                        {isAuthenticated ? (
+                          <div className="flex flex-col gap-2">
+                            <Link
+                              href={`/${locale}/my-orders`}
+                              onClick={closeMobileMenu}
+                              className="flex items-center gap-2.5 text-sm font-light uppercase tracking-wider text-foreground transition-colors hover:text-[#8C7E6A]"
+                            >
+                              <UserIcon className="h-4 w-4" />
+                              <span>{customer?.fullName || (locale === 'vi' ? 'Đơn hàng của tôi' : 'My Orders')}</span>
+                            </Link>
+                            <button
+                              onClick={() => {
+                                customerLogout()
+                                closeMobileMenu()
+                              }}
+                              className="self-start text-[10px] font-thin uppercase tracking-wider text-foreground/45 transition-colors hover:text-foreground"
+                            >
+                              {locale === 'vi' ? '(Đăng xuất)' : '(Logout)'}
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              closeMobileMenu()
+                              openAuthModal(locale === 'vi' ? 'Đăng nhập tài khoản khách hàng' : 'Login to customer account')
+                            }}
+                            className="flex items-center gap-2.5 text-sm font-light uppercase tracking-wider text-foreground transition-colors hover:text-[#8C7E6A]"
+                          >
+                            <UserIcon className="h-4 w-4" />
+                            <span>{locale === 'vi' ? 'Đăng nhập / Đăng ký' : 'Login / Register'}</span>
+                          </button>
+                        )}
+                      </div>
                       <div className="flex gap-6 text-foreground/40">
                         {socialLinks?.instagramUsername && (
                           <a
@@ -1134,7 +1185,7 @@ export function Header() {
                           </a>
                         )}
                       </div>
-                      <p className="text-[8px] font-bold uppercase tracking-[0.4em] text-foreground/20">
+                      <p className="text-[8px] font-thin uppercase tracking-[0.4em] text-foreground/20">
                         Saigon / Vietnam
                       </p>
                     </div>

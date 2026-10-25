@@ -175,10 +175,10 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 <ShoppingBag className="w-4 h-4" />
               </div>
               <div>
-                <h2 className="font-serif text-sm uppercase tracking-[0.2em] font-bold text-[#4A4238] truncate">
+                <h2 className="font-serif text-sm uppercase tracking-[0.2em] font-light text-[#4A4238] truncate">
                   Giỏ hàng của bạn
                 </h2>
-                <p className="text-[10px] text-stone-400 font-mono tracking-wider">
+                <p className="text-[10px] text-stone-400 font-mono tracking-wider font-thin">
                   {items.length} loại sản phẩm • Tổng {totalQuantity} món
                 </p>
               </div>
@@ -194,11 +194,11 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
           {/* Select all bar (chỉ hiển thị khi có sản phẩm) */}
           {items.length > 0 && (
-            <div className="px-6 py-2.5 bg-stone-50 border-b border-stone-200 flex items-center justify-between text-xs">
+            <div className="px-6 py-2.5 bg-stone-50 border-b border-stone-200 flex items-center justify-between text-xs font-thin">
               <button
                 type="button"
                 onClick={toggleSelectAll}
-                className="flex items-center gap-2 text-stone-700 hover:text-[#4A4238] font-medium transition-colors"
+                className="flex items-center gap-2 text-stone-700 hover:text-[#4A4238] font-light transition-colors"
               >
                 {selectedItemIds.length === items.length && items.length > 0 ? (
                   <CheckSquare className="w-4 h-4 text-[#8C7E6A]" />
@@ -208,7 +208,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 <span>Chọn tất cả ({items.length})</span>
               </button>
 
-              <span className="text-[11px] text-[#8C7E6A] font-medium font-mono">
+              <span className="text-[11px] text-[#8C7E6A] font-light font-mono">
                 Đã chọn: {selectedItemIds.length}/{items.length}
               </span>
             </div>
@@ -285,10 +285,10 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                     {/* Thông tin sản phẩm */}
                     <div className="flex-1 min-w-0 flex flex-col justify-between">
                       <div>
-                        <h4 className="text-xs font-medium text-[#4A4238] truncate" title={item.product?.nameVi}>
+                        <h4 className="text-xs font-light text-[#4A4238] truncate" title={item.product?.nameVi}>
                           {item.product?.nameVi}
                         </h4>
-                        <p className="font-mono text-xs font-semibold text-[#8C7E6A] mt-0.5">
+                        <p className="font-mono text-xs font-light text-[#8C7E6A] mt-0.5">
                           {Number(item.priceVND).toLocaleString('vi-VN')} ₫
                         </p>
                       </div>
@@ -303,7 +303,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                           >
                             <Minus className="w-3 h-3" />
                           </button>
-                          <span className="font-mono text-xs px-2 min-w-[24px] text-center font-medium">
+                          <span className="font-mono text-xs px-2 min-w-[24px] text-center font-light">
                             {item.quantity}
                           </span>
                           <button
@@ -336,14 +336,14 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
             <div className="p-6 border-t border-stone-200 bg-white space-y-4">
               <div className="flex justify-between items-baseline text-xs">
                 <div className="flex flex-col">
-                  <span className="uppercase tracking-wider text-stone-500 font-medium">
+                  <span className="uppercase tracking-wider text-stone-500 font-thin">
                     Tổng tiền tạm tính
                   </span>
-                  <span className="text-[10px] text-stone-400">
+                  <span className="text-[10px] text-stone-400 font-thin">
                     ({selectedItemIds.length} sản phẩm được chọn)
                   </span>
                 </div>
-                <span className="font-mono text-base font-semibold text-[#8C7E6A]">
+                <span className="font-mono text-base font-light text-[#8C7E6A]">
                   {subtotal.toLocaleString('vi-VN')} ₫
                 </span>
               </div>
@@ -352,7 +352,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 <Link
                   href={checkoutHref}
                   onClick={onClose}
-                  className="w-full py-3.5 px-4 bg-[#4A4238] text-white hover:bg-[#8C7E6A] transition-colors uppercase tracking-[0.25em] text-xs font-medium text-center shadow-sm flex items-center justify-center gap-2"
+                  className="w-full py-3.5 px-4 bg-[#4A4238] text-white hover:bg-[#8C7E6A] transition-colors uppercase tracking-[0.25em] text-xs font-light text-center shadow-sm flex items-center justify-center gap-2"
                 >
                   <span>Tiến hành đặt hàng ({selectedItemIds.length})</span>
                   <ArrowRight className="w-4 h-4" />
@@ -361,7 +361,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 <button
                   type="button"
                   disabled
-                  className="w-full py-3.5 px-4 bg-stone-300 text-stone-500 cursor-not-allowed uppercase tracking-[0.25em] text-xs font-medium text-center flex items-center justify-center gap-2"
+                  className="w-full py-3.5 px-4 bg-stone-300 text-stone-500 cursor-not-allowed uppercase tracking-[0.25em] text-xs font-light text-center flex items-center justify-center gap-2"
                 >
                   <span>Vui lòng chọn sản phẩm</span>
                 </button>
