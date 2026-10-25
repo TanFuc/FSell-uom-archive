@@ -335,13 +335,13 @@ function CheckoutContent() {
                           )}
                         </div>
                         <div className="min-w-0 pr-2">
-                          <p className="font-light text-[#4A4238] truncate" title={item.product?.nameVi}>
+                          <p className="font-sans font-semibold text-xs text-[#4A4238] truncate" title={item.product?.nameVi}>
                             {item.product?.nameVi}
                           </p>
                           <p className="text-stone-400 text-[11px] mt-0.5 font-thin">SL: {item.quantity}</p>
                         </div>
                       </div>
-                      <div className="font-mono text-stone-800 font-light shrink-0 whitespace-nowrap text-right pl-2">
+                      <div className="font-sans font-semibold text-xs text-stone-800 shrink-0 whitespace-nowrap text-right pl-2">
                         {(item.priceVND * item.quantity).toLocaleString('vi-VN')} ₫
                       </div>
                     </div>
@@ -352,7 +352,7 @@ function CheckoutContent() {
               <div className="border-t border-stone-200 pt-4 mt-4 space-y-2 text-xs font-thin">
                 <div className="flex justify-between text-stone-500">
                   <span>Tạm tính</span>
-                  <span className="font-mono text-stone-700">{totalAmount.toLocaleString('vi-VN')} ₫</span>
+                  <span className="font-sans font-medium text-stone-700">{totalAmount.toLocaleString('vi-VN')} ₫</span>
                 </div>
                 <div className="flex justify-between text-stone-500">
                   <span>Phí vận chuyển</span>
@@ -360,7 +360,7 @@ function CheckoutContent() {
                 </div>
                 <div className="border-t border-stone-200 pt-3 flex justify-between items-baseline font-medium text-sm">
                   <span className="uppercase tracking-wider font-serif">Tổng cộng</span>
-                  <span className="font-mono text-lg font-semibold text-[#8C7E6A]">
+                  <span className="font-sans text-lg sm:text-xl font-bold text-[#8C7E6A]">
                     {totalAmount.toLocaleString('vi-VN')} ₫
                   </span>
                 </div>

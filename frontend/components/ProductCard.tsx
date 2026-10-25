@@ -167,9 +167,9 @@ export function ProductCard({ product, locale, priority }: ProductCardProps) {
           )}
         </button>
       </div>
-      <div className="mt-3 space-y-1">
+      <div className="mt-3 space-y-1.5">
         <h3
-          className="line-clamp-2 h-7 overflow-hidden text-ellipsis font-serif text-[10px] font-light leading-tight tracking-wide md:h-8 md:text-xs"
+          className="line-clamp-2 min-h-[2.5rem] overflow-hidden text-ellipsis font-sans text-xs sm:text-sm font-semibold leading-snug tracking-normal text-[#4A4238] transition-colors group-hover:text-[#8C7E6A]"
           title={name}
         >
           {name}
@@ -177,14 +177,14 @@ export function ProductCard({ product, locale, priority }: ProductCardProps) {
         <div className="flex flex-wrap items-center gap-2">
           <p
             className={cn(
-              'font-serif text-[11px] sm:text-xs md:text-sm font-medium tracking-wide',
-              priceDisplay.hasDiscount ? 'text-[#991b1b] font-semibold' : 'text-[#4A4238]',
+              'font-sans text-xs sm:text-sm md:text-base font-semibold tracking-tight',
+              priceDisplay.hasDiscount ? 'text-[#991b1b]' : 'text-[#4A4238]',
             )}
           >
             {priceDisplay.currentPrice}
           </p>
           {priceDisplay.hasDiscount && priceDisplay.originalPrice && (
-            <p className="text-[8px] font-thin text-muted-foreground/50 line-through md:text-[10px]">
+            <p className="font-sans text-[10px] md:text-xs font-normal text-muted-foreground/60 line-through">
               {priceDisplay.originalPrice}
             </p>
           )}

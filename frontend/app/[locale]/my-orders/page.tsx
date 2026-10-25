@@ -121,14 +121,14 @@ export default function MyOrdersPage() {
                 </div>
 
                 <div className="space-y-1.5 text-xs text-stone-600">
-                  <p className="line-clamp-1 font-light text-[#4A4238]">
+                  <p className="line-clamp-1 font-sans font-medium text-[#4A4238]">
                     {order.items?.map((i: any) => `${i.productTitle} (x${i.quantity})`).join(', ')}
                   </p>
                   <div className="flex justify-between items-center pt-2">
                     <span className="text-[11px] text-stone-400 font-thin">
                       Tổng số {order.items?.length || 0} sản phẩm
                     </span>
-                    <span className="font-mono text-sm font-semibold text-[#8C7E6A]">
+                    <span className="font-sans text-sm sm:text-base font-bold text-[#8C7E6A]">
                       {Number(order.totalVND).toLocaleString('vi-VN')} ₫
                     </span>
                   </div>

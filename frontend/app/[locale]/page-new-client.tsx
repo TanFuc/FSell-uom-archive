@@ -60,11 +60,11 @@ export default function PageNewClient() {
                     )}
                   </div>
                   <div className="space-y-1.5">
-                    <h3 className="line-clamp-2 min-h-[2.5rem] text-sm font-medium leading-tight transition-all group-hover:italic">
+                    <h3 className="line-clamp-2 min-h-[2.5rem] font-sans text-xs sm:text-sm font-semibold leading-snug tracking-normal text-[#4A4238] transition-colors group-hover:text-[#8C7E6A]">
                       {locale === 'vi' ? product.nameVi : product.nameEn}
                     </h3>
-                    <p className="text-sm font-light text-muted-foreground">
-                      {product.priceVND.toLocaleString('vi-VN')}₫
+                    <p className="font-sans text-xs sm:text-sm md:text-base font-semibold tracking-tight text-[#4A4238]">
+                      {product.priceVND.toLocaleString('vi-VN')} ₫
                     </p>
                   </div>
                 </Link>

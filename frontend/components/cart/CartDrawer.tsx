@@ -285,10 +285,10 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                     {/* Thông tin sản phẩm */}
                     <div className="flex-1 min-w-0 flex flex-col justify-between">
                       <div>
-                        <h4 className="text-xs font-medium text-[#4A4238] truncate" title={item.product?.nameVi}>
+                        <h4 className="font-sans text-xs sm:text-sm font-semibold text-[#4A4238] truncate" title={item.product?.nameVi}>
                           {item.product?.nameVi}
                         </h4>
-                        <p className="font-mono text-xs font-medium text-[#8C7E6A] mt-0.5">
+                        <p className="font-sans text-xs sm:text-sm font-semibold text-[#8C7E6A] mt-0.5">
                           {Number(item.priceVND).toLocaleString('vi-VN')} ₫
                         </p>
                       </div>
@@ -343,7 +343,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                     ({selectedItemIds.length} sản phẩm được chọn)
                   </span>
                 </div>
-                <span className="font-mono text-base font-semibold text-[#8C7E6A]">
+                <span className="font-sans text-base sm:text-lg font-bold text-[#8C7E6A]">
                   {subtotal.toLocaleString('vi-VN')} ₫
                 </span>
               </div>

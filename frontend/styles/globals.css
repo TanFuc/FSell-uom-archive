@@ -221,15 +221,18 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
-    min-height: 3rem; /* Larger height for bigger text */
-    line-height: 1.5rem;
+    min-height: 2.75rem;
+    line-height: 1.375rem;
+    font-family: var(--font-montserrat), sans-serif;
+    font-weight: 600;
   }
 
   .product-price {
+    font-family: var(--font-montserrat), sans-serif;
     font-variant-numeric: tabular-nums;
-    letter-spacing: 0.01em;
-    font-size: 1.125rem; /* 18px - larger price text */
-    font-weight: 500;
+    letter-spacing: -0.01em;
+    font-size: 1.125rem;
+    font-weight: 600;
   }
 
   .aspect-hero {

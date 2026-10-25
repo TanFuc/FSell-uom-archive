@@ -57,7 +57,8 @@ const config: Config = {
       },
       fontFamily: {
         serif: ['var(--font-arizona)', 'serif'],
-        sans: ['var(--font-arizona)', 'serif'],
+        sans: ['var(--font-montserrat)', 'sans-serif'],
+        montserrat: ['var(--font-montserrat)', 'sans-serif'],
         arizona: ['var(--font-arizona)', 'serif'],
         playfair: ['var(--font-arizona)', 'serif'],
         admin: ['var(--font-montserrat)', 'sans-serif'],

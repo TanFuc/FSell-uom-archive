@@ -101,13 +101,13 @@ const SearchResultItem = memo(
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/15 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
         </div>
         <div className="space-y-1">
-          <p className="line-clamp-2 min-h-[2.15rem] text-[9px] font-light uppercase leading-tight tracking-[0.13em] text-foreground/90">
+          <p className="line-clamp-2 min-h-[2.15rem] font-sans text-xs font-semibold leading-tight text-[#4A4238] transition-colors group-hover:text-[#8C7E6A]">
             <HighlightedText
               text={locale === 'vi' ? product.nameVi : product.nameEn}
               query={query}
             />
           </p>
-          <p className="text-[8px] font-thin uppercase tracking-[0.16em] text-foreground/45">
+          <p className="font-sans text-xs font-semibold tracking-tight text-[#8C7E6A]">
             {getDisplayPrice(product, locale, exchangeRate).currentPrice}
           </p>
         </div>

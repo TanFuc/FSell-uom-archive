@@ -354,13 +354,13 @@ export default function OrderTrackingDetailPage() {
                     )}
                   </div>
                   <div className="min-w-0">
-                    <p className="font-medium text-[#4A4238] truncate">{item.productTitle}</p>
+                    <p className="font-sans font-semibold text-xs sm:text-sm text-[#4A4238] truncate">{item.productTitle}</p>
                     <p className="text-stone-400 font-thin text-[11px] mt-0.5">Số lượng: {item.quantity}</p>
                   </div>
                 </div>
 
                 <div className="text-right shrink-0">
-                  <div className="font-mono text-[#4A4238] font-medium text-xs sm:text-sm">
+                  <div className="font-sans text-[#4A4238] font-semibold text-xs sm:text-sm">
                     {(item.priceVND * item.quantity).toLocaleString('vi-VN')} ₫
                   </div>
                 </div>
@@ -372,7 +372,7 @@ export default function OrderTrackingDetailPage() {
             <span className="text-xs uppercase tracking-wider text-stone-500 font-light">
               Tổng thanh toán
             </span>
-            <span className="font-mono text-base sm:text-lg font-semibold text-[#8C7E6A]">
+            <span className="font-sans text-base sm:text-lg font-bold text-[#8C7E6A]">
               {Number(order.totalVND).toLocaleString('vi-VN')} ₫
             </span>
           </div>

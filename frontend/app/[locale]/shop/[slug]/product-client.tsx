@@ -526,26 +526,26 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
               <div className="md:sticky md:top-24 md:self-start lg:top-28">
                 <div className="w-full space-y-6 pb-12 pt-6 md:space-y-8 md:pb-0 md:pt-0">
                   {/* Info Header */}
-                  <div className="space-y-2">
-                    <h1 className="text-mobile-safe font-sans text-sm font-light leading-tight tracking-[0.08em] text-foreground sm:text-base sm:tracking-[0.1em]">
+                  <div className="space-y-3">
+                    <h1 className="text-mobile-safe font-sans text-xl sm:text-2xl md:text-3xl font-semibold leading-tight tracking-tight text-[#4A4238]">
                       {name}
                     </h1>
-                    <div className="flex flex-wrap items-center gap-2.5">
+                    <div className="flex flex-wrap items-baseline gap-3">
                       <p
                         className={cn(
-                          'font-sans text-sm sm:text-base font-medium tracking-[0.05em]',
-                          priceDisplay.hasDiscount ? 'text-[#991b1b] font-semibold' : 'text-foreground',
+                          'font-sans text-xl sm:text-2xl md:text-3xl font-bold tracking-tight',
+                          priceDisplay.hasDiscount ? 'text-[#991b1b]' : 'text-[#4A4238]',
                         )}
                       >
                         {priceDisplay.currentPrice}
                       </p>
                       {priceDisplay.hasDiscount && priceDisplay.originalPrice && (
                         <>
-                          <p className="text-xs font-thin text-foreground/40 line-through">
+                          <p className="font-sans text-sm sm:text-base font-normal text-muted-foreground/60 line-through">
                             {priceDisplay.originalPrice}
                           </p>
                           {priceDisplay.discountPercentage && (
-                            <span className="rounded-sm bg-[#991b1b]/10 px-1.5 py-0.5 text-[9px] font-medium tracking-wide text-[#991b1b]">
+                            <span className="rounded-xs bg-[#991b1b] px-2 py-0.5 font-sans text-xs font-semibold tracking-wide text-white">
                               −{priceDisplay.discountPercentage}%
                             </span>
                           )}
