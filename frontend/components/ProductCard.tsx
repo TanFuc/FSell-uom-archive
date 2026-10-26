@@ -169,7 +169,7 @@ export function ProductCard({ product, locale, priority }: ProductCardProps) {
       </div>
       <div className="mt-3 space-y-1.5">
         <h3
-          className="line-clamp-2 min-h-[2.5rem] overflow-hidden text-ellipsis font-sans text-xs sm:text-sm font-semibold leading-snug tracking-normal text-[#4A4238] transition-colors group-hover:text-[#8C7E6A]"
+          className="line-clamp-2 min-h-[2.5rem] overflow-hidden text-ellipsis font-serif text-sm sm:text-[15px] font-normal leading-snug tracking-normal text-[#4A4238] transition-colors group-hover:text-[#8C7E6A]"
           title={name}
         >
           {name}
@@ -177,14 +177,14 @@ export function ProductCard({ product, locale, priority }: ProductCardProps) {
         <div className="flex flex-wrap items-center gap-2">
           <p
             className={cn(
-              'font-sans text-xs sm:text-sm md:text-base font-semibold tracking-tight',
+              'font-serif text-sm sm:text-base font-normal tracking-tight',
               priceDisplay.hasDiscount ? 'text-[#991b1b]' : 'text-[#4A4238]',
             )}
           >
             {priceDisplay.currentPrice}
           </p>
           {priceDisplay.hasDiscount && priceDisplay.originalPrice && (
-            <p className="font-sans text-[10px] md:text-xs font-normal text-muted-foreground/60 line-through">
+            <p className="font-serif text-xs font-thin text-muted-foreground/60 line-through">
               {priceDisplay.originalPrice}
             </p>
           )}

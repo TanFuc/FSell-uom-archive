@@ -328,11 +328,11 @@ export function ProductStorefrontPreview({
 
             {/* Price section */}
             <div className="flex items-baseline gap-3 pt-1">
-              <span className="font-sans text-xl sm:text-2xl font-bold text-[#2C2620]">
+              <span className="font-serif text-xl sm:text-2xl font-normal text-[#2C2620]">
                 {displayPrice}
               </span>
               {originalPrice && (
-                <span className="font-sans text-sm text-stone-400 line-through">
+                <span className="font-serif text-sm text-stone-400 line-through">
                   {originalPrice}
                 </span>
               )}

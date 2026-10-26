@@ -301,7 +301,7 @@ export default function HomeClient({
             <h2 className="text-mobile-safe text-[8px] font-light uppercase tracking-[0.28em] text-foreground/40 sm:tracking-[0.4em]">
               {sectionText('products', 'title')}
             </h2>
-            <p className="text-mobile-safe font-sans text-lg sm:text-xl font-semibold uppercase tracking-[0.08em] sm:tracking-[0.1em] text-[#4A4238]">
+            <p className="text-mobile-safe font-serif text-lg sm:text-xl font-normal uppercase tracking-[0.08em] sm:tracking-[0.1em] text-[#4A4238]">
               {sectionText('products', 'subtitle')}
             </p>
           </div>
@@ -368,7 +368,7 @@ export default function HomeClient({
             <h2 className="text-mobile-safe text-[9px] font-light uppercase tracking-[0.28em] text-foreground/40 sm:tracking-[0.35em] md:text-[10px]">
               {sectionText('journal', 'title')}
             </h2>
-            <p className="text-mobile-safe font-sans text-lg sm:text-xl font-semibold uppercase tracking-[0.08em] md:tracking-[0.1em] text-[#4A4238]">
+            <p className="text-mobile-safe font-serif text-lg sm:text-xl font-normal uppercase tracking-[0.08em] md:tracking-[0.1em] text-[#4A4238]">
               {sectionText('journal', 'subtitle')}
             </p>
           </div>
@@ -482,7 +482,7 @@ export default function HomeClient({
               <h2 className="text-mobile-safe text-[9px] font-light uppercase tracking-[0.28em] text-foreground/40 sm:tracking-[0.35em] md:text-[10px]">
                 {sectionText('explore', 'title')}
               </h2>
-              <p className="text-mobile-safe font-sans text-lg sm:text-xl font-semibold uppercase tracking-[0.08em] md:tracking-[0.1em] text-[#4A4238]">
+              <p className="text-mobile-safe font-serif text-lg sm:text-xl font-normal uppercase tracking-[0.08em] md:tracking-[0.1em] text-[#4A4238]">
                 {sectionText('explore', 'subtitle')}
               </p>
             </div>
@@ -496,7 +496,7 @@ export default function HomeClient({
                   href={item.href}
                   className="group block rounded-md border border-foreground/10 bg-white p-5 transition duration-300 hover:-translate-y-1 hover:border-foreground/25 hover:shadow-sm"
                 >
-                  <span className="text-mobile-safe block font-sans text-xs sm:text-sm font-semibold uppercase tracking-[0.12em] text-[#4A4238]">
+                  <span className="text-mobile-safe block font-serif text-xs sm:text-sm font-normal uppercase tracking-[0.12em] text-[#4A4238]">
                     {item.title}
                   </span>
                   <span className="mt-3 block text-xs leading-relaxed text-foreground/60 font-thin">

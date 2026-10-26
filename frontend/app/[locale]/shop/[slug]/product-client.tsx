@@ -781,7 +781,7 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
             <h2 className="text-mobile-safe text-[8px] font-light uppercase tracking-[0.28em] text-foreground/40 sm:tracking-[0.4em]">
               {locale === 'vi' ? 'CÓ THỂ BẠN THÍCH' : 'YOU MAY ALSO LIKE'}
             </h2>
-            <p className="text-mobile-safe font-sans text-lg sm:text-xl font-semibold uppercase tracking-[0.08em] sm:tracking-[0.1em] text-[#4A4238]">
+            <p className="text-mobile-safe font-serif text-lg sm:text-xl font-normal uppercase tracking-[0.08em] sm:tracking-[0.1em] text-[#4A4238]">
               {locale === 'vi' ? 'Sản phẩm tương tự' : 'Related pieces'}
             </p>
           </div>
@@ -829,13 +829,13 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
 
       <section className="w-full bg-white px-4 pb-24 sm:px-6 lg:px-12">
         <div className="mx-auto max-w-4xl rounded-2xl border border-foreground/10 bg-foreground/[0.02] p-5 shadow-sm sm:p-8">
-          <h2 className="text-mobile-safe text-center font-sans text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] text-[#4A4238]">
+          <h2 className="text-mobile-safe text-center font-serif text-sm sm:text-base font-normal uppercase tracking-[0.15em] text-[#4A4238]">
             {faqTitle}
           </h2>
           <div className="mt-8 grid gap-6 md:grid-cols-2">
             {faqItems.map((item) => (
               <div key={item.question} className="space-y-3">
-                <h3 className="font-sans text-xs sm:text-sm font-semibold tracking-normal text-[#4A4238]">
+                <h3 className="font-serif text-sm sm:text-base font-normal tracking-normal text-[#4A4238]">
                   {item.question}
                 </h3>
                 <p className="text-xs leading-relaxed text-stone-600 font-thin">{item.answer}</p>
