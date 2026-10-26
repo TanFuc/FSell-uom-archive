@@ -1,7 +1,7 @@
 'use client'
 
 import { motion, AnimatePresence, useMotionValue, useSpring } from 'framer-motion'
-import { Instagram, Facebook, ArrowLeft, ChevronLeft, ChevronRight, ShoppingBag, Plus, Minus, ShieldCheck, PackageCheck, Sparkles, Truck, Award, Heart, RotateCcw, CheckCircle2 } from 'lucide-react'
+import { Instagram, Facebook, ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, ShoppingBag, Plus, Minus, ShieldCheck, PackageCheck, Sparkles, Truck, Award, Heart, RotateCcw, CheckCircle2 } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useLocale, useTranslations } from 'next-intl'
@@ -566,43 +566,47 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
 
                     {/* Structured Specifications Form / Card */}
                     {(product.material || product.dimensions || variants.groups.length > 0) && (
-                      <div className="rounded-sm border border-stone-200/90 bg-[#FBF9F5] p-4 space-y-3 shadow-2xs">
-                        <div className="flex items-center justify-between pb-2.5 border-b border-stone-200/70">
-                          <span className="font-sans text-xs font-semibold uppercase tracking-wider text-[#4A4238]">
-                            {locale === 'vi' ? 'Thông số chế tác' : 'Specifications'}
-                          </span>
-                          <span className="font-sans text-[10px] uppercase font-semibold text-[#8C7E6A] tracking-wider px-2 py-0.5 rounded-xs bg-[#8C7E6A]/10">
-                            {locale === 'vi' ? 'Thủ công độc bản' : 'Handcrafted'}
+                      <div className="relative overflow-hidden rounded-sm border border-[#E8E1D5] bg-gradient-to-b from-[#FCFAF7] to-[#F8F5EE] p-4 sm:p-5 shadow-[0_2px_12px_rgba(74,66,56,0.03)] space-y-3.5 before:absolute before:inset-x-0 before:top-0 before:h-[1.5px] before:bg-gradient-to-r before:from-transparent before:via-[#C2B6A3]/60 before:to-transparent">
+                        <div className="flex items-center justify-between pb-3 border-b border-[#ECE4D8]">
+                          <div className="flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#8C7E6A]" />
+                            <span className="font-serif text-xs sm:text-[13px] font-semibold uppercase tracking-[0.18em] text-[#3D332A]">
+                              {locale === 'vi' ? 'Thông số chế tác' : 'Craft Specifications'}
+                            </span>
+                          </div>
+                          <span className="inline-flex items-center gap-1.5 font-serif text-[10px] sm:text-[11px] uppercase font-medium text-[#7A6A55] tracking-[0.14em] px-2.5 py-0.5 rounded-full bg-white/80 border border-[#DCD3C5] shadow-xs">
+                            <Sparkles className="w-2.5 h-2.5 text-[#8C7E6A]" />
+                            {locale === 'vi' ? 'Thủ công độc bản' : 'Unique Handcraft'}
                           </span>
                         </div>
 
-                        <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2.5 text-xs">
+                        <dl className="divide-y divide-[#EFEAE2] text-xs sm:text-[13px]">
                           {product.material && (
-                            <div className="space-y-0.5">
-                              <dt className="font-sans text-[10px] uppercase tracking-wider text-stone-500 font-medium">
+                            <div className="py-2.5 first:pt-1 last:pb-1 flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-6">
+                              <dt className="w-24 sm:w-28 shrink-0 font-serif text-[11px] sm:text-xs uppercase tracking-[0.16em] text-[#8C7E6A] font-medium">
                                 {locale === 'vi' ? 'Chất liệu' : 'Material'}
                               </dt>
-                              <dd className="font-sans font-semibold text-xs sm:text-sm text-[#2C2620]">
+                              <dd className="font-serif font-normal text-xs sm:text-[13px] text-[#2C241D] leading-relaxed flex-1">
                                 {product.material}
                               </dd>
                             </div>
                           )}
                           {product.dimensions && (
-                            <div className="space-y-0.5">
-                              <dt className="font-sans text-[10px] uppercase tracking-wider text-stone-500 font-medium">
+                            <div className="py-2.5 first:pt-1 last:pb-1 flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-6">
+                              <dt className="w-24 sm:w-28 shrink-0 font-serif text-[11px] sm:text-xs uppercase tracking-[0.16em] text-[#8C7E6A] font-medium">
                                 {locale === 'vi' ? 'Kích thước' : 'Dimensions'}
                               </dt>
-                              <dd className="font-sans font-semibold text-xs sm:text-sm text-[#2C2620]">
+                              <dd className="font-serif font-normal text-xs sm:text-[13px] text-[#2C241D] leading-relaxed flex-1">
                                 {product.dimensions}
                               </dd>
                             </div>
                           )}
                           {variants.groups.map((group) => (
-                            <div key={group.label} className="space-y-0.5">
-                              <dt className="font-sans text-[10px] uppercase tracking-wider text-stone-500 font-medium">
+                            <div key={group.label} className="py-2.5 first:pt-1 last:pb-1 flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-6">
+                              <dt className="w-24 sm:w-28 shrink-0 font-serif text-[11px] sm:text-xs uppercase tracking-[0.16em] text-[#8C7E6A] font-medium">
                                 {group.label}
                               </dt>
-                              <dd className="font-sans font-semibold text-xs sm:text-sm text-[#2C2620]">
+                              <dd className="font-serif font-normal text-xs sm:text-[13px] text-[#2C241D] leading-relaxed flex-1">
                                 {group.values.join(', ')}
                               </dd>
                             </div>
@@ -614,28 +618,26 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                     {/* Detailed Description */}
                     {description && (
                       <div className="space-y-2 pt-1">
-                        <h4 className="font-sans text-xs font-semibold uppercase tracking-wider text-[#4A4238]">
+                        <h4 className="font-serif text-xs sm:text-[13px] font-semibold uppercase tracking-[0.18em] text-[#3D332A]">
                           {locale === 'vi' ? 'Mô tả tác phẩm' : 'About this piece'}
                         </h4>
                         <div
-                          className="prose prose-stone max-w-none overflow-hidden font-sans text-xs sm:text-sm font-normal leading-relaxed text-[#3A332C] [overflow-wrap:anywhere] [&_p]:leading-[1.75] [&_p]:mb-3 [&_strong]:font-semibold [&_strong]:text-[#2C2620] [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1.5 [&_li]:text-[#3A332C] [&_li]:leading-relaxed"
+                          className="prose prose-stone max-w-none overflow-hidden font-serif text-xs sm:text-sm font-normal leading-relaxed text-[#3A332C] [overflow-wrap:anywhere] [&_p]:leading-[1.75] [&_p]:mb-3 [&_strong]:font-semibold [&_strong]:text-[#2C2620] [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1.5 [&_li]:text-[#3A332C] [&_li]:leading-relaxed"
                           dangerouslySetInnerHTML={{ __html: description }}
                         />
                       </div>
                     )}
 
-                    <div className="flex flex-wrap gap-4 pt-1">
-                      <Link
-                        href={`/${locale}/journal`}
-                        className="font-sans text-xs font-semibold uppercase tracking-[0.15em] text-[#8C7E6A] underline decoration-[#8C7E6A]/30 underline-offset-8 transition hover:text-[#4A4238]"
-                      >
-                        {t('readJournal')}
-                      </Link>
+                    {/* Explore all products CTA */}
+                    <div className="pt-2">
                       <Link
                         href={`/${locale}/shop`}
-                        className="font-sans text-xs font-semibold uppercase tracking-[0.15em] text-[#8C7E6A] underline decoration-[#8C7E6A]/30 underline-offset-8 transition hover:text-[#4A4238]"
+                        className="group inline-flex items-center gap-2.5 font-serif text-xs sm:text-[13px] uppercase tracking-[0.18em] text-[#7A6A55] hover:text-[#2C241D] transition-all duration-300 py-1"
                       >
-                        {t('visitShop')}
+                        <span className="relative font-medium pb-0.5 border-b border-[#8C7E6A]/35 group-hover:border-[#2C241D] transition-colors duration-300">
+                          {t('viewAllProducts')}
+                        </span>
+                        <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1.5 text-[#8C7E6A] group-hover:text-[#2C241D]" />
                       </Link>
                     </div>
                   </div>
