@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "dotenv -- next dev",
+    "dev": "node --max-old-space-size=2048 ./node_modules/next/dist/bin/next dev",
     "prebuild": "node -e \"const fs=require('fs'); for (const dir of ['.next','public/_next']) { try { fs.rmSync(dir, { recursive:true, force:true, maxRetries:3, retryDelay:100 }) } catch(e) { } }\"",
     "build": "next build",
     "postbuild": "node scripts/prepare-standalone.mjs",

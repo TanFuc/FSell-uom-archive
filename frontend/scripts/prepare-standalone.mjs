@@ -69,7 +69,9 @@ if (!existsSync(serverSrc) || !existsSync(staticSrc)) {
 }
 
 copyDirIfNeeded(staticSrc, staticDest)
-copyDirIfNeeded(staticSrc, publicNextStaticDest)
+if (existsSync(publicNextStaticDest)) {
+  rmSync(path.join(publicSrc, '_next'), { recursive: true, force: true })
+}
 copyDirIfNeeded(publicSrc, publicDest)
 copyDirIfNeeded(staticSrc, standalonePublicNextStaticDest)
 copyDirIfNeeded(serverSrc, serverDest)

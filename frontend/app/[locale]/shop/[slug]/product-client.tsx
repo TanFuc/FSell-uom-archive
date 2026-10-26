@@ -1,7 +1,7 @@
 'use client'
 
 import { motion, AnimatePresence, useMotionValue, useSpring } from 'framer-motion'
-import { Instagram, Facebook, ArrowLeft, ChevronLeft, ChevronRight, ShoppingBag, Plus, Minus } from 'lucide-react'
+import { Instagram, Facebook, ArrowLeft, ChevronLeft, ChevronRight, ShoppingBag, Plus, Minus, ShieldCheck, PackageCheck, Sparkles } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useLocale, useTranslations } from 'next-intl'
@@ -555,71 +555,86 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                   </div>
 
                   {/* Details Section */}
-                  <div className="space-y-4">
-                    <h4 className="font-sans text-xs font-semibold uppercase tracking-wider text-[#4A4238]">
-                      {t('details')}
-                    </h4>
-
+                  <div className="space-y-5">
+                    {/* Poetic quote / Short summary */}
                     {shortDescription ? (
-                      <p className="text-[12px] font-thin leading-[1.75] tracking-[0.02em] text-foreground/90">
-                        {shortDescription}
-                      </p>
+                      <div className="border-l-2 border-[#8C7E6A] bg-stone-50/60 pl-4 py-2 rounded-r-sm">
+                        <p className="font-serif italic text-sm sm:text-[15px] leading-relaxed text-[#5C5042]">
+                          “{shortDescription}”
+                        </p>
+                      </div>
                     ) : null}
 
-                    {/* Chất liệu & Kích thước */}
-                    {(product.material || product.dimensions) && (
-                      <div className="flex flex-col gap-1 text-[12px] font-thin leading-[1.7] tracking-[0.02em] text-foreground/90">
-                        {product.material && (
-                          <p>
-                            <span className="font-sans font-medium uppercase tracking-[0.05em] text-[#4A4238]">
-                              {locale === 'vi' ? 'Chất liệu' : 'Material'}:{' '}
-                            </span>
-                            <span className="font-serif italic font-normal text-[#8C7E6A]">
-                              {product.material}
-                            </span>
-                          </p>
-                        )}
-                        {product.dimensions && (
-                          <p>
-                            <span className="font-sans font-medium uppercase tracking-[0.05em] text-[#4A4238]">
-                              {locale === 'vi' ? 'Kích thước' : 'Dimensions'}:{' '}
-                            </span>
-                            <span className="text-[#4A4238] font-normal">{product.dimensions}</span>
-                          </p>
-                        )}
+                    {/* Structured Specifications Form / Card */}
+                    {(product.material || product.dimensions || variants.groups.length > 0) && (
+                      <div className="rounded-sm border border-stone-200/90 bg-[#FBF9F5] p-4 space-y-3 shadow-2xs">
+                        <div className="flex items-center justify-between pb-2.5 border-b border-stone-200/70">
+                          <span className="font-sans text-xs font-semibold uppercase tracking-wider text-[#4A4238]">
+                            {locale === 'vi' ? 'Thông số chế tác' : 'Specifications'}
+                          </span>
+                          <span className="font-sans text-[10px] uppercase font-semibold text-[#8C7E6A] tracking-wider px-2 py-0.5 rounded-xs bg-[#8C7E6A]/10">
+                            {locale === 'vi' ? 'Thủ công độc bản' : 'Handcrafted'}
+                          </span>
+                        </div>
+
+                        <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2.5 text-xs">
+                          {product.material && (
+                            <div className="space-y-0.5">
+                              <dt className="font-sans text-[10px] uppercase tracking-wider text-stone-500 font-medium">
+                                {locale === 'vi' ? 'Chất liệu' : 'Material'}
+                              </dt>
+                              <dd className="font-sans font-semibold text-xs sm:text-sm text-[#2C2620]">
+                                {product.material}
+                              </dd>
+                            </div>
+                          )}
+                          {product.dimensions && (
+                            <div className="space-y-0.5">
+                              <dt className="font-sans text-[10px] uppercase tracking-wider text-stone-500 font-medium">
+                                {locale === 'vi' ? 'Kích thước' : 'Dimensions'}
+                              </dt>
+                              <dd className="font-sans font-semibold text-xs sm:text-sm text-[#2C2620]">
+                                {product.dimensions}
+                              </dd>
+                            </div>
+                          )}
+                          {variants.groups.map((group) => (
+                            <div key={group.label} className="space-y-0.5">
+                              <dt className="font-sans text-[10px] uppercase tracking-wider text-stone-500 font-medium">
+                                {group.label}
+                              </dt>
+                              <dd className="font-sans font-semibold text-xs sm:text-sm text-[#2C2620]">
+                                {group.values.join(', ')}
+                              </dd>
+                            </div>
+                          ))}
+                        </dl>
                       </div>
                     )}
 
-                    {/* Combined Description & Technical Specs */}
-                    {variants.groups.length > 0 && (
-                      <div className="flex flex-col gap-1.5 text-[12px] font-thin leading-[1.7] tracking-[0.02em] text-foreground/90">
-                        {variants.groups.map((group) => (
-                          <p key={group.label}>
-                            <span className="font-sans font-medium uppercase text-[#4A4238]">{group.label}: </span>
-                            <span>{group.values.join(', ')}</span>
-                          </p>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* HTML Description */}
+                    {/* Detailed Description */}
                     {description && (
-                      <div
-                        className="prose prose-sm max-w-none overflow-hidden font-sans text-[12px] font-thin tracking-[0.02em] text-foreground/90 [overflow-wrap:anywhere] [&_a]:underline [&_a]:underline-offset-2 [&_blockquote]:border-l [&_blockquote]:border-foreground/30 [&_blockquote]:pl-4 [&_h1]:text-base [&_h1]:font-light [&_h2]:text-sm [&_h2]:font-light [&_h3]:text-xs [&_h3]:font-light [&_img]:my-4 [&_img]:h-auto [&_img]:max-w-full [&_img]:rounded-lg [&_li]:leading-[1.7] [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:leading-[1.75] [&_ul]:list-disc [&_ul]:pl-5"
-                        dangerouslySetInnerHTML={{ __html: description }}
-                      />
+                      <div className="space-y-2 pt-1">
+                        <h4 className="font-sans text-xs font-semibold uppercase tracking-wider text-[#4A4238]">
+                          {locale === 'vi' ? 'Mô tả tác phẩm' : 'About this piece'}
+                        </h4>
+                        <div
+                          className="prose prose-stone max-w-none overflow-hidden font-sans text-xs sm:text-sm font-normal leading-relaxed text-[#3A332C] [overflow-wrap:anywhere] [&_p]:leading-[1.75] [&_p]:mb-3 [&_strong]:font-semibold [&_strong]:text-[#2C2620] [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1.5 [&_li]:text-[#3A332C] [&_li]:leading-relaxed"
+                          dangerouslySetInnerHTML={{ __html: description }}
+                        />
+                      </div>
                     )}
 
-                    <div className="flex flex-wrap gap-4 pt-2">
+                    <div className="flex flex-wrap gap-4 pt-1">
                       <Link
                         href={`/${locale}/journal`}
-                        className="text-[9px] font-light uppercase tracking-[0.3em] text-foreground underline decoration-foreground/15 underline-offset-8 transition hover:opacity-70"
+                        className="font-sans text-xs font-semibold uppercase tracking-[0.15em] text-[#8C7E6A] underline decoration-[#8C7E6A]/30 underline-offset-8 transition hover:text-[#4A4238]"
                       >
                         {journalCta}
                       </Link>
                       <Link
                         href={`/${locale}/shop`}
-                        className="text-[9px] font-light uppercase tracking-[0.3em] text-foreground underline decoration-foreground/15 underline-offset-8 transition hover:opacity-70"
+                        className="font-sans text-xs font-semibold uppercase tracking-[0.15em] text-[#8C7E6A] underline decoration-[#8C7E6A]/30 underline-offset-8 transition hover:text-[#4A4238]"
                       >
                         {shopCta}
                       </Link>
@@ -627,25 +642,25 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                   </div>
 
                   {/* Add to Cart Section - Enforcing Login */}
-                  <div className="space-y-3 pt-6 border-t border-foreground/10">
+                  <div className="space-y-4 pt-6 border-t border-stone-200">
                     <div className="flex items-center gap-3">
                       {/* Quantity Selector */}
-                      <div className="flex items-center border border-foreground/20 bg-white">
+                      <div className="flex items-center border border-stone-300 bg-white rounded-xs">
                         <button
                           type="button"
                           onClick={() => setQuantity((prev) => Math.max(1, prev - 1))}
-                          className="px-3 py-2.5 text-foreground/70 hover:text-foreground transition-colors"
+                          className="px-3.5 py-2.5 text-stone-600 hover:text-stone-900 transition-colors"
                           aria-label="Giảm số lượng"
                         >
                           <Minus className="w-3.5 h-3.5" />
                         </button>
-                        <span className="font-sans text-xs px-2 min-w-[28px] text-center font-semibold text-[#4A4238]">
+                        <span className="font-sans text-xs px-2 min-w-[32px] text-center font-semibold text-[#2C2620]">
                           {quantity}
                         </span>
                         <button
                           type="button"
                           onClick={() => setQuantity((prev) => prev + 1)}
-                          className="px-3 py-2.5 text-foreground/70 hover:text-foreground transition-colors"
+                          className="px-3.5 py-2.5 text-stone-600 hover:text-stone-900 transition-colors"
                           aria-label="Tăng số lượng"
                         >
                           <Plus className="w-3.5 h-3.5" />
@@ -657,16 +672,38 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                         type="button"
                         onClick={() => handleAddToCart(quantity)}
                         disabled={addingToCart}
-                        className="flex-1 py-3 px-6 bg-[#4A4238] text-white hover:bg-[#8C7E6A] transition-colors uppercase tracking-[0.2em] text-xs font-semibold flex items-center justify-center gap-2 shadow-sm disabled:opacity-60"
+                        className="flex-1 py-3 px-6 bg-[#4A4238] text-white hover:bg-[#8C7E6A] transition-colors uppercase tracking-[0.2em] text-xs font-semibold flex items-center justify-center gap-2 shadow-sm disabled:opacity-60 rounded-xs"
                       >
                         <ShoppingBag className="w-4 h-4" />
                         <span>{addingToCart ? 'Đang thêm...' : 'Thêm vào giỏ hàng'}</span>
                       </button>
                     </div>
 
-                    <p className="text-[10px] text-foreground/50 tracking-wider font-thin">
-                      * Yêu cầu đăng nhập tài khoản để lưu giỏ hàng và đồng bộ thanh toán.
+                    <p className="text-[11px] text-stone-500 font-sans tracking-wide">
+                      * Đăng nhập tài khoản để lưu giỏ hàng và đồng bộ thanh toán trực tuyến.
                     </p>
+
+                    {/* Trust & Craft Guarantee Badges */}
+                    <div className="grid grid-cols-3 gap-2 pt-3 border-t border-stone-200/70 text-center">
+                      <div className="flex flex-col items-center gap-1.5 p-2 rounded-xs bg-[#FBF9F5] border border-stone-200/50">
+                        <PackageCheck className="w-4 h-4 text-[#8C7E6A]" />
+                        <span className="font-sans text-[10px] sm:text-[11px] font-medium text-[#4A4238] leading-tight">
+                          {locale === 'vi' ? 'Đóng gói chống vỡ 100%' : 'Breakage-Safe Packing'}
+                        </span>
+                      </div>
+                      <div className="flex flex-col items-center gap-1.5 p-2 rounded-xs bg-[#FBF9F5] border border-stone-200/50">
+                        <Sparkles className="w-4 h-4 text-[#8C7E6A]" />
+                        <span className="font-sans text-[10px] sm:text-[11px] font-medium text-[#4A4238] leading-tight">
+                          {locale === 'vi' ? 'Gốm thủ công nghệ nhân' : 'Artisan Handcrafted'}
+                        </span>
+                      </div>
+                      <div className="flex flex-col items-center gap-1.5 p-2 rounded-xs bg-[#FBF9F5] border border-stone-200/50">
+                        <ShieldCheck className="w-4 h-4 text-[#8C7E6A]" />
+                        <span className="font-sans text-[10px] sm:text-[11px] font-medium text-[#4A4238] leading-tight">
+                          {locale === 'vi' ? 'Đồng kiểm khi nhận' : 'Inspection on Delivery'}
+                        </span>
+                      </div>
+                    </div>
                   </div>
 
                   {/* Inquiry Buttons */}
