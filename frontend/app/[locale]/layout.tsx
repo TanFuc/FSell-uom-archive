@@ -12,6 +12,7 @@ import { ConfirmationProvider } from '@/components/providers/ConfirmationProvide
 import { Toaster } from '@/components/ui/toaster'
 import { CustomerAuthModal } from '@/components/customer/CustomerAuthModal'
 import { CustomerSocialAuthListener } from '@/components/customer/CustomerSocialAuthListener'
+import { ClientCacheBuster } from '@/components/ClientCacheBuster'
 import { locales } from '@/i18n'
 import {
   buildAbsoluteUrl,
@@ -215,6 +216,8 @@ export default async function RootLayout({ children, params: { locale } }: RootL
     } catch {}
   }
 
+  const clientCacheVersion = siteContent['system.client_cache_version'] || 'v1.0'
+
   return (
     <html lang={locale} suppressHydrationWarning>
       <head>
@@ -222,11 +225,20 @@ export default async function RootLayout({ children, params: { locale } }: RootL
         <link rel="dns-prefetch" href="https://images.uomarchive.com" />
         <link rel="preconnect" href="https://api.uomarchive.com" crossOrigin="" />
         <link rel="dns-prefetch" href="https://api.uomarchive.com" />
+        <script
+          id="uom-cache-buster"
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var v=${JSON.stringify(
+              clientCacheVersion,
+            )};var k='uom_ui_cache_version';var s=localStorage.getItem(k);if(s!==v){if('serviceWorker'in navigator){navigator.serviceWorker.getRegistrations().then(function(r){for(var i=0;i<r.length;i++){r[i].unregister();}});}if('caches'in window){caches.keys().then(function(c){for(var j=0;j<c.length;j++){caches.delete(c[j]);}});}try{var t=localStorage.getItem('accessToken');var rt=localStorage.getItem('refreshToken');var cs=localStorage.getItem('uom-customer-storage');sessionStorage.clear();if(t)localStorage.setItem('accessToken',t);if(rt)localStorage.setItem('refreshToken',rt);if(cs)localStorage.setItem('uom-customer-storage',cs);}catch(e){}localStorage.setItem(k,v);if(s&&s!=='null'&&s!=='undefined'){var n=Date.now();var lr=Number(sessionStorage.getItem('uom_lr')||0);if(n-lr>8000){sessionStorage.setItem('uom_lr',String(n));window.location.reload();}}}}catch(e){}})();`,
+          }}
+        />
       </head>
       <body
         suppressHydrationWarning
         className={`${abcArizona.variable} ${montserrat.variable} flex min-h-screen flex-col bg-background font-serif font-thin antialiased`}
       >
+        <ClientCacheBuster currentVersion={clientCacheVersion} />
         <DisableRightClick />
         <NextIntlClientProvider messages={messages}>
           <QueryProvider>

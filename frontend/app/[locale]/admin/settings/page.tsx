@@ -24,6 +24,7 @@ import { DEFAULT_SOCIAL_LINKS, DEFAULT_EXCHANGE_RATE } from '@/lib/constants'
 import { FileUpload } from '@/components/FileUpload'
 import { QrCode, Building, CreditCard, User, Trash2 } from 'lucide-react'
 import { ProductTrustBadgesManager } from '@/components/admin/ProductTrustBadgesManager'
+import { GlobalCacheManager } from '@/components/admin/GlobalCacheManager'
 
 const socialLinksSchema = z.object({
   facebookPageUrl: z.string().url('Must be a valid URL').optional().or(z.literal('')),
@@ -46,7 +47,6 @@ export default function SettingsPage() {
   const [isSavingRate, setIsSavingRate] = useState(false)
   const [isRecalculatingUsd, setIsRecalculatingUsd] = useState(false)
 
-  // Payment settings state
   const [paymentSettings, setPaymentSettings] = useState({
     qrCodeUrl: '',
     bankName: 'MB Bank',
@@ -57,6 +57,7 @@ export default function SettingsPage() {
     activeTemplateId: '',
   })
   const [isSavingPayment, setIsSavingPayment] = useState(false)
+  const [cacheVersion, setCacheVersion] = useState('v1.0')
 
   const socialForm = useForm<SocialLinksFormValues>({
     resolver: zodResolver(socialLinksSchema),
@@ -71,11 +72,16 @@ export default function SettingsPage() {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const [social, rate, payment] = await Promise.all([
+        const [social, rate, payment, siteContent] = await Promise.all([
           api.getSocialLinks(),
           api.getExchangeRate(),
           api.getPaymentSettings(),
+          api.getSiteContent().catch(() => ({} as any)),
         ])
+
+        if (siteContent && siteContent['system.client_cache_version']) {
+          setCacheVersion(siteContent['system.client_cache_version'])
+        }
 
         socialForm.reset({
           facebookPageUrl: social.facebookPageUrl || '',
@@ -193,6 +199,9 @@ export default function SettingsPage() {
       </div>
 
       <div className="grid gap-6">
+        {/* Global Client Cache & UI Reset Manager */}
+        <GlobalCacheManager initialVersion={cacheVersion} />
+
         {/* Social Links */}
         <Card>
           <CardHeader>

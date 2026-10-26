@@ -58,8 +58,11 @@ export default function middleware(request: NextRequest) {
   // Using shorter max-age during SEO recovery to ensure Google sees fresh ALT tags.
   if (response instanceof Response && response.status === 200 && isPublicLocalizedRoute) {
     const sitemapUrl = new URL('/sitemap.xml', request.url)
-    response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600')
-    response.headers.set('CDN-Cache-Control', 'public, s-maxage=300')
+    response.headers.set(
+      'Cache-Control',
+      'public, max-age=0, s-maxage=60, stale-while-revalidate=120, must-revalidate',
+    )
+    response.headers.set('CDN-Cache-Control', 'public, s-maxage=60')
     response.headers.set('X-Robots-Tag', 'index, follow')
     response.headers.append('Link', `<${sitemapUrl.href}>; rel="sitemap"; type="application/xml"`)
   }

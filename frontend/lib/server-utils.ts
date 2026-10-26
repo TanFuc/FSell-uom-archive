@@ -86,7 +86,7 @@ export async function fetchBrandingNoStore(): Promise<BrandingData | null> {
 export const fetchSiteContentServer = cache(async (): Promise<Record<string, string>> => {
   try {
     const response = await fetch(`${API_URL}/settings/site-content`, {
-      next: { revalidate: 60 },
+      next: { revalidate: 60, tags: ['site-content'] },
       signal: AbortSignal.timeout(1800),
     })
     if (!response.ok) return {}

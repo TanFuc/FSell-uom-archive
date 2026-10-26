@@ -86,5 +86,17 @@ export class UpdateSiteContentDto {
   @IsOptional()
   'journal.stories'?: string;
 
+  @ApiPropertyOptional({ description: 'Client UI cache version timestamp' })
+  @IsString()
+  @IsOptional()
+  'system.client_cache_version'?: string;
+
   [key: string]: string | undefined
+}
+
+export class UpdateClientCacheVersionDto {
+  @ApiPropertyOptional({ example: 'v1793015749464', description: 'Version string/timestamp' })
+  @IsString()
+  @IsOptional()
+  version?: string
 }

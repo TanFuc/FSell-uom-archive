@@ -189,6 +189,17 @@ export class SettingsService {
     return { success: true }
   }
 
+  async updateClientCacheVersion(version: string) {
+    await this.prisma.siteContent.upsert({
+      where: { key: 'system.client_cache_version' },
+      update: { value: version },
+      create: { key: 'system.client_cache_version', value: version },
+    })
+    await this.redis.del('site_content')
+    this.logger.log(`Client cache version updated to ${version}`)
+    return { success: true, version }
+  }
+
   async getSocialLinks(): Promise<SocialLinks> {
     const cached = await this.redis.get('social_links')
     if (cached) {

@@ -567,17 +567,13 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                     {/* Structured Specifications Form / Card */}
                     {(product.material || product.dimensions || variants.groups.length > 0) && (
                       <div className="relative overflow-hidden rounded-sm border border-[#E8E1D5] bg-gradient-to-b from-[#FCFAF7] to-[#F8F5EE] p-4 sm:p-5 shadow-[0_2px_12px_rgba(74,66,56,0.03)] space-y-3.5 before:absolute before:inset-x-0 before:top-0 before:h-[1.5px] before:bg-gradient-to-r before:from-transparent before:via-[#C2B6A3]/60 before:to-transparent">
-                        <div className="flex items-center justify-between pb-3 border-b border-[#ECE4D8]">
+                        <div className="flex items-center pb-3 border-b border-[#ECE4D8]">
                           <div className="flex items-center gap-2">
                             <span className="w-1.5 h-1.5 rounded-full bg-[#8C7E6A]" />
                             <span className="font-serif text-xs sm:text-[13px] font-semibold uppercase tracking-[0.18em] text-[#3D332A]">
                               {locale === 'vi' ? 'Thông số chế tác' : 'Craft Specifications'}
                             </span>
                           </div>
-                          <span className="inline-flex items-center gap-1.5 font-serif text-[10px] sm:text-[11px] uppercase font-medium text-[#7A6A55] tracking-[0.14em] px-2.5 py-0.5 rounded-full bg-white/80 border border-[#DCD3C5] shadow-xs">
-                            <Sparkles className="w-2.5 h-2.5 text-[#8C7E6A]" />
-                            {locale === 'vi' ? 'Thủ công độc bản' : 'Unique Handcraft'}
-                          </span>
                         </div>
 
                         <dl className="divide-y divide-[#EFEAE2] text-xs sm:text-[13px]">

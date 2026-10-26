@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards } from '@nestjs/common'
+import { Controller, Get, Post, Put, Delete, Body, Param, Headers, UnauthorizedException, UseGuards } from '@nestjs/common'
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger'
 import { Role } from '@prisma/client'
 import { Roles, CurrentUser, JwtPayload } from '../auth/decorators'
@@ -6,6 +6,7 @@ import { JwtAuthGuard, RolesGuard } from '../auth/guards'
 import {
   UpdateThemeDto,
   UpdateSiteContentDto,
+  UpdateClientCacheVersionDto,
   UpdateSocialLinksDto,
   UpdateExchangeRateDto,
   UpdateBrandingDto,
@@ -60,6 +61,29 @@ export class SettingsController {
   @ApiResponse({ status: 200, description: 'Site content updated' })
   async updateSiteContent(@Body() dto: UpdateSiteContentDto, @CurrentUser() user: JwtPayload) {
     return this.settingsService.updateSiteContent(dto, user.sub)
+  }
+
+  @Put('client-cache-version')
+  @ApiOperation({ summary: 'Update client UI cache version (admin or internal secret)' })
+  @ApiResponse({ status: 200, description: 'Client cache version updated' })
+  async updateClientCacheVersion(
+    @Body() dto: UpdateClientCacheVersionDto,
+    @Headers('authorization') authHeader?: string,
+    @Headers('x-revalidate-secret') secretHeader?: string,
+  ) {
+    const isDev = process.env.NODE_ENV !== 'production'
+    const configuredSecret =
+      process.env.REVALIDATE_SECRET ||
+      process.env.SITEMAP_REVALIDATE_SECRET ||
+      'dev-sitemap-revalidate-secret'
+    const isSecretValid = Boolean(secretHeader && secretHeader === configuredSecret)
+
+    if (!isDev && !isSecretValid && !authHeader) {
+      throw new UnauthorizedException('Unauthorized')
+    }
+
+    const version = dto?.version || `v${Date.now()}`
+    return this.settingsService.updateClientCacheVersion(version)
   }
 
   @Get('social-links')
