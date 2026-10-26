@@ -177,7 +177,7 @@ export async function generateMetadata({
       icon: [
         { url: '/icon.svg', type: 'image/svg+xml' },
         { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
-        { url: '/favicon.ico', sizes: '48x48' },
+        { url: '/favicon.ico', sizes: 'any' },
       ],
       shortcut: [{ url: '/favicon.ico' }],
       apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
