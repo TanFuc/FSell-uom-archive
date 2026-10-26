@@ -23,6 +23,7 @@ import { api } from '@/lib/api'
 import { DEFAULT_SOCIAL_LINKS, DEFAULT_EXCHANGE_RATE } from '@/lib/constants'
 import { FileUpload } from '@/components/FileUpload'
 import { QrCode, Building, CreditCard, User, Trash2 } from 'lucide-react'
+import { ProductTrustBadgesManager } from '@/components/admin/ProductTrustBadgesManager'
 
 const socialLinksSchema = z.object({
   facebookPageUrl: z.string().url('Must be a valid URL').optional().or(z.literal('')),
@@ -458,6 +459,9 @@ export default function SettingsPage() {
             </form>
           </CardContent>
         </Card>
+
+        {/* Product Trust Badges Manager */}
+        <ProductTrustBadgesManager />
       </div>
     </div>
   )

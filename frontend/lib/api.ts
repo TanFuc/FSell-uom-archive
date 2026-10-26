@@ -823,6 +823,63 @@ class ApiClient {
     const res = await this.client.post(`/orders/admin/${idOrNumber}/send-confirmation-email`)
     return res.data?.data !== undefined ? res.data.data : res.data
   }
+
+  // ==================== TRUST BADGES ====================
+  async getTrustBadges(): Promise<{
+    enabled: boolean
+    items: Array<{
+      id: string
+      icon: string
+      titleVi: string
+      titleEn: string
+      descriptionVi?: string
+      descriptionEn?: string
+      isVisible: boolean
+      order: number
+    }>
+  }> {
+    const res = await this.client.get('/settings/trust-badges')
+    return res.data?.data !== undefined ? res.data.data : res.data
+  }
+
+  async createTrustBadge(data: {
+    icon: string
+    titleVi: string
+    titleEn: string
+    descriptionVi?: string
+    descriptionEn?: string
+    isVisible?: boolean
+    order?: number
+  }) {
+    const res = await this.client.post('/settings/trust-badges', data)
+    return res.data?.data !== undefined ? res.data.data : res.data
+  }
+
+  async updateTrustBadge(
+    id: string,
+    data: {
+      icon?: string
+      titleVi?: string
+      titleEn?: string
+      descriptionVi?: string
+      descriptionEn?: string
+      isVisible?: boolean
+      order?: number
+    },
+  ) {
+    const res = await this.client.put(`/settings/trust-badges/${id}`, data)
+    return res.data?.data !== undefined ? res.data.data : res.data
+  }
+
+  async deleteTrustBadge(id: string) {
+    const res = await this.client.delete(`/settings/trust-badges/${id}`)
+    return res.data?.data !== undefined ? res.data.data : res.data
+  }
+
+  async toggleTrustBadgesGlobal(enabled: boolean) {
+    const res = await this.client.put('/settings/trust-badges/toggle-global', { enabled })
+    return res.data?.data !== undefined ? res.data.data : res.data
+  }
 }
 
 export const api = new ApiClient(API_BASE_URL)

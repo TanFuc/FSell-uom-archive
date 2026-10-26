@@ -8,6 +8,8 @@ import {
   UpdateSocialLinksDto,
   UpdateBrandingDto,
   UpdatePaymentSettingsDto,
+  CreateTrustBadgeDto,
+  UpdateTrustBadgeDto,
 } from './dto'
 
 const CACHE_TTL = 3600 // 1 hour in seconds
@@ -520,5 +522,126 @@ export class SettingsService {
     await this.redis.del('payment_settings')
     this.logger.log('Payment settings updated')
     return settings
+  }
+
+  async getTrustBadges() {
+    const cached = await this.redis.get('product_trust_badges')
+    if (cached) {
+      const parsed = this.parseCachedJson<{ enabled: boolean; items: any[] }>(cached)
+      if (parsed) return parsed
+    }
+
+    const count = await this.prisma.productTrustBadge.count()
+    if (count === 0) {
+      await this.prisma.productTrustBadge.createMany({
+        data: [
+          {
+            icon: 'package',
+            titleVi: 'Đóng gói chống vỡ 100%',
+            titleEn: 'Breakage-Safe Packing',
+            descriptionVi: 'Hàng gốm sứ được bọc xốp bóng khí và hộp carton đa lớp chuyên dụng chống vỡ',
+            descriptionEn: 'Carefully wrapped with multi-layer bubble cushioning and heavy-duty box',
+            isVisible: true,
+            order: 0,
+          },
+          {
+            icon: 'sparkles',
+            titleVi: 'Gốm thủ công nghệ nhân',
+            titleEn: 'Artisan Handcrafted',
+            descriptionVi: 'Mỗi tác phẩm là độc bản được vuốt tay và nung củi bởi nghệ nhân bản địa',
+            descriptionEn: 'Every piece is uniquely hand-shaped and kiln-fired by local artisans',
+            isVisible: true,
+            order: 1,
+          },
+          {
+            icon: 'shield',
+            titleVi: 'Đồng kiểm khi nhận',
+            titleEn: 'Inspection on Delivery',
+            descriptionVi: 'Quý khách được mở hộp kiểm tra tính nguyên vẹn trước khi nhận hàng và thanh toán',
+            descriptionEn: 'Inspect the condition of pieces prior to accepting delivery and payment',
+            isVisible: true,
+            order: 2,
+          },
+        ],
+      })
+    }
+
+    const [items, globalSetting] = await Promise.all([
+      this.prisma.productTrustBadge.findMany({
+        orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
+      }),
+      this.prisma.siteSettings.findUnique({
+        where: { key: 'trust_badges_enabled' },
+      }),
+    ])
+
+    const result = {
+      enabled: globalSetting ? globalSetting.value === 'true' : true,
+      items,
+    }
+
+    await this.redis.set('product_trust_badges', JSON.stringify(result), CACHE_TTL)
+    return result
+  }
+
+  async createTrustBadge(dto: CreateTrustBadgeDto) {
+    let order = dto.order
+    if (order === undefined) {
+      const maxOrder = await this.prisma.productTrustBadge.aggregate({
+        _max: { order: true },
+      })
+      order = (maxOrder._max.order ?? -1) + 1
+    }
+
+    const badge = await this.prisma.productTrustBadge.create({
+      data: {
+        icon: dto.icon || 'package',
+        titleVi: dto.titleVi,
+        titleEn: dto.titleEn,
+        descriptionVi: dto.descriptionVi ?? '',
+        descriptionEn: dto.descriptionEn ?? '',
+        isVisible: dto.isVisible ?? true,
+        order,
+      },
+    })
+
+    await this.redis.del('product_trust_badges')
+    return badge
+  }
+
+  async updateTrustBadge(id: string, dto: UpdateTrustBadgeDto) {
+    const badge = await this.prisma.productTrustBadge.update({
+      where: { id },
+      data: {
+        ...(dto.icon !== undefined && { icon: dto.icon }),
+        ...(dto.titleVi !== undefined && { titleVi: dto.titleVi }),
+        ...(dto.titleEn !== undefined && { titleEn: dto.titleEn }),
+        ...(dto.descriptionVi !== undefined && { descriptionVi: dto.descriptionVi }),
+        ...(dto.descriptionEn !== undefined && { descriptionEn: dto.descriptionEn }),
+        ...(dto.isVisible !== undefined && { isVisible: dto.isVisible }),
+        ...(dto.order !== undefined && { order: dto.order }),
+      },
+    })
+
+    await this.redis.del('product_trust_badges')
+    return badge
+  }
+
+  async deleteTrustBadge(id: string) {
+    const deleted = await this.prisma.productTrustBadge.delete({
+      where: { id },
+    })
+    await this.redis.del('product_trust_badges')
+    return deleted
+  }
+
+  async toggleTrustBadgesGlobal(enabled: boolean) {
+    await this.prisma.siteSettings.upsert({
+      where: { key: 'trust_badges_enabled' },
+      update: { value: enabled ? 'true' : 'false' },
+      create: { key: 'trust_badges_enabled', value: enabled ? 'true' : 'false' },
+    })
+    await this.redis.del('product_trust_badges')
+    return { enabled }
   }
 }

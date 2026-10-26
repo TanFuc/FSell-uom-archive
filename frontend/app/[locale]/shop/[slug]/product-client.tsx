@@ -1,7 +1,7 @@
 'use client'
 
 import { motion, AnimatePresence, useMotionValue, useSpring } from 'framer-motion'
-import { Instagram, Facebook, ArrowLeft, ChevronLeft, ChevronRight, ShoppingBag, Plus, Minus, ShieldCheck, PackageCheck, Sparkles } from 'lucide-react'
+import { Instagram, Facebook, ArrowLeft, ChevronLeft, ChevronRight, ShoppingBag, Plus, Minus, ShieldCheck, PackageCheck, Sparkles, Truck, Award, Heart, RotateCcw, CheckCircle2 } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useLocale, useTranslations } from 'next-intl'
@@ -11,7 +11,7 @@ import { ProductCard } from '@/components/ProductCard'
 import { LoadingScreen } from '@/components/ui/loading-screen'
 import { NetworkErrorState } from '@/components/ui/network-error-state'
 import { useProduct, useProducts } from '@/hooks/use-products'
-import { useExchangeRate, useSocialLinks } from '@/hooks/use-settings'
+import { useExchangeRate, useSocialLinks, useTrustBadges } from '@/hooks/use-settings'
 import { getDisplayPrice } from '@/lib/currency'
 import { type Product } from '@/lib/types'
 import { optimizeProductImage, cn } from '@/lib/utils'
@@ -250,6 +250,7 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
   })
   const { data: exchangeRate } = useExchangeRate({ enabled: locale === 'en' })
   const { data: socialLinks } = useSocialLinks()
+  const { data: trustBadgesData } = useTrustBadges()
 
   const { data: relatedProducts } = useProducts({
     page: 1,
@@ -281,7 +282,7 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
     if (!product) return
 
     if (!isAuthenticated) {
-      openAuthModal('Vui lòng đăng nhập tài khoản để thêm sản phẩm vào giỏ hàng', () => {
+      openAuthModal(t('loginToAddToCart'), () => {
         handleAddToCart(qty)
       })
       return
@@ -291,20 +292,20 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
     try {
       await api.addToCart(product.id, qty)
       useCustomerStore.getState().fetchCartCount()
-      toast.success('Đã thêm sản phẩm vào giỏ hàng!', {
+      toast.success(t('addedToCartSuccess'), {
         duration: 2000,
         action: {
-          label: 'Xem giỏ',
+          label: t('viewCart'),
           onClick: () => setIsCartDrawerOpen(true),
         },
       })
     } catch (err: any) {
       if (err?.response?.status === 401) {
-        openAuthModal('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại', () => {
+        openAuthModal(t('sessionExpiredLoginAgain'), () => {
           handleAddToCart(qty)
         })
       } else {
-        toast.error(err?.response?.data?.message || 'Không thể thêm sản phẩm vào giỏ hàng')
+        toast.error(err?.response?.data?.message || t('cannotAddToCart'))
       }
     } finally {
       setAddingToCart(false)
@@ -352,8 +353,6 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
   const variants = parseVariantSummary(shortDescriptionRaw, locale)
   const shortDescription = variants.cleanText
   const priceDisplay = getDisplayPrice(product, locale, exchangeRate?.rate)
-  const journalCta = locale === 'vi' ? 'Xem Journal' : 'Read the journal'
-  const shopCta = locale === 'vi' ? 'Xem shop' : 'Visit the shop'
   const faqTitle = locale === 'vi' ? 'Câu hỏi thường gặp' : 'Frequently asked questions'
   const faqItems =
     locale === 'vi'
@@ -630,13 +629,13 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                         href={`/${locale}/journal`}
                         className="font-sans text-xs font-semibold uppercase tracking-[0.15em] text-[#8C7E6A] underline decoration-[#8C7E6A]/30 underline-offset-8 transition hover:text-[#4A4238]"
                       >
-                        {journalCta}
+                        {t('readJournal')}
                       </Link>
                       <Link
                         href={`/${locale}/shop`}
                         className="font-sans text-xs font-semibold uppercase tracking-[0.15em] text-[#8C7E6A] underline decoration-[#8C7E6A]/30 underline-offset-8 transition hover:text-[#4A4238]"
                       >
-                        {shopCta}
+                        {t('visitShop')}
                       </Link>
                     </div>
                   </div>
@@ -650,7 +649,7 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                           type="button"
                           onClick={() => setQuantity((prev) => Math.max(1, prev - 1))}
                           className="px-3.5 py-2.5 text-stone-600 hover:text-stone-900 transition-colors"
-                          aria-label="Giảm số lượng"
+                          aria-label={t('decreaseQuantity')}
                         >
                           <Minus className="w-3.5 h-3.5" />
                         </button>
@@ -661,7 +660,7 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                           type="button"
                           onClick={() => setQuantity((prev) => prev + 1)}
                           className="px-3.5 py-2.5 text-stone-600 hover:text-stone-900 transition-colors"
-                          aria-label="Tăng số lượng"
+                          aria-label={t('increaseQuantity')}
                         >
                           <Plus className="w-3.5 h-3.5" />
                         </button>
@@ -675,35 +674,61 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                         className="flex-1 py-3 px-6 bg-[#4A4238] text-white hover:bg-[#8C7E6A] transition-colors uppercase tracking-[0.2em] text-xs font-semibold flex items-center justify-center gap-2 shadow-sm disabled:opacity-60 rounded-xs"
                       >
                         <ShoppingBag className="w-4 h-4" />
-                        <span>{addingToCart ? 'Đang thêm...' : 'Thêm vào giỏ hàng'}</span>
+                        <span>{addingToCart ? t('addingToCart') : t('addToCart')}</span>
                       </button>
                     </div>
 
                     <p className="text-[11px] text-stone-500 font-sans tracking-wide">
-                      * Đăng nhập tài khoản để lưu giỏ hàng và đồng bộ thanh toán trực tuyến.
+                      {t('cartLoginNotice')}
                     </p>
 
-                    {/* Trust & Craft Guarantee Badges */}
-                    <div className="grid grid-cols-3 gap-2 pt-3 border-t border-stone-200/70 text-center">
-                      <div className="flex flex-col items-center gap-1.5 p-2 rounded-xs bg-[#FBF9F5] border border-stone-200/50">
-                        <PackageCheck className="w-4 h-4 text-[#8C7E6A]" />
-                        <span className="font-sans text-[10px] sm:text-[11px] font-medium text-[#4A4238] leading-tight">
-                          {locale === 'vi' ? 'Đóng gói chống vỡ 100%' : 'Breakage-Safe Packing'}
-                        </span>
-                      </div>
-                      <div className="flex flex-col items-center gap-1.5 p-2 rounded-xs bg-[#FBF9F5] border border-stone-200/50">
-                        <Sparkles className="w-4 h-4 text-[#8C7E6A]" />
-                        <span className="font-sans text-[10px] sm:text-[11px] font-medium text-[#4A4238] leading-tight">
-                          {locale === 'vi' ? 'Gốm thủ công nghệ nhân' : 'Artisan Handcrafted'}
-                        </span>
-                      </div>
-                      <div className="flex flex-col items-center gap-1.5 p-2 rounded-xs bg-[#FBF9F5] border border-stone-200/50">
-                        <ShieldCheck className="w-4 h-4 text-[#8C7E6A]" />
-                        <span className="font-sans text-[10px] sm:text-[11px] font-medium text-[#4A4238] leading-tight">
-                          {locale === 'vi' ? 'Đồng kiểm khi nhận' : 'Inspection on Delivery'}
-                        </span>
-                      </div>
-                    </div>
+                    {/* Trust & Craft Guarantee Badges (Dynamic from Admin) */}
+                    {trustBadgesData?.enabled !== false && (() => {
+                      const fallbackBadges = [
+                        { id: '1', icon: 'package', titleVi: 'Đóng gói chống vỡ 100%', titleEn: 'Breakage-Safe Packing', isVisible: true },
+                        { id: '2', icon: 'sparkles', titleVi: 'Gốm thủ công nghệ nhân', titleEn: 'Artisan Handcrafted', isVisible: true },
+                        { id: '3', icon: 'shield', titleVi: 'Đồng kiểm khi nhận', titleEn: 'Inspection on Delivery', isVisible: true },
+                      ]
+                      const badgesToDisplay = (trustBadgesData?.items || fallbackBadges).filter((b: any) => b.isVisible)
+                      if (badgesToDisplay.length === 0) return null
+
+                      const renderIcon = (iconName: string) => {
+                        switch (iconName?.toLowerCase()) {
+                          case 'package': return <PackageCheck className="w-4 h-4 text-[#8C7E6A]" />
+                          case 'sparkles': return <Sparkles className="w-4 h-4 text-[#8C7E6A]" />
+                          case 'shield': return <ShieldCheck className="w-4 h-4 text-[#8C7E6A]" />
+                          case 'truck': return <Truck className="w-4 h-4 text-[#8C7E6A]" />
+                          case 'award': return <Award className="w-4 h-4 text-[#8C7E6A]" />
+                          case 'heart': return <Heart className="w-4 h-4 text-[#8C7E6A]" />
+                          case 'refresh': return <RotateCcw className="w-4 h-4 text-[#8C7E6A]" />
+                          default: return <CheckCircle2 className="w-4 h-4 text-[#8C7E6A]" />
+                        }
+                      }
+
+                      return (
+                        <div className={`grid gap-2 pt-3 border-t border-stone-200/70 text-center ${
+                          badgesToDisplay.length === 1
+                            ? 'grid-cols-1'
+                            : badgesToDisplay.length === 2
+                              ? 'grid-cols-2'
+                              : badgesToDisplay.length === 3
+                                ? 'grid-cols-3'
+                                : 'grid-cols-2 sm:grid-cols-4'
+                        }`}>
+                          {badgesToDisplay.map((badge: any) => (
+                            <div
+                              key={badge.id}
+                              className="flex flex-col items-center gap-1.5 p-2 rounded-xs bg-[#FBF9F5] border border-stone-200/50"
+                            >
+                              {renderIcon(badge.icon)}
+                              <span className="font-sans text-[10px] sm:text-[11px] font-medium text-[#4A4238] leading-tight">
+                                {locale === 'vi' ? badge.titleVi : badge.titleEn}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )
+                    })()}
                   </div>
 
                   {/* Inquiry Buttons */}

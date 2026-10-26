@@ -1,7 +1,7 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { ArrowLeft, Upload, X, Plus, RefreshCw, Save } from 'lucide-react'
+import { ArrowLeft, Upload, X, Plus, RefreshCw, Save, Eye, FileEdit } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter, useParams } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
@@ -9,6 +9,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useForm, useWatch, type FieldErrors } from 'react-hook-form'
 import * as z from 'zod'
 import { SeoSnippetPreview } from '@/components/admin/SeoSnippetPreview'
+import { ProductStorefrontPreview } from '@/components/admin/ProductStorefrontPreview'
 import { RichTextEditor } from '@/components/RichTextEditor'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -44,7 +45,7 @@ import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { useDocumentTitle } from '@/hooks/use-document-title'
-import { useBranding, useExchangeRate } from '@/hooks/use-settings'
+import { useBranding, useExchangeRate, useTrustBadges } from '@/hooks/use-settings'
 import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api'
 import { vndToUsd } from '@/lib/currency'
@@ -263,6 +264,8 @@ export default function ProductFormPage() {
   const { data: exchangeRateData } = useExchangeRate()
   const { data: branding } = useBranding()
   const exchangeRate = exchangeRateData?.rate
+  const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit')
+  const { data: trustBadgesData } = useTrustBadges()
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
@@ -742,6 +745,35 @@ export default function ProductFormPage() {
         </div>
 
         <div className="flex items-center gap-2 self-end sm:self-center">
+          {/* View Mode Toggle: Form vs Storefront Live Preview */}
+          <div className="flex items-center rounded-lg border bg-muted/60 p-0.5 text-xs mr-1">
+            <button
+              type="button"
+              onClick={() => setViewMode('edit')}
+              className={cn(
+                'flex items-center gap-1.5 rounded-md px-3 py-1.5 font-medium transition-all cursor-pointer',
+                viewMode === 'edit'
+                  ? 'bg-background text-foreground shadow-xs font-semibold'
+                  : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              <FileEdit className="h-3.5 w-3.5" />
+              <span>{locale === 'vi' ? 'Biểu mẫu' : 'Form'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('preview')}
+              className={cn(
+                'flex items-center gap-1.5 rounded-md px-3 py-1.5 font-medium transition-all cursor-pointer',
+                viewMode === 'preview'
+                  ? 'bg-background text-foreground shadow-xs font-semibold'
+                  : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              <Eye className="h-3.5 w-3.5" />
+              <span>{locale === 'vi' ? 'Mô phỏng Storefront' : 'Storefront Preview'}</span>
+            </button>
+          </div>
           <Button
             type="button"
             variant="outline"
@@ -780,9 +812,23 @@ export default function ProductFormPage() {
         </div>
       </div>
 
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="flex-1 min-h-0 lg:overflow-hidden flex flex-col">
-          <div className="grid items-start gap-6 lg:grid-cols-3 flex-1 min-h-0 lg:h-full lg:overflow-hidden">
+      {viewMode === 'preview' ? (
+        <div className="flex-1 min-h-0 overflow-hidden rounded-md border border-stone-200 bg-white">
+          <ProductStorefrontPreview
+            product={form.watch()}
+            images={images}
+            categories={categories}
+            categoryId={form.watch('categoryId')}
+            exchangeRate={exchangeRate}
+            trustBadges={trustBadgesData?.items}
+            trustBadgesEnabled={trustBadgesData?.enabled}
+            onSwitchToEdit={() => setViewMode('edit')}
+          />
+        </div>
+      ) : (
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="flex-1 min-h-0 lg:overflow-hidden flex flex-col">
+            <div className="grid items-start gap-6 lg:grid-cols-3 flex-1 min-h-0 lg:h-full lg:overflow-hidden">
             {/* Main content - 2 columns (Independent scroll) */}
             <div className="space-y-6 lg:col-span-2 lg:h-full lg:overflow-y-auto lg:pr-3 lg:pb-10">
               {/* Basic Info */}
@@ -1709,6 +1755,7 @@ export default function ProductFormPage() {
           </div>
         </form>
       </Form>
+      )}
 
       {/* Quick Category Dialog */}
       <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>

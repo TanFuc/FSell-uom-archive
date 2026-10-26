@@ -1,4 +1,4 @@
-import { Controller, Get, Put, Body, UseGuards } from '@nestjs/common'
+import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards } from '@nestjs/common'
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger'
 import { Role } from '@prisma/client'
 import { Roles, CurrentUser, JwtPayload } from '../auth/decorators'
@@ -10,6 +10,9 @@ import {
   UpdateExchangeRateDto,
   UpdateBrandingDto,
   UpdatePaymentSettingsDto,
+  CreateTrustBadgeDto,
+  UpdateTrustBadgeDto,
+  ToggleTrustBadgesGlobalDto,
 } from './dto'
 import { SettingsService } from './settings.service'
 
@@ -148,5 +151,55 @@ export class SettingsController {
     @CurrentUser() user: JwtPayload,
   ) {
     return this.settingsService.updatePaymentSettings(dto, user.sub)
+  }
+
+  @Get('trust-badges')
+  @ApiOperation({ summary: 'Get product trust badges and global display setting (public)' })
+  @ApiResponse({ status: 200, description: 'Trust badges list and toggle status' })
+  async getTrustBadges() {
+    return this.settingsService.getTrustBadges()
+  }
+
+  @Post('trust-badges')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.MANAGER)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Create new product trust badge (admin/manager)' })
+  @ApiResponse({ status: 201, description: 'Trust badge created' })
+  async createTrustBadge(@Body() dto: CreateTrustBadgeDto) {
+    return this.settingsService.createTrustBadge(dto)
+  }
+
+  @Put('trust-badges/toggle-global')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.MANAGER)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Toggle trust badges section globally on product detail (admin/manager)' })
+  @ApiResponse({ status: 200, description: 'Global toggle updated' })
+  async toggleTrustBadgesGlobal(@Body() dto: ToggleTrustBadgesGlobalDto) {
+    return this.settingsService.toggleTrustBadgesGlobal(dto.enabled)
+  }
+
+  @Put('trust-badges/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.MANAGER)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Update product trust badge by ID (admin/manager)' })
+  @ApiResponse({ status: 200, description: 'Trust badge updated' })
+  async updateTrustBadge(
+    @Param('id') id: string,
+    @Body() dto: UpdateTrustBadgeDto,
+  ) {
+    return this.settingsService.updateTrustBadge(id, dto)
+  }
+
+  @Delete('trust-badges/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.MANAGER)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Delete product trust badge by ID (admin/manager)' })
+  @ApiResponse({ status: 200, description: 'Trust badge deleted' })
+  async deleteTrustBadge(@Param('id') id: string) {
+    return this.settingsService.deleteTrustBadge(id)
   }
 }

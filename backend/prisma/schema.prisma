@@ -430,3 +430,19 @@ model PaymentSettings {
 
   @@map("payment_settings")
 }
+
+model ProductTrustBadge {
+  id            String   @id @default(cuid())
+  icon          String   @default("package")
+  titleVi       String
+  titleEn       String
+  descriptionVi String?  @default("")
+  descriptionEn String?  @default("")
+  isVisible     Boolean  @default(true)
+  order         Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("product_trust_badges")
+}
+

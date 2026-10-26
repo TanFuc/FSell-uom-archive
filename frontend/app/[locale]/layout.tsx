@@ -115,7 +115,6 @@ export async function generateMetadata({
   const brandName = getSeoBrandName(locale, branding)
   const description = getSeoSiteDescription(locale, branding)
   const previewImageUrl = buildAbsoluteUrl(getSeoSocialImageUrl(branding), baseUrl)
-  const tabIconUrl = '/assets/logo.png'
 
   return {
     metadataBase: new URL(baseUrl),
@@ -176,11 +175,12 @@ export async function generateMetadata({
     },
     icons: {
       icon: [
-        { url: tabIconUrl, type: 'image/png' },
-        { url: '/assets/logo.svg', type: 'image/svg+xml' },
+        { url: '/icon.svg', type: 'image/svg+xml' },
+        { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+        { url: '/favicon.ico', sizes: '48x48' },
       ],
-      shortcut: [{ url: tabIconUrl, type: 'image/png' }],
-      apple: [{ url: tabIconUrl, sizes: '180x180', type: 'image/png' }],
+      shortcut: [{ url: '/favicon.ico' }],
+      apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
     },
     manifest: '/manifest.webmanifest',
     alternates: {
