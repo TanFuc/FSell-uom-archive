@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, ChevronRight, ShoppingBag } from 'lucide-react'
+import { ArrowLeft, ChevronRight, ShoppingBag, QrCode } from 'lucide-react'
 import { useLocale } from 'next-intl'
 import { api } from '@/lib/api'
 
@@ -115,11 +115,30 @@ export default function MyOrdersPage() {
                       })}
                     </span>
                   </div>
-                  <span
-                    className={`px-2 py-0.5 text-[10px] uppercase tracking-wider font-medium border ${badge.color}`}
-                  >
-                    {badge.label}
-                  </span>
+                  <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                    {order.paymentMethod === 'bank_transfer' && (
+                      <span
+                        className={`px-2 py-0.5 text-[9px] uppercase tracking-wider font-medium border ${
+                          order.paymentStatus === 'paid'
+                            ? 'text-emerald-700 bg-emerald-50 border-emerald-200'
+                            : order.paymentProofUrl
+                            ? 'text-amber-800 bg-amber-50 border-amber-200'
+                            : 'text-red-700 bg-red-50 border-red-200 font-semibold'
+                        }`}
+                      >
+                        {order.paymentStatus === 'paid'
+                          ? 'Đã thanh toán'
+                          : order.paymentProofUrl
+                          ? 'Đã gửi biên lai'
+                          : 'Chưa chuyển khoản'}
+                      </span>
+                    )}
+                    <span
+                      className={`px-2 py-0.5 text-[10px] uppercase tracking-wider font-medium border ${badge.color}`}
+                    >
+                      {badge.label}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="space-y-1.5 text-xs text-stone-600">
@@ -135,6 +154,25 @@ export default function MyOrdersPage() {
                     </span>
                   </div>
                 </div>
+
+                {/* Alert nếu chưa chuyển khoản hoặc chưa gửi ảnh bill */}
+                {order.paymentMethod === 'bank_transfer' && order.paymentStatus !== 'paid' && (
+                  <div className="mt-3 p-2.5 bg-amber-50/90 border border-amber-200/90 text-amber-900 flex items-center justify-between gap-2 transition-colors">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <QrCode className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+                      <span className="text-[11px] font-medium truncate">
+                        {order.paymentProofUrl
+                          ? 'Đã gửi biên nhận • Shop đang đối soát'
+                          : order.transferClaimedAt
+                          ? 'Đã bấm chuyển khoản • Cần bổ sung ảnh bill'
+                          : 'Chưa chuyển khoản • Nhấn để quét mã QR & tải bill'}
+                      </span>
+                    </div>
+                    <span className="text-[10px] uppercase tracking-wider font-semibold text-amber-800 shrink-0 underline underline-offset-2">
+                      {order.paymentProofUrl ? 'Xem đơn →' : 'Thanh toán ngay →'}
+                    </span>
+                  </div>
+                )}
 
                 <div className="mt-3 pt-2.5 border-t border-stone-200 flex items-center justify-between text-[11px] text-[#8C7E6A] font-light uppercase tracking-wider">
                   <span>Xem chi tiết & Tracking</span>
