@@ -55,6 +55,12 @@ export function FileUpload({
             headers: {
               Authorization: `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('accessToken') : ''}`,
             },
+            ondata: (formData: any) => {
+              if (_folder) {
+                formData.append('folder', _folder)
+              }
+              return formData
+            },
             onload: (response) => {
               const data = JSON.parse(response)
               if (data.success && data.data) {
@@ -121,6 +127,12 @@ export function MultipleFileUpload({
             method: 'POST',
             headers: {
               Authorization: `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('accessToken') : ''}`,
+            },
+            ondata: (formData: any) => {
+              if (_folder) {
+                formData.append('folder', _folder)
+              }
+              return formData
             },
             onload: (response) => {
               const data = JSON.parse(response)

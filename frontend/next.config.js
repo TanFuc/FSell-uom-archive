@@ -11,6 +11,19 @@ const apiPort = apiUrlObj.port
 
 const nextConfig = {
   output: 'standalone',
+  async rewrites() {
+    const rawApiUrl =
+      process.env.NEXT_PUBLIC_API_BASE_URL ||
+      process.env.NEXT_PUBLIC_API_URL ||
+      'http://localhost:3006'
+    const apiBase = rawApiUrl.replace(/\/$/, '')
+    return [
+      {
+        source: '/uploads/:path*',
+        destination: `${apiBase}/uploads/:path*`,
+      },
+    ]
+  },
   async redirects() {
     return [
       {

@@ -21,6 +21,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api'
 import { DEFAULT_SOCIAL_LINKS, DEFAULT_EXCHANGE_RATE } from '@/lib/constants'
+import { getImageUrl } from '@/lib/utils'
 import { FileUpload } from '@/components/FileUpload'
 import { QrCode, Building, CreditCard, User, Trash2 } from 'lucide-react'
 import { GlobalCacheManager } from '@/components/admin/GlobalCacheManager'
@@ -320,8 +321,14 @@ export default function SettingsPage() {
                   <div className="flex items-center gap-4 p-3 bg-neutral-50 border border-neutral-200 max-w-md">
                     <div className="w-24 h-24 bg-white border border-neutral-200 p-1 flex items-center justify-center shrink-0">
                       <img
-                        src={paymentSettings.qrCodeUrl}
+                        src={getImageUrl(paymentSettings.qrCodeUrl)}
                         alt="QR Code"
+                        onError={(e) => {
+                          const target = e.currentTarget
+                          if (!target.src.includes(':3006') && paymentSettings.qrCodeUrl.startsWith('/uploads')) {
+                            target.src = `http://localhost:3006${paymentSettings.qrCodeUrl}`
+                          }
+                        }}
                         className="w-full h-full object-contain"
                       />
                     </div>

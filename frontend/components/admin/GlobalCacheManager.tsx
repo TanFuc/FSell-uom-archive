@@ -1,9 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { RefreshCw, CheckCircle2, Sparkles, HardDrive } from 'lucide-react'
+import { RefreshCw, CheckCircle2, Sparkles, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import {
   Dialog,
   DialogContent,
@@ -42,7 +42,9 @@ export function GlobalCacheManager({ initialVersion = 'v1' }: GlobalCacheManager
       if (data.success) {
         const newVer = data.version || `v${Date.now()}`
         setCurrentVersion(newVer)
-        setLastClearedTime(new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }))
+        setLastClearedTime(
+          new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+        )
         setIsConfirmOpen(false)
 
         // Clear local browser's own cache as well
@@ -57,15 +59,15 @@ export function GlobalCacheManager({ initialVersion = 'v1' }: GlobalCacheManager
         }
 
         toast({
-          title: 'Đã xóa cache toàn hệ thống thành công!',
-          description: 'Mã phiên bản giao diện đã được cập nhật. Tất cả người dùng sẽ tự động làm mới giao diện ngay khi vào trang.',
+          title: 'Đã cập nhật giao diện thành công!',
+          description: 'Toàn bộ khách hàng sẽ tự động nhận giao diện mới nhất khi truy cập trang web.',
         })
       } else {
-        throw new Error(data.message || 'Lỗi khi kích hoạt xóa cache')
+        throw new Error(data.message || 'Lỗi khi kích hoạt cập nhật giao diện')
       }
     } catch (err: any) {
       toast({
-        title: 'Không thể xóa cache',
+        title: 'Không thể cập nhật giao diện',
         description: err?.message || 'Vui lòng thử lại sau',
         variant: 'destructive',
       })
@@ -75,88 +77,83 @@ export function GlobalCacheManager({ initialVersion = 'v1' }: GlobalCacheManager
   }
 
   const formatVersionDisplay = (ver: string) => {
-    if (!ver) return 'Mặc định (Chưa đặt)'
+    if (!ver) return 'Mặc định'
     if (ver.startsWith('v') && ver.length > 8) {
       const ts = Number(ver.slice(1))
       if (!isNaN(ts)) {
-        return `Phiên bản ${ver} (${new Date(ts).toLocaleString('vi-VN')})`
+        return new Date(ts).toLocaleString('vi-VN', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        })
       }
     }
-    return `Phiên bản ${ver}`
+    return ver
   }
 
   return (
     <>
-      <Card className="border-[#E8E1D5] bg-[#FAF8F5]/80 shadow-xs overflow-hidden">
-        <CardHeader className="pb-3 border-b border-[#ECE4D8]/80">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-[#8C7E6A]/15 flex items-center justify-center text-[#7A6A55]">
-                <HardDrive className="w-4 h-4 text-[#8C7E6A]" />
+      <Card className="border-[#E8E1D5] bg-[#FAF8F5] shadow-xs">
+        <CardContent className="p-4 sm:p-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-start sm:items-center gap-3.5">
+              <div className="w-10 h-10 rounded-full bg-[#8C7E6A]/15 flex items-center justify-center shrink-0 text-[#7A6A55] border border-[#8C7E6A]/20">
+                <Sparkles className="w-5 h-5 text-[#8C7E6A]" />
               </div>
-              <div>
-                <CardTitle className="font-serif text-base font-semibold text-[#3D332A]">
-                  Xóa Cache & Reset Giao Diện Cho Tất Cả Người Dùng
-                </CardTitle>
-                <CardDescription className="text-xs text-stone-500 mt-0.5">
-                  Làm mới bộ nhớ đệm (CacheStorage & Service Worker) của tất cả khách hàng và thiết bị cũ
-                </CardDescription>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="font-serif text-base font-semibold text-[#3D332A]">
+                    Cập nhật giao diện cho khách hàng
+                  </h3>
+                  <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-800 bg-emerald-50 px-2 py-0.5 border border-emerald-200">
+                    <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                    Giữ nguyên giỏ hàng & đăng nhập
+                  </span>
+                </div>
+                <p className="text-xs text-stone-600 leading-relaxed">
+                  Làm mới bộ nhớ và áp dụng ngay giao diện mới nhất cho tất cả người dùng khi họ vào web.
+                </p>
+                <div className="text-[11px] text-stone-500 pt-0.5 flex items-center gap-2">
+                  <span>
+                    Bản phát hành: <span className="font-medium text-stone-700">{formatVersionDisplay(currentVersion)}</span>
+                  </span>
+                  {lastClearedTime && (
+                    <span className="text-emerald-700 flex items-center gap-1 font-medium">
+                      • <CheckCircle2 className="w-3 h-3 inline" /> Vừa làm mới lúc {lastClearedTime}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
 
             <Button
               type="button"
               onClick={() => setIsConfirmOpen(true)}
-              className="bg-[#4A4238] hover:bg-[#8C7E6A] text-white text-xs font-medium px-4 py-2 gap-2 shrink-0 transition-colors shadow-xs"
+              className="bg-[#4A4238] hover:bg-[#8C7E6A] text-white text-xs uppercase tracking-wider font-medium px-4 py-2.5 gap-2 shrink-0 transition-colors shadow-xs"
             >
               <RefreshCw className="w-3.5 h-3.5" />
-              Xóa cache toàn hệ thống
+              Làm mới giao diện ngay
             </Button>
-          </div>
-        </CardHeader>
-
-        <CardContent className="pt-4 space-y-3.5 text-xs text-[#5C5042]">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-3 rounded-sm bg-white/70 border border-[#E7E0D4] space-y-1.5">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-[#8C7E6A]">
-                Mã phiên bản giao diện hiện tại
-              </span>
-              <p className="font-mono text-xs font-semibold text-[#2C241D]">
-                {formatVersionDisplay(currentVersion)}
-              </p>
-              {lastClearedTime && (
-                <p className="text-[11px] text-emerald-700 flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3" /> Vừa xóa lúc: {lastClearedTime}
-                </p>
-              )}
-            </div>
-
-            <div className="p-3 rounded-sm bg-white/70 border border-[#E7E0D4] space-y-1">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-[#8C7E6A]">
-                Cơ chế hoạt động an toàn
-              </span>
-              <p className="text-[11px] leading-relaxed text-stone-600">
-                Khi kích hoạt, hệ thống sẽ tự động gỡ bỏ Service Worker, xóa CacheStorage và tải lại toàn bộ CSS, JS, ảnh giao diện mới nhất. Giỏ hàng và tài khoản đăng nhập của khách hàng được giữ nguyên 100%.
-              </p>
-            </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Confirmation Dialog */}
       <Dialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
-        <DialogContent className="sm:max-w-[480px]">
+        <DialogContent className="sm:max-w-[460px]">
           <DialogHeader>
             <div className="flex items-center gap-2.5 text-[#3D332A] mb-1">
-              <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-800">
+              <div className="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center text-amber-800 shrink-0">
                 <RefreshCw className="w-4 h-4" />
               </div>
-              <DialogTitle className="font-serif text-lg font-semibold">
-                Xác nhận xóa cache toàn bộ người dùng?
+              <DialogTitle className="font-serif text-lg font-semibold text-[#3D332A]">
+                Làm mới giao diện toàn hệ thống?
               </DialogTitle>
             </div>
             <DialogDescription className="text-xs text-stone-600 leading-relaxed pt-2">
-              Hành động này sẽ nâng mã phiên bản giao diện website. Toàn bộ người dùng truy cập (cả khách vãng lai và thành viên) sẽ tự động làm mới bộ nhớ đệm trình duyệt để nhận ngay bản cập nhật mới nhất (font chữ, layout, nút bấm...).
+              Hệ thống sẽ phát hành bản cập nhật mới. Khi khách hàng mở trang web, thiết bị của họ sẽ tự động tải giao diện mới nhất (font chữ, layout, hình ảnh). Giỏ hàng và tài khoản của khách được giữ nguyên 100%.
             </DialogDescription>
           </DialogHeader>
 
@@ -180,12 +177,12 @@ export function GlobalCacheManager({ initialVersion = 'v1' }: GlobalCacheManager
               {isClearing ? (
                 <>
                   <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                  Đang xử lý...
+                  Đang cập nhật...
                 </>
               ) : (
                 <>
                   <Sparkles className="w-3.5 h-3.5" />
-                  Xác nhận & Reset ngay
+                  Xác nhận cập nhật
                 </>
               )}
             </Button>

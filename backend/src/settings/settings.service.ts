@@ -504,7 +504,7 @@ export class SettingsService {
     const settings = await this.prisma.paymentSettings.upsert({
       where: { id: 'singleton' },
       update: {
-        ...(dto.qrCodeUrl !== undefined && { qrCodeUrl: dto.qrCodeUrl }),
+        ...(dto.qrCodeUrl !== undefined && { qrCodeUrl: dto.qrCodeUrl ? dto.qrCodeUrl : null }),
         ...(dto.bankName !== undefined && { bankName: dto.bankName }),
         ...(dto.accountNumber !== undefined && { accountNumber: dto.accountNumber }),
         ...(dto.accountHolder !== undefined && { accountHolder: dto.accountHolder }),
