@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { api } from '@/lib/api'
+import { getImageUrl } from '@/lib/utils'
 
 interface PaymentTransferModalProps {
   isOpen: boolean
@@ -50,6 +51,7 @@ export function PaymentTransferModal({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
   const [uploadSuccess, setUploadSuccess] = useState(false)
+  const [adminQrFailed, setAdminQrFailed] = useState(false)
 
   if (!isOpen) return null
 
@@ -136,11 +138,11 @@ export function PaymentTransferModal({
     .replaceAll('{orderNumber}', orderNumber)
     .replaceAll('{totalVND}', String(totalVND))
 
-  const qrImageUrl =
-    paymentSettings?.qrCodeUrl ||
-    (accountNumber
-      ? `https://api.vietqr.io/image/${encodeURIComponent(bankName)}-${encodeURIComponent(accountNumber)}-compact.jpg?amount=${totalVND}&addInfo=${encodeURIComponent(transferContent)}&accountName=${encodeURIComponent(accountHolder)}`
-      : null)
+  const vietQrUrl = accountNumber
+    ? `https://api.vietqr.io/image/${encodeURIComponent(bankName)}-${encodeURIComponent(accountNumber)}-compact.jpg?amount=${totalVND}&addInfo=${encodeURIComponent(transferContent)}&accountName=${encodeURIComponent(accountHolder)}`
+    : null
+  const adminQrUrl = paymentSettings?.qrCodeUrl ? getImageUrl(paymentSettings.qrCodeUrl) : null
+  const qrImageUrl = (!adminQrFailed && adminQrUrl) ? adminQrUrl : vietQrUrl
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
@@ -207,6 +209,11 @@ export function PaymentTransferModal({
                           src={qrImageUrl}
                           alt="Mã QR chuyển khoản"
                           className="w-full aspect-square object-contain"
+                          onError={() => {
+                            if (!adminQrFailed && adminQrUrl) {
+                              setAdminQrFailed(true)
+                            }
+                          }}
                         />
                       </div>
                     ) : (

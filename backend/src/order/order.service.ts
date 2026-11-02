@@ -35,19 +35,26 @@ export class OrderService {
     return secret
   }
 
-  private assertPaymentAccess(orderId: string, token?: string): void {
-    if (!matchesOrderAccessToken(orderId, this.getOrderAccessSecret(), token)) {
-      throw new ForbiddenException('Liên kết xác nhận chuyển khoản không hợp lệ')
+  private assertPaymentAccess(orderId: string, token?: string, customerId?: string, user?: any): void {
+    if (matchesOrderAccessToken(orderId, this.getOrderAccessSecret(), token)) {
+      return
     }
+    if (user?.id && customerId && user.id === customerId) {
+      return
+    }
+    if (user?.role === 'ADMIN' || user?.role === 'MANAGER') {
+      return
+    }
+    throw new ForbiddenException('Liên kết xác nhận chuyển khoản không hợp lệ')
   }
 
-  async assertPublicOrderAccess(identifier: string, token?: string): Promise<void> {
+  async assertPublicOrderAccess(identifier: string, token?: string, user?: any): Promise<void> {
     const order = await this.prisma.order.findFirst({
       where: { OR: [{ id: identifier }, { orderNumber: identifier }], deletedAt: null },
-      select: { id: true },
+      select: { id: true, customerId: true },
     })
     if (!order) throw new NotFoundException('Không tìm thấy đơn hàng')
-    this.assertPaymentAccess(order.id, token)
+    this.assertPaymentAccess(order.id, token, order.customerId ?? undefined, user)
   }
 
   /**
@@ -265,7 +272,11 @@ export class OrderService {
       }
     }
 
-    return order
+    const secret = this.getOrderAccessSecret()
+    return {
+      ...order,
+      paymentAccessToken: createOrderAccessToken(order.id, secret),
+    }
   }
 
   /**
@@ -562,7 +573,12 @@ export class OrderService {
   /**
    * Khách hàng tải lên ảnh biên nhận chuyển khoản (Proof of Payment)
    */
-  async uploadPaymentProof(identifier: string, file: Express.Multer.File, accessToken?: string) {
+  async uploadPaymentProof(
+    identifier: string,
+    file: Express.Multer.File,
+    accessToken?: string,
+    user?: any,
+  ) {
     if (!file) {
       throw new BadRequestException('Vui lòng chọn hình ảnh biên nhận chuyển khoản')
     }
@@ -580,7 +596,7 @@ export class OrderService {
     if (!order) {
       throw new NotFoundException('Không tìm thấy đơn hàng')
     }
-    this.assertPaymentAccess(order.id, accessToken)
+    this.assertPaymentAccess(order.id, accessToken, order.customerId ?? undefined, user)
 
     if (order.paymentMethod !== 'bank_transfer' || order.status === 'cancelled' || order.paymentStatus === 'paid') {
       throw new BadRequestException('Đơn hàng không thể nhận thêm biên nhận chuyển khoản')
@@ -612,24 +628,33 @@ export class OrderService {
       this.logger.warn(`Lỗi gửi mail sau khi upload bill đơn ${updatedOrder.orderNumber}: ${err.message}`)
     })
 
-    return updatedOrder
+    const secret = this.getOrderAccessSecret()
+    return {
+      ...updatedOrder,
+      paymentAccessToken: createOrderAccessToken(updatedOrder.id, secret),
+    }
   }
 
-  async confirmTransfer(identifier: string, accessToken?: string) {
+  async confirmTransfer(identifier: string, accessToken?: string, user?: any) {
     const order = await this.prisma.order.findFirst({
       where: { OR: [{ id: identifier }, { orderNumber: identifier }], deletedAt: null },
     })
     if (!order) throw new NotFoundException('Không tìm thấy đơn hàng')
-    this.assertPaymentAccess(order.id, accessToken)
+    this.assertPaymentAccess(order.id, accessToken, order.customerId ?? undefined, user)
     if (order.paymentMethod !== 'bank_transfer' || order.status === 'cancelled') {
       throw new BadRequestException('Đơn hàng không thể xác nhận chuyển khoản')
     }
     if (order.paymentStatus === 'paid') return order
-    return this.prisma.order.update({
+    const updated = await this.prisma.order.update({
       where: { id: order.id },
       data: { transferClaimedAt: order.transferClaimedAt || new Date(), paymentStatus: 'pending_approval' },
       include: { items: { where: { deletedAt: null } } },
     })
+    const secret = this.getOrderAccessSecret()
+    return {
+      ...updated,
+      paymentAccessToken: createOrderAccessToken(updated.id, secret),
+    }
   }
 
   /**

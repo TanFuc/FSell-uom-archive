@@ -1,6 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="31 31 450 450" width="512" height="512">
   <!-- Solid white rounded square background for optimal contrast in all themes -->
-  <rect width="512" height="512" rx="108" fill="#FFFFFF"/>
   <!-- Perfectly centered authentic ƯƠM. brand glyphs -->
   <g transform="translate(-99.33, 701.35) scale(0.033841, -0.033841)" fill="#1A1816" stroke="none">
     <path d="M7463 15116 c-72 -14 -94 -31 -122 -92 -44 -93 -20 -207 59 -278 43

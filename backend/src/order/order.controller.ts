@@ -117,27 +117,39 @@ export class OrderController {
   async uploadPaymentProof(
     @Param('idOrNumber') idOrNumber: string,
     @UploadedFile() file: Express.Multer.File,
-    @Headers('x-order-payment-token') accessToken?: string,
+    @Headers('x-order-payment-token') headerToken?: string,
+    @Query('access') queryAccess?: string,
+    @Query('token') queryToken?: string,
+    @Req() req?: any,
   ) {
-    return this.orderService.uploadPaymentProof(idOrNumber, file, accessToken)
+    const accessToken = headerToken || queryAccess || queryToken
+    return this.orderService.uploadPaymentProof(idOrNumber, file, accessToken, req?.user)
   }
 
   @Post(':idOrNumber/confirm-transfer')
   @RateLimit({ limit: 10, ttl: 60 })
   async confirmTransfer(
     @Param('idOrNumber') idOrNumber: string,
-    @Headers('x-order-payment-token') accessToken?: string,
+    @Headers('x-order-payment-token') headerToken?: string,
+    @Query('access') queryAccess?: string,
+    @Query('token') queryToken?: string,
+    @Req() req?: any,
   ) {
-    return this.orderService.confirmTransfer(idOrNumber, accessToken)
+    const accessToken = headerToken || queryAccess || queryToken
+    return this.orderService.confirmTransfer(idOrNumber, accessToken, req?.user)
   }
 
   @Get(':idOrNumber')
   @RateLimit({ limit: 60, ttl: 60 })
   async getOrder(
     @Param('idOrNumber') idOrNumber: string,
-    @Headers('x-order-payment-token') accessToken?: string,
+    @Headers('x-order-payment-token') headerToken?: string,
+    @Query('access') queryAccess?: string,
+    @Query('token') queryToken?: string,
+    @Req() req?: any,
   ) {
-    await this.orderService.assertPublicOrderAccess(idOrNumber, accessToken)
+    const accessToken = headerToken || queryAccess || queryToken
+    await this.orderService.assertPublicOrderAccess(idOrNumber, accessToken, req?.user)
     return this.orderService.getOrderByIdOrNumber(idOrNumber)
   }
 
@@ -148,9 +160,13 @@ export class OrderController {
   @RateLimit({ limit: 30, ttl: 60 })
   async syncTracking(
     @Param('idOrNumber') idOrNumber: string,
-    @Headers('x-order-payment-token') accessToken?: string,
+    @Headers('x-order-payment-token') headerToken?: string,
+    @Query('access') queryAccess?: string,
+    @Query('token') queryToken?: string,
+    @Req() req?: any,
   ) {
-    await this.orderService.assertPublicOrderAccess(idOrNumber, accessToken)
+    const accessToken = headerToken || queryAccess || queryToken
+    await this.orderService.assertPublicOrderAccess(idOrNumber, accessToken, req?.user)
     return this.orderService.syncOrderFulfillmentFromSapo(idOrNumber)
   }
 

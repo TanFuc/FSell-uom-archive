@@ -675,6 +675,7 @@ class ApiClient {
 
   async getOrderTracking(idOrNumber: string, accessToken?: string): Promise<any> {
     const res = await this.client.get(`/orders/${idOrNumber}`, {
+      params: accessToken ? { access: accessToken } : undefined,
       headers: accessToken ? { 'x-order-payment-token': accessToken } : {},
     })
     return res.data?.data !== undefined ? res.data.data : res.data
@@ -682,6 +683,7 @@ class ApiClient {
 
   async syncOrderTracking(idOrNumber: string, accessToken?: string): Promise<any> {
     const res = await this.client.post(`/orders/${idOrNumber}/sync-tracking`, null, {
+      params: accessToken ? { access: accessToken } : undefined,
       headers: accessToken ? { 'x-order-payment-token': accessToken } : {},
     })
     return res.data?.data !== undefined ? res.data.data : res.data
@@ -766,6 +768,7 @@ class ApiClient {
     const formData = new FormData()
     formData.append('file', file)
     const res = await this.client.post(`/orders/${idOrNumber}/payment-proof`, formData, {
+      params: accessToken ? { access: accessToken } : undefined,
       headers: {
         'Content-Type': 'multipart/form-data',
         'x-order-payment-token': accessToken,
@@ -776,6 +779,7 @@ class ApiClient {
 
   async confirmOrderTransfer(idOrNumber: string, accessToken: string): Promise<any> {
     const res = await this.client.post(`/orders/${idOrNumber}/confirm-transfer`, null, {
+      params: accessToken ? { access: accessToken } : undefined,
       headers: { 'x-order-payment-token': accessToken },
     })
     return res.data?.data !== undefined ? res.data.data : res.data

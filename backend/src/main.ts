@@ -208,12 +208,15 @@ async function startApplication(): Promise<void> {
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    exposedHeaders: ['x-order-payment-token', 'X-Order-Payment-Token'],
     allowedHeaders: [
       'Content-Type',
       'Authorization',
       'Accept-Language',
       'X-Requested-With',
       'ngrok-skip-browser-warning',
+      'x-order-payment-token',
+      'X-Order-Payment-Token',
     ],
   })
 

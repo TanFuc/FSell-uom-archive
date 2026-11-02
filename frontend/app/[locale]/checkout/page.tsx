@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useLocale } from 'next-intl'
 import Link from 'next/link'
 import { ArrowLeft, ShoppingBag, ShieldCheck, CheckCircle2, QrCode } from 'lucide-react'
 import { toast } from 'sonner'
@@ -11,6 +12,7 @@ import { PaymentTransferModal } from '@/components/order/PaymentTransferModal'
 
 function CheckoutContent() {
   const router = useRouter()
+  const locale = useLocale()
   const searchParams = useSearchParams()
   const itemsParam = searchParams.get('items')
 
@@ -397,7 +399,7 @@ function CheckoutContent() {
             isOpen={isPaymentModalOpen}
             onClose={() => {
               setIsPaymentModalOpen(false)
-              router.push(`/order-tracking/${createdOrder.orderNumber || createdOrder.id}?access=${createdOrder.paymentAccessToken}`)
+              router.push(`/${locale}/order-tracking/${createdOrder.orderNumber || createdOrder.id}?access=${createdOrder.paymentAccessToken}`)
             }}
             orderNumber={createdOrder.orderNumber || createdOrder.id}
             paymentAccessToken={createdOrder.paymentAccessToken}
@@ -411,7 +413,7 @@ function CheckoutContent() {
             }}
             onSkip={() => {
               setIsPaymentModalOpen(false)
-              router.push(`/order-tracking/${createdOrder.orderNumber || createdOrder.id}?access=${createdOrder.paymentAccessToken}`)
+              router.push(`/${locale}/order-tracking/${createdOrder.orderNumber || createdOrder.id}?access=${createdOrder.paymentAccessToken}`)
             }}
           />
         )}

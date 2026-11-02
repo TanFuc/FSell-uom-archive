@@ -23,6 +23,7 @@ import { toast } from 'sonner'
 import { OrderTrackingTimeline } from '@/components/order/OrderTrackingTimeline'
 import { PaymentTransferModal } from '@/components/order/PaymentTransferModal'
 import { api } from '@/lib/api'
+import { getImageUrl } from '@/lib/utils'
 
 export default function OrderTrackingDetailPage() {
   const params = useParams()
@@ -282,7 +283,7 @@ export default function OrderTrackingDetailPage() {
                     title="Nhấp để xem ảnh lớn"
                   >
                     <img
-                      src={order.paymentProofUrl}
+                      src={getImageUrl(order.paymentProofUrl)}
                       alt="Ảnh biên nhận chuyển khoản"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                     />
@@ -397,7 +398,7 @@ export default function OrderTrackingDetailPage() {
         isOpen={isPaymentModalOpen}
         onClose={() => setIsPaymentModalOpen(false)}
         orderNumber={order.orderNumber}
-        paymentAccessToken={paymentAccessToken}
+        paymentAccessToken={paymentAccessToken || order?.paymentAccessToken}
         totalVND={order.totalVND}
         paymentSettings={paymentSettings}
         onSuccess={(updated) => {
@@ -425,7 +426,7 @@ export default function OrderTrackingDetailPage() {
             </div>
             <div className="max-h-[75vh] overflow-auto flex items-center justify-center bg-stone-50">
               <img
-                src={order.paymentProofUrl}
+                src={getImageUrl(order.paymentProofUrl)}
                 alt="Biên nhận thanh toán"
                 className="max-w-full max-h-[70vh] object-contain shadow-sm"
               />

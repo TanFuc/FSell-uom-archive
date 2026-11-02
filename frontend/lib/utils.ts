@@ -91,10 +91,20 @@ export function normalizePublicImageUrl(path: string): string {
     let apiBase = (
       process.env.NEXT_PUBLIC_API_BASE_URL ||
       process.env.NEXT_PUBLIC_API_URL ||
-      'https://api.uomarchive.com'
+      ''
     ).replace(/\/$/, '')
-    if (typeof window !== 'undefined' && window.location.hostname.endsWith('uomarchive.com')) {
-      apiBase = 'https://api.uomarchive.com'
+    if (typeof window !== 'undefined') {
+      const hostname = window.location.hostname
+      if (hostname.endsWith('uomarchive.com')) {
+        apiBase = 'https://api.uomarchive.com'
+      } else if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        if (!apiBase || apiBase.includes('uomarchive.com')) {
+          apiBase = 'http://localhost:3006'
+        }
+      }
+    }
+    if (!apiBase) {
+      apiBase = process.env.NODE_ENV === 'production' ? 'https://api.uomarchive.com' : 'http://localhost:3006'
     }
     const cleanPath = path.startsWith('/') ? path : `/${path}`
     return `${apiBase}${cleanPath}`
