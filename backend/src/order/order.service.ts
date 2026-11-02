@@ -35,6 +35,34 @@ export class OrderService {
     return secret
   }
 
+  extractUserFromRequest(req?: any): { id?: string; role?: string } | null {
+    if (!req) return null
+    if (req.user?.id) return req.user
+
+    const authHeader = req.headers?.authorization || req.headers?.Authorization
+    const cookieToken = req.cookies?.customer_access_token || req.cookies?.customerAccessToken || req.cookies?.accessToken
+    const rawToken = authHeader && typeof authHeader === 'string' && authHeader.toLowerCase().startsWith('bearer ')
+      ? authHeader.replace(/^bearer\s+/i, '').trim()
+      : cookieToken
+
+    if (rawToken && typeof rawToken === 'string') {
+      try {
+        const jwt = require('jsonwebtoken')
+        const secret = this.configService.get<string>('JWT_ACCESS_SECRET')
+        if (secret) {
+          const payload = jwt.verify(rawToken, secret) as any
+          if (payload?.sub) {
+            return {
+              id: payload.sub,
+              role: payload.role || (payload.type === 'CUSTOMER' ? 'CUSTOMER' : undefined),
+            }
+          }
+        }
+      } catch {}
+    }
+    return null
+  }
+
   private assertPaymentAccess(orderId: string, token?: string, customerId?: string, user?: any): void {
     if (matchesOrderAccessToken(orderId, this.getOrderAccessSecret(), token)) {
       return
@@ -48,12 +76,13 @@ export class OrderService {
     throw new ForbiddenException('Liên kết xác nhận chuyển khoản không hợp lệ')
   }
 
-  async assertPublicOrderAccess(identifier: string, token?: string, user?: any): Promise<void> {
+  async assertPublicOrderAccess(identifier: string, token?: string, reqOrUser?: any): Promise<void> {
     const order = await this.prisma.order.findFirst({
       where: { OR: [{ id: identifier }, { orderNumber: identifier }], deletedAt: null },
       select: { id: true, customerId: true },
     })
     if (!order) throw new NotFoundException('Không tìm thấy đơn hàng')
+    const user = reqOrUser?.id ? reqOrUser : this.extractUserFromRequest(reqOrUser)
     this.assertPaymentAccess(order.id, token, order.customerId ?? undefined, user)
   }
 
@@ -577,7 +606,7 @@ export class OrderService {
     identifier: string,
     file: Express.Multer.File,
     accessToken?: string,
-    user?: any,
+    reqOrUser?: any,
   ) {
     if (!file) {
       throw new BadRequestException('Vui lòng chọn hình ảnh biên nhận chuyển khoản')
@@ -596,6 +625,7 @@ export class OrderService {
     if (!order) {
       throw new NotFoundException('Không tìm thấy đơn hàng')
     }
+    const user = reqOrUser?.id ? reqOrUser : this.extractUserFromRequest(reqOrUser)
     this.assertPaymentAccess(order.id, accessToken, order.customerId ?? undefined, user)
 
     if (order.paymentMethod !== 'bank_transfer' || order.status === 'cancelled' || order.paymentStatus === 'paid') {
@@ -635,11 +665,12 @@ export class OrderService {
     }
   }
 
-  async confirmTransfer(identifier: string, accessToken?: string, user?: any) {
+  async confirmTransfer(identifier: string, accessToken?: string, reqOrUser?: any) {
     const order = await this.prisma.order.findFirst({
       where: { OR: [{ id: identifier }, { orderNumber: identifier }], deletedAt: null },
     })
     if (!order) throw new NotFoundException('Không tìm thấy đơn hàng')
+    const user = reqOrUser?.id ? reqOrUser : this.extractUserFromRequest(reqOrUser)
     this.assertPaymentAccess(order.id, accessToken, order.customerId ?? undefined, user)
     if (order.paymentMethod !== 'bank_transfer' || order.status === 'cancelled') {
       throw new BadRequestException('Đơn hàng không thể xác nhận chuyển khoản')

@@ -576,9 +576,9 @@ export function Header({ initialSiteContent }: HeaderProps = {}) {
             isScrolled ? 'h-16 lg:h-20' : 'h-20 lg:h-28',
           )}
         >
-          <div className="flex w-full items-center justify-between">
+          <div className="relative flex w-full items-center justify-between">
             {/* Left */}
-            <div className="flex shrink-0 items-center justify-start lg:min-w-[220px]">
+            <div className="flex shrink-0 items-center justify-start z-10">
               <button
                 onClick={toggleMobileMenu}
                 aria-label={showMobileMenu ? t('closeMenu') : t('openMenu')}
@@ -622,8 +622,8 @@ export function Header({ initialSiteContent }: HeaderProps = {}) {
               </button>
             </div>
 
-            {/* Middle Logo (Never clipped or covered by buttons) */}
-            <div className="flex min-w-0 flex-1 items-center justify-center px-1 xs:px-2">
+            {/* Middle Logo (Always centered) */}
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 pointer-events-auto max-w-[50vw] sm:max-w-[60vw] text-center">
               <Link
                 href={`/${locale}`}
                 className={cn(
@@ -649,7 +649,7 @@ export function Header({ initialSiteContent }: HeaderProps = {}) {
             </div>
 
             {/* Right Actions: Socials + Search + Cart + Auth + Lang (Icon Only) */}
-            <div className="flex shrink-0 items-center justify-end gap-2 xs:gap-2.5 sm:gap-4 lg:gap-5 lg:min-w-[220px]">
+            <div className="flex shrink-0 items-center justify-end gap-2 xs:gap-2.5 sm:gap-4 lg:gap-5 z-10">
               {/* Desktop Socials */}
               <div className="mr-1 hidden items-center gap-4 lg:flex">
                 {socialLinks?.instagramUsername && (

@@ -109,28 +109,50 @@ export default function OrderTrackingDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-[70vh] bg-white flex flex-col items-center justify-center p-6 text-[#4A4238]">
-        <div className="w-8 h-8 border-2 border-[#8C7E6A] border-t-transparent rounded-full animate-spin mb-3" />
-        <p className="text-xs uppercase tracking-[0.2em] text-[#8C7E6A]">Đang tải dữ liệu đơn hàng...</p>
+      <div className="min-h-screen bg-white text-[#4A4238] font-sans flex flex-col justify-center items-center px-4 pb-20 pt-28 sm:pt-36">
+        <div className="w-8 h-8 border-2 border-[#8C7E6A] border-t-transparent rounded-full animate-spin mb-4" />
+        <p className="text-xs uppercase tracking-[0.2em] text-[#8C7E6A] font-light">
+          Đang tải dữ liệu đơn hàng...
+        </p>
       </div>
     )
   }
 
   if (error || !order) {
     return (
-      <div className="min-h-[70vh] bg-white flex flex-col items-center justify-center p-6 text-center text-[#4A4238]">
-        <h2 className="font-serif text-xl sm:text-2xl font-light uppercase tracking-wider mb-2">
-          Không tìm thấy đơn hàng
-        </h2>
-        <p className="text-xs text-stone-500 max-w-sm mb-6 font-thin">
-          {error || 'Vui lòng kiểm tra lại mã đơn hàng hoặc đường link tra cứu.'}
-        </p>
-        <Link
-          href="/shop"
-          className="btn text-xs tracking-[0.2em] uppercase px-6 py-2.5 bg-[#4A4238] text-white hover:bg-[#8C7E6A] transition-colors font-light"
-        >
-          Khám phá sản phẩm
-        </Link>
+      <div className="min-h-screen bg-white text-[#4A4238] font-sans pb-24 pt-24 sm:pt-28 lg:pt-32">
+        <div className="max-w-xl mx-auto px-4 sm:px-6">
+          <div className="bg-white border border-stone-200 p-8 sm:p-12 text-center shadow-[0_4px_24px_rgba(74,66,56,0.04)] space-y-4">
+            <div className="w-14 h-14 mx-auto rounded-full bg-stone-50 border border-stone-200 flex items-center justify-center text-[#8C7E6A] mb-2">
+              <ShoppingBag className="w-7 h-7 stroke-[1.2]" />
+            </div>
+            <div>
+              <span className="text-[10px] uppercase tracking-[0.25em] text-[#8C7E6A] font-serif font-light block mb-1">
+                Tra cứu đơn hàng
+              </span>
+              <h1 className="font-serif text-2xl sm:text-3xl font-light text-[#4A4238] tracking-tight">
+                Không tìm thấy đơn hàng
+              </h1>
+            </div>
+            <p className="text-xs text-stone-600 font-light max-w-md mx-auto leading-relaxed">
+              {error || 'Vui lòng kiểm tra lại mã đơn hàng hoặc mở liên kết từ email xác nhận của bạn.'}
+            </p>
+            <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Link
+                href={`/${locale}/my-orders`}
+                className="w-full sm:w-auto px-6 py-2.5 bg-[#4A4238] text-white text-xs uppercase tracking-[0.18em] font-light hover:bg-[#8C7E6A] transition-colors"
+              >
+                Đơn hàng của tôi
+              </Link>
+              <Link
+                href={`/${locale}/shop`}
+                className="w-full sm:w-auto px-6 py-2.5 border border-stone-300 text-stone-700 text-xs uppercase tracking-[0.18em] font-light hover:border-[#8C7E6A] hover:text-[#4A4238] transition-colors"
+              >
+                Khám phá bộ sưu tập
+              </Link>
+            </div>
+          </div>
+        </div>
       </div>
     )
   }

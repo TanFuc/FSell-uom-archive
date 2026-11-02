@@ -123,7 +123,7 @@ export class OrderController {
     @Req() req?: any,
   ) {
     const accessToken = headerToken || queryAccess || queryToken
-    return this.orderService.uploadPaymentProof(idOrNumber, file, accessToken, req?.user)
+    return this.orderService.uploadPaymentProof(idOrNumber, file, accessToken, req)
   }
 
   @Post(':idOrNumber/confirm-transfer')
@@ -136,7 +136,7 @@ export class OrderController {
     @Req() req?: any,
   ) {
     const accessToken = headerToken || queryAccess || queryToken
-    return this.orderService.confirmTransfer(idOrNumber, accessToken, req?.user)
+    return this.orderService.confirmTransfer(idOrNumber, accessToken, req)
   }
 
   @Get(':idOrNumber')
@@ -149,7 +149,7 @@ export class OrderController {
     @Req() req?: any,
   ) {
     const accessToken = headerToken || queryAccess || queryToken
-    await this.orderService.assertPublicOrderAccess(idOrNumber, accessToken, req?.user)
+    await this.orderService.assertPublicOrderAccess(idOrNumber, accessToken, req)
     return this.orderService.getOrderByIdOrNumber(idOrNumber)
   }
 
@@ -166,7 +166,7 @@ export class OrderController {
     @Req() req?: any,
   ) {
     const accessToken = headerToken || queryAccess || queryToken
-    await this.orderService.assertPublicOrderAccess(idOrNumber, accessToken, req?.user)
+    await this.orderService.assertPublicOrderAccess(idOrNumber, accessToken, req)
     return this.orderService.syncOrderFulfillmentFromSapo(idOrNumber)
   }
 
