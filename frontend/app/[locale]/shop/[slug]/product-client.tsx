@@ -526,13 +526,13 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                 <div className="w-full space-y-6 pb-12 pt-6 md:space-y-8 md:pb-0 md:pt-0">
                   {/* Info Header */}
                   <div className="space-y-3">
-                    <h1 className="text-mobile-safe font-serif text-2xl sm:text-3xl md:text-4xl font-light uppercase tracking-wider leading-tight text-[#1A1816]">
+                    <h1 className="text-mobile-safe font-serif text-2xl sm:text-3xl md:text-4xl font-light uppercase tracking-wider leading-tight text-black">
                       {name}
                     </h1>
                     <div className="flex flex-wrap items-baseline gap-3">
                       <p
                         className={cn(
-                          'font-serif text-2xl sm:text-3xl md:text-4xl font-light tracking-tight text-[#1A1816]',
+                          'font-serif text-2xl sm:text-3xl md:text-4xl font-light tracking-tight text-black',
                           priceDisplay.hasDiscount && 'text-[#991b1b]',
                         )}
                       >
@@ -540,7 +540,7 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                       </p>
                       {priceDisplay.hasDiscount && priceDisplay.originalPrice && (
                         <>
-                          <p className="font-serif text-sm sm:text-base font-thin text-muted-foreground/60 line-through">
+                          <p className="font-serif text-sm sm:text-base font-thin text-neutral-400 line-through">
                             {priceDisplay.originalPrice}
                           </p>
                           {priceDisplay.discountPercentage && (
@@ -553,87 +553,55 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                     </div>
                   </div>
 
-                  {/* Details Section */}
-                  <div className="space-y-5">
-                    {/* Poetic quote / Short summary */}
+                  {/* Details Section - Clean Unboxed Editorial Presentation matching Design Spec */}
+                  <div className="space-y-3.5 pt-1 text-black">
+                    {/* Short Description (body Thin) */}
                     {shortDescription ? (
-                      <div className="border-l-2 border-[#8C7E6A] bg-stone-50/60 pl-4 py-2 rounded-r-sm">
-                        <p className="font-serif italic text-sm sm:text-[15px] leading-relaxed text-[#5C5042]">
-                          “{shortDescription}”
-                        </p>
-                      </div>
+                      <p className="font-serif font-thin text-sm sm:text-base leading-relaxed text-black">
+                        {shortDescription}
+                      </p>
                     ) : null}
 
-                    {/* Structured Specifications Form / Card */}
-                    {(product.material || product.dimensions || variants.groups.length > 0) && (
-                      <div className="relative overflow-hidden rounded-sm border border-[#E8E1D5] bg-gradient-to-b from-[#FCFAF7] to-[#F8F5EE] p-4 sm:p-5 shadow-[0_2px_12px_rgba(74,66,56,0.03)] space-y-3.5 before:absolute before:inset-x-0 before:top-0 before:h-[1.5px] before:bg-gradient-to-r before:from-transparent before:via-[#C2B6A3]/60 before:to-transparent">
-                        <div className="flex items-center pb-3 border-b border-[#ECE4D8]">
-                          <div className="flex items-center gap-2">
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#8C7E6A]" />
-                            <span className="font-serif text-xs sm:text-[13px] font-light uppercase tracking-[0.18em] text-[#3D332A]">
-                              {locale === 'vi' ? 'Thông số chế tác' : 'Craft Specifications'}
-                            </span>
-                          </div>
-                        </div>
-
-                        <dl className="divide-y divide-[#EFEAE2] text-xs sm:text-[13px]">
-                          {product.material && (
-                            <div className="py-2.5 first:pt-1 last:pb-1 flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-6">
-                              <dt className="w-24 sm:w-28 shrink-0 font-serif text-[11px] sm:text-xs uppercase tracking-[0.16em] text-[#8C7E6A] font-medium">
-                                {locale === 'vi' ? 'Chất liệu' : 'Material'}
-                              </dt>
-                              <dd className="font-serif font-normal text-xs sm:text-[13px] text-[#2C241D] leading-relaxed flex-1">
-                                {product.material}
-                              </dd>
-                            </div>
-                          )}
-                          {product.dimensions && (
-                            <div className="py-2.5 first:pt-1 last:pb-1 flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-6">
-                              <dt className="w-24 sm:w-28 shrink-0 font-serif text-[11px] sm:text-xs uppercase tracking-[0.16em] text-[#8C7E6A] font-medium">
-                                {locale === 'vi' ? 'Kích thước' : 'Dimensions'}
-                              </dt>
-                              <dd className="font-serif font-normal text-xs sm:text-[13px] text-[#2C241D] leading-relaxed flex-1">
-                                {product.dimensions}
-                              </dd>
-                            </div>
-                          )}
-                          {variants.groups.map((group) => (
-                            <div key={group.label} className="py-2.5 first:pt-1 last:pb-1 flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-6">
-                              <dt className="w-24 sm:w-28 shrink-0 font-serif text-[11px] sm:text-xs uppercase tracking-[0.16em] text-[#8C7E6A] font-medium">
-                                {group.label}
-                              </dt>
-                              <dd className="font-serif font-normal text-xs sm:text-[13px] text-[#2C241D] leading-relaxed flex-1">
-                                {group.values.join(', ')}
-                              </dd>
-                            </div>
-                          ))}
-                        </dl>
-                      </div>
+                    {/* Specifications (Material & Dimensions - nhấn Light) */}
+                    {product.material && (
+                      <p className="font-serif text-sm sm:text-base text-black leading-relaxed">
+                        <span className="font-light">{locale === 'vi' ? 'Chất liệu ' : 'Material '}</span>
+                        <span className="font-light">{product.material}</span>
+                      </p>
                     )}
 
-                    {/* Detailed Description */}
+                    {product.dimensions && (
+                      <p className="font-serif text-sm sm:text-base text-black leading-relaxed">
+                        <span className="font-light">{locale === 'vi' ? 'Kích thước ' : 'Dimensions '}</span>
+                        <span className="font-thin">{product.dimensions}</span>
+                      </p>
+                    )}
+
+                    {variants.groups.map((group) => (
+                      <p key={group.label} className="font-serif text-sm sm:text-base text-black leading-relaxed">
+                        <span className="font-light">{group.label}: </span>
+                        <span className="font-thin">{group.values.join(', ')}</span>
+                      </p>
+                    ))}
+
+                    {/* Detailed Description HTML (body Thin, nhấn Light) */}
                     {description && (
-                      <div className="space-y-2 pt-1">
-                        <h4 className="font-serif text-xs sm:text-[13px] font-light uppercase tracking-[0.18em] text-[#3D332A]">
-                          {locale === 'vi' ? 'Mô tả tác phẩm' : 'About this piece'}
-                        </h4>
-                        <div
-                          className="prose prose-stone max-w-none overflow-hidden font-serif text-xs sm:text-sm font-thin leading-relaxed text-[#3A332C] [overflow-wrap:anywhere] [&_p]:leading-[1.75] [&_p]:mb-3 [&_strong]:font-light [&_strong]:text-[#1A1816] [&_b]:font-light [&_b]:text-[#1A1816] [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1.5 [&_li]:text-[#3A332C] [&_li]:leading-relaxed"
-                          dangerouslySetInnerHTML={{ __html: description }}
-                        />
-                      </div>
+                      <div
+                        className="prose prose-stone max-w-none overflow-hidden font-serif text-sm sm:text-base font-thin leading-relaxed text-black [overflow-wrap:anywhere] pt-1 [&_p]:leading-[1.75] [&_p]:mb-3 [&_p]:text-black [&_strong]:font-light [&_strong]:text-black [&_b]:font-light [&_b]:text-black [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1.5 [&_li]:text-black [&_li]:leading-relaxed"
+                        dangerouslySetInnerHTML={{ __html: description }}
+                      />
                     )}
 
                     {/* Explore all products CTA */}
                     <div className="pt-2">
                       <Link
                         href={`/${locale}/shop`}
-                        className="group inline-flex items-center gap-2.5 font-serif text-xs sm:text-[13px] uppercase tracking-[0.18em] text-[#7A6A55] hover:text-[#2C241D] transition-all duration-300 py-1"
+                        className="group inline-flex items-center gap-2 font-serif text-xs sm:text-[13px] uppercase tracking-[0.18em] text-black hover:opacity-60 transition-all duration-300 py-1"
                       >
-                        <span className="relative font-medium pb-0.5 border-b border-[#8C7E6A]/35 group-hover:border-[#2C241D] transition-colors duration-300">
+                        <span className="relative font-light pb-0.5 border-b border-black/40 group-hover:border-black transition-colors duration-300">
                           {t('viewAllProducts')}
                         </span>
-                        <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1.5 text-[#8C7E6A] group-hover:text-[#2C241D]" />
+                        <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1.5 text-black" />
                       </Link>
                     </div>
                   </div>
@@ -642,22 +610,22 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                   <div className="space-y-4 pt-6 border-t border-stone-200">
                     <div className="flex items-center gap-3">
                       {/* Quantity Selector */}
-                      <div className="flex items-center border border-stone-300 bg-white rounded-xs">
+                      <div className="flex items-center border border-neutral-300 bg-white rounded-xs">
                         <button
                           type="button"
                           onClick={() => setQuantity((prev) => Math.max(1, prev - 1))}
-                          className="px-3.5 py-2.5 text-stone-600 hover:text-stone-900 transition-colors"
+                          className="px-3.5 py-2.5 text-black hover:opacity-60 transition-opacity"
                           aria-label={t('decreaseQuantity')}
                         >
                           <Minus className="w-3.5 h-3.5" />
                         </button>
-                        <span className="font-serif text-xs px-2 min-w-[32px] text-center font-light text-[#1A1816]">
+                        <span className="font-serif text-xs px-2 min-w-[32px] text-center font-light text-black">
                           {quantity}
                         </span>
                         <button
                           type="button"
                           onClick={() => setQuantity((prev) => prev + 1)}
-                          className="px-3.5 py-2.5 text-stone-600 hover:text-stone-900 transition-colors"
+                          className="px-3.5 py-2.5 text-black hover:opacity-60 transition-opacity"
                           aria-label={t('increaseQuantity')}
                         >
                           <Plus className="w-3.5 h-3.5" />
@@ -669,14 +637,14 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                         type="button"
                         onClick={() => handleAddToCart(quantity)}
                         disabled={addingToCart}
-                        className="flex-1 py-3 px-6 bg-[#4A4238] text-white hover:bg-[#8C7E6A] transition-colors uppercase tracking-[0.2em] text-xs font-semibold flex items-center justify-center gap-2 shadow-sm disabled:opacity-60 rounded-xs"
+                        className="flex-1 py-3 px-6 bg-black text-white hover:bg-neutral-800 transition-colors uppercase tracking-[0.2em] text-xs font-light flex items-center justify-center gap-2 shadow-xs disabled:opacity-60 rounded-xs"
                       >
                         <ShoppingBag className="w-4 h-4" />
                         <span>{addingToCart ? t('addingToCart') : t('addToCart')}</span>
                       </button>
                     </div>
 
-                    <p className="text-[11px] text-stone-500 font-sans tracking-wide">
+                    <p className="text-[11px] text-neutral-500 font-serif font-thin tracking-wide">
                       {t('cartLoginNotice')}
                     </p>
 
@@ -692,14 +660,14 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
 
                       const renderIcon = (iconName: string) => {
                         switch (iconName?.toLowerCase()) {
-                          case 'package': return <PackageCheck className="w-4 h-4 text-[#8C7E6A]" />
-                          case 'sparkles': return <Sparkles className="w-4 h-4 text-[#8C7E6A]" />
-                          case 'shield': return <ShieldCheck className="w-4 h-4 text-[#8C7E6A]" />
-                          case 'truck': return <Truck className="w-4 h-4 text-[#8C7E6A]" />
-                          case 'award': return <Award className="w-4 h-4 text-[#8C7E6A]" />
-                          case 'heart': return <Heart className="w-4 h-4 text-[#8C7E6A]" />
-                          case 'refresh': return <RotateCcw className="w-4 h-4 text-[#8C7E6A]" />
-                          default: return <CheckCircle2 className="w-4 h-4 text-[#8C7E6A]" />
+                          case 'package': return <PackageCheck className="w-4 h-4 text-black" />
+                          case 'sparkles': return <Sparkles className="w-4 h-4 text-black" />
+                          case 'shield': return <ShieldCheck className="w-4 h-4 text-black" />
+                          case 'truck': return <Truck className="w-4 h-4 text-black" />
+                          case 'award': return <Award className="w-4 h-4 text-black" />
+                          case 'heart': return <Heart className="w-4 h-4 text-black" />
+                          case 'refresh': return <RotateCcw className="w-4 h-4 text-black" />
+                          default: return <CheckCircle2 className="w-4 h-4 text-black" />
                         }
                       }
 
@@ -716,10 +684,10 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                           {badgesToDisplay.map((badge: any) => (
                             <div
                               key={badge.id}
-                              className="flex flex-col items-center gap-1.5 p-2 rounded-xs bg-[#FBF9F5] border border-stone-200/50"
+                              className="flex flex-col items-center gap-1.5 p-2 rounded-xs bg-neutral-50/80 border border-black/5"
                             >
                               {renderIcon(badge.icon)}
-                              <span className="font-sans text-[10px] sm:text-[11px] font-medium text-[#4A4238] leading-tight">
+                              <span className="font-serif text-[10px] sm:text-[11px] font-light text-black leading-tight">
                                 {locale === 'vi' ? badge.titleVi : badge.titleEn}
                               </span>
                             </div>
@@ -731,7 +699,7 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
 
                   {/* Inquiry Buttons */}
                   <div className="space-y-4 pt-4">
-                    <h4 className="font-sans text-xs font-semibold uppercase tracking-[0.15em] text-[#4A4238]">
+                    <h4 className="font-sans text-xs font-semibold uppercase tracking-[0.15em] text-black">
                       {t('orderInquiry')}
                     </h4>
                     <div className="flex max-w-sm flex-col gap-2.5">
@@ -740,10 +708,10 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                           href={`https://instagram.com/${socialLinks.instagramUsername}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="group flex w-full items-center justify-between gap-4 border border-foreground/15 bg-white px-5 py-3.5 transition-all duration-200 hover:border-foreground hover:bg-foreground hover:text-white"
+                          className="group flex w-full items-center justify-between gap-4 border border-black/15 bg-white px-5 py-3.5 transition-all duration-200 hover:border-black hover:bg-black hover:text-white text-black"
                           aria-label="Instagram Inquiry"
                         >
-                          <span className="min-w-0 font-sans text-xs font-semibold uppercase tracking-[0.15em]">
+                          <span className="min-w-0 font-serif text-xs font-light uppercase tracking-[0.18em]">
                             Instagram
                           </span>
                           <Instagram className="h-4 w-4 shrink-0 transition-transform duration-200 group-hover:scale-110" />
@@ -754,10 +722,10 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                           href={socialLinks.facebookPageUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="group flex w-full items-center justify-between gap-4 border border-foreground/15 bg-white px-5 py-3.5 transition-all duration-200 hover:border-foreground hover:bg-foreground hover:text-white"
+                          className="group flex w-full items-center justify-between gap-4 border border-black/15 bg-white px-5 py-3.5 transition-all duration-200 hover:border-black hover:bg-black hover:text-white text-black"
                           aria-label="Facebook Inquiry"
                         >
-                          <span className="min-w-0 font-sans text-xs font-semibold uppercase tracking-[0.15em]">
+                          <span className="min-w-0 font-serif text-xs font-light uppercase tracking-[0.18em]">
                             Facebook
                           </span>
                           <Facebook className="h-4 w-4 shrink-0 transition-transform duration-200 group-hover:scale-110" />
@@ -779,13 +747,13 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
             <h2 className="text-mobile-safe text-[8px] font-light uppercase tracking-[0.28em] text-foreground/40 sm:tracking-[0.4em]">
               {locale === 'vi' ? 'CÓ THỂ BẠN THÍCH' : 'YOU MAY ALSO LIKE'}
             </h2>
-            <p className="text-mobile-safe font-serif text-lg sm:text-xl font-normal uppercase tracking-[0.08em] sm:tracking-[0.1em] text-[#4A4238]">
+            <p className="text-mobile-safe font-serif text-lg sm:text-xl font-normal uppercase tracking-[0.08em] sm:tracking-[0.1em] text-black">
               {locale === 'vi' ? 'Sản phẩm tương tự' : 'Related pieces'}
             </p>
           </div>
           <Link
             href={`/${locale}/shop`}
-            className="group flex items-center gap-2 font-sans text-xs font-medium uppercase tracking-[0.15em] transition-colors hover:text-[#8C7E6A]"
+            className="group flex items-center gap-2 font-sans text-xs font-medium uppercase tracking-[0.15em] transition-colors hover:text-black"
           >
             <span>{tHome('viewAll')}</span>
             <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
@@ -827,16 +795,16 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
 
       <section className="w-full bg-white px-4 pb-24 sm:px-6 lg:px-12">
         <div className="mx-auto max-w-4xl rounded-2xl border border-foreground/10 bg-foreground/[0.02] p-5 shadow-sm sm:p-8">
-          <h2 className="text-mobile-safe text-center font-serif text-sm sm:text-base font-normal uppercase tracking-[0.15em] text-[#4A4238]">
+          <h2 className="text-mobile-safe text-center font-serif text-sm sm:text-base font-normal uppercase tracking-[0.15em] text-black">
             {faqTitle}
           </h2>
           <div className="mt-8 grid gap-6 md:grid-cols-2">
             {faqItems.map((item) => (
               <div key={item.question} className="space-y-3">
-                <h3 className="font-serif text-sm sm:text-base font-normal tracking-normal text-[#4A4238]">
+                <h3 className="font-serif text-sm sm:text-base font-normal tracking-normal text-black">
                   {item.question}
                 </h3>
-                <p className="text-xs leading-relaxed text-stone-600 font-thin">{item.answer}</p>
+                <p className="text-xs leading-relaxed text-black/80 font-thin">{item.answer}</p>
               </div>
             ))}
           </div>
