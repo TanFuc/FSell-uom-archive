@@ -526,25 +526,25 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                 <div className="w-full space-y-6 pb-12 pt-6 md:space-y-8 md:pb-0 md:pt-0">
                   {/* Info Header */}
                   <div className="space-y-3">
-                    <h1 className="text-mobile-safe font-sans text-xl sm:text-2xl md:text-3xl font-semibold leading-tight tracking-tight text-[#4A4238]">
+                    <h1 className="text-mobile-safe font-serif text-2xl sm:text-3xl md:text-4xl font-light uppercase tracking-wider leading-tight text-[#1A1816]">
                       {name}
                     </h1>
                     <div className="flex flex-wrap items-baseline gap-3">
                       <p
                         className={cn(
-                          'font-sans text-xl sm:text-2xl md:text-3xl font-bold tracking-tight',
-                          priceDisplay.hasDiscount ? 'text-[#991b1b]' : 'text-[#4A4238]',
+                          'font-serif text-2xl sm:text-3xl md:text-4xl font-light tracking-tight text-[#1A1816]',
+                          priceDisplay.hasDiscount && 'text-[#991b1b]',
                         )}
                       >
                         {priceDisplay.currentPrice}
                       </p>
                       {priceDisplay.hasDiscount && priceDisplay.originalPrice && (
                         <>
-                          <p className="font-sans text-sm sm:text-base font-normal text-muted-foreground/60 line-through">
+                          <p className="font-serif text-sm sm:text-base font-thin text-muted-foreground/60 line-through">
                             {priceDisplay.originalPrice}
                           </p>
                           {priceDisplay.discountPercentage && (
-                            <span className="rounded-xs bg-[#991b1b] px-2 py-0.5 font-sans text-xs font-semibold tracking-wide text-white">
+                            <span className="rounded-xs bg-[#991b1b] px-2 py-0.5 font-serif text-xs font-light tracking-wide text-white">
                               −{priceDisplay.discountPercentage}%
                             </span>
                           )}
@@ -570,7 +570,7 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                         <div className="flex items-center pb-3 border-b border-[#ECE4D8]">
                           <div className="flex items-center gap-2">
                             <span className="w-1.5 h-1.5 rounded-full bg-[#8C7E6A]" />
-                            <span className="font-serif text-xs sm:text-[13px] font-semibold uppercase tracking-[0.18em] text-[#3D332A]">
+                            <span className="font-serif text-xs sm:text-[13px] font-light uppercase tracking-[0.18em] text-[#3D332A]">
                               {locale === 'vi' ? 'Thông số chế tác' : 'Craft Specifications'}
                             </span>
                           </div>
@@ -614,11 +614,11 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                     {/* Detailed Description */}
                     {description && (
                       <div className="space-y-2 pt-1">
-                        <h4 className="font-serif text-xs sm:text-[13px] font-semibold uppercase tracking-[0.18em] text-[#3D332A]">
+                        <h4 className="font-serif text-xs sm:text-[13px] font-light uppercase tracking-[0.18em] text-[#3D332A]">
                           {locale === 'vi' ? 'Mô tả tác phẩm' : 'About this piece'}
                         </h4>
                         <div
-                          className="prose prose-stone max-w-none overflow-hidden font-serif text-xs sm:text-sm font-normal leading-relaxed text-[#3A332C] [overflow-wrap:anywhere] [&_p]:leading-[1.75] [&_p]:mb-3 [&_strong]:font-semibold [&_strong]:text-[#2C2620] [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1.5 [&_li]:text-[#3A332C] [&_li]:leading-relaxed"
+                          className="prose prose-stone max-w-none overflow-hidden font-serif text-xs sm:text-sm font-thin leading-relaxed text-[#3A332C] [overflow-wrap:anywhere] [&_p]:leading-[1.75] [&_p]:mb-3 [&_strong]:font-light [&_strong]:text-[#1A1816] [&_b]:font-light [&_b]:text-[#1A1816] [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1.5 [&_li]:text-[#3A332C] [&_li]:leading-relaxed"
                           dangerouslySetInnerHTML={{ __html: description }}
                         />
                       </div>
@@ -651,7 +651,7 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                         >
                           <Minus className="w-3.5 h-3.5" />
                         </button>
-                        <span className="font-sans text-xs px-2 min-w-[32px] text-center font-semibold text-[#2C2620]">
+                        <span className="font-serif text-xs px-2 min-w-[32px] text-center font-light text-[#1A1816]">
                           {quantity}
                         </span>
                         <button
