@@ -69,15 +69,34 @@ class ApiClient {
         }
 
         if (typeof window !== 'undefined') {
-          const isCustomerRoute =
-            config.url?.startsWith('/cart') ||
-            config.url?.startsWith('/orders') ||
-            config.url?.startsWith('/customer')
+          const getCookie = (name: string): string | null => {
+            if (typeof document === 'undefined') return null
+            const match = document.cookie.match(new RegExp('(?:^|;\\s*)' + name + '=([^;]*)'))
+            return match ? decodeURIComponent(match[1]) : null
+          }
 
-          const customerToken = localStorage.getItem('customerAccessToken')
-          const adminToken = localStorage.getItem('accessToken')
+          const rawAdminToken = localStorage.getItem('accessToken') || getCookie('accessToken')
+          const rawCustomerToken = localStorage.getItem('customerAccessToken') || getCookie('customerAccessToken')
 
-          const token = isCustomerRoute ? (customerToken || adminToken) : adminToken
+          if (rawAdminToken && !localStorage.getItem('accessToken')) {
+            localStorage.setItem('accessToken', rawAdminToken)
+          }
+
+          const isAdminContext =
+            Boolean(config.url?.includes('/admin')) ||
+            (typeof window !== 'undefined' && window.location.pathname.includes('/admin'))
+
+          let token: string | null = null
+          if (isAdminContext) {
+            token = rawAdminToken
+          } else {
+            const isCustomerRoute =
+              Boolean(config.url?.startsWith('/cart')) ||
+              (Boolean(config.url?.startsWith('/orders')) && !config.url?.startsWith('/orders/admin')) ||
+              Boolean(config.url?.startsWith('/customer'))
+
+            token = isCustomerRoute ? (rawCustomerToken || rawAdminToken) : (rawAdminToken || rawCustomerToken)
+          }
           if (token) {
             config.headers.Authorization = `Bearer ${token}`
           }
@@ -126,10 +145,14 @@ class ApiClient {
               const isAdminPage = window.location.pathname.includes('/admin')
               const locale = localStorage.getItem('locale') || 'vi'
 
-              const savedLocale = localStorage.getItem('locale')
-              localStorage.clear()
-              if (savedLocale) {
-                localStorage.setItem('locale', savedLocale)
+              if (isAdminPage) {
+                localStorage.removeItem('accessToken')
+                localStorage.removeItem('refreshToken')
+                document.cookie = 'accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+              } else {
+                localStorage.removeItem('customerAccessToken')
+                localStorage.removeItem('customerRefreshToken')
+                document.cookie = 'customerAccessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
               }
 
               const loginPath = isAdminPage ? `/${locale}/admin/login` : `/${locale}/login`
