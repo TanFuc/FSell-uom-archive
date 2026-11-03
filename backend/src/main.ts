@@ -255,6 +255,11 @@ async function startApplication(): Promise<void> {
     : join(__dirname, '..', 'uploads')
   app.useStaticAssets(uploadsStaticPath, {
     prefix: '/uploads/',
+    setHeaders: (res: any) => {
+      res.setHeader('Access-Control-Allow-Origin', '*')
+      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin')
+      res.setHeader('Cache-Control', 'public, max-age=86400')
+    },
   })
 
   if (nodeEnv === 'development') {

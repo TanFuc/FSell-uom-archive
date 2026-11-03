@@ -22,6 +22,7 @@ import {
 } from '@/lib/search-trending'
 import { type Product, type SiteContent } from '@/lib/types'
 import { cn, optimizeProductImage } from '@/lib/utils'
+import { CustomerProfileModal } from '@/components/customer/CustomerProfileModal'
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -142,6 +143,7 @@ export function Header({ initialSiteContent }: HeaderProps = {}) {
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [isCartOpen, setIsCartOpen] = useState(false)
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
   const { customer, isAuthenticated, openAuthModal, logout: customerLogout, cartCount, fetchCartCount } = useCustomerStore()
 
   useEffect(() => {
@@ -718,17 +720,21 @@ export function Header({ initialSiteContent }: HeaderProps = {}) {
               {/* Customer Account Button */}
               {isAuthenticated ? (
                 <div className="flex items-center gap-1.5 whitespace-nowrap shrink-0">
-                  <Link
-                    href={`/${locale}/my-orders`}
-                    className="p-1 hover:text-[#8C7E6A] transition-colors shrink-0"
-                    title={customer?.fullName || 'Đơn hàng của tôi'}
-                    aria-label="Đơn hàng của tôi"
+                  <button
+                    type="button"
+                    onClick={() => setIsProfileModalOpen(true)}
+                    className="flex items-center gap-1.5 p-1 hover:text-[#8C7E6A] transition-colors group cursor-pointer text-left"
+                    title={customer?.fullName || (locale === 'vi' ? 'Thông tin & Đổi mật khẩu' : 'Profile & Password')}
+                    aria-label="Thông tin tài khoản"
                   >
-                    <UserIcon className="h-5 w-5 lg:h-6 lg:w-6 shrink-0" />
-                  </Link>
+                    <UserIcon className="h-5 w-5 lg:h-6 lg:w-6 shrink-0 group-hover:scale-105 transition-transform" />
+                    <span className="hidden sm:inline font-serif text-xs font-normal text-[#4A4238] group-hover:text-[#8C7E6A] max-w-[120px] truncate">
+                      {customer?.fullName || (locale === 'vi' ? 'Tài khoản' : 'Account')}
+                    </span>
+                  </button>
                   <button
                     onClick={customerLogout}
-                    className="hidden text-[9px] uppercase tracking-wider text-foreground/40 hover:text-foreground shrink-0 sm:inline font-thin"
+                    className="text-[9px] uppercase tracking-wider text-foreground/40 hover:text-[#4A4238] shrink-0 font-thin transition-colors"
                     title="Đăng xuất"
                   >
                     (Thoát)
@@ -1132,20 +1138,30 @@ export function Header({ initialSiteContent }: HeaderProps = {}) {
                       <div className="border-t border-foreground/10 pt-6">
                         {isAuthenticated ? (
                           <div className="flex flex-col gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                closeMobileMenu()
+                                setIsProfileModalOpen(true)
+                              }}
+                              className="flex items-center gap-2.5 text-sm font-light uppercase tracking-wider text-foreground transition-colors hover:text-[#8C7E6A] text-left"
+                            >
+                              <UserIcon className="h-4 w-4" />
+                              <span>{customer?.fullName || (locale === 'vi' ? 'Thông tin & Đổi mật khẩu' : 'Profile & Password')}</span>
+                            </button>
                             <Link
                               href={`/${locale}/my-orders`}
                               onClick={closeMobileMenu}
-                              className="flex items-center gap-2.5 text-sm font-light uppercase tracking-wider text-foreground transition-colors hover:text-[#8C7E6A]"
+                              className="text-xs font-light text-stone-500 hover:text-stone-800 transition-colors pl-6"
                             >
-                              <UserIcon className="h-4 w-4" />
-                              <span>{customer?.fullName || (locale === 'vi' ? 'Đơn hàng của tôi' : 'My Orders')}</span>
+                              {locale === 'vi' ? 'Xem đơn hàng của tôi →' : 'View my orders →'}
                             </Link>
                             <button
                               onClick={() => {
                                 customerLogout()
                                 closeMobileMenu()
                               }}
-                              className="self-start text-[10px] font-thin uppercase tracking-wider text-foreground/45 transition-colors hover:text-foreground"
+                              className="self-start text-[10px] font-thin uppercase tracking-wider text-foreground/45 transition-colors hover:text-foreground pl-6"
                             >
                               {locale === 'vi' ? '(Đăng xuất)' : '(Logout)'}
                             </button>
@@ -1199,6 +1215,10 @@ export function Header({ initialSiteContent }: HeaderProps = {}) {
 
       {/* Global Cart Drawer */}
       <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+      <CustomerProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+      />
     </>
   )
 }

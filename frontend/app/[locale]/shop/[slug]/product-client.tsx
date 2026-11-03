@@ -651,42 +651,40 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                     
                   </div>
 
-                  {/* Inquiry Buttons */}
-                  <div className="space-y-4 pt-4">
-                    <h4 className="font-sans text-xs font-semibold uppercase tracking-[0.15em] text-black">
-                      {t('orderInquiry')}
-                    </h4>
-                    <div className="flex max-w-sm flex-col gap-2.5">
-                      {socialLinks?.instagramUsername && (
-                        <a
-                          href={`https://instagram.com/${socialLinks.instagramUsername}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="group flex w-full items-center justify-between gap-4 border border-black/15 bg-white px-5 py-3.5 transition-all duration-200 hover:border-black hover:bg-black hover:text-white text-black"
-                          aria-label="Instagram Inquiry"
-                        >
-                          <span className="min-w-0 font-serif text-xs font-light uppercase tracking-[0.18em]">
-                            Instagram
-                          </span>
-                          <Instagram className="h-4 w-4 shrink-0 transition-transform duration-200 group-hover:scale-110" />
-                        </a>
-                      )}
-                      {socialLinks?.facebookPageUrl && (
-                        <a
-                          href={socialLinks.facebookPageUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="group flex w-full items-center justify-between gap-4 border border-black/15 bg-white px-5 py-3.5 transition-all duration-200 hover:border-black hover:bg-black hover:text-white text-black"
-                          aria-label="Facebook Inquiry"
-                        >
-                          <span className="min-w-0 font-serif text-xs font-light uppercase tracking-[0.18em]">
-                            Facebook
-                          </span>
-                          <Facebook className="h-4 w-4 shrink-0 transition-transform duration-200 group-hover:scale-110" />
-                        </a>
-                      )}
+                  {/* Subtle / Compact Direct Inquiry */}
+                  {(socialLinks?.instagramUsername || socialLinks?.facebookPageUrl) && (
+                    <div className="pt-4 border-t border-stone-200/60 flex items-center justify-between flex-wrap gap-2 text-xs">
+                      <span className="font-serif text-[11px] font-light text-stone-500 uppercase tracking-wider">
+                        {locale === 'vi' ? 'Hỗ trợ tư vấn trực tiếp:' : 'Direct consultation:'}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        {socialLinks?.instagramUsername && (
+                          <a
+                            href={`https://instagram.com/${socialLinks.instagramUsername}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-light uppercase tracking-[0.12em] border border-stone-200 hover:border-[#4A4238] hover:text-[#4A4238] text-stone-600 transition-colors rounded-xs bg-stone-50/50"
+                            aria-label="Instagram Inquiry"
+                          >
+                            <Instagram className="h-3.5 w-3.5 text-stone-500" />
+                            <span>Instagram</span>
+                          </a>
+                        )}
+                        {socialLinks?.facebookPageUrl && (
+                          <a
+                            href={socialLinks.facebookPageUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-light uppercase tracking-[0.12em] border border-stone-200 hover:border-[#4A4238] hover:text-[#4A4238] text-stone-600 transition-colors rounded-xs bg-stone-50/50"
+                            aria-label="Facebook Inquiry"
+                          >
+                            <Facebook className="h-3.5 w-3.5 text-stone-500" />
+                            <span>Facebook</span>
+                          </a>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
             </div>

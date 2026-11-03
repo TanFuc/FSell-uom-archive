@@ -156,3 +156,4 @@ export function LegalModal({ isOpen, type, onClose }: LegalModalProps) {
     </div>
   )
 }
+

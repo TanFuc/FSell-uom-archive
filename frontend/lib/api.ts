@@ -752,6 +752,23 @@ class ApiClient {
     return res.data?.data !== undefined ? res.data.data : res.data
   }
 
+  async customerUpdateProfile(data: {
+    fullName?: string
+    phone?: string
+    address?: string
+  }): Promise<any> {
+    const res = await this.client.put('/customer/auth/profile', data)
+    return res.data?.data !== undefined ? res.data.data : res.data
+  }
+
+  async customerChangePassword(data: {
+    currentPassword?: string
+    newPassword: string
+  }): Promise<any> {
+    const res = await this.client.put('/customer/auth/change-password', data)
+    return res.data?.data !== undefined ? res.data.data : res.data
+  }
+
   async customerGetMe(): Promise<any> {
     const res = await this.client.get(`/customer/auth/me`)
     return res.data?.data !== undefined ? res.data.data : res.data

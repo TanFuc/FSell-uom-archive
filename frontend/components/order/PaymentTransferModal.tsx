@@ -51,7 +51,7 @@ export function PaymentTransferModal({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
   const [uploadSuccess, setUploadSuccess] = useState(false)
-  const [adminQrFailed, setAdminQrFailed] = useState(false)
+  const [qrAttempt, setQrAttempt] = useState(0)
 
   if (!isOpen) return null
 
@@ -138,11 +138,19 @@ export function PaymentTransferModal({
     .replaceAll('{orderNumber}', orderNumber)
     .replaceAll('{totalVND}', String(totalVND))
 
+  const rawQrUrl = paymentSettings?.qrCodeUrl || ''
+  const adminQrUrl = rawQrUrl ? getImageUrl(rawQrUrl) : null
   const vietQrUrl = accountNumber
     ? `https://api.vietqr.io/image/${encodeURIComponent(bankName)}-${encodeURIComponent(accountNumber)}-compact.jpg?amount=${totalVND}&addInfo=${encodeURIComponent(transferContent)}&accountName=${encodeURIComponent(accountHolder)}`
     : null
-  const adminQrUrl = paymentSettings?.qrCodeUrl ? getImageUrl(paymentSettings.qrCodeUrl) : null
-  const qrImageUrl = (!adminQrFailed && adminQrUrl) ? adminQrUrl : vietQrUrl
+
+  const qrImageUrl = (() => {
+    if (!rawQrUrl) return vietQrUrl
+    if (qrAttempt === 0) return adminQrUrl || rawQrUrl
+    if (qrAttempt === 1) return rawQrUrl.startsWith('/') ? rawQrUrl : `/${rawQrUrl}`
+    if (qrAttempt === 2 && rawQrUrl.startsWith('/uploads')) return `http://localhost:3006${rawQrUrl}`
+    return vietQrUrl
+  })()
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
@@ -210,9 +218,7 @@ export function PaymentTransferModal({
                           alt="Mã QR chuyển khoản"
                           className="w-full aspect-square object-contain"
                           onError={() => {
-                            if (!adminQrFailed && adminQrUrl) {
-                              setAdminQrFailed(true)
-                            }
+                            setQrAttempt((prev) => prev + 1)
                           }}
                         />
                       </div>

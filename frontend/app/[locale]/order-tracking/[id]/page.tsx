@@ -31,7 +31,8 @@ export default function OrderTrackingDetailPage() {
   const searchParams = useSearchParams()
   const locale = useLocale()
   const idOrNumber = params?.id as string
-  const paymentAccessToken = searchParams.get('access') || undefined
+  const queryAccess = searchParams.get('access') || searchParams.get('token') || undefined
+  const [paymentAccessToken, setPaymentAccessToken] = useState<string | undefined>(queryAccess)
 
   const [order, setOrder] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -42,13 +43,41 @@ export default function OrderTrackingDetailPage() {
   const [viewProofModalOpen, setViewProofModalOpen] = useState(false)
 
   useEffect(() => {
+    let activeToken = queryAccess
+    if (activeToken) {
+      setPaymentAccessToken(activeToken)
+      try {
+        sessionStorage.setItem(`order_access_${idOrNumber}`, activeToken)
+        localStorage.setItem(`order_access_${idOrNumber}`, activeToken)
+      } catch {}
+    } else if (idOrNumber && typeof window !== 'undefined') {
+      try {
+        const stored = sessionStorage.getItem(`order_access_${idOrNumber}`) || localStorage.getItem(`order_access_${idOrNumber}`)
+        if (stored) {
+          activeToken = stored
+          setPaymentAccessToken(stored)
+        }
+      } catch {}
+    }
+
     if (!idOrNumber) return
     setLoading(true)
     api
-      .getOrderTracking(idOrNumber, paymentAccessToken)
+      .getOrderTracking(idOrNumber, activeToken)
       .then((data) => {
         setOrder(data)
         setError(null)
+        if (data?.paymentAccessToken) {
+          setPaymentAccessToken(data.paymentAccessToken)
+          try {
+            sessionStorage.setItem(`order_access_${idOrNumber}`, data.paymentAccessToken)
+            localStorage.setItem(`order_access_${idOrNumber}`, data.paymentAccessToken)
+            if (data.orderNumber) {
+              sessionStorage.setItem(`order_access_${data.orderNumber}`, data.paymentAccessToken)
+              localStorage.setItem(`order_access_${data.orderNumber}`, data.paymentAccessToken)
+            }
+          } catch {}
+        }
       })
       .catch((err) => {
         console.error('Lỗi tải đơn hàng:', err)
@@ -60,7 +89,7 @@ export default function OrderTrackingDetailPage() {
       .getPaymentSettings()
       .then(setPaymentSettings)
       .catch(() => {})
-  }, [idOrNumber, paymentAccessToken])
+  }, [idOrNumber, queryAccess])
 
   const handleSyncTracking = async () => {
     if (!idOrNumber || syncing) return

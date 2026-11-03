@@ -63,11 +63,25 @@ export class OrderService {
     return null
   }
 
-  private assertPaymentAccess(orderId: string, token?: string, customerId?: string, user?: any): void {
-    if (matchesOrderAccessToken(orderId, this.getOrderAccessSecret(), token)) {
+  private assertPaymentAccess(
+    orderId: string,
+    token?: string,
+    customerId?: string,
+    user?: any,
+    customerEmail?: string,
+    orderNumber?: string,
+  ): void {
+    if (matchesOrderAccessToken(orderId, this.getOrderAccessSecret(), token, orderNumber)) {
       return
     }
     if (user?.id && customerId && user.id === customerId) {
+      return
+    }
+    if (
+      user?.email &&
+      customerEmail &&
+      user.email.toLowerCase() === customerEmail.toLowerCase()
+    ) {
       return
     }
     if (user?.role === 'ADMIN' || user?.role === 'MANAGER') {
@@ -79,11 +93,18 @@ export class OrderService {
   async assertPublicOrderAccess(identifier: string, token?: string, reqOrUser?: any): Promise<void> {
     const order = await this.prisma.order.findFirst({
       where: { OR: [{ id: identifier }, { orderNumber: identifier }], deletedAt: null },
-      select: { id: true, customerId: true },
+      select: { id: true, orderNumber: true, customerId: true, customerEmail: true },
     })
     if (!order) throw new NotFoundException('Không tìm thấy đơn hàng')
     const user = reqOrUser?.id ? reqOrUser : this.extractUserFromRequest(reqOrUser)
-    this.assertPaymentAccess(order.id, token, order.customerId ?? undefined, user)
+    this.assertPaymentAccess(
+      order.id,
+      token,
+      order.customerId ?? undefined,
+      user,
+      order.customerEmail ?? undefined,
+      order.orderNumber,
+    )
   }
 
   /**
@@ -626,7 +647,14 @@ export class OrderService {
       throw new NotFoundException('Không tìm thấy đơn hàng')
     }
     const user = reqOrUser?.id ? reqOrUser : this.extractUserFromRequest(reqOrUser)
-    this.assertPaymentAccess(order.id, accessToken, order.customerId ?? undefined, user)
+    this.assertPaymentAccess(
+      order.id,
+      accessToken,
+      order.customerId ?? undefined,
+      user,
+      order.customerEmail ?? undefined,
+      order.orderNumber,
+    )
 
     if (order.paymentMethod !== 'bank_transfer' || order.status === 'cancelled' || order.paymentStatus === 'paid') {
       throw new BadRequestException('Đơn hàng không thể nhận thêm biên nhận chuyển khoản')
@@ -671,7 +699,14 @@ export class OrderService {
     })
     if (!order) throw new NotFoundException('Không tìm thấy đơn hàng')
     const user = reqOrUser?.id ? reqOrUser : this.extractUserFromRequest(reqOrUser)
-    this.assertPaymentAccess(order.id, accessToken, order.customerId ?? undefined, user)
+    this.assertPaymentAccess(
+      order.id,
+      accessToken,
+      order.customerId ?? undefined,
+      user,
+      order.customerEmail ?? undefined,
+      order.orderNumber,
+    )
     if (order.paymentMethod !== 'bank_transfer' || order.status === 'cancelled') {
       throw new BadRequestException('Đơn hàng không thể xác nhận chuyển khoản')
     }

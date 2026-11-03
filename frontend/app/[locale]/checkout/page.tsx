@@ -118,6 +118,18 @@ function CheckoutContent() {
 
       toast.success('Đặt hàng thành công! Vui lòng chuyển khoản thanh toán.')
       useCustomerStore.getState().fetchCartCount()
+      if (typeof window !== 'undefined' && order?.paymentAccessToken) {
+        try {
+          if (order.orderNumber) {
+            sessionStorage.setItem(`order_access_${order.orderNumber}`, order.paymentAccessToken)
+            localStorage.setItem(`order_access_${order.orderNumber}`, order.paymentAccessToken)
+          }
+          if (order.id) {
+            sessionStorage.setItem(`order_access_${order.id}`, order.paymentAccessToken)
+            localStorage.setItem(`order_access_${order.id}`, order.paymentAccessToken)
+          }
+        } catch {}
+      }
       // Mở modal quét mã QR chuyển khoản và tải bill
       setCreatedOrder(order)
       setIsPaymentModalOpen(true)
@@ -408,7 +420,7 @@ function CheckoutContent() {
             onSuccess={(updated) => {
               setIsPaymentModalOpen(false)
               router.push(
-                `/order-tracking/${updated?.orderNumber || createdOrder.orderNumber || createdOrder.id}?access=${createdOrder.paymentAccessToken}`,
+                `/${locale}/order-tracking/${updated?.orderNumber || createdOrder.orderNumber || createdOrder.id}?access=${createdOrder.paymentAccessToken}`,
               )
             }}
             onSkip={() => {

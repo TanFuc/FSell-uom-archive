@@ -327,6 +327,8 @@ export default function SettingsPage() {
                           const target = e.currentTarget
                           if (!target.src.includes(':3006') && paymentSettings.qrCodeUrl.startsWith('/uploads')) {
                             target.src = `http://localhost:3006${paymentSettings.qrCodeUrl}`
+                          } else if (paymentSettings.qrCodeUrl.startsWith('/uploads')) {
+                            target.src = paymentSettings.qrCodeUrl
                           }
                         }}
                         className="w-full h-full object-contain"
