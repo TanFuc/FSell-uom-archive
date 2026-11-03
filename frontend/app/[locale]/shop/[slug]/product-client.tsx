@@ -1,7 +1,7 @@
 'use client'
 
 import { motion, AnimatePresence, useMotionValue, useSpring } from 'framer-motion'
-import { Instagram, Facebook, ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, ShoppingBag, Plus, Minus, ShieldCheck, PackageCheck, Sparkles, Truck, Award, Heart, RotateCcw, CheckCircle2 } from 'lucide-react'
+import { Instagram, Facebook, ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, ShoppingBag, Plus, Minus } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useLocale, useTranslations } from 'next-intl'
@@ -11,7 +11,7 @@ import { ProductCard } from '@/components/ProductCard'
 import { LoadingScreen } from '@/components/ui/loading-screen'
 import { NetworkErrorState } from '@/components/ui/network-error-state'
 import { useProduct, useProducts } from '@/hooks/use-products'
-import { useExchangeRate, useSocialLinks, useTrustBadges } from '@/hooks/use-settings'
+import { useExchangeRate, useSocialLinks } from '@/hooks/use-settings'
 import { getDisplayPrice } from '@/lib/currency'
 import { type Product } from '@/lib/types'
 import { optimizeProductImage, cn } from '@/lib/utils'
@@ -250,7 +250,7 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
   })
   const { data: exchangeRate } = useExchangeRate({ enabled: locale === 'en' })
   const { data: socialLinks } = useSocialLinks()
-  const { data: trustBadgesData } = useTrustBadges()
+
 
   const { data: relatedProducts } = useProducts({
     page: 1,
@@ -648,53 +648,7 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                       {t('cartLoginNotice')}
                     </p>
 
-                    {/* Trust & Craft Guarantee Badges (Dynamic from Admin) */}
-                    {trustBadgesData?.enabled !== false && (() => {
-                      const fallbackBadges = [
-                        { id: '1', icon: 'package', titleVi: 'Đóng gói chống vỡ 100%', titleEn: 'Breakage-Safe Packing', isVisible: true },
-                        { id: '2', icon: 'sparkles', titleVi: 'Gốm thủ công nghệ nhân', titleEn: 'Artisan Handcrafted', isVisible: true },
-                        { id: '3', icon: 'shield', titleVi: 'Đồng kiểm khi nhận', titleEn: 'Inspection on Delivery', isVisible: true },
-                      ]
-                      const badgesToDisplay = (trustBadgesData?.items || fallbackBadges).filter((b: any) => b.isVisible)
-                      if (badgesToDisplay.length === 0) return null
-
-                      const renderIcon = (iconName: string) => {
-                        switch (iconName?.toLowerCase()) {
-                          case 'package': return <PackageCheck className="w-4 h-4 text-black" />
-                          case 'sparkles': return <Sparkles className="w-4 h-4 text-black" />
-                          case 'shield': return <ShieldCheck className="w-4 h-4 text-black" />
-                          case 'truck': return <Truck className="w-4 h-4 text-black" />
-                          case 'award': return <Award className="w-4 h-4 text-black" />
-                          case 'heart': return <Heart className="w-4 h-4 text-black" />
-                          case 'refresh': return <RotateCcw className="w-4 h-4 text-black" />
-                          default: return <CheckCircle2 className="w-4 h-4 text-black" />
-                        }
-                      }
-
-                      return (
-                        <div className={`grid gap-2 pt-3 border-t border-stone-200/70 text-center ${
-                          badgesToDisplay.length === 1
-                            ? 'grid-cols-1'
-                            : badgesToDisplay.length === 2
-                              ? 'grid-cols-2'
-                              : badgesToDisplay.length === 3
-                                ? 'grid-cols-3'
-                                : 'grid-cols-2 sm:grid-cols-4'
-                        }`}>
-                          {badgesToDisplay.map((badge: any) => (
-                            <div
-                              key={badge.id}
-                              className="flex flex-col items-center gap-1.5 p-2 rounded-xs bg-neutral-50/80 border border-black/5"
-                            >
-                              {renderIcon(badge.icon)}
-                              <span className="font-serif text-[10px] sm:text-[11px] font-light text-black leading-tight">
-                                {locale === 'vi' ? badge.titleVi : badge.titleEn}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      )
-                    })()}
+                    
                   </div>
 
                   {/* Inquiry Buttons */}

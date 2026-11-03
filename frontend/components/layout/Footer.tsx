@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { LegalModal } from '@/components/legal/LegalModal'
 import { useLocale, useTranslations } from 'next-intl'
 import { useEffect, useState } from 'react'
 import { useBranding, useSiteContent, useSocialLinks } from '@/hooks/use-settings'
@@ -46,6 +47,7 @@ export function Footer({ initialSiteContent }: FooterProps) {
     }
   }
 
+  const [legalModalType, setLegalModalType] = useState<'terms' | 'privacy' | null>(null)
   const [cachedBranding, setCachedBranding] = useState<
     | {
         brandNameVi?: string
@@ -163,12 +165,20 @@ export function Footer({ initialSiteContent }: FooterProps) {
               LEGAL
             </h4>
             <div className="flex flex-col gap-2">
-              <span className="font-sans text-xs font-normal text-stone-400">
-                Terms
-              </span>
-              <span className="font-sans text-xs font-normal text-stone-400">
-                Privacy
-              </span>
+              <button
+                type="button"
+                onClick={() => setLegalModalType('terms')}
+                className="text-left font-sans text-xs font-normal text-stone-500 hover:text-[#4A4238] transition-colors"
+              >
+                {locale === 'vi' ? 'Điều khoản dịch vụ' : 'Terms of Service'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setLegalModalType('privacy')}
+                className="text-left font-sans text-xs font-normal text-stone-500 hover:text-[#4A4238] transition-colors"
+              >
+                {locale === 'vi' ? 'Chính sách bảo mật' : 'Privacy Policy'}
+              </button>
             </div>
           </div>
         </div>
@@ -187,6 +197,12 @@ export function Footer({ initialSiteContent }: FooterProps) {
           </div>
         </div>
       </div>
+    {/* Legal Dialog for Footer Links */}
+      <LegalModal
+        isOpen={Boolean(legalModalType)}
+        type={legalModalType || 'privacy'}
+        onClose={() => setLegalModalType(null)}
+      />
     </footer>
   )
 }

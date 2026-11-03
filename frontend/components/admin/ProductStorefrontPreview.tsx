@@ -6,19 +6,11 @@ import {
   ShoppingBag,
   Plus,
   Minus,
-  PackageCheck,
-  Sparkles,
-  ShieldCheck,
   Instagram,
   Facebook,
   ExternalLink,
   ChevronLeft,
   ChevronRight,
-  Truck,
-  Award,
-  Heart,
-  RotateCcw,
-  CheckCircle2,
   ArrowRight,
 } from 'lucide-react'
 import { formatCurrency, vndToUsd } from '@/lib/currency'
@@ -50,37 +42,12 @@ interface ProductStorefrontPreviewProps {
   categories?: Array<{ id: string; nameVi: string; nameEn: string }>
   categoryId?: string | null
   exchangeRate?: number
-  trustBadges?: Array<{
-    id: string
-    icon: string
-    titleVi: string
-    titleEn: string
-    isVisible: boolean
-  }>
+  trustBadges?: any
   trustBadgesEnabled?: boolean
   onSwitchToEdit?: () => void
 }
 
-function getTrustIcon(iconName: string) {
-  switch (iconName?.toLowerCase()) {
-    case 'package':
-      return <PackageCheck className="w-4 h-4 text-[#8C7E6A]" />
-    case 'sparkles':
-      return <Sparkles className="w-4 h-4 text-[#8C7E6A]" />
-    case 'shield':
-      return <ShieldCheck className="w-4 h-4 text-[#8C7E6A]" />
-    case 'truck':
-      return <Truck className="w-4 h-4 text-[#8C7E6A]" />
-    case 'award':
-      return <Award className="w-4 h-4 text-[#8C7E6A]" />
-    case 'heart':
-      return <Heart className="w-4 h-4 text-[#8C7E6A]" />
-    case 'refresh':
-      return <RotateCcw className="w-4 h-4 text-[#8C7E6A]" />
-    default:
-      return <CheckCircle2 className="w-4 h-4 text-[#8C7E6A]" />
-  }
-}
+
 
 export function ProductStorefrontPreview({
   product,
@@ -88,8 +55,7 @@ export function ProductStorefrontPreview({
   categories,
   categoryId,
   exchangeRate = 25000,
-  trustBadges,
-  trustBadgesEnabled = true,
+
   onSwitchToEdit,
 }: ProductStorefrontPreviewProps) {
   const [previewLocale, setPreviewLocale] = useState<'vi' | 'en'>('vi')
@@ -142,34 +108,7 @@ export function ProductStorefrontPreview({
   const activeImages = images && images.length > 0 ? images : ['/assets/logo.svg']
   const currentImage = activeImages[selectedImageIndex] || activeImages[0]
 
-  // Default badges if none from API
-  const defaultBadges = [
-    {
-      id: 'default-1',
-      icon: 'package',
-      titleVi: 'Đóng gói chống vỡ 100%',
-      titleEn: 'Breakage-Safe Packing',
-      isVisible: true,
-    },
-    {
-      id: 'default-2',
-      icon: 'sparkles',
-      titleVi: 'Gốm thủ công nghệ nhân',
-      titleEn: 'Artisan Handcrafted',
-      isVisible: true,
-    },
-    {
-      id: 'default-3',
-      icon: 'shield',
-      titleVi: 'Đồng kiểm khi nhận',
-      titleEn: 'Inspection on Delivery',
-      isVisible: true,
-    },
-  ]
 
-  const activeBadges = (trustBadges && trustBadges.length > 0 ? trustBadges : defaultBadges).filter(
-    (b) => b.isVisible,
-  )
 
   return (
     <div className="flex flex-col h-full bg-[#FAF9F5] text-[#2C2620] overflow-y-auto">
@@ -448,32 +387,7 @@ export function ProductStorefrontPreview({
                   : '* Log in to your account to save cart and sync online checkout.'}
               </p>
 
-              {/* Trust Badges */}
-              {trustBadgesEnabled && activeBadges.length > 0 && (
-                <div
-                  className={`grid gap-2 pt-3 border-t border-stone-200/70 text-center ${
-                    activeBadges.length === 1
-                      ? 'grid-cols-1'
-                      : activeBadges.length === 2
-                        ? 'grid-cols-2'
-                        : activeBadges.length === 3
-                          ? 'grid-cols-3'
-                          : 'grid-cols-2 sm:grid-cols-4'
-                  }`}
-                >
-                  {activeBadges.map((badge) => (
-                    <div
-                      key={badge.id}
-                      className="flex flex-col items-center gap-1.5 p-2 rounded-xs bg-[#FBF9F5] border border-stone-200/50"
-                    >
-                      {getTrustIcon(badge.icon)}
-                      <span className="font-sans text-[10px] sm:text-[11px] font-medium text-[#4A4238] leading-tight">
-                        {previewLocale === 'vi' ? badge.titleVi : badge.titleEn}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
+              
             </div>
 
             {/* Order Inquiry Section */}

@@ -5,6 +5,7 @@ import { X, Lock, Mail, User, Phone, CheckCircle2, Eye, EyeOff, AlertCircle } fr
 import { toast } from 'sonner'
 import { useCustomerStore } from '@/lib/customer-store'
 import { api } from '@/lib/api'
+import { LegalModal } from '@/components/legal/LegalModal'
 
 export function CustomerAuthModal() {
   const {
@@ -31,6 +32,8 @@ export function CustomerAuthModal() {
   const [regPhone, setRegPhone] = useState('')
   const [showRegPassword, setShowRegPassword] = useState(false)
   const [showRegConfirmPassword, setShowRegConfirmPassword] = useState(false)
+  const [agreedToTerms, setAgreedToTerms] = useState(false)
+  const [legalModalType, setLegalModalType] = useState<'terms' | 'privacy' | null>(null)
 
   if (!isAuthModalOpen) return null
 
@@ -82,6 +85,11 @@ export function CustomerAuthModal() {
 
     if (regPassword !== regConfirmPassword) {
       toast.error('Mật khẩu xác nhận không khớp. Vui lòng kiểm tra lại!')
+      return
+    }
+
+    if (!agreedToTerms) {
+      toast.error('Vui lòng đọc và tích chọn đồng ý với Điều khoản dịch vụ & Chính sách bảo mật để tiếp tục')
       return
     }
 
@@ -244,6 +252,28 @@ export function CustomerAuthModal() {
               Chưa có tài khoản? Đăng ký ngay
             </button>
           </div>
+
+          <div className="pt-3 border-t border-stone-100 text-center">
+            <p className="text-[11px] text-stone-500 leading-relaxed font-light">
+              Bằng việc đăng nhập, bạn đồng ý với{' '}
+              <button
+                type="button"
+                onClick={() => setLegalModalType('terms')}
+                className="text-[#4A4238] font-medium underline underline-offset-2 hover:text-[#8C7E6A]"
+              >
+                Điều khoản
+              </button>{' '}
+              &{' '}
+              <button
+                type="button"
+                onClick={() => setLegalModalType('privacy')}
+                className="text-[#4A4238] font-medium underline underline-offset-2 hover:text-[#8C7E6A]"
+              >
+                Chính sách bảo mật
+              </button>{' '}
+              của ƯƠM. Archive.
+            </p>
+          </div>
         </form>
 
         {/* Tab 2: Register Form */}
@@ -375,10 +405,42 @@ export function CustomerAuthModal() {
             )}
           </div>
 
+          {/* Consent Checkbox theo Nghị định 13/2023/NĐ-CP & Nghị định 52/2013/NĐ-CP */}
+          <div className="pt-1.5 pb-1">
+            <label className="flex items-start gap-2.5 cursor-pointer text-xs text-stone-600 font-light leading-relaxed select-none">
+              <input
+                type="checkbox"
+                required
+                checked={agreedToTerms}
+                onChange={(e) => setAgreedToTerms(e.target.checked)}
+                className="mt-0.5 w-4 h-4 rounded-xs border-stone-300 text-[#4A4238] accent-[#4A4238] focus:ring-0 cursor-pointer shrink-0"
+              />
+              <span className="text-[11px] leading-snug text-stone-600">
+                Tôi đã đọc và đồng ý với{' '}
+                <button
+                  type="button"
+                  onClick={() => setLegalModalType('terms')}
+                  className="text-[#4A4238] font-medium underline underline-offset-2 hover:text-[#8C7E6A] transition-colors"
+                >
+                  Điều khoản dịch vụ
+                </button>{' '}
+                và{' '}
+                <button
+                  type="button"
+                  onClick={() => setLegalModalType('privacy')}
+                  className="text-[#4A4238] font-medium underline underline-offset-2 hover:text-[#8C7E6A] transition-colors"
+                >
+                  Chính sách bảo vệ dữ liệu cá nhân
+                </button>{' '}
+                của ƯƠM. Archive. <span className="text-red-500">*</span>
+              </span>
+            </label>
+          </div>
+
           <button
             type="submit"
-            disabled={loading || isPasswordMismatch}
-            className="w-full py-3 px-4 bg-[#4A4238] text-white hover:bg-[#8C7E6A] disabled:bg-stone-400 disabled:cursor-not-allowed transition-colors uppercase tracking-[0.2em] text-xs font-semibold text-center shadow-sm mt-3 rounded-sm"
+            disabled={loading || isPasswordMismatch || !agreedToTerms}
+            className="w-full py-3 px-4 bg-[#4A4238] text-white hover:bg-[#8C7E6A] disabled:bg-stone-300 disabled:cursor-not-allowed transition-colors uppercase tracking-[0.2em] text-xs font-semibold text-center shadow-sm mt-2 rounded-sm"
           >
             {loading ? 'Đang khởi tạo...' : 'Tạo tài khoản & Tiếp tục'}
           </button>
@@ -394,6 +456,13 @@ export function CustomerAuthModal() {
           </div>
         </form>
       </div>
+
+      {/* Modal Pháp lý: Điều khoản & Chính sách bảo mật */}
+      <LegalModal
+        isOpen={Boolean(legalModalType)}
+        type={legalModalType || 'privacy'}
+        onClose={() => setLegalModalType(null)}
+      />
     </div>
   )
 }
