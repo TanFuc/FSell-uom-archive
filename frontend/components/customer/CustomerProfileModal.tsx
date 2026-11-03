@@ -396,3 +396,4 @@ export function CustomerProfileModal({ isOpen, onClose }: CustomerProfileModalPr
     </div>
   )
 }
+

@@ -23,3 +23,4 @@ export class ChangeCustomerPasswordDto {
   @MinLength(6, { message: 'Mật khẩu mới phải có tối thiểu 6 ký tự' })
   newPassword: string
 }
+
