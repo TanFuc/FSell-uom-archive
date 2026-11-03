@@ -320,7 +320,7 @@ export function ProductStorefrontPreview({
               {/* Detailed Description HTML (prose preserving font sizes, font weights, colors) */}
               {description && (
                 <div
-                  className="prose prose-stone max-w-none overflow-hidden font-serif text-sm sm:text-base font-thin leading-relaxed text-black [overflow-wrap:anywhere] pt-1 [&_p]:leading-[1.75] [&_p]:mb-3 [&_p]:text-black [&_strong]:font-semibold [&_strong]:text-black [&_b]:font-semibold [&_b]:text-black [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1.5 [&_li]:text-black [&_li]:leading-relaxed"
+                  className="prose prose-stone max-w-none overflow-hidden font-serif text-sm sm:text-base font-thin leading-relaxed text-black [overflow-wrap:anywhere] pt-1 [&_p]:leading-[1.75] [&_p]:mb-3 [&_p]:text-black [&_strong]:font-bold [&_strong]:text-black [&_strong]:[font-synthesis:weight] [&_b]:font-bold [&_b]:text-black [&_b]:[font-synthesis:weight] [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1.5 [&_li]:text-black [&_li]:leading-relaxed"
                   dangerouslySetInnerHTML={{ __html: description }}
                 />
               )}

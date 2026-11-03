@@ -197,14 +197,6 @@ const FONT_SIZES = [
   { label: '32px (Rất lớn)', value: '32px', numeric: 32 },
 ]
 
-const FONT_WEIGHTS = [
-  { label: '300 (Mảnh / Light)', value: '300' },
-  { label: '400 (Bình thường / Regular)', value: '400' },
-  { label: '500 (Vừa / Medium)', value: '500' },
-  { label: '600 (Hơi đậm / SemiBold)', value: '600' },
-  { label: '700 (Đậm / Bold)', value: '700' },
-  { label: '800 (Rất đậm / ExtraBold)', value: '800' },
-]
 
 const TEXT_COLORS = [
   { label: 'Đen', value: '#000000', bg: '#000000' },
@@ -369,7 +361,6 @@ export function RichTextEditor({
 
   const currentAttrs = editor?.getAttributes('textStyleExtended') || {}
   const currentFontSize = currentAttrs.fontSize || '14px'
-  const currentFontWeight = currentAttrs.fontWeight || '400'
 
   const changeFontSizeStep = (delta: number) => {
     if (!editor) return
@@ -470,28 +461,6 @@ export function RichTextEditor({
           </button>
         </div>
 
-        {/* 2. Font Weight Dropdown */}
-        <div className="flex items-center bg-white border border-neutral-200 rounded px-1 py-0.5">
-          <select
-            value={currentFontWeight}
-            onChange={(e) => {
-              const val = e.target.value
-              if (val) {
-                editor.chain().focus().setFontWeight(val).run()
-              } else {
-                editor.chain().focus().unsetFontWeight().run()
-              }
-            }}
-            className="h-7 text-xs bg-transparent border-none text-neutral-800 font-medium focus:outline-none cursor-pointer pr-1"
-            title="Độ đậm chữ (Font Weight)"
-          >
-            {FONT_WEIGHTS.map((wt) => (
-              <option key={wt.value} value={wt.value}>
-                {wt.label}
-              </option>
-            ))}
-          </select>
-        </div>
 
         <div className="mx-1 h-5 w-px bg-neutral-300" />
 
@@ -801,7 +770,7 @@ export function RichTextEditor({
           '[&_.ProseMirror_p.is-editor-empty:first-child::before]:h-0',
           '[&_.ProseMirror_p.is-editor-empty:first-child::before]:pointer-events-none',
           '[&_.ProseMirror_hr]:border-neutral-300 [&_.ProseMirror_hr]:my-4',
-          '[&_.ProseMirror_strong]:font-semibold [&_.ProseMirror_b]:font-semibold',
+          '[&_.ProseMirror_strong]:font-bold [&_.ProseMirror_strong]:[font-synthesis:weight] [&_.ProseMirror_strong]:text-black [&_.ProseMirror_b]:font-bold [&_.ProseMirror_b]:[font-synthesis:weight] [&_.ProseMirror_b]:text-black',
           '[&_.ProseMirror]:text-left',
           disabled && 'cursor-not-allowed opacity-50',
           isMaximized &&

@@ -63,16 +63,6 @@ const abcArizona = localFont({
       style: 'normal',
     },
     {
-      path: '../../public/fonts/VL ABCArizonaFlare-Light.otf',
-      weight: '600',
-      style: 'normal',
-    },
-    {
-      path: '../../public/fonts/VL ABCArizonaFlare-Light.otf',
-      weight: '700',
-      style: 'normal',
-    },
-    {
       path: '../../public/fonts/VL ABCArizonaFlare-LightItalic.otf',
       weight: '300',
       style: 'italic',
@@ -85,16 +75,6 @@ const abcArizona = localFont({
     {
       path: '../../public/fonts/VL ABCArizonaFlare-RegIta.otf',
       weight: '500',
-      style: 'italic',
-    },
-    {
-      path: '../../public/fonts/VL ABCArizonaFlare-RegIta.otf',
-      weight: '600',
-      style: 'italic',
-    },
-    {
-      path: '../../public/fonts/VL ABCArizonaFlare-RegIta.otf',
-      weight: '700',
       style: 'italic',
     },
   ],
