@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import {
   ShoppingBag,
   Plus,
@@ -14,7 +15,7 @@ import {
   ArrowRight,
 } from 'lucide-react'
 import { formatCurrency, vndToUsd } from '@/lib/currency'
-import { getImageUrl } from '@/lib/utils'
+import { getImageUrl, cn } from '@/lib/utils'
 
 interface ProductStorefrontPreviewProps {
   product: {
@@ -47,15 +48,12 @@ interface ProductStorefrontPreviewProps {
   onSwitchToEdit?: () => void
 }
 
-
-
 export function ProductStorefrontPreview({
   product,
   images,
   categories,
   categoryId,
   exchangeRate = 25000,
-
   onSwitchToEdit,
 }: ProductStorefrontPreviewProps) {
   const [previewLocale, setPreviewLocale] = useState<'vi' | 'en'>('vi')
@@ -81,12 +79,12 @@ export function ProductStorefrontPreview({
   const description =
     previewLocale === 'vi' ? product.descriptionVi : product.descriptionEn
 
-  // Price calculations
+  // Price calculations matching product-client.tsx
   const priceVND = product.priceVND || 0
   const salePriceVND = product.salePriceVND
   const hasDiscount = salePriceVND !== null && salePriceVND !== undefined && salePriceVND < priceVND
 
-  const displayPrice =
+  const currentPrice =
     previewLocale === 'vi'
       ? formatCurrency(hasDiscount ? salePriceVND! : priceVND, 'VND')
       : `$${(
@@ -100,51 +98,50 @@ export function ProductStorefrontPreview({
       : `$${(product.priceUSD ?? vndToUsd(priceVND, exchangeRate)).toFixed(2)}`
     : null
 
-  const discountPercent =
-    hasDiscount && priceVND > 0
-      ? Math.round(((priceVND - salePriceVND!) / priceVND) * 100)
-      : 0
+  const discountPercentage = hasDiscount
+    ? Math.round(((priceVND - salePriceVND!) / priceVND) * 100)
+    : null
 
-  const activeImages = images && images.length > 0 ? images : ['/assets/logo.svg']
+  const activeImages = images && images.length > 0 ? images : ['/images/placeholder.webp']
   const currentImage = activeImages[selectedImageIndex] || activeImages[0]
 
-
-
   return (
-    <div className="flex flex-col h-full bg-[#FAF9F5] text-[#2C2620] overflow-y-auto">
-      {/* Simulation Controls Bar */}
-      <div className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-3 border-b border-stone-200 bg-white/95 px-4 py-2.5 backdrop-blur shadow-2xs">
+    <div className="flex flex-col bg-white text-black font-sans selection:bg-[#4A4238] selection:text-white border border-neutral-200 shadow-sm rounded-sm overflow-hidden">
+      {/* Simulation Control Bar */}
+      <div className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-3 border-b border-neutral-200 bg-neutral-900 px-4 py-2.5 text-white">
         <div className="flex items-center gap-2">
-          <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="font-mono text-xs font-semibold text-[#4A4238] uppercase tracking-wider">
-            Storefront Simulation Mode (100% Khách Hàng)
+          <span className="inline-block h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="font-serif text-xs uppercase tracking-widest font-light text-neutral-200">
+            Mô phỏng Giao diện Khách hàng (1:1 Storefront)
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
-          {/* Language Switcher */}
-          <div className="flex items-center rounded-sm border border-stone-300 bg-stone-100 p-0.5 text-xs">
+        <div className="flex items-center gap-2.5">
+          {/* Language Toggle */}
+          <div className="inline-flex rounded-xs bg-neutral-800 p-0.5 border border-neutral-700">
             <button
               type="button"
               onClick={() => setPreviewLocale('vi')}
-              className={`rounded-xs px-2.5 py-1 font-semibold transition-colors ${
+              className={cn(
+                'rounded-xs px-2.5 py-0.5 text-xs font-medium transition-colors cursor-pointer',
                 previewLocale === 'vi'
-                  ? 'bg-white text-[#4A4238] shadow-2xs'
-                  : 'text-stone-500 hover:text-stone-900'
-              }`}
+                  ? 'bg-white text-black shadow-xs font-semibold'
+                  : 'text-neutral-400 hover:text-white',
+              )}
             >
-              Tiếng Việt (VI)
+              Tiếng Việt
             </button>
             <button
               type="button"
               onClick={() => setPreviewLocale('en')}
-              className={`rounded-xs px-2.5 py-1 font-semibold transition-colors ${
+              className={cn(
+                'rounded-xs px-2.5 py-0.5 text-xs font-medium transition-colors cursor-pointer',
                 previewLocale === 'en'
-                  ? 'bg-white text-[#4A4238] shadow-2xs'
-                  : 'text-stone-500 hover:text-stone-900'
-              }`}
+                  ? 'bg-white text-black shadow-xs font-semibold'
+                  : 'text-neutral-400 hover:text-white',
+              )}
             >
-              English (EN)
+              English
             </button>
           </div>
 
@@ -154,9 +151,9 @@ export function ProductStorefrontPreview({
               href={`/${previewLocale}/shop/${product.slug}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 rounded-sm border border-stone-300 bg-white px-2.5 py-1 text-xs text-stone-700 hover:bg-stone-50 transition-colors"
+              className="inline-flex items-center gap-1 rounded-xs border border-neutral-700 bg-neutral-800 px-2.5 py-1 text-xs text-neutral-200 hover:bg-neutral-700 hover:text-white transition-colors"
             >
-              <span>Xem link thật</span>
+              <span>Xem trang thật</span>
               <ExternalLink className="w-3 h-3" />
             </a>
           )}
@@ -165,7 +162,7 @@ export function ProductStorefrontPreview({
             <button
               type="button"
               onClick={onSwitchToEdit}
-              className="rounded-sm bg-[#4A4238] px-3 py-1 text-xs font-medium text-white hover:bg-[#8C7E6A] transition-colors"
+              className="rounded-xs bg-white px-3 py-1 text-xs font-medium text-black hover:bg-neutral-200 transition-colors"
             >
               Quay lại Form sửa
             </button>
@@ -173,29 +170,38 @@ export function ProductStorefrontPreview({
         </div>
       </div>
 
-      {/* Identical Storefront Container */}
-      <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
-          {/* Left Column: Gallery */}
-          <div className="lg:col-span-7 space-y-4">
+      {/* 1:1 Real Storefront Product Page Layout */}
+      <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8 bg-white">
+        {/* Breadcrumb matching Storefront */}
+        <div className="mb-6 flex items-center gap-2 font-serif text-xs font-light tracking-wide text-neutral-400 uppercase">
+          <span>{previewLocale === 'vi' ? 'Trang chủ' : 'Home'}</span>
+          <span>/</span>
+          <span>{previewLocale === 'vi' ? 'Cửa hàng' : 'Shop'}</span>
+          <span>/</span>
+          <span className="text-black font-normal">{categoryName}</span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-14 items-start">
+          {/* 1. Left Column: Image Gallery (aspect-[3/4] matching storefront) */}
+          <div className="space-y-4">
             {/* Main Stage Image */}
-            <div className="relative aspect-square w-full overflow-hidden bg-stone-100 rounded-sm border border-stone-200/80 shadow-xs">
+            <div className="relative aspect-[3/4] w-full overflow-hidden bg-neutral-100 rounded-none border border-neutral-200">
               <Image
                 src={getImageUrl(currentImage)}
                 alt={name}
                 fill
-                sizes="(max-width: 1024px) 100vw, 55vw"
+                sizes="(max-width: 768px) 100vw, 50vw"
                 className="object-cover transition-all duration-300"
                 priority
               />
 
               {hasDiscount && (
-                <div className="absolute top-4 left-4 rounded-xs bg-[#8C7E6A] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-white shadow-xs">
-                  -{discountPercent}%
+                <div className="absolute top-4 left-4 rounded-xs bg-[#991b1b] px-2.5 py-1 text-xs font-light uppercase tracking-wider text-white shadow-xs">
+                  −{discountPercentage}%
                 </div>
               )}
 
-              {/* Navigation arrows if multiple images */}
+              {/* Navigation arrows */}
               {activeImages.length > 1 && (
                 <>
                   <button
@@ -205,7 +211,7 @@ export function ProductStorefrontPreview({
                         prev === 0 ? activeImages.length - 1 : prev - 1,
                       )
                     }
-                    className="absolute left-3 top-1/2 -translate-y-1/2 p-2 bg-white/80 hover:bg-white text-stone-700 rounded-full shadow-xs transition-colors"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 p-2 bg-white/90 hover:bg-white text-black shadow-xs transition-colors cursor-pointer"
                     aria-label="Previous image"
                   >
                     <ChevronLeft className="w-4 h-4" />
@@ -217,7 +223,7 @@ export function ProductStorefrontPreview({
                         prev === activeImages.length - 1 ? 0 : prev + 1,
                       )
                     }
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-white/80 hover:bg-white text-stone-700 rounded-full shadow-xs transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-white/90 hover:bg-white text-black shadow-xs transition-colors cursor-pointer"
                     aria-label="Next image"
                   >
                     <ChevronRight className="w-4 h-4" />
@@ -228,17 +234,18 @@ export function ProductStorefrontPreview({
 
             {/* Thumbnail Strip */}
             {activeImages.length > 1 && (
-              <div className="flex gap-3 overflow-x-auto pb-2">
+              <div className="flex gap-2.5 overflow-x-auto pb-1">
                 {activeImages.map((img, idx) => (
                   <button
                     key={`${img}-${idx}`}
                     type="button"
                     onClick={() => setSelectedImageIndex(idx)}
-                    className={`relative aspect-square w-20 shrink-0 overflow-hidden rounded-xs border-2 transition-all ${
+                    className={cn(
+                      'relative aspect-[3/4] w-16 sm:w-20 shrink-0 overflow-hidden border transition-all cursor-pointer',
                       selectedImageIndex === idx
-                        ? 'border-[#4A4238] shadow-xs'
-                        : 'border-stone-200 opacity-60 hover:opacity-100'
-                    }`}
+                        ? 'border-black ring-1 ring-black'
+                        : 'border-neutral-200 opacity-60 hover:opacity-100',
+                    )}
                   >
                     <Image
                       src={getImageUrl(img)}
@@ -253,119 +260,106 @@ export function ProductStorefrontPreview({
             )}
           </div>
 
-          {/* Right Column: Product Detail & Purchase Information */}
-          <div className="lg:col-span-5 space-y-6">
-            {/* Category and Handcrafted Emblem */}
-            <div className="flex items-center justify-between text-xs tracking-wider uppercase text-stone-500">
-              <span>{categoryName}</span>
-              <span className="font-mono text-[10px] text-[#8C7E6A]">ƯƠM. ARCHIVE</span>
-            </div>
+          {/* 2. Right Column: Product Detail & Purchase Information */}
+          <div className="space-y-6 md:space-y-7">
+            {/* Info Header */}
+            <div className="space-y-3">
+              <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl font-light uppercase tracking-wider leading-tight text-black">
+                {name}
+              </h1>
 
-            {/* Product Title */}
-            <h1 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-normal tracking-tight text-[#2C2620] leading-tight">
-              {name}
-            </h1>
-
-            {/* Price section */}
-            <div className="flex items-baseline gap-3 pt-1">
-              <span className="font-serif text-xl sm:text-2xl font-normal text-[#2C2620]">
-                {displayPrice}
-              </span>
-              {originalPrice && (
-                <span className="font-serif text-sm text-stone-400 line-through">
-                  {originalPrice}
-                </span>
-              )}
-            </div>
-
-            {/* Poetic Quote / Short Description */}
-            {shortDesc && (
-              <div className="border-l-2 border-[#8C7E6A] bg-stone-50/60 pl-4 py-2.5 rounded-r-sm">
-                <p className="font-serif italic text-sm sm:text-[15px] leading-relaxed text-[#5C5042]">
-                  “{shortDesc}”
+              {/* Price Row */}
+              <div className="flex flex-wrap items-baseline gap-3">
+                <p
+                  className={cn(
+                    'font-serif text-2xl sm:text-3xl md:text-4xl font-light tracking-tight text-black',
+                    hasDiscount && 'text-[#991b1b]',
+                  )}
+                >
+                  {currentPrice}
                 </p>
+                {hasDiscount && originalPrice && (
+                  <>
+                    <p className="font-serif text-sm sm:text-base font-thin text-neutral-400 line-through">
+                      {originalPrice}
+                    </p>
+                    {discountPercentage && (
+                      <span className="rounded-xs bg-[#991b1b] px-2 py-0.5 font-serif text-xs font-light tracking-wide text-white">
+                        −{discountPercentage}%
+                      </span>
+                    )}
+                  </>
+                )}
               </div>
-            )}
+            </div>
 
-            {/* Structured Specifications Card */}
-            {(product.material || product.dimensions) && (
-              <div className="relative overflow-hidden rounded-sm border border-[#E8E1D5] bg-gradient-to-b from-[#FCFAF7] to-[#F8F5EE] p-4 sm:p-5 shadow-[0_2px_12px_rgba(74,66,56,0.03)] space-y-3.5 before:absolute before:inset-x-0 before:top-0 before:h-[1.5px] before:bg-gradient-to-r before:from-transparent before:via-[#C2B6A3]/60 before:to-transparent">
-                <div className="flex items-center pb-3 border-b border-[#ECE4D8]">
-                  <div className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#8C7E6A]" />
-                    <span className="font-serif text-xs sm:text-[13px] font-semibold uppercase tracking-[0.18em] text-[#3D332A]">
-                      {previewLocale === 'vi' ? 'Thông số chế tác' : 'Craft Specifications'}
-                    </span>
-                  </div>
-                </div>
+            {/* Details Section - Clean Unboxed Editorial Presentation matching Storefront */}
+            <div className="space-y-3.5 pt-1 text-black">
+              {/* Short Description (body Thin) */}
+              {shortDesc && (
+                <p className="font-serif font-thin text-sm sm:text-base leading-relaxed text-black">
+                  {shortDesc}
+                </p>
+              )}
 
-                <dl className="divide-y divide-[#EFEAE2] text-xs sm:text-[13px]">
-                  {product.material && (
-                    <div className="py-2.5 first:pt-1 last:pb-1 flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-6">
-                      <dt className="w-24 sm:w-28 shrink-0 font-serif text-[11px] sm:text-xs uppercase tracking-[0.16em] text-[#8C7E6A] font-medium">
-                        {previewLocale === 'vi' ? 'Chất liệu' : 'Material'}
-                      </dt>
-                      <dd className="font-serif font-normal text-xs sm:text-[13px] text-[#2C241D] leading-relaxed flex-1">
-                        {product.material}
-                      </dd>
-                    </div>
-                  )}
-                  {product.dimensions && (
-                    <div className="py-2.5 first:pt-1 last:pb-1 flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-6">
-                      <dt className="w-24 sm:w-28 shrink-0 font-serif text-[11px] sm:text-xs uppercase tracking-[0.16em] text-[#8C7E6A] font-medium">
-                        {previewLocale === 'vi' ? 'Kích thước' : 'Dimensions'}
-                      </dt>
-                      <dd className="font-serif font-normal text-xs sm:text-[13px] text-[#2C241D] leading-relaxed flex-1">
-                        {product.dimensions}
-                      </dd>
-                    </div>
-                  )}
-                </dl>
-              </div>
-            )}
+              {/* Specifications: Material & Dimensions */}
+              {product.material && (
+                <p className="font-serif text-sm sm:text-base text-black leading-relaxed">
+                  <span className="font-light">{previewLocale === 'vi' ? 'Chất liệu ' : 'Material '}</span>
+                  <span className="font-light">{product.material}</span>
+                </p>
+              )}
 
-            {/* Detailed Description */}
-            {description && (
-              <div className="space-y-2 pt-1">
-                <h4 className="font-serif text-xs sm:text-[13px] font-semibold uppercase tracking-[0.18em] text-[#3D332A]">
-                  {previewLocale === 'vi' ? 'Mô tả tác phẩm' : 'About the piece'}
-                </h4>
+              {product.dimensions && (
+                <p className="font-serif text-sm sm:text-base text-black leading-relaxed">
+                  <span className="font-light">{previewLocale === 'vi' ? 'Kích thước ' : 'Dimensions '}</span>
+                  <span className="font-thin">{product.dimensions}</span>
+                </p>
+              )}
+
+              {/* Detailed Description HTML (prose preserving font sizes, font weights, colors) */}
+              {description && (
                 <div
-                  className="prose prose-stone max-w-none font-serif text-xs sm:text-sm font-normal leading-relaxed text-[#3A332C] [&_p]:leading-[1.75] [&_p]:mb-3 [&_strong]:font-semibold [&_strong]:text-[#2C2620]"
+                  className="prose prose-stone max-w-none overflow-hidden font-serif text-sm sm:text-base font-thin leading-relaxed text-black [overflow-wrap:anywhere] pt-1 [&_p]:leading-[1.75] [&_p]:mb-3 [&_p]:text-black [&_strong]:font-semibold [&_strong]:text-black [&_b]:font-semibold [&_b]:text-black [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1.5 [&_li]:text-black [&_li]:leading-relaxed"
                   dangerouslySetInnerHTML={{ __html: description }}
                 />
-              </div>
-            )}
+              )}
 
-            {/* Quick Link - View all products */}
-            <div className="pt-2">
-              <span className="group inline-flex items-center gap-2.5 font-serif text-xs sm:text-[13px] uppercase tracking-[0.18em] text-[#7A6A55] hover:text-[#2C241D] transition-all duration-300 py-1 cursor-pointer">
-                <span className="relative font-medium pb-0.5 border-b border-[#8C7E6A]/35 group-hover:border-[#2C241D] transition-colors duration-300">
-                  {previewLocale === 'vi' ? 'Xem tất cả sản phẩm' : 'Explore all pieces'}
-                </span>
-                <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1.5 text-[#8C7E6A] group-hover:text-[#2C241D]" />
-              </span>
+              {/* Explore all products CTA */}
+              <div className="pt-2">
+                <Link
+                  href={`/${previewLocale}/shop`}
+                  className="group inline-flex items-center gap-2 font-serif text-xs sm:text-[13px] uppercase tracking-[0.18em] text-black hover:opacity-60 transition-all duration-300 py-1"
+                >
+                  <span className="relative font-light pb-0.5 border-b border-black/40 group-hover:border-black transition-colors duration-300">
+                    {previewLocale === 'vi' ? 'Xem tất cả tác phẩm' : 'View all products'}
+                  </span>
+                  <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1.5 text-black" />
+                </Link>
+              </div>
             </div>
 
             {/* Add to Cart Section */}
-            <div className="space-y-4 pt-6 border-t border-stone-200">
+            <div className="space-y-4 pt-6 border-t border-neutral-200">
               <div className="flex items-center gap-3">
-                {/* Quantity */}
-                <div className="flex items-center border border-stone-300 bg-white rounded-xs">
+                {/* Quantity Selector */}
+                <div className="flex items-center border border-neutral-300 bg-white rounded-xs">
                   <button
                     type="button"
                     onClick={() => setQuantity((prev) => Math.max(1, prev - 1))}
-                    className="px-3.5 py-2.5 text-stone-600 hover:text-stone-900 transition-colors"
+                    className="px-3.5 py-2.5 text-black hover:opacity-60 transition-opacity cursor-pointer"
+                    aria-label="Giảm số lượng"
                   >
                     <Minus className="w-3.5 h-3.5" />
                   </button>
-                  <span className="font-sans text-xs px-2 min-w-[32px] text-center font-semibold text-[#2C2620]">
+                  <span className="font-serif text-xs px-2 min-w-[32px] text-center font-light text-black">
                     {quantity}
                   </span>
                   <button
                     type="button"
                     onClick={() => setQuantity((prev) => prev + 1)}
-                    className="px-3.5 py-2.5 text-stone-600 hover:text-stone-900 transition-colors"
+                    className="px-3.5 py-2.5 text-black hover:opacity-60 transition-opacity cursor-pointer"
+                    aria-label="Tăng số lượng"
                   >
                     <Plus className="w-3.5 h-3.5" />
                   </button>
@@ -374,40 +368,46 @@ export function ProductStorefrontPreview({
                 {/* Add to Cart Button */}
                 <button
                   type="button"
-                  className="flex-1 py-3 px-6 bg-[#4A4238] text-white hover:bg-[#8C7E6A] transition-colors uppercase tracking-[0.2em] text-xs font-semibold flex items-center justify-center gap-2 shadow-sm rounded-xs cursor-pointer"
+                  className="flex-1 py-3 px-6 bg-black text-white hover:bg-neutral-800 transition-colors uppercase tracking-[0.2em] text-xs font-light flex items-center justify-center gap-2 shadow-xs cursor-pointer rounded-xs"
                 >
                   <ShoppingBag className="w-4 h-4" />
-                  <span>{previewLocale === 'vi' ? 'Thêm vào giỏ hàng' : 'Add to Cart'}</span>
+                  <span>{previewLocale === 'vi' ? 'Thêm vào giỏ' : 'Add to cart'}</span>
                 </button>
               </div>
 
-              <p className="text-[11px] text-stone-500 font-sans tracking-wide">
+              <p className="text-[11px] text-neutral-500 font-serif font-thin tracking-wide">
                 {previewLocale === 'vi'
-                  ? '* Đăng nhập tài khoản để lưu giỏ hàng và đồng bộ thanh toán trực tuyến.'
-                  : '* Log in to your account to save cart and sync online checkout.'}
+                  ? 'Vui lòng đăng nhập tài khoản để thêm vào giỏ và hoàn tất thanh toán'
+                  : 'Please sign in to add this item to cart and proceed to checkout'}
               </p>
-
-              
             </div>
 
-            {/* Subtle / Compact Direct Inquiry */}
-            {product.inquiryEnabled !== false && (
-              <div className="pt-4 border-t border-stone-200/60 flex items-center justify-between flex-wrap gap-2 text-xs">
-                <span className="font-serif text-[11px] font-light text-stone-500 uppercase tracking-wider">
-                  {previewLocale === 'vi' ? 'Hỗ trợ tư vấn trực tiếp:' : 'Direct consultation:'}
-                </span>
-                <div className="flex items-center gap-2">
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-light uppercase tracking-[0.12em] border border-stone-200 hover:border-[#4A4238] hover:text-[#4A4238] text-stone-600 transition-colors rounded-xs bg-stone-50/50">
-                    <Instagram className="h-3.5 w-3.5 text-stone-500" />
-                    <span>Instagram</span>
-                  </div>
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-light uppercase tracking-[0.12em] border border-stone-200 hover:border-[#4A4238] hover:text-[#4A4238] text-stone-600 transition-colors rounded-xs bg-stone-50/50">
-                    <Facebook className="h-3.5 w-3.5 text-stone-500" />
-                    <span>Facebook</span>
-                  </div>
-                </div>
+            {/* Direct Consultation Row matching Storefront */}
+            <div className="pt-4 border-t border-neutral-200 flex items-center justify-between flex-wrap gap-2 text-xs">
+              <span className="font-serif text-[11px] font-light text-neutral-500 uppercase tracking-wider">
+                {previewLocale === 'vi' ? 'Hỗ trợ tư vấn trực tiếp:' : 'Direct consultation:'}
+              </span>
+              <div className="flex items-center gap-2">
+                <a
+                  href="https://instagram.com/uomarchive"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-light uppercase tracking-[0.12em] border border-neutral-200 hover:border-black hover:text-black text-neutral-600 transition-colors rounded-xs bg-neutral-50"
+                >
+                  <Instagram className="h-3.5 w-3.5 text-neutral-500" />
+                  <span>Instagram</span>
+                </a>
+                <a
+                  href="https://m.me/uomarchive"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-light uppercase tracking-[0.12em] border border-neutral-200 hover:border-black hover:text-black text-neutral-600 transition-colors rounded-xs bg-neutral-50"
+                >
+                  <Facebook className="h-3.5 w-3.5 text-neutral-500" />
+                  <span>Facebook</span>
+                </a>
               </div>
-            )}
+            </div>
           </div>
         </div>
       </div>

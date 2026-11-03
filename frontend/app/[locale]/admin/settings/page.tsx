@@ -325,10 +325,13 @@ export default function SettingsPage() {
                         alt="QR Code"
                         onError={(e) => {
                           const target = e.currentTarget
-                          if (!target.src.includes(':3006') && paymentSettings.qrCodeUrl.startsWith('/uploads')) {
-                            target.src = `http://localhost:3006${paymentSettings.qrCodeUrl}`
-                          } else if (paymentSettings.qrCodeUrl.startsWith('/uploads')) {
-                            target.src = paymentSettings.qrCodeUrl
+                          const raw = paymentSettings.qrCodeUrl || ''
+                          if (!target.dataset.triedFallback && raw.startsWith('/uploads')) {
+                            target.dataset.triedFallback = '1'
+                            target.src = raw.startsWith('http') ? raw : `http://localhost:3006${raw}`
+                          } else if (target.dataset.triedFallback === '1' && raw.startsWith('/uploads')) {
+                            target.dataset.triedFallback = '2'
+                            target.src = raw
                           }
                         }}
                         className="w-full h-full object-contain"

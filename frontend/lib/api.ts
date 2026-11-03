@@ -115,54 +115,57 @@ class ApiClient {
         const originalRequest: any = error.config
 
         if (error.response?.status === 401 && !originalRequest._retry) {
-          if (originalRequest.url?.includes('/auth/login')) {
+          if (originalRequest.url?.includes("/auth/login") || originalRequest.url?.includes("/customer/auth/login")) {
             return Promise.reject(error)
           }
 
           originalRequest._retry = true
 
-          try {
-            const refreshToken = localStorage.getItem('refreshToken')
-            if (!refreshToken) {
-              throw new Error('No refresh token')
-            }
+          const isAdminEndpoint =
+            Boolean(originalRequest.url?.includes("/admin")) ||
+            Boolean(originalRequest.url?.includes("/banners")) ||
+            Boolean(originalRequest.url?.includes("/users")) ||
+            (typeof window !== "undefined" && window.location.pathname.includes("/admin"))
 
-            const { data } = await axios.post(
-              `${API_BASE_URL}/auth/refresh`,
-              {},
-              {
-                headers: { Authorization: `Bearer ${refreshToken}` },
-              },
-            )
-
-            localStorage.setItem('accessToken', data.data.accessToken)
-            localStorage.setItem('refreshToken', data.data.refreshToken)
-
-            originalRequest.headers.Authorization = `Bearer ${data.data.accessToken}`
-            return this.client(originalRequest)
-          } catch (refreshError: any) {
-            if (typeof window !== 'undefined') {
-              const isAdminPage = window.location.pathname.includes('/admin')
-              const locale = localStorage.getItem('locale') || 'vi'
-
-              if (isAdminPage) {
-                localStorage.removeItem('accessToken')
-                localStorage.removeItem('refreshToken')
-                document.cookie = 'accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
-              } else {
-                localStorage.removeItem('customerAccessToken')
-                localStorage.removeItem('customerRefreshToken')
-                document.cookie = 'customerAccessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+          if (isAdminEndpoint) {
+            try {
+              const refreshToken = localStorage.getItem("refreshToken")
+              if (!refreshToken) {
+                throw new Error("No refresh token")
               }
 
-              const loginPath = isAdminPage ? `/${locale}/admin/login` : `/${locale}/login`
+              const { data } = await axios.post(
+                `${API_BASE_URL}/auth/refresh`,
+                {},
+                {
+                  headers: { Authorization: `Bearer ${refreshToken}` },
+                },
+              )
 
-              console.error('Session expired. Please login again.')
+              localStorage.setItem("accessToken", data.data.accessToken)
+              localStorage.setItem("refreshToken", data.data.refreshToken)
 
-              window.location.href = loginPath
+              originalRequest.headers.Authorization = `Bearer ${data.data.accessToken}`
+              return this.client(originalRequest)
+            } catch (refreshError: any) {
+              if (typeof window !== "undefined") {
+                localStorage.removeItem("accessToken")
+                localStorage.removeItem("refreshToken")
+                document.cookie = "accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
+                const locale = localStorage.getItem("locale") || "vi"
+                if (window.location.pathname.includes("/admin")) {
+                  window.location.href = `/${locale}/admin/login`
+                }
+              }
+              return Promise.reject(refreshError)
             }
-
-            return Promise.reject(refreshError)
+          } else {
+            if (typeof window !== "undefined") {
+              localStorage.removeItem("customerAccessToken")
+              localStorage.removeItem("customerRefreshToken")
+              document.cookie = "customerAccessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
+            }
+            return Promise.reject(error)
           }
         }
 

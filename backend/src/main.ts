@@ -250,9 +250,13 @@ async function startApplication(): Promise<void> {
   app.use('/auth/login', express.text({ type: '*/*', limit: '1mb' }))
   app.use('/auth/login', loginPayloadNormalizerMiddleware)
 
-  const uploadsStaticPath = existsSync(join(process.cwd(), 'uploads'))
-    ? join(process.cwd(), 'uploads')
-    : join(__dirname, '..', 'uploads')
+  const candidateUploads = [
+    join(process.cwd(), 'backend', 'uploads'),
+    join(process.cwd(), 'uploads'),
+    join(__dirname, '..', 'uploads'),
+    join(__dirname, '..', '..', 'uploads'),
+  ]
+  const uploadsStaticPath = candidateUploads.find((p) => existsSync(p)) || join(process.cwd(), 'uploads')
   app.useStaticAssets(uploadsStaticPath, {
     prefix: '/uploads/',
     setHeaders: (res: any) => {

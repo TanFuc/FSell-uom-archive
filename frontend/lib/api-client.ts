@@ -124,7 +124,8 @@ class ApiClient {
             originalRequest.headers.Authorization = `Bearer ${data.data.accessToken}`
             return this.client(originalRequest)
           } catch (refreshError) {
-            localStorage.clear()
+            localStorage.removeItem("accessToken")
+            localStorage.removeItem("refreshToken")
             if (typeof window !== 'undefined') {
               window.location.href = '/login'
             }

@@ -35,7 +35,7 @@ export class OrderService {
     return secret
   }
 
-  extractUserFromRequest(req?: any): { id?: string; role?: string } | null {
+  extractUserFromRequest(req?: any): { id?: string; email?: string; role?: string } | null {
     if (!req) return null
     if (req.user?.id) return req.user
 
@@ -54,6 +54,7 @@ export class OrderService {
           if (payload?.sub) {
             return {
               id: payload.sub,
+              email: payload.email,
               role: payload.role || (payload.type === 'CUSTOMER' ? 'CUSTOMER' : undefined),
             }
           }
@@ -91,15 +92,23 @@ export class OrderService {
   }
 
   async assertPublicOrderAccess(identifier: string, token?: string, reqOrUser?: any): Promise<void> {
+    const cleanId = (identifier || '').trim()
     const order = await this.prisma.order.findFirst({
-      where: { OR: [{ id: identifier }, { orderNumber: identifier }], deletedAt: null },
+      where: {
+        OR: [
+          { id: cleanId },
+          { orderNumber: cleanId },
+          { orderNumber: cleanId.toUpperCase() },
+        ],
+        deletedAt: null,
+      },
       select: { id: true, orderNumber: true, customerId: true, customerEmail: true },
     })
     if (!order) throw new NotFoundException('Không tìm thấy đơn hàng')
     const user = reqOrUser?.id ? reqOrUser : this.extractUserFromRequest(reqOrUser)
     this.assertPaymentAccess(
       order.id,
-      token,
+      token?.trim(),
       order.customerId ?? undefined,
       user,
       order.customerEmail ?? undefined,
@@ -280,9 +289,14 @@ export class OrderService {
    * hệ thống sẽ tự động gọi Sapo API để kéo tracking number và cập nhật DB.
    */
   async getOrderByIdOrNumber(identifier: string) {
+    const cleanId = (identifier || '').trim()
     let order = await this.prisma.order.findFirst({
       where: {
-        OR: [{ id: identifier }, { orderNumber: identifier }],
+        OR: [
+          { id: cleanId },
+          { orderNumber: cleanId },
+          { orderNumber: cleanId.toUpperCase() },
+        ],
         deletedAt: null,
       },
       include: {

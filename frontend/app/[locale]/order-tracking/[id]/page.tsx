@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { useLocale } from 'next-intl'
@@ -42,54 +42,58 @@ export default function OrderTrackingDetailPage() {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
   const [viewProofModalOpen, setViewProofModalOpen] = useState(false)
 
-  useEffect(() => {
-    let activeToken = queryAccess
-    if (activeToken) {
-      setPaymentAccessToken(activeToken)
+  const fetchOrderDetail = useCallback(async () => {
+    if (!idOrNumber) return
+    const tokenFromUrl = typeof window !== "undefined"
+      ? (new URLSearchParams(window.location.search).get("access") ||
+         new URLSearchParams(window.location.search).get("token"))
+      : null
+    const storedToken = typeof window !== "undefined"
+      ? (sessionStorage.getItem(`order_access_${idOrNumber}`) ||
+         localStorage.getItem(`order_access_${idOrNumber}`))
+      : null
+    const tokenToUse = (tokenFromUrl || queryAccess || storedToken || "").trim() || undefined
+    if (tokenToUse) {
+      setPaymentAccessToken(tokenToUse)
       try {
-        sessionStorage.setItem(`order_access_${idOrNumber}`, activeToken)
-        localStorage.setItem(`order_access_${idOrNumber}`, activeToken)
-      } catch {}
-    } else if (idOrNumber && typeof window !== 'undefined') {
-      try {
-        const stored = sessionStorage.getItem(`order_access_${idOrNumber}`) || localStorage.getItem(`order_access_${idOrNumber}`)
-        if (stored) {
-          activeToken = stored
-          setPaymentAccessToken(stored)
-        }
+        sessionStorage.setItem(`order_access_${idOrNumber}`, tokenToUse)
+        localStorage.setItem(`order_access_${idOrNumber}`, tokenToUse)
       } catch {}
     }
-
-    if (!idOrNumber) return
     setLoading(true)
-    api
-      .getOrderTracking(idOrNumber, activeToken)
-      .then((data) => {
-        setOrder(data)
-        setError(null)
-        if (data?.paymentAccessToken) {
-          setPaymentAccessToken(data.paymentAccessToken)
-          try {
-            sessionStorage.setItem(`order_access_${idOrNumber}`, data.paymentAccessToken)
-            localStorage.setItem(`order_access_${idOrNumber}`, data.paymentAccessToken)
-            if (data.orderNumber) {
-              sessionStorage.setItem(`order_access_${data.orderNumber}`, data.paymentAccessToken)
-              localStorage.setItem(`order_access_${data.orderNumber}`, data.paymentAccessToken)
-            }
-          } catch {}
-        }
-      })
-      .catch((err) => {
-        console.error('Lỗi tải đơn hàng:', err)
-        setError('Không tìm thấy đơn hàng hoặc liên kết truy cập không hợp lệ. Hãy mở đơn từ email xác nhận hoặc mục Đơn của tôi.')
-      })
-      .finally(() => setLoading(false))
-
-    api
-      .getPaymentSettings()
-      .then(setPaymentSettings)
-      .catch(() => {})
+    setError(null)
+    try {
+      const data = await api.getOrderTracking(idOrNumber, tokenToUse)
+      setOrder(data)
+      setError(null)
+      if (data?.paymentAccessToken) {
+        setPaymentAccessToken(data.paymentAccessToken)
+        try {
+          sessionStorage.setItem(`order_access_${idOrNumber}`, data.paymentAccessToken)
+          localStorage.setItem(`order_access_${idOrNumber}`, data.paymentAccessToken)
+          if (data.orderNumber) {
+            sessionStorage.setItem(`order_access_${data.orderNumber}`, data.paymentAccessToken)
+            localStorage.setItem(`order_access_${data.orderNumber}`, data.paymentAccessToken)
+          }
+        } catch {}
+      }
+    } catch (err: any) {
+      console.error("Lỗi tải đơn hàng:", err)
+      const isNetworkError = err?.message === "Network Error" || !err?.response
+      setError(
+        isNetworkError
+          ? "Không thể kết nối tới máy chủ. Vui lòng kiểm tra lại mạng hoặc nhấn Thử lại."
+          : "Không tìm thấy đơn hàng hoặc liên kết truy cập không hợp lệ. Hãy mở đơn từ email xác nhận hoặc mục Đơn của tôi."
+      )
+    } finally {
+      setLoading(false)
+    }
   }, [idOrNumber, queryAccess])
+
+  useEffect(() => {
+    fetchOrderDetail()
+    api.getPaymentSettings().then(setPaymentSettings).catch(() => {})
+  }, [fetchOrderDetail])
 
   const handleSyncTracking = async () => {
     if (!idOrNumber || syncing) return
@@ -167,9 +171,17 @@ export default function OrderTrackingDetailPage() {
               {error || 'Vui lòng kiểm tra lại mã đơn hàng hoặc mở liên kết từ email xác nhận của bạn.'}
             </p>
             <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => fetchOrderDetail()}
+                className="w-full sm:w-auto px-6 py-2.5 bg-[#4A4238] text-white text-xs uppercase tracking-[0.18em] font-light hover:bg-[#8C7E6A] transition-colors flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                <span>Thử lại tải đơn</span>
+              </button>
               <Link
                 href={`/${locale}/my-orders`}
-                className="w-full sm:w-auto px-6 py-2.5 bg-[#4A4238] text-white text-xs uppercase tracking-[0.18em] font-light hover:bg-[#8C7E6A] transition-colors"
+                className="w-full sm:w-auto px-6 py-2.5 border border-stone-300 text-stone-700 text-xs uppercase tracking-[0.18em] font-light hover:border-[#8C7E6A] hover:text-[#4A4238] transition-colors"
               >
                 Đơn hàng của tôi
               </Link>
