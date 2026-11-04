@@ -746,6 +746,11 @@ export class OrderService {
     status?: string
     paymentStatus?: string
     search?: string
+    startDate?: string
+    endDate?: string
+    hasProof?: string
+    sortBy?: string
+    sortOrder?: string
   }) {
     const page = Math.max(1, Number(query.page) || 1)
     const limit = Math.max(1, Math.min(100, Number(query.limit) || 20))
@@ -764,6 +769,28 @@ export class OrderService {
       where.paymentStatus = query.paymentStatus
     }
 
+    if (query.hasProof === 'true') {
+      where.paymentProofUrl = { not: null }
+    } else if (query.hasProof === 'false') {
+      where.paymentProofUrl = null
+    }
+
+    if (query.startDate) {
+      const start = new Date(query.startDate)
+      if (!isNaN(start.getTime())) {
+        start.setHours(0, 0, 0, 0)
+        where.createdAt = { ...(where.createdAt || {}), gte: start }
+      }
+    }
+
+    if (query.endDate) {
+      const end = new Date(query.endDate)
+      if (!isNaN(end.getTime())) {
+        end.setHours(23, 59, 59, 999)
+        where.createdAt = { ...(where.createdAt || {}), lte: end }
+      }
+    }
+
     if (query.search && query.search.trim()) {
       const s = query.search.trim()
       where.OR = [
@@ -775,13 +802,17 @@ export class OrderService {
       ]
     }
 
+    const sortField = query.sortBy === 'totalVND' ? 'totalVND' : 'createdAt'
+    const sortDirection = query.sortOrder === 'asc' ? 'asc' : 'desc'
+    const orderBy = { [sortField]: sortDirection }
+
     const [items, total] = await Promise.all([
       this.prisma.order.findMany({
         where,
         include: {
           items: { where: { deletedAt: null } },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy,
         skip,
         take: limit,
       }),

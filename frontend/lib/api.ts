@@ -835,6 +835,11 @@ class ApiClient {
     status?: string
     paymentStatus?: string
     search?: string
+    startDate?: string
+    endDate?: string
+    hasProof?: string
+    sortBy?: string
+    sortOrder?: string
   }): Promise<{
     items: any[]
     total: number

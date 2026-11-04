@@ -54,6 +54,11 @@ export class OrderController {
     @Query('status') status?: string,
     @Query('paymentStatus') paymentStatus?: string,
     @Query('search') search?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('hasProof') hasProof?: string,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: string,
   ) {
     return this.orderService.getAdminOrders({
       page: page ? Number(page) : 1,
@@ -61,6 +66,11 @@ export class OrderController {
       status,
       paymentStatus,
       search,
+      startDate,
+      endDate,
+      hasProof,
+      sortBy,
+      sortOrder,
     })
   }
 

@@ -635,18 +635,7 @@ export function Header({ initialSiteContent }: HeaderProps = {}) {
                 tabIndex={0}
                 suppressHydrationWarning
               >
-                {branding?.logoUrl ? (
-                  <img
-                    src={branding.logoUrl}
-                    alt={brandText}
-                    className={cn(
-                      'mx-auto h-auto max-h-7 max-w-full object-contain sm:max-h-9 lg:max-h-12',
-                      isScrolled && 'max-h-5 sm:max-h-8',
-                    )}
-                  />
-                ) : (
-                  <span className="block truncate">{brandText}</span>
-                )}
+                <span className="block truncate">{brandText}</span>
               </Link>
             </div>
 
