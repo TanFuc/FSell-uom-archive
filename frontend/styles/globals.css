@@ -23,8 +23,8 @@
     --muted: 0 0% 96%; /* #F5F5F5 light gray */
     --muted-foreground: 0 0% 40%; /* #666666 medium gray */
 
-    --accent: 0 0% 5%; /* #0D0D0D near-black */
-    --accent-foreground: 0 0% 100%; /* white */
+    --accent: 0 0% 96%; /* #F5F5F5 light gray */
+    --accent-foreground: 0 0% 10%; /* #1A1A1A near-black */
 
     --destructive: 0 0% 0%; /* black for consistency */
     --destructive-foreground: 0 0% 100%; /* white */

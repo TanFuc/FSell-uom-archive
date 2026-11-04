@@ -224,38 +224,44 @@ export default function AdminOrdersPage() {
     }
   }
 
-  // Cấu hình style và nhãn gọn gàng, đồng bộ cho nút Select Trạng thái đơn (không bị lồng border)
+  // Cấu hình style và nhãn gọn gàng, đồng bộ cho nút Select Trạng thái đơn (căn lề trái đồng đều, có chấm tròn trạng thái)
   const getStatusStyle = (status: string) => {
     switch (status) {
       case 'pending':
         return {
           label: 'Chờ xử lý',
-          className: 'bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100/80',
+          className: 'bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100/80',
+          dotClass: 'bg-amber-500',
         }
       case 'processing':
         return {
           label: 'Đang chuẩn bị',
-          className: 'bg-blue-50 text-blue-800 border-blue-300 hover:bg-blue-100/80',
+          className: 'bg-blue-50 text-blue-900 border-blue-300 hover:bg-blue-100/80',
+          dotClass: 'bg-blue-500',
         }
       case 'shipped':
         return {
           label: 'Đang vận chuyển',
-          className: 'bg-purple-50 text-purple-800 border-purple-300 hover:bg-purple-100/80',
+          className: 'bg-purple-50 text-purple-900 border-purple-300 hover:bg-purple-100/80',
+          dotClass: 'bg-purple-500',
         }
       case 'delivered':
         return {
           label: 'Đã hoàn thành',
-          className: 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100/80',
+          className: 'bg-emerald-50 text-emerald-900 border-emerald-300 hover:bg-emerald-100/80',
+          dotClass: 'bg-emerald-500',
         }
       case 'cancelled':
         return {
           label: 'Đã hủy',
-          className: 'bg-neutral-100 text-neutral-600 border-neutral-300 hover:bg-neutral-200/80',
+          className: 'bg-neutral-100 text-neutral-700 border-neutral-300 hover:bg-neutral-200/80',
+          dotClass: 'bg-neutral-400',
         }
       default:
         return {
           label: status,
           className: 'bg-neutral-50 text-neutral-700 border-neutral-300',
+          dotClass: 'bg-neutral-400',
         }
     }
   }
@@ -653,9 +659,9 @@ export default function AdminOrdersPage() {
                         )}
                       </td>
 
-                      {/* Trạng thái đơn - Dropdown gọn gàng, 1 lớp viền chuẩn, không bị vỡ/lệch lề */}
+                      {/* Trạng thái đơn - Dropdown chuẩn mực, căn lề trái đồng đều 100%, có chấm trạng thái, hover nhẹ nhàng */}
                       <td className="py-3.5 px-4 text-center">
-                        <div className="flex justify-center">
+                        <div className="flex justify-center text-left">
                           <Select
                             value={order.status}
                             onValueChange={(val) => handleUpdateStatus(order.id, val)}
@@ -663,27 +669,45 @@ export default function AdminOrdersPage() {
                           >
                             <SelectTrigger
                               className={cn(
-                                'h-7.5 w-[142px] text-[11px] font-semibold uppercase tracking-wider px-2.5 rounded shadow-2xs border transition-colors flex items-center justify-between',
+                                'h-8 w-[150px] text-[11px] font-medium px-2.5 rounded shadow-2xs border transition-colors flex items-center justify-between text-left',
                                 statusStyle.className,
                               )}
                             >
-                              <SelectValue>{statusStyle.label}</SelectValue>
+                              <div className="flex items-center gap-1.5 truncate text-left min-w-0">
+                                <span className={cn('w-2 h-2 rounded-full shrink-0', statusStyle.dotClass)} />
+                                <span className="truncate text-left font-medium">{statusStyle.label}</span>
+                              </div>
                             </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="pending">
-                                <span className="text-amber-800 font-medium">Chờ xử lý</span>
+                            <SelectContent align="center" className="min-w-[175px] bg-white border border-neutral-200 shadow-lg p-1">
+                              <SelectItem value="pending" className="cursor-pointer py-1.5 focus:bg-amber-50">
+                                <div className="flex items-center gap-2">
+                                  <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
+                                  <span className="text-amber-900 font-medium text-xs">Chờ xử lý</span>
+                                </div>
                               </SelectItem>
-                              <SelectItem value="processing">
-                                <span className="text-blue-800 font-medium">Đang chuẩn bị (Xác nhận)</span>
+                              <SelectItem value="processing" className="cursor-pointer py-1.5 focus:bg-blue-50">
+                                <div className="flex items-center gap-2">
+                                  <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
+                                  <span className="text-blue-900 font-medium text-xs">Đang chuẩn bị (Xác nhận)</span>
+                                </div>
                               </SelectItem>
-                              <SelectItem value="shipped">
-                                <span className="text-purple-800 font-medium">Đang vận chuyển</span>
+                              <SelectItem value="shipped" className="cursor-pointer py-1.5 focus:bg-purple-50">
+                                <div className="flex items-center gap-2">
+                                  <span className="w-2 h-2 rounded-full bg-purple-500 shrink-0" />
+                                  <span className="text-purple-900 font-medium text-xs">Đang vận chuyển</span>
+                                </div>
                               </SelectItem>
-                              <SelectItem value="delivered">
-                                <span className="text-emerald-800 font-medium">Đã hoàn thành</span>
+                              <SelectItem value="delivered" className="cursor-pointer py-1.5 focus:bg-emerald-50">
+                                <div className="flex items-center gap-2">
+                                  <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                                  <span className="text-emerald-900 font-medium text-xs">Đã hoàn thành</span>
+                                </div>
                               </SelectItem>
-                              <SelectItem value="cancelled">
-                                <span className="text-neutral-600 font-medium">Đã hủy</span>
+                              <SelectItem value="cancelled" className="cursor-pointer py-1.5 focus:bg-neutral-100">
+                                <div className="flex items-center gap-2">
+                                  <span className="w-2 h-2 rounded-full bg-neutral-400 shrink-0" />
+                                  <span className="text-neutral-700 font-medium text-xs">Đã hủy</span>
+                                </div>
                               </SelectItem>
                             </SelectContent>
                           </Select>
