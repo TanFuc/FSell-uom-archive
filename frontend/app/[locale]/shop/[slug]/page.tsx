@@ -10,31 +10,22 @@ import {
   truncateMetaDescription,
 } from '@/lib/seo'
 import { fetchBranding } from '@/lib/server-utils'
+import { type Product } from '@/lib/types'
 import ProductClient from './product-client'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888/api'
+const API_URL =
+  process.env.SERVER_API_URL ||
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  'http://localhost:8888'
 const BASE_URL = getCanonicalBaseUrl()
+const PRODUCT_FETCH_TIMEOUT_MS = Number.parseInt(
+  process.env.PRODUCT_FETCH_TIMEOUT_MS || process.env.SERVER_FETCH_TIMEOUT_MS || '1800',
+  10,
+)
+export const revalidate = 300
 
-type ProductDetail = {
-  slug: string
-  nameVi?: string
-  nameEn?: string
-  shortDescriptionVi?: string
-  shortDescriptionEn?: string
-  descriptionVi?: string
-  descriptionEn?: string
-  images?: string[]
-  priceVND?: number
-  salePriceVND?: number | null
-  stock?: number
-  material?: string
-  dimensions?: string
-  updatedAt?: string
-  category?: {
-    nameVi?: string
-    nameEn?: string
-  } | null
-}
+type ProductDetail = Product
 
 type ProductResponse = {
   data?: ProductDetail
@@ -75,7 +66,14 @@ function unwrapProductResponse(payload: unknown): ProductDetail | null {
 
 async function fetchProduct(slug: string): Promise<FetchProductResult> {
   try {
-    const res = await fetch(`${API_URL}/products/${slug}`, { next: { revalidate: 300 } })
+    const timeout =
+      Number.isFinite(PRODUCT_FETCH_TIMEOUT_MS) && PRODUCT_FETCH_TIMEOUT_MS > 0
+        ? PRODUCT_FETCH_TIMEOUT_MS
+        : 1800
+    const res = await fetch(`${API_URL}/products/${slug}`, {
+      next: { revalidate: 300 },
+      signal: AbortSignal.timeout(timeout),
+    })
     if (res.status === 404) {
       return { status: 'not-found' }
     }
@@ -338,7 +336,7 @@ export default async function ProductPage({ params }: Props) {
           }}
         />
       )}
-      <ProductClient params={params} />
+      <ProductClient params={params} initialProduct={product} />
     </>
   )
 }

@@ -8,28 +8,45 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   private client: RedisClientType
 
   constructor(private configService: ConfigService) {
-    const upstashUrl = this.configService.get<string>('UPSTASH_REDIS_URL')
-    const upstashToken = this.configService.get<string>('UPSTASH_REDIS_TOKEN')
+    const upstashUrl = this.configService.get<string>('UPSTASH_REDIS_URL')?.trim()
+    const upstashToken = this.configService.get<string>('UPSTASH_REDIS_TOKEN')?.trim()
+    const redisUrl = this.configService.get<string>('REDIS_URL')?.trim()
+    const redisPassword = this.configService.get<string>('REDIS_PASSWORD')?.trim()
+    const connectTimeoutMs = Number(
+      this.configService.get<string>('REDIS_CONNECT_TIMEOUT_MS') ?? '5000',
+    )
+    const maxRetries = Number(this.configService.get<string>('REDIS_MAX_RETRIES') ?? '3')
 
-    const hasUpstashConfig = Boolean(upstashUrl && upstashToken)
-    const url = hasUpstashConfig
-      ? (upstashUrl as string)
-      : (this.configService.get<string>('REDIS_URL') ?? 'redis://localhost:6379')
-    const password = hasUpstashConfig
-      ? (upstashToken as string)
-      : this.configService.get<string>('REDIS_PASSWORD')
+    const url = upstashUrl || redisUrl || 'redis://localhost:6379'
+    const password = upstashToken || redisPassword || undefined
+    const isTlsRedis = url.startsWith('rediss://')
+    const isUpstashRedis = Boolean(upstashUrl || url.includes('upstash.io'))
 
-    this.logger.log(hasUpstashConfig ? 'Using Upstash Redis' : 'Using Local Redis')
+    this.logger.log(isUpstashRedis ? 'Using Upstash Redis' : 'Using Redis')
 
     this.client = createClient({
       url,
-      password: password ?? undefined,
-      socket: hasUpstashConfig
-        ? {
-            tls: true,
-            rejectUnauthorized: true,
+      password,
+      disableOfflineQueue: true,
+      socket: {
+        connectTimeout:
+          Number.isFinite(connectTimeoutMs) && connectTimeoutMs > 0 ? connectTimeoutMs : 5000,
+        keepAlive: 30000,
+        reconnectStrategy: (retries) => {
+          const retryLimit = Number.isFinite(maxRetries) && maxRetries >= 0 ? maxRetries : 3
+          if (retries > retryLimit) {
+            return false
           }
-        : undefined,
+
+          return Math.min(100 * retries, 1000)
+        },
+        ...(isTlsRedis
+          ? {
+              tls: true,
+              rejectUnauthorized: true,
+            }
+          : {}),
+      },
     })
 
     this.client.on('error', (err) => {
@@ -37,7 +54,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     })
 
     this.client.on('connect', () => {
-      this.logger.log(`Redis Client Connected to ${hasUpstashConfig ? 'Upstash' : 'Local Redis'}`)
+      this.logger.log(`Redis Client Connected to ${isUpstashRedis ? 'Upstash' : 'Redis'}`)
     })
   }
 

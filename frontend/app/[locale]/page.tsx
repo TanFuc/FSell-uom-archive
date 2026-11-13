@@ -16,8 +16,16 @@ import { getStorySlug, parseStories, STORIES_CONTENT_KEY, type StoryItem } from 
 import { type Banner, type Product } from '@/lib/types'
 import HomeClient from './home-client'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8888/api'
-export const dynamic = 'force-dynamic'
+const API_URL =
+  process.env.SERVER_API_URL ||
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  'http://localhost:8888'
+export const revalidate = 60
+const HOME_FETCH_TIMEOUT_MS = Number.parseInt(
+  process.env.HOME_FETCH_TIMEOUT_MS || process.env.SERVER_FETCH_TIMEOUT_MS || '1800',
+  10,
+)
 
 type SiteContentResponse = Record<string, unknown>
 type HomeSiteContent = Record<string, string>
@@ -61,11 +69,15 @@ function getSiteContent(payload: unknown): HomeSiteContent {
 
 async function fetchHomeSsrData(): Promise<HomeSsrData> {
   const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), 10000)
+  const timeout =
+    Number.isFinite(HOME_FETCH_TIMEOUT_MS) && HOME_FETCH_TIMEOUT_MS > 0
+      ? HOME_FETCH_TIMEOUT_MS
+      : 1800
+  const timeoutId = setTimeout(() => controller.abort(), timeout)
 
   try {
     const fetchOptions = {
-      cache: 'no-store' as const,
+      next: { revalidate: 60 },
       signal: controller.signal,
     }
 

@@ -26,6 +26,7 @@ Thumbs.db
 *.pem
 
 # Debug
+logs/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -72,6 +73,7 @@ next-env.d.ts
 *.swo
 *~
 .cache
+.runtime/
 
 # Tailwind CSS
 .tailwindcss-cache

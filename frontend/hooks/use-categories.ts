@@ -13,11 +13,15 @@ export const categoryKeys = {
   detail: (id: string) => [...categoryKeys.details(), id] as const,
 }
 
-export function useCategories(params?: QueryCategoriesDto, options?: { enabled?: boolean }) {
+export function useCategories(
+  params?: QueryCategoriesDto,
+  options?: { enabled?: boolean; initialData?: any },
+) {
   return useQuery({
     queryKey: categoryKeys.list(params || {}),
     queryFn: () => api.getCategories(params),
     enabled: options?.enabled ?? true,
+    initialData: options?.initialData,
     staleTime: 10 * 60 * 1000, // 10 minutes
   })
 }

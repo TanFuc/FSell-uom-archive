@@ -73,7 +73,6 @@ const SearchResultItem = memo(
       <Link
         href={`/${locale}/shop/${product.slug}`}
         onClick={onClick}
-        prefetch={false}
         className={cn(
           'group block rounded-2xl border border-foreground/[0.08] bg-[linear-gradient(160deg,#ffffff_0%,#faf8f2_100%)] p-3 text-center shadow-[0_8px_20px_rgba(0,0,0,0.05)] transition-all duration-300 hover:-translate-y-1 hover:border-foreground/20 hover:shadow-[0_18px_34px_rgba(0,0,0,0.15)]',
           isActive &&
@@ -130,11 +129,6 @@ export function Header() {
   const locale = useLocale() as 'vi' | 'en'
   const router = useRouter()
   const t = useTranslations('Navigation')
-  const { data: branding } = useBranding()
-  const { data: exchangeRate } = useExchangeRate()
-  const { data: socialLinks } = useSocialLinks()
-  const { data: siteContent } = useSiteContent()
-
   const [showSearch, setShowSearch] = useState(false)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -146,6 +140,14 @@ export function Header() {
   const scrollbarPaddingRef = useRef('')
   const bodyOverflowRef = useRef('')
   const bodyScrollCompensationRef = useRef('')
+  const { data: branding } = useBranding()
+  const { data: exchangeRate } = useExchangeRate({ enabled: showSearch })
+  const { data: socialLinks } = useSocialLinks()
+  const { data: siteContent } = useSiteContent({
+    enabled: showSearch,
+    staleTime: 30 * 60 * 1000,
+    refetchOnMount: false,
+  })
 
   useEffect(() => {
     const handleScroll = () => {
@@ -186,11 +188,20 @@ export function Header() {
     try {
       const stored = localStorage.getItem(BRANDING_CACHE_KEY)
       if (!stored) return undefined
-      return JSON.parse(stored) as {
+      const parsed = JSON.parse(stored) as {
         brandNameVi?: string
         brandNameEn?: string
         loadingText?: string
       }
+      if (
+        [parsed.brandNameVi, parsed.brandNameEn, parsed.loadingText].some(
+          (value) => typeof value === 'string' && (value.includes('UOM.') || value.includes('Æ')),
+        )
+      ) {
+        localStorage.removeItem(BRANDING_CACHE_KEY)
+        return undefined
+      }
+      return parsed
     } catch {
       return undefined
     }
@@ -312,7 +323,7 @@ export function Header() {
   const { data: latestSuggestions, isLoading: isLatestLoading } = useProducts(
     {
       page: 1,
-      limit: 40,
+      limit: 12,
       isActive: true,
       sortBy: 'updatedAt',
       sortOrder: 'desc',
@@ -733,7 +744,10 @@ export function Header() {
                     </div>
                     {isSearching && searchQuery && globalLoadingText && (
                       <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                        <span className="animate-pulse text-[10px] font-bold uppercase tracking-[0.25em] text-foreground/40">
+                        <span
+                          className="animate-pulse text-[10px] font-bold uppercase tracking-[0.25em] text-foreground/40"
+                          suppressHydrationWarning
+                        >
                           {globalLoadingText}
                         </span>
                       </div>
@@ -957,7 +971,7 @@ export function Header() {
                         animate="show"
                         className="flex flex-wrap gap-2 md:flex-col md:gap-2.5"
                       >
-                        {categories?.map((cat) => (
+                        {categories?.map((cat: { id: string; nameVi: string; nameEn: string }) => (
                           <motion.div key={cat.id} variants={itemRise}>
                             <Link
                               href={`/${locale}/shop?categoryId=${cat.id}`}

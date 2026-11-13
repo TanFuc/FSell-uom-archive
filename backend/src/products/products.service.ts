@@ -420,7 +420,7 @@ export class ProductsService {
         priceUSD: original.priceUSD,
         salePriceVND: original.salePriceVND,
         salePriceUSD: original.salePriceUSD,
-        images: original.images,
+        images: original.images ?? [],
         hoverImage: original.hoverImage,
         material: original.material,
         dimensions: original.dimensions,

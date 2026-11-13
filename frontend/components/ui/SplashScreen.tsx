@@ -6,6 +6,14 @@ import { useBranding } from '@/hooks/use-settings'
 const BRANDING_CACHE_KEY = 'uom_branding_cache'
 const DEFAULT_LOADING_TEXT = 'ƯƠM.'
 const DISPLAY_DURATION_MS = 1500
+const FONT_READY_TIMEOUT_MS = 1600
+
+function normalizeLoadingText(value?: string) {
+  const normalized = value?.trim()
+  if (!normalized) return DEFAULT_LOADING_TEXT
+  if (normalized.length > 24 || normalized.split(/\s+/).length > 3) return DEFAULT_LOADING_TEXT
+  return normalized
+}
 
 function getCachedLoadingText() {
   if (typeof window === 'undefined') return undefined
@@ -13,6 +21,10 @@ function getCachedLoadingText() {
     const stored = localStorage.getItem(BRANDING_CACHE_KEY)
     if (!stored) return undefined
     const parsed = JSON.parse(stored) as { loadingText?: string }
+    if (parsed.loadingText?.includes('UOM.') || parsed.loadingText?.includes('Æ')) {
+      localStorage.removeItem(BRANDING_CACHE_KEY)
+      return undefined
+    }
     return parsed.loadingText
   } catch {
     return undefined
@@ -52,7 +64,7 @@ export function SplashScreen({ initialLoadingText }: { initialLoadingText?: stri
   }, [initialLoadingText])
 
   useEffect(() => {
-    if (!mounted) return
+    if (!mounted || !fontReady) return
 
     const isBot = /googlebot|bingbot|yandexbot|baiduspider|slurp|duckduckbot/i.test(
       navigator.userAgent,
@@ -68,9 +80,9 @@ export function SplashScreen({ initialLoadingText }: { initialLoadingText?: stri
     }, DISPLAY_DURATION_MS)
 
     return () => clearTimeout(timer)
-  }, [mounted])
+  }, [fontReady, mounted])
 
-  // Prevent brief flash of fallback (thin) font by waiting for Playfair to load
+  // Prevent a brief fallback-font flash by waiting for the splash font to settle.
   useEffect(() => {
     if (typeof document === 'undefined') {
       setFontReady(true)
@@ -82,13 +94,15 @@ export function SplashScreen({ initialLoadingText }: { initialLoadingText?: stri
 
     // If Font Loading API is available, try to load the font, otherwise proceed.
     if (document.fonts && typeof document.fonts.load === 'function') {
-      // Use a short timeout to avoid blocking too long on slow networks.
       const timeout = window.setTimeout(() => {
         if (!cancelled) setFontReady(true)
-      }, 700)
+      }, FONT_READY_TIMEOUT_MS)
 
-      document.fonts
-        .load(`1em "${fontName}"`)
+      Promise.allSettled([
+        document.fonts.load(`400 1em "${fontName}"`),
+        document.fonts.load(`500 1em "${fontName}"`),
+        document.fonts.ready,
+      ])
         .then(() => {
           if (!cancelled) {
             setFontReady(true)
@@ -114,9 +128,8 @@ export function SplashScreen({ initialLoadingText }: { initialLoadingText?: stri
     }
   }, [branding?.loadingText, mounted])
 
-  const displayText =
-    initialLoadingText || branding?.loadingText || cachedLoadingText || DEFAULT_LOADING_TEXT
-  const normalizedDisplayText = (displayText || '').trim()
+  const displayText = initialLoadingText || branding?.loadingText || cachedLoadingText
+  const normalizedDisplayText = normalizeLoadingText(displayText)
 
   return (
     <div
@@ -126,7 +139,7 @@ export function SplashScreen({ initialLoadingText }: { initialLoadingText?: stri
       <div className="relative mx-auto w-full max-w-[90vw] px-4 text-center">
         {normalizedDisplayText && fontReady && (
           <h1
-            className="animate-pulse break-words font-playfair text-[clamp(2rem,12vw,5rem)] font-bold leading-[0.95] tracking-[0.08em] text-foreground [overflow-wrap:anywhere] md:tracking-[0.12em]"
+            className="animate-pulse break-words font-playfair text-[clamp(2rem,12vw,5rem)] font-medium leading-[0.95] tracking-[0.08em] text-foreground [overflow-wrap:anywhere] md:tracking-[0.12em]"
             style={{
               animation: 'fadeIn 220ms ease-out, pulse 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
             }}

@@ -16,14 +16,22 @@ export function Footer() {
     if (typeof window === 'undefined') return undefined
     try {
       const stored = localStorage.getItem(BRANDING_CACHE_KEY)
-      return stored
-        ? (JSON.parse(stored) as {
-            brandNameVi?: string
-            brandNameEn?: string
-            brandTaglineVi?: string
-            brandTaglineEn?: string
-          })
-        : undefined
+      if (!stored) return undefined
+      const parsed = JSON.parse(stored) as {
+        brandNameVi?: string
+        brandNameEn?: string
+        brandTaglineVi?: string
+        brandTaglineEn?: string
+      }
+      if (
+        [parsed.brandNameVi, parsed.brandNameEn, parsed.brandTaglineVi, parsed.brandTaglineEn].some(
+          (value) => typeof value === 'string' && (value.includes('UOM.') || value.includes('Æ')),
+        )
+      ) {
+        localStorage.removeItem(BRANDING_CACHE_KEY)
+        return undefined
+      }
+      return parsed
     } catch {
       return undefined
     }
@@ -58,7 +66,7 @@ export function Footer() {
       ? branding?.brandTaglineVi || cachedBranding?.brandTaglineVi || t('description')
       : branding?.brandTaglineEn || cachedBranding?.brandTaglineEn || t('description')
 
-  const currentYear = new Date().getFullYear()
+  const copyrightYear = 2026
   const navigationItems = [
     { label: locale === 'vi' ? 'Trang chủ' : 'Home', href: `/${locale}` },
     { label: t('shop'), href: `/${locale}/shop` },
@@ -77,10 +85,14 @@ export function Footer() {
             <Link
               href={`/${locale}`}
               className="text-mobile-safe inline-block font-playfair text-xl font-bold tracking-tighter text-foreground transition-opacity hover:opacity-70 sm:text-2xl"
+              suppressHydrationWarning
             >
               {brandName}
             </Link>
-            <p className="max-w-[24rem] text-[9px] font-medium uppercase leading-relaxed tracking-[0.12em] text-foreground/40 sm:hidden md:block md:tracking-[0.2em]">
+            <p
+              className="max-w-[24rem] text-[9px] font-medium uppercase leading-relaxed tracking-[0.12em] text-foreground/40 sm:hidden md:block md:tracking-[0.2em]"
+              suppressHydrationWarning
+            >
               {brandTagline}
             </p>
           </div>
@@ -156,8 +168,11 @@ export function Footer() {
 
         {/* Bottom Bar: Merged into the flow, no border */}
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-foreground/[0.04] pt-4">
-          <p className="text-[8px] font-bold uppercase tracking-[0.16em] text-foreground/30 sm:tracking-[0.3em] lg:tracking-[0.4em]">
-            © {currentYear} <span className="font-playfair text-xs lowercase">ƯƠM.</span>
+          <p
+            className="text-[8px] font-bold uppercase tracking-[0.16em] text-foreground/30 sm:tracking-[0.3em] lg:tracking-[0.4em]"
+            suppressHydrationWarning
+          >
+            © {copyrightYear} <span className="font-playfair text-xs lowercase">ƯƠM.</span>
           </p>
           <div className="flex gap-4 opacity-20 sm:gap-6">
             <span className="text-[8px] font-bold tracking-[0.3em] sm:tracking-[0.5em]">VI</span>

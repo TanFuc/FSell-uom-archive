@@ -1,4 +1,4 @@
-import { getCanonicalBaseUrl } from '@/lib/seo'
+import { getCanonicalBaseUrl, normalizeSeoImageDomain } from '@/lib/seo'
 import { getStorySlug, parseStories, STORIES_CONTENT_KEY, type StoryItem } from '@/lib/stories'
 
 export const BASE_URL = getCanonicalBaseUrl()
@@ -13,13 +13,18 @@ const FETCH_TIMEOUT_MS = Number.parseInt(process.env.SITEMAP_FETCH_TIMEOUT_MS ||
 const PAGE_SIZE = 200
 const API_CANDIDATES = [
   process.env.SITEMAP_API_URL,
+  process.env.SERVER_API_URL,
+  process.env.NEXT_PUBLIC_API_BASE_URL,
   process.env.NEXT_PUBLIC_API_URL,
-  'https://www.uomarchive.com/api',
-  'https://uomarchive.com/api',
-  'http://localhost:8888/api',
-].filter((value): value is string => Boolean(value))
+  'https://api.uomarchive.com',
+  'http://localhost:8888',
+]
+  .filter((value): value is string => Boolean(value))
+  .map((value) => value.replace(/\/$/, ''))
 
-const API_URLS = Array.from(new Set(API_CANDIDATES.map((value) => value.replace(/\/$/, ''))))
+const API_URLS = Array.from(
+  new Set(API_CANDIDATES.map((value) => value.replace(/\/api$/, '').replace(/\/$/, ''))),
+)
 
 export type Product = {
   id: string
@@ -120,12 +125,12 @@ function toAbsoluteUrl(value: string): string {
     if (value.includes(' ')) {
       try {
         const url = new URL(value)
-        return url.toString()
+        return normalizeSeoImageDomain(url.toString())
       } catch {
         return value.replace(/ /g, '%20')
       }
     }
-    return value
+    return normalizeSeoImageDomain(value)
   }
 
   const normalizedPath = value.startsWith('/') ? value : `/${value}`

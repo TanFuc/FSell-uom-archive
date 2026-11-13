@@ -3,7 +3,8 @@ const createNextIntlPlugin = require('next-intl/plugin')
 const withNextIntl = createNextIntlPlugin()
 
 /** @type {import('next').NextConfig} */
-const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888/api'
+const apiUrl =
+  process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888'
 const apiUrlObj = new URL(apiUrl)
 const apiProtocol = apiUrlObj.protocol.replace(':', '')
 const apiPort = apiUrlObj.port
@@ -12,6 +13,11 @@ const nextConfig = {
   output: 'standalone',
   async redirects() {
     return [
+      {
+        source: '/favicon.ico',
+        destination: '/icon.svg',
+        permanent: false,
+      },
       // 1. Non-www → www (canonical domain)
       {
         source: '/:path*',
@@ -23,9 +29,7 @@ const nextConfig = {
       // Root URL that hits before intl middleware picks it up
       {
         source: '/',
-        missing: [
-          { type: 'header', key: 'x-locale-redirect-done' },
-        ],
+        missing: [{ type: 'header', key: 'x-locale-redirect-done' }],
         destination: '/vi',
         permanent: true, // 301 for permanent SEO authority transfer
       },
@@ -62,6 +66,33 @@ const nextConfig = {
   async headers() {
     return [
       {
+        source: '/_next/static/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
+        source: '/_next/image',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=2592000, stale-while-revalidate=86400',
+          },
+        ],
+      },
+      {
+        source: '/assets/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=2592000, stale-while-revalidate=86400',
+          },
+        ],
+      },
+      {
         source: '/sitemap.xml',
         headers: [
           {
@@ -76,6 +107,9 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   images: {
+    minimumCacheTTL: 60 * 60 * 24 * 30,
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920],
+    imageSizes: [96, 256, 384],
     remotePatterns: [
       {
         protocol: apiProtocol,
@@ -85,10 +119,14 @@ const nextConfig = {
       },
       {
         protocol: 'https',
-        hostname: '**',
+        hostname: 'images.uomarchive.com',
       },
     ],
     formats: ['image/avif', 'image/webp'],
+  },
+  experimental: {
+    cpus: 1,
+    workerThreads: false,
   },
 
   poweredByHeader: false,

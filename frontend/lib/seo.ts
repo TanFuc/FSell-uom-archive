@@ -1,6 +1,7 @@
 import { type Metadata } from 'next'
 
 const DEFAULT_CANONICAL_BASE_URL = 'https://www.uomarchive.com'
+const DEFAULT_IMAGE_BASE_URL = 'https://images.uomarchive.com'
 const DEFAULT_BRAND_NAME = 'ƯƠM.'
 const DEFAULT_LOGO_PATH = '/assets/logo.png'
 const DEFAULT_SITE_DESCRIPTION_VI =
@@ -144,8 +145,35 @@ export function buildCanonicalPath(locale: SeoLocale, path = ''): string {
 }
 
 export function buildAbsoluteUrl(path: string, baseUrl = getCanonicalBaseUrl()): string {
-  if (/^https?:\/\//i.test(path)) return path
+  if (/^https?:\/\//i.test(path)) return normalizeSeoImageDomain(path)
   return `${baseUrl}${path.startsWith('/') ? path : `/${path}`}`
+}
+
+function getImageBaseUrl(): string {
+  return (
+    process.env.NEXT_PUBLIC_IMAGE_BASE_URL ||
+    process.env.NEXT_PUBLIC_R2_PUBLIC_URL ||
+    DEFAULT_IMAGE_BASE_URL
+  ).replace(/\/$/, '')
+}
+
+export function normalizeSeoImageDomain(value: string): string {
+  try {
+    const url = new URL(value)
+    const shouldRewrite =
+      url.hostname.endsWith('.r2.dev') ||
+      url.hostname.includes('r2.cloudflarestorage.com') ||
+      url.hostname === 'images.uomarchive.com'
+
+    if (!shouldRewrite) {
+      return value
+    }
+
+    const normalizedPath = url.pathname.replace(/^\/uom-archive\//, '/').replace(/^\/+/, '')
+    return `${getImageBaseUrl()}/${normalizedPath}`
+  } catch {
+    return value
+  }
 }
 
 export function buildLocaleAlternates(

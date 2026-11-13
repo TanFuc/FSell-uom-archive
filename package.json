@@ -33,7 +33,7 @@
     "docker:prod:build:frontend": "docker compose --env-file .env.prod -f docker-compose.prod.yml build frontend",
     "docker:prod:up": "docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build",
     "docker:prod:up:backend": "docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build backend",
-    "docker:prod:up:backend:stack": "docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build postgres redis backend",
+    "docker:prod:up:backend:stack": "docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build mariadb redis backend",
     "docker:prod:up:frontend": "docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build frontend",
     "docker:prod:up:frontend:only": "docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build --no-deps frontend",
     "docker:prod:down": "docker compose --env-file .env.prod -f docker-compose.prod.yml down",

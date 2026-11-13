@@ -10,10 +10,15 @@ import { ProductCard } from '@/components/ProductCard'
 import { useCategories } from '@/hooks/use-categories'
 import { useDocumentTitle } from '@/hooks/use-document-title'
 import { useProducts } from '@/hooks/use-products'
-import { type Product, type Category } from '@/lib/types'
+import { type Product, type Category, type PaginatedResponse } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
-export default function ShopClient() {
+type ShopClientProps = {
+  initialProducts?: PaginatedResponse<Product>
+  initialCategories?: Category[]
+}
+
+export default function ShopClient({ initialProducts, initialCategories }: ShopClientProps) {
   const locale = useLocale() as 'vi' | 'en'
   const t = useTranslations('shop')
   const tCommon = useTranslations('common')
@@ -69,15 +74,23 @@ export default function ShopClient() {
 
   useDocumentTitle(t('title'))
 
-  const { data: categoriesData } = useCategories({ includeInactive: false })
+  const { data: categoriesData } = useCategories(
+    { includeInactive: false },
+    { initialData: initialCategories },
+  )
   const categories = categoriesData || []
 
-  const { data, isLoading } = useProducts({
+  const baseProductQuery = {
     page,
     limit: 12,
     search: search || undefined,
     categoryId: categoryId,
     isActive: true,
+  }
+  const canUseInitialProducts = page === 1 && !search && !categoryId
+
+  const { data, isLoading } = useProducts(baseProductQuery, {
+    initialData: canUseInitialProducts ? initialProducts : undefined,
   })
 
   return (

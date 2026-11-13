@@ -28,10 +28,27 @@ async function bootstrap() {
   const port = configService.get<number>('PORT') ?? 3001
   const frontendUrl = configService.get<string>('FRONTEND_URL') ?? 'http://localhost:3000'
   const nodeEnv = configService.get<string>('NODE_ENV') ?? 'development'
-  const frontendUrls = (configService.get<string>('FRONTEND_URLS') ?? frontendUrl)
-    .split(',')
-    .map((url) => url.trim())
-    .filter(Boolean)
+  const requestLoggingEnabled =
+    configService.get<string>('REQUEST_LOGGING_ENABLED') === 'true' || nodeEnv !== 'production'
+  const slowRequestLoggingMs = Number(
+    configService.get<string>('SLOW_REQUEST_LOGGING_MS') ?? '1500',
+  )
+  const frontendUrls = Array.from(
+    new Set(
+      [
+        frontendUrl,
+        configService.get<string>('APP_URL'),
+        configService.get<string>('NEXT_PUBLIC_APP_URL'),
+        ...(configService.get<string>('FRONTEND_URLS') ?? '').split(','),
+        'https://uomarchive.com',
+        'https://www.uomarchive.com',
+        'http://uomarchive.com',
+        'http://www.uomarchive.com',
+      ]
+        .map((url) => url?.trim().replace(/\/$/, ''))
+        .filter(Boolean) as string[],
+    ),
+  )
 
   app.use(
     helmet({
@@ -74,7 +91,7 @@ async function bootstrap() {
         return callback(null, true)
       }
 
-      if (frontendUrls.includes(origin)) {
+      if (frontendUrls.includes(origin.replace(/\/$/, ''))) {
         return callback(null, true)
       }
 
@@ -106,14 +123,20 @@ async function bootstrap() {
 
   const monitoringService = app.get(MonitoringService)
   app.useGlobalInterceptors(
-    new RequestLoggingInterceptor(monitoringService),
+    new RequestLoggingInterceptor(monitoringService, {
+      logRequests: requestLoggingEnabled,
+      slowRequestMs:
+        Number.isFinite(slowRequestLoggingMs) && slowRequestLoggingMs > 0
+          ? slowRequestLoggingMs
+          : 1500,
+    }),
     new TransformInterceptor(),
   )
 
-  app.setGlobalPrefix('api')
+  // app.setGlobalPrefix('api')
 
-  app.use('/api/auth/login', express.text({ type: '*/*', limit: '1mb' }))
-  app.use('/api/auth/login', loginPayloadNormalizerMiddleware)
+  app.use('/auth/login', express.text({ type: '*/*', limit: '1mb' }))
+  app.use('/auth/login', loginPayloadNormalizerMiddleware)
 
   app.useStaticAssets(join(__dirname, '..', 'uploads'), {
     prefix: '/uploads/',
@@ -148,7 +171,10 @@ async function bootstrap() {
     logger.log(`Swagger documentation available at http://localhost:${port}/api/docs`)
   }
 
-  await app.listen(port, '0.0.0.0')
+  const server = await app.listen(port, '0.0.0.0')
+  server.keepAliveTimeout = 5000
+  server.headersTimeout = 6000
+  server.requestTimeout = 15000
   logger.log(`Application running on http://localhost:${port}`)
   logger.log(`Environment: ${nodeEnv}`)
 }

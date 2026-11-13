@@ -19,6 +19,7 @@ interface ProductPageProps {
   params: {
     slug: string
   }
+  initialProduct?: Product | null
 }
 
 type VariantInfo = {
@@ -229,12 +230,14 @@ function useDragScroll() {
   }
 }
 
-export default function ProductClient({ params }: ProductPageProps) {
+export default function ProductClient({ params, initialProduct }: ProductPageProps) {
   const locale = useLocale() as 'vi' | 'en'
   const t = useTranslations('product')
   const tHome = useTranslations('Home')
-  const { data: product, isLoading, error } = useProduct(params.slug)
-  const { data: exchangeRate } = useExchangeRate()
+  const { data: product, isLoading, error } = useProduct(params.slug, {
+    initialData: initialProduct ?? undefined,
+  })
+  const { data: exchangeRate } = useExchangeRate({ enabled: locale === 'en' })
   const { data: socialLinks } = useSocialLinks()
 
   const { data: relatedProducts } = useProducts({
@@ -443,9 +446,11 @@ export default function ProductClient({ params }: ProductPageProps) {
                           src={optimizeProductImage(image, { width: 1200, height: 1600 })}
                           alt={`${name} - Ceramic Archive Piece ${index + 1} - ƯƠM. Archive`}
                           fill
-                          sizes="(max-width: 768px) 100vw, 60vw"
+                          sizes="(max-width: 768px) 100vw, 700px"
+                          quality={index === 0 ? 78 : 70}
                           className="object-cover object-center md:h-full md:w-full"
                           priority={index === 0}
+                          fetchPriority={index === 0 ? 'high' : 'auto'}
                           draggable="false"
                         />
                       </div>

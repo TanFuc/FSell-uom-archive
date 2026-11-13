@@ -60,22 +60,46 @@ export function slugify(str: string): string {
     .replace(/(^-|-$)/g, '')
 }
 
-export function getImageUrl(path: string): string {
-  if (path.startsWith('http')) {
+function getPublicImageBaseUrl(): string {
+  return (
+    process.env.NEXT_PUBLIC_IMAGE_BASE_URL ||
+    process.env.NEXT_PUBLIC_R2_PUBLIC_URL ||
+    process.env.NEXT_PUBLIC_API_BASE_URL ||
+    process.env.NEXT_PUBLIC_API_URL ||
+    'http://localhost:3001'
+  ).replace(/\/$/, '')
+}
+
+export function normalizePublicImageUrl(path: string): string {
+  if (!path) return path
+
+  const imageBaseUrl = getPublicImageBaseUrl()
+
+  if (/^https?:\/\//i.test(path)) {
     try {
       const url = new URL(path)
-      const r2PublicUrl = (process.env.NEXT_PUBLIC_R2_PUBLIC_URL || '').replace(/\/$/, '')
-      if (r2PublicUrl && url.hostname.endsWith('.r2.dev')) {
-        const normalizedPath = url.pathname.replace(/^\/uom-archive\//, '/').replace(/^\//, '')
-        return `${r2PublicUrl}/${normalizedPath}`
+      const shouldRewriteToImageDomain =
+        url.hostname.endsWith('.r2.dev') ||
+        url.hostname.includes('r2.cloudflarestorage.com') ||
+        url.hostname === 'images.uomarchive.com'
+
+      if (imageBaseUrl && shouldRewriteToImageDomain) {
+        const normalizedPath = url.pathname.replace(/^\/uom-archive\//, '/').replace(/^\/+/, '')
+        return `${imageBaseUrl}/${normalizedPath}`
       }
     } catch {
       return path
     }
+
     return path
   }
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
-  return `${baseUrl}${path}`
+
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`
+  return `${imageBaseUrl}${normalizedPath}`
+}
+
+export function getImageUrl(path: string): string {
+  return normalizePublicImageUrl(path)
 }
 
 /**

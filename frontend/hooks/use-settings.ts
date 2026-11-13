@@ -7,15 +7,33 @@ import type { ThemeSettings, SocialLinks, SiteContent, BrandingSettings } from '
 
 const BRANDING_CACHE_KEY = 'uom_branding_cache'
 
+function isLegacyBrandingCache(data: Partial<BrandingSettings>): boolean {
+  return [
+    data.brandNameVi,
+    data.brandNameEn,
+    data.loadingText,
+    data.brandTaglineVi,
+    data.brandTaglineEn,
+  ].some((value) => typeof value === 'string' && (value.includes('UOM.') || value.includes('Æ')))
+}
+
 function getBrandingFromStorage(): BrandingSettings | undefined {
   if (typeof window === 'undefined') return undefined
   try {
     const stored = localStorage.getItem(BRANDING_CACHE_KEY)
-    return stored ? (JSON.parse(stored) as BrandingSettings) : undefined
+    if (!stored) return undefined
+    const parsed = JSON.parse(stored) as BrandingSettings
+    if (isLegacyBrandingCache(parsed)) {
+      localStorage.removeItem(BRANDING_CACHE_KEY)
+      return undefined
+    }
+    return parsed
   } catch {
     return undefined
   }
 }
+
+void getBrandingFromStorage
 
 function saveBrandingToStorage(data: BrandingSettings): void {
   if (typeof window === 'undefined') return
@@ -37,6 +55,14 @@ type SiteContentQueryOptions = {
   staleTime?: number
   refetchOnMount?: boolean | 'always'
   initialData?: any
+  enabled?: boolean
+}
+
+type SettingsQueryOptions<TData = any> = {
+  enabled?: boolean
+  initialData?: TData
+  staleTime?: number
+  refetchOnMount?: boolean | 'always'
 }
 
 export function useSettings() {
@@ -55,19 +81,25 @@ export function useTheme() {
   })
 }
 
-export function useSocialLinks() {
+export function useSocialLinks(options?: SettingsQueryOptions<SocialLinks>) {
   return useQuery({
     queryKey: settingsKeys.social(),
     queryFn: () => apiClient.getSocialLinks(),
-    staleTime: 10 * 60 * 1000,
+    enabled: options?.enabled ?? true,
+    initialData: options?.initialData,
+    staleTime: options?.staleTime ?? 10 * 60 * 1000,
+    refetchOnMount: options?.refetchOnMount,
   })
 }
 
-export function useExchangeRate() {
+export function useExchangeRate(options?: SettingsQueryOptions) {
   return useQuery({
     queryKey: settingsKeys.exchange(),
     queryFn: () => apiClient.getExchangeRate(),
-    staleTime: 5 * 60 * 1000, // 5 minutes (more frequent)
+    enabled: options?.enabled ?? true,
+    initialData: options?.initialData,
+    staleTime: options?.staleTime ?? 30 * 60 * 1000,
+    refetchOnMount: options?.refetchOnMount,
   })
 }
 
@@ -75,6 +107,7 @@ export function useSiteContent(options?: SiteContentQueryOptions) {
   return useQuery({
     queryKey: settingsKeys.content(),
     queryFn: () => apiClient.getSiteContent(),
+    enabled: options?.enabled ?? true,
     staleTime: options?.staleTime ?? 10 * 60 * 1000,
     refetchOnMount: options?.refetchOnMount,
     initialData: options?.initialData,
@@ -155,8 +188,6 @@ export function useBranding() {
     },
     staleTime: 10 * 60 * 1000,
     refetchOnMount: false,
-
-    placeholderData: getBrandingFromStorage,
   })
 }
 
