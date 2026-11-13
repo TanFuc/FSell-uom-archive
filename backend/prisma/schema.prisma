@@ -2,6 +2,7 @@
 
 generator client {
   provider      = "prisma-client-js"
+  engineType    = "library"
   binaryTargets = ["native", "debian-openssl-1.1.x", "debian-openssl-3.0.x", "linux-musl-openssl-3.0.x"]
 }
 
@@ -106,8 +107,8 @@ model Product {
 
   images     Json // Array of image URLs; JSON keeps the contract compatible with MariaDB and PostgreSQL
   hoverImage String? // Image shown on hover (optional)
-  material   String
-  dimensions String
+  material   String?
+  dimensions String?
   stock      Int     @default(0)
   isActive   Boolean @default(true)
   isFeatured Boolean @default(false)

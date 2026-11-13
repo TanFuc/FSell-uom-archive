@@ -207,12 +207,12 @@ export default function ProductsPage() {
           <p className="text-muted-foreground">{t('manageProductCatalog')}</p>
         </div>
         <div className="flex gap-2">
-          <Link href={`/${locale}/admin/products/trash`}>
-            <Button variant="outline">
+          <Button asChild variant="outline">
+            <Link href={`/${locale}/admin/products/trash`}>
               <Trash className="mr-2 h-4 w-4" />
               {t('trash')}
-            </Button>
-          </Link>
+            </Link>
+          </Button>
           <Button onClick={() => router.push(`/${locale}/admin/products/new`)}>
             <Plus className="mr-2 h-4 w-4" />
             {t('create')}

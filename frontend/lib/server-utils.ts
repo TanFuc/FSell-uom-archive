@@ -1,4 +1,5 @@
 import { cache } from 'react'
+import { BRANDING_REVALIDATE_SECONDS } from '@/lib/cache-config'
 
 const API_URL =
   process.env.SERVER_API_URL ||
@@ -47,7 +48,9 @@ async function fetchBrandingInternal(
         ? BRANDING_FETCH_TIMEOUT_MS
         : 1200
     const res = await fetch(`${API_URL}/settings/branding`, {
-      ...(isRevalidateMode ? { next: { revalidate: 60 } } : { cache: cacheMode }),
+      ...(isRevalidateMode
+        ? { next: { revalidate: BRANDING_REVALIDATE_SECONDS } }
+        : { cache: cacheMode }),
       signal: AbortSignal.timeout(timeout),
     })
 

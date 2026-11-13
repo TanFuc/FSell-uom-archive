@@ -21,6 +21,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { useDocumentTitle } from '@/hooks/use-document-title'
 import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api'
+import { getApiErrorMessage } from '@/lib/error-handler'
 import { optimizeAndResizeImage } from '@/lib/image-upload'
 import { type CreateCategoryDto, type UpdateCategoryDto } from '@/lib/types'
 
@@ -164,7 +165,7 @@ export default function CategoryFormPage() {
     } catch (error: any) {
       toast({
         title: t('error'),
-        description: error.message || t('failedToUpdate'),
+        description: getApiErrorMessage(error, locale, t('failedToUpdate')),
         variant: 'destructive',
       })
     } finally {
@@ -214,7 +215,9 @@ export default function CategoryFormPage() {
               name="slug"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t('categorySlug')}</FormLabel>
+                  <FormLabel>
+                    {t('categorySlug')} <span className="font-bold text-destructive">*</span>
+                  </FormLabel>
                   <div className="flex gap-2">
                     <FormControl>
                       <Input {...field} placeholder="category-slug" />
@@ -234,7 +237,9 @@ export default function CategoryFormPage() {
               name="nameVi"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t('vietnameseName')}</FormLabel>
+                  <FormLabel>
+                    {t('vietnameseName')} <span className="font-bold text-destructive">*</span>
+                  </FormLabel>
                   <FormControl>
                     <Input {...field} placeholder="Tên danh mục" />
                   </FormControl>
@@ -249,7 +254,9 @@ export default function CategoryFormPage() {
               name="nameEn"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t('englishName')}</FormLabel>
+                  <FormLabel>
+                    {t('englishName')} <span className="font-bold text-destructive">*</span>
+                  </FormLabel>
                   <FormControl>
                     <Input {...field} placeholder="Category Name" />
                   </FormControl>

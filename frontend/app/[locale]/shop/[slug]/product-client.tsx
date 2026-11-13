@@ -4,16 +4,17 @@ import { motion, AnimatePresence, useMotionValue, useSpring } from 'framer-motio
 import { Instagram, Facebook, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { ProductCard } from '@/components/ProductCard'
 import { LoadingScreen } from '@/components/ui/loading-screen'
+import { NetworkErrorState } from '@/components/ui/network-error-state'
 import { useProduct, useProducts } from '@/hooks/use-products'
 import { useExchangeRate, useSocialLinks } from '@/hooks/use-settings'
 import { getDisplayPrice } from '@/lib/currency'
 import { type Product } from '@/lib/types'
 import { optimizeProductImage, cn } from '@/lib/utils'
+import ProductImageLightbox from '@/components/ProductImageLightbox'
 
 interface ProductPageProps {
   params: {
@@ -234,7 +235,13 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
   const locale = useLocale() as 'vi' | 'en'
   const t = useTranslations('product')
   const tHome = useTranslations('Home')
-  const { data: product, isLoading, error } = useProduct(params.slug, {
+  const {
+    data: product,
+    isLoading,
+    isFetching,
+    error,
+    refetch,
+  } = useProduct(params.slug, {
     initialData: initialProduct ?? undefined,
   })
   const { data: exchangeRate } = useExchangeRate({ enabled: locale === 'en' })
@@ -258,6 +265,7 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
   const cursorXSpring = useSpring(cursorX, springConfig)
   const cursorYSpring = useSpring(cursorY, springConfig)
   const [isHoveringImage, setIsHoveringImage] = useState(false)
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
 
   const handleMouseMoveCursor = useCallback(
     (e: React.MouseEvent) => {
@@ -291,7 +299,7 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
   }
 
   if (error || !product) {
-    notFound()
+    return <NetworkErrorState compact isRetrying={isFetching} onRetry={() => refetch()} />
   }
 
   const description = locale === 'vi' ? product.descriptionVi : product.descriptionEn
@@ -340,9 +348,9 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
           },
         ]
   return (
-    <div className="safe-screen">
+    <div className="w-full max-w-full overflow-x-clip">
       {/* Header padding for fixed header */}
-      <div className="h-24 lg:h-28" />
+      <div className="h-20 lg:h-28" />
 
       {/* Floating Left-Side Back Navigation (Desktop Only) */}
       <Link
@@ -358,7 +366,7 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
 
       {/* Custom Cursor Overlay */}
       <AnimatePresence>
-        {isHoveringImage && (
+        {isHoveringImage && lightboxIndex === null && (
           <motion.div
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -382,7 +390,7 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
           {/* Back Button (Mobile/Tablet Only) */}
           <Link
             href={`/${locale}/shop`}
-            className="mb-6 inline-flex items-center pt-8 transition-all hover:translate-x-[-4px] lg:hidden"
+            className="mb-4 inline-flex items-center pt-2 transition-all hover:translate-x-[-4px] lg:hidden"
             aria-label={t('back')}
           >
             <ArrowLeft className="h-4 w-4" />
@@ -440,7 +448,12 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                     {product.images.map((image, index) => (
                       <div
                         key={index}
-                        className="relative aspect-[3/4] h-auto w-full shrink-0 snap-center overflow-hidden rounded-sm bg-muted/10 md:h-auto md:w-full md:hover:shadow-xl"
+                        onClick={() => {
+                          if (!imageDrag.isDragging) {
+                            setLightboxIndex(index)
+                          }
+                        }}
+                        className="relative aspect-[3/4] h-auto w-full shrink-0 cursor-pointer snap-center overflow-hidden rounded-sm bg-muted/10 md:h-auto md:w-full md:hover:shadow-xl"
                       >
                         <Image
                           src={optimizeProductImage(image, { width: 1200, height: 1600 })}
@@ -466,102 +479,142 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
 
             {/* 2. Right Column: Sticky Product Details */}
             <div className="relative min-w-0 px-0 md:px-0">
-              <div className="space-y-4 pb-12 pt-10 md:sticky md:top-32 md:space-y-12 md:pb-24 md:pt-0">
-                {/* Info Header */}
-                <div className="mb-8 space-y-2">
-                  <h1 className="text-mobile-safe font-sans text-[13px] font-bold leading-tight tracking-[0.08em] text-foreground sm:tracking-[0.1em]">
-                    {name}
-                  </h1>
-                  <div className="flex items-center gap-4">
-                    <p className="font-sans text-[11px] font-semibold tracking-[0.05em] text-foreground">
-                      {priceDisplay.currentPrice}
-                    </p>
-                    {priceDisplay.hasDiscount && priceDisplay.originalPrice && (
-                      <p className="text-[11px] font-light text-foreground/30 line-through">
-                        {priceDisplay.originalPrice}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Details Section */}
-                <div className="space-y-4">
-                  <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-foreground">
-                    {t('details')}
-                  </h4>
-
-                  {shortDescription ? (
-                    <p className="text-[11px] font-normal leading-relaxed tracking-[0.05em] text-foreground/80">
-                      {shortDescription}
-                    </p>
-                  ) : null}
-
-                  {/* Combined Description & Technical Specs */}
-                  <div className="flex flex-col gap-1 text-[11px] font-normal leading-relaxed tracking-[0.05em] text-foreground">
-                    {variants.groups.map((group) => (
-                      <p key={group.label}>
-                        <span className="font-bold uppercase">{group.label}: </span>
-                        <span className="text-foreground/80">{group.values.join(', ')}</span>
-                      </p>
-                    ))}
-                  </div>
-
-                  {/* HTML Description */}
-                  <div
-                    className="prose prose-sm max-w-none overflow-hidden font-sans text-[11px] font-medium tracking-[0.05em] text-foreground [overflow-wrap:anywhere] [&_a]:underline [&_a]:underline-offset-2 [&_blockquote]:border-l [&_blockquote]:border-foreground/30 [&_blockquote]:pl-4 [&_h1]:text-lg [&_h1]:font-bold [&_h2]:text-base [&_h2]:font-bold [&_h3]:text-sm [&_h3]:font-semibold [&_img]:my-4 [&_img]:h-auto [&_img]:max-w-full [&_img]:rounded-lg [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:leading-relaxed [&_ul]:list-disc [&_ul]:pl-5"
-                    dangerouslySetInnerHTML={{ __html: description || '' }}
-                  />
-
-                  <div className="flex flex-wrap gap-4 pt-4">
-                    <Link
-                      href={`/${locale}/journal`}
-                      className="text-[9px] font-bold uppercase tracking-[0.3em] text-foreground underline decoration-foreground/15 underline-offset-8 transition hover:opacity-70"
-                    >
-                      {journalCta}
-                    </Link>
-                    <Link
-                      href={`/${locale}/shop`}
-                      className="text-[9px] font-bold uppercase tracking-[0.3em] text-foreground underline decoration-foreground/15 underline-offset-8 transition hover:opacity-70"
-                    >
-                      {shopCta}
-                    </Link>
-                  </div>
-                </div>
-
-                {/* Inquiry Buttons */}
-                <div className="space-y-8 pt-8">
-                  <h4 className="text-[9px] font-bold uppercase tracking-[0.3em] text-foreground/30">
-                    {t('orderInquiry')}
-                  </h4>
-                  <div className="flex flex-col gap-3">
-                    {socialLinks?.instagramUsername && (
-                      <a
-                        href={`https://instagram.com/${socialLinks.instagramUsername}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="group flex max-w-full items-center justify-between gap-4 border border-foreground/10 px-4 py-4 transition-all duration-300 hover:bg-foreground hover:text-white sm:px-6"
-                        aria-label="Instagram Inquiry"
+              <div className="md:sticky md:top-24 md:self-start lg:top-28">
+                <div className="w-full space-y-6 pb-12 pt-6 md:space-y-8 md:pb-0 md:pt-0">
+                  {/* Info Header */}
+                  <div className="space-y-2">
+                    <h1 className="text-mobile-safe font-sans text-sm font-bold leading-tight tracking-[0.08em] text-foreground sm:text-base sm:tracking-[0.1em]">
+                      {name}
+                    </h1>
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      <p
+                        className={cn(
+                          'font-sans text-xs font-semibold tracking-[0.05em] sm:text-sm',
+                          priceDisplay.hasDiscount ? 'text-[#991b1b]' : 'text-foreground',
+                        )}
                       >
-                        <span className="min-w-0 text-[10px] font-bold uppercase tracking-[0.2em] sm:tracking-[0.3em]">
-                          Instagram
-                        </span>
-                        <Instagram className="h-4 w-4" />
-                      </a>
+                        {priceDisplay.currentPrice}
+                      </p>
+                      {priceDisplay.hasDiscount && priceDisplay.originalPrice && (
+                        <>
+                          <p className="text-xs font-light text-foreground/30 line-through">
+                            {priceDisplay.originalPrice}
+                          </p>
+                          {priceDisplay.discountPercentage && (
+                            <span className="rounded-sm bg-[#991b1b]/10 px-1.5 py-0.5 text-[9px] font-bold tracking-wide text-[#991b1b]">
+                              −{priceDisplay.discountPercentage}%
+                            </span>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Details Section */}
+                  <div className="space-y-4">
+                    <h4 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-foreground">
+                      {t('details')}
+                    </h4>
+
+                    {shortDescription ? (
+                      <p className="text-[12px] font-medium leading-[1.75] tracking-[0.02em] text-foreground/90">
+                        {shortDescription}
+                      </p>
+                    ) : null}
+
+                    {/* Chất liệu & Kích thước */}
+                    {(product.material || product.dimensions) && (
+                      <div className="flex flex-col gap-1 text-[12px] font-normal leading-[1.7] tracking-[0.02em] text-foreground/90">
+                        {product.material && (
+                          <p>
+                            <span className="font-semibold uppercase tracking-[0.08em]">
+                              {locale === 'vi' ? 'Chất liệu' : 'Material'}:{' '}
+                            </span>
+                            {product.material}
+                          </p>
+                        )}
+                        {product.dimensions && (
+                          <p>
+                            <span className="font-semibold uppercase tracking-[0.08em]">
+                              {locale === 'vi' ? 'Kích thước' : 'Dimensions'}:{' '}
+                            </span>
+                            {product.dimensions}
+                          </p>
+                        )}
+                      </div>
                     )}
-                    {socialLinks?.facebookPageUrl && (
-                      <a
-                        href={socialLinks.facebookPageUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="group flex max-w-full items-center justify-between gap-4 border border-foreground/10 px-4 py-4 transition-all duration-300 hover:bg-foreground hover:text-white sm:px-6"
-                        aria-label="Facebook Inquiry"
+
+                    {/* Combined Description & Technical Specs */}
+                    {variants.groups.length > 0 && (
+                      <div className="flex flex-col gap-1.5 text-[12px] font-normal leading-[1.7] tracking-[0.02em] text-foreground/90">
+                        {variants.groups.map((group) => (
+                          <p key={group.label}>
+                            <span className="font-semibold uppercase">{group.label}: </span>
+                            <span>{group.values.join(', ')}</span>
+                          </p>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* HTML Description */}
+                    {description && (
+                      <div
+                        className="prose prose-sm max-w-none overflow-hidden font-sans text-[12px] font-normal tracking-[0.02em] text-foreground/90 [overflow-wrap:anywhere] [&_a]:underline [&_a]:underline-offset-2 [&_blockquote]:border-l [&_blockquote]:border-foreground/30 [&_blockquote]:pl-4 [&_h1]:text-base [&_h1]:font-bold [&_h2]:text-sm [&_h2]:font-bold [&_h3]:text-xs [&_h3]:font-semibold [&_img]:my-4 [&_img]:h-auto [&_img]:max-w-full [&_img]:rounded-lg [&_li]:leading-[1.7] [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:leading-[1.75] [&_ul]:list-disc [&_ul]:pl-5"
+                        dangerouslySetInnerHTML={{ __html: description }}
+                      />
+                    )}
+
+                    <div className="flex flex-wrap gap-4 pt-2">
+                      <Link
+                        href={`/${locale}/journal`}
+                        className="text-[9px] font-bold uppercase tracking-[0.3em] text-foreground underline decoration-foreground/15 underline-offset-8 transition hover:opacity-70"
                       >
-                        <span className="min-w-0 text-[10px] font-bold uppercase tracking-[0.2em] sm:tracking-[0.3em]">
-                          Facebook
-                        </span>
-                        <Facebook className="h-4 w-4" />
-                      </a>
-                    )}
+                        {journalCta}
+                      </Link>
+                      <Link
+                        href={`/${locale}/shop`}
+                        className="text-[9px] font-bold uppercase tracking-[0.3em] text-foreground underline decoration-foreground/15 underline-offset-8 transition hover:opacity-70"
+                      >
+                        {shopCta}
+                      </Link>
+                    </div>
+                  </div>
+
+                  {/* Inquiry Buttons */}
+                  <div className="space-y-4 pt-6">
+                    <h4 className="text-[9px] font-bold uppercase tracking-[0.3em] text-foreground/40">
+                      {t('orderInquiry')}
+                    </h4>
+                    <div className="flex max-w-sm flex-col gap-2.5">
+                      {socialLinks?.instagramUsername && (
+                        <a
+                          href={`https://instagram.com/${socialLinks.instagramUsername}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="group flex w-full items-center justify-between gap-4 border border-foreground/15 bg-white px-5 py-3.5 transition-all duration-200 hover:border-foreground hover:bg-foreground hover:text-white"
+                          aria-label="Instagram Inquiry"
+                        >
+                          <span className="min-w-0 text-[10px] font-bold uppercase tracking-[0.2em] sm:tracking-[0.25em]">
+                            Instagram
+                          </span>
+                          <Instagram className="h-4 w-4 shrink-0 transition-transform duration-200 group-hover:scale-110" />
+                        </a>
+                      )}
+                      {socialLinks?.facebookPageUrl && (
+                        <a
+                          href={socialLinks.facebookPageUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="group flex w-full items-center justify-between gap-4 border border-foreground/15 bg-white px-5 py-3.5 transition-all duration-200 hover:border-foreground hover:bg-foreground hover:text-white"
+                          aria-label="Facebook Inquiry"
+                        >
+                          <span className="min-w-0 text-[10px] font-bold uppercase tracking-[0.2em] sm:tracking-[0.25em]">
+                            Facebook
+                          </span>
+                          <Facebook className="h-4 w-4 shrink-0 transition-transform duration-200 group-hover:scale-110" />
+                        </a>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -640,6 +693,17 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
           </div>
         </div>
       </section>
+
+      {/* Lightbox Modal with Zoom / Pan / Navigation */}
+      {product?.images && (
+        <ProductImageLightbox
+          images={product.images}
+          initialIndex={lightboxIndex ?? 0}
+          isOpen={lightboxIndex !== null}
+          onClose={() => setLightboxIndex(null)}
+          productName={name}
+        />
+      )}
     </div>
   )
 }

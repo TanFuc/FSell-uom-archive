@@ -4,6 +4,7 @@ import { SITEMAP_PRODUCTS_TAG, SITEMAP_STATIC_TAG, SITEMAP_STORIES_TAG } from '@
 
 type PingRequestBody = {
   urls?: string[]
+  secret?: string
 }
 
 type PingResult = {
@@ -28,6 +29,17 @@ const DEFAULT_REVALIDATE_PATHS = [
 
 function normalizeBaseUrl(): string {
   return getCanonicalBaseUrl()
+}
+
+function isAuthorized(request: Request, body: PingRequestBody): boolean {
+  const secret = process.env.SITEMAP_REVALIDATE_SECRET?.trim()
+
+  if (!secret) {
+    return process.env.NODE_ENV !== 'production'
+  }
+
+  const headerSecret = request.headers.get('x-revalidate-secret')?.trim()
+  return headerSecret === secret || body.secret?.trim() === secret
 }
 
 function isValidAbsoluteUrl(value: string): boolean {
@@ -173,6 +185,10 @@ export async function POST(request: Request): Promise<Response> {
     payload = (await request.json()) as PingRequestBody
   } catch {
     return Response.json({ success: false, message: 'Invalid JSON payload' }, { status: 400 })
+  }
+
+  if (!isAuthorized(request, payload)) {
+    return Response.json({ success: false, message: 'Unauthorized' }, { status: 401 })
   }
 
   const urls = limitUrls(payload.urls ?? [])

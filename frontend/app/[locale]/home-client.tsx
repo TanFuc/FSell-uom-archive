@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useLocale, useTranslations } from 'next-intl'
-import { useRef, useState, useEffect, useCallback } from 'react'
+import { useRef, useState, useEffect, useCallback, useMemo } from 'react'
 import { BannerCarousel } from '@/components/BannerCarousel'
 import { ProductCard } from '@/components/ProductCard'
 import { useBanners } from '@/hooks/use-banners'
@@ -229,13 +229,21 @@ export default function HomeClient({
   ) as UseQueryResult<PaginatedResponse<Product>>
 
   const { data: siteContent, isLoading: isLoadingStories } = useSiteContent({
-    staleTime: 5 * 60 * 1000,
-    refetchOnMount: false,
     initialData: initialSiteContent,
   }) as UseQueryResult<SiteContent>
   const stories = parseStories(siteContent?.[STORIES_CONTENT_KEY]).filter(
     (story) => story.isVisible !== false,
   )
+
+  const homeProducts = useMemo(() => {
+    if (!latestProducts?.data) return []
+    return [...latestProducts.data].sort((a, b) => {
+      const aFeatured = a.isFeatured ? 1 : 0
+      const bFeatured = b.isFeatured ? 1 : 0
+      if (aFeatured !== bFeatured) return bFeatured - aFeatured
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    })
+  }, [latestProducts?.data])
 
   const latestDrag = usePremiumSmoothScroll()
   const featuredDrag = usePremiumSmoothScroll()
@@ -249,7 +257,7 @@ export default function HomeClient({
       {/* Hero Banner Section */}
       <section className="w-full">
         {isLoadingBanners ? (
-          <div className="aspect-[4/5] w-full animate-pulse bg-muted/20 md:aspect-[21/9] lg:aspect-[3/1]" />
+          <div className="h-[82vh] w-full animate-pulse bg-muted/20 sm:h-[88vh] md:h-[92vh] lg:h-[96vh] xl:h-screen" />
         ) : (
           <BannerCarousel banners={banners ?? []} locale={locale} />
         )}
@@ -309,7 +317,7 @@ export default function HomeClient({
               )}
             >
               <AnimatePresence mode="popLayout">
-                {latestProducts?.data.map((product: Product, idx: number) => (
+                {homeProducts.map((product: Product, idx: number) => (
                   <motion.div
                     key={product.id}
                     initial={{ opacity: 0, y: 20 }}
@@ -350,10 +358,10 @@ export default function HomeClient({
 
         {isLoadingStories ? (
           <div className="flex gap-6 overflow-hidden px-4 sm:px-6 lg:px-12">
-            {Array.from({ length: 2 }).map((_, i) => (
+            {Array.from({ length: 3 }).map((_, i) => (
               <div
                 key={i}
-                className="w-[calc(100vw-32px)] max-w-full shrink-0 space-y-6 sm:w-[calc(100vw-64px)] md:w-[45vw] lg:w-[calc(50vw-48px)]"
+                className="w-[82vw] max-w-full shrink-0 space-y-6 sm:w-[70vw] md:w-[44vw] lg:w-[38vw] xl:w-[36vw]"
               >
                 <div className="overflow-hidden rounded-xl border border-foreground/5">
                   <div className="aspect-[4/5] animate-pulse bg-muted/20" />
@@ -393,10 +401,11 @@ export default function HomeClient({
                   <motion.div
                     key={story.id}
                     initial={false}
-                    className="w-[calc(100vw-32px)] max-w-full shrink-0 sm:w-[calc(100vw-64px)] md:w-[45vw] lg:w-[calc(50vw-48px)]"
+                    className="w-[82vw] max-w-full shrink-0 sm:w-[70vw] md:w-[44vw] lg:w-[38vw] xl:w-[36vw]"
                   >
                     <Link
                       href={`/${locale}/journal/${encodeURIComponent(getStorySlug(story, locale))}`}
+                      prefetch={false}
                       className="block"
                     >
                       <article className="group overflow-hidden rounded-xl border border-foreground/10 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg">

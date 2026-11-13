@@ -27,7 +27,7 @@ import { useUpdateBanner, useDeleteBanner } from '@/hooks/use-banners'
 import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api'
 import { type Banner } from '@/lib/types'
-import { optimizeProductImage } from '@/lib/utils'
+import { optimizeProductImage, cn } from '@/lib/utils'
 
 export default function BannersPage() {
   const router = useRouter()
@@ -121,12 +121,12 @@ export default function BannersPage() {
           <h1 className="font-serif text-2xl">{t('banners.pageTitle')}</h1>
           <p className="text-muted-foreground">{t('banners.pageDesc')}</p>
         </div>
-        <Link href={`/${locale}/admin/banners/new`}>
-          <Button className="w-full sm:w-auto">
+        <Button asChild className="w-full sm:w-auto">
+          <Link href={`/${locale}/admin/banners/new`}>
             <Plus className="mr-2 h-4 w-4" />
             {t('banners.create')}
-          </Button>
-        </Link>
+          </Link>
+        </Button>
       </div>
 
       <div className="rounded-md border">
@@ -197,19 +197,24 @@ export default function BannersPage() {
                   </TableCell>
                   <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
                     <Button
-                      variant={banner.isActive ? 'default' : 'outline'}
+                      variant="outline"
                       size="sm"
-                      className={banner.isActive ? 'h-7 bg-green-600 hover:bg-green-700' : 'h-7'}
+                      className={cn(
+                        'h-7 text-xs font-medium transition-colors',
+                        banner.isActive
+                          ? 'border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                          : 'border-neutral-200 bg-neutral-100 text-neutral-500 hover:bg-neutral-200/80 hover:text-neutral-700',
+                      )}
                       onClick={(e) => handleToggleActive(banner, e)}
                     >
                       {banner.isActive ? (
                         <>
-                          <Power className="mr-1 h-3 w-3" />
+                          <Power className="mr-1 h-3 w-3 text-emerald-600" />
                           {t('active')}
                         </>
                       ) : (
                         <>
-                          <PowerOff className="mr-1 h-3 w-3" />
+                          <PowerOff className="mr-1 h-3 w-3 text-neutral-400" />
                           {t('inactive')}
                         </>
                       )}
@@ -221,14 +226,17 @@ export default function BannersPage() {
                         variant="ghost"
                         size="icon"
                         onClick={() => router.push(`/${locale}/admin/banners/${banner.id}`)}
+                        className="text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
+                        title="Chỉnh sửa"
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="text-destructive hover:text-destructive"
+                        className="text-red-500 hover:bg-red-50 hover:text-red-700"
                         onClick={() => setDeleteDialog({ open: true, banner })}
+                        title="Xóa"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -257,7 +265,11 @@ export default function BannersPage() {
             >
               {t('cancel')}
             </Button>
-            <Button variant="destructive" onClick={handleDelete}>
+            <Button
+              variant="outline"
+              className="border-red-600 bg-red-600 text-white transition-colors hover:border-red-700 hover:bg-red-700"
+              onClick={handleDelete}
+            >
               {t('banners.deleteAction')}
             </Button>
           </DialogFooter>

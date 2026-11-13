@@ -6,6 +6,7 @@ import { getTranslations } from 'next-intl/server'
 import { buildPageMetadata, getCanonicalBaseUrl } from '@/lib/seo'
 import { fetchBranding } from '@/lib/server-utils'
 import { getStorySlug, parseStories, STORIES_CONTENT_KEY } from '@/lib/stories'
+import { DATA_REVALIDATE_SECONDS, PAGE_REVALIDATE_SECONDS } from '@/lib/cache-config'
 
 const API_URL =
   process.env.SERVER_API_URL ||
@@ -17,7 +18,7 @@ const SITE_CONTENT_FETCH_TIMEOUT_MS = Number.parseInt(
   process.env.SERVER_FETCH_TIMEOUT_MS || '1800',
   10,
 )
-export const revalidate = 3600
+export const revalidate = PAGE_REVALIDATE_SECONDS
 
 type SiteContentResponse = Record<string, unknown>
 
@@ -31,7 +32,7 @@ async function fetchSiteContent(): Promise<SiteContentResponse | null> {
 
   try {
     const response = await fetch(`${API_URL}/settings/site-content`, {
-      next: { revalidate: 300 },
+      next: { revalidate: DATA_REVALIDATE_SECONDS },
       signal: controller.signal,
     })
 
@@ -206,7 +207,8 @@ export default async function JournalPage({ params }: PageProps) {
               <Link
                 key={story.id}
                 href={`/${locale}/journal/${encodeURIComponent(getStorySlug(story, locale))}`}
-                className="group overflow-hidden rounded-2xl border border-black/10 bg-white/95 shadow-sm transition duration-300 hover:-translate-y-1.5 hover:shadow-xl"
+                prefetch={false}
+                className="group flex h-full flex-col overflow-hidden rounded-2xl border border-black/10 bg-white/95 shadow-sm transition duration-300 hover:-translate-y-1.5 hover:shadow-xl"
               >
                 <div className="relative aspect-[4/3] overflow-hidden bg-foreground/[0.03]">
                   <Image
@@ -220,21 +222,25 @@ export default async function JournalPage({ params }: PageProps) {
                   />
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-70" />
                 </div>
-                <div className="space-y-3 p-5">
-                  {story.publishedAt && (
-                    <p className="inline-flex max-w-full rounded-full border border-foreground/10 bg-foreground/[0.03] px-2.5 py-1 text-[10px] uppercase tracking-[0.12em] text-foreground/55 sm:tracking-[0.18em]">
-                      {story.publishedAt}
-                    </p>
-                  )}
-                  <h2 className="text-mobile-safe font-playfair text-xl leading-tight text-foreground">
+                <div className="flex flex-1 flex-col space-y-3 p-5">
+                  <div className="min-h-[1.5rem]">
+                    {story.publishedAt ? (
+                      <p className="inline-flex max-w-full rounded-full border border-foreground/10 bg-foreground/[0.03] px-2.5 py-1 text-[10px] uppercase tracking-[0.12em] text-foreground/55 sm:tracking-[0.18em]">
+                        {story.publishedAt}
+                      </p>
+                    ) : null}
+                  </div>
+                  <h2 className="text-mobile-safe line-clamp-2 min-h-[3.25rem] font-playfair text-xl leading-tight text-foreground">
                     {locale === 'vi' ? story.titleVi : story.titleEn}
                   </h2>
-                  <p className="line-clamp-3 text-sm leading-relaxed text-foreground/70">
+                  <p className="line-clamp-3 min-h-[3.75rem] text-sm leading-relaxed text-foreground/70">
                     {locale === 'vi' ? story.summaryVi : story.summaryEn}
                   </p>
-                  <span className="text-[9px] font-semibold uppercase tracking-[0.18em] text-foreground/55 sm:tracking-[0.28em]">
-                    {storyCta}
-                  </span>
+                  <div className="mt-auto pt-3">
+                    <span className="text-[9px] font-semibold uppercase tracking-[0.18em] text-foreground/55 sm:tracking-[0.28em]">
+                      {storyCta}
+                    </span>
+                  </div>
                 </div>
               </Link>
             ))}

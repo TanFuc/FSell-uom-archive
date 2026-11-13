@@ -2,13 +2,12 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { useExchangeRate } from '@/hooks/use-settings'
 import { getDisplayPrice } from '@/lib/currency'
 import type { Product } from '@/lib/types'
-import { optimizeProductImage } from '@/lib/utils'
+import { optimizeProductImage, cn } from '@/lib/utils'
 
 interface ProductCardProps {
   product: Product
@@ -18,7 +17,6 @@ interface ProductCardProps {
 
 export function ProductCard({ product, locale, priority }: ProductCardProps) {
   const t = useTranslations('admin')
-  const router = useRouter()
   const { data: exchangeRate } = useExchangeRate({ enabled: locale === 'en' })
   const name = locale === 'vi' ? product.nameVi : product.nameEn
   const productHref = `/${locale}/shop/${product.slug}`
@@ -34,16 +32,14 @@ export function ProductCard({ product, locale, priority }: ProductCardProps) {
   return (
     <Link
       href={productHref}
+      prefetch={false}
       className="animate-fade-in group block"
       draggable="false"
       onMouseEnter={() => {
         setShouldLoadHoverImage(true)
-        router.prefetch(productHref)
       }}
-      onFocus={() => router.prefetch(productHref)}
       onTouchStart={() => {
         setShouldLoadHoverImage(true)
-        router.prefetch(productHref)
       }}
     >
       <span className="sr-only">{anchorLabel}</span>
@@ -94,8 +90,16 @@ export function ProductCard({ product, locale, priority }: ProductCardProps) {
         )}
         {/* Sale badge */}
         {priceDisplay.hasDiscount && priceDisplay.discountPercentage && (
-          <div className="absolute left-2 top-2 z-20 rounded bg-red-500 px-2 py-1 text-xs text-white">
+          <div className="absolute left-2 top-2 z-20 rounded-sm bg-[#991b1b]/90 px-2 py-0.5 text-[9px] font-bold tracking-wide text-white backdrop-blur-sm md:text-[10px]">
             -{priceDisplay.discountPercentage}%
+          </div>
+        )}
+
+        {/* Featured badge */}
+        {product.isFeatured && (
+          <div className="absolute right-2 top-2 z-20 flex items-center gap-1 rounded-sm border border-[#d4af37]/40 bg-black/80 px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.14em] text-[#e5c158] shadow-sm backdrop-blur-md md:text-[9px]">
+            <span className="text-[10px] leading-none">★</span>
+            <span>{locale === 'vi' ? 'Nổi bật' : 'Featured'}</span>
           </div>
         )}
       </div>
@@ -107,7 +111,12 @@ export function ProductCard({ product, locale, priority }: ProductCardProps) {
           {name}
         </h3>
         <div className="flex flex-wrap items-center gap-2">
-          <p className="font-sans text-[10px] font-medium uppercase tracking-wide text-foreground md:text-xs">
+          <p
+            className={cn(
+              'font-sans text-[10px] font-medium uppercase tracking-wide md:text-xs',
+              priceDisplay.hasDiscount ? 'font-semibold text-[#991b1b]' : 'text-foreground',
+            )}
+          >
             {priceDisplay.currentPrice}
           </p>
           {priceDisplay.hasDiscount && priceDisplay.originalPrice && (

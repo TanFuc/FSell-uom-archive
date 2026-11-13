@@ -84,8 +84,7 @@ async function main() {
         <blockquote>"Each firing teaches us humility in front of material."</blockquote>
         <p>When pieces leave the kiln, we inspect each one by hand: the base, rim balance, and glaze tone under natural light.</p>
       `,
-      imageUrl:
-        'https://images.uomarchive.com/seed/journal-hands.png',
+      imageUrl: 'https://images.uomarchive.com/seed/journal-hands.png',
       publishedAt: '2026-03-12',
     },
     {
@@ -123,8 +122,7 @@ async function main() {
         </ul>
         <p>A beautiful ceramic object is not only about form, but about how it lives with the light in your home.</p>
       `,
-      imageUrl:
-        'https://images.uomarchive.com/seed/journal-glaze.png',
+      imageUrl: 'https://images.uomarchive.com/seed/journal-glaze.png',
       publishedAt: '2026-03-20',
     },
     {
@@ -162,8 +160,7 @@ async function main() {
         </ol>
         <p>At the end of the day, a cup of tea in a well-balanced handmade cup can be the simplest way back to calm.</p>
       `,
-      imageUrl:
-        'https://images.uomarchive.com/seed/journal-tea.png',
+      imageUrl: 'https://images.uomarchive.com/seed/journal-tea.png',
       publishedAt: '2026-03-28',
     },
     {
@@ -201,8 +198,7 @@ async function main() {
         </ul>
         <p>With this balance, your display stays elegant, cohesive, and true to a minimal handmade aesthetic.</p>
       `,
-      imageUrl:
-        'https://images.uomarchive.com/seed/about-story.png',
+      imageUrl: 'https://images.uomarchive.com/seed/about-story.png',
       publishedAt: '2026-04-02',
     },
     {
@@ -240,8 +236,7 @@ async function main() {
         </ol>
         <p>Our goal is simple: each piece should feel as good in real life as it looks in photos.</p>
       `,
-      imageUrl:
-        'https://images.uomarchive.com/seed/product-dinner-1.png',
+      imageUrl: 'https://images.uomarchive.com/seed/product-dinner-1.png',
       publishedAt: '2026-04-04',
     },
   ]
@@ -265,13 +260,11 @@ async function main() {
     { key: 'inquiry.button.en', value: 'Inquire' },
     {
       key: 'hero.image.vi',
-      value:
-        'https://images.uomarchive.com/seed/hero.png',
+      value: 'https://images.uomarchive.com/seed/hero.png',
     },
     {
       key: 'hero.image.en',
-      value:
-        'https://images.uomarchive.com/seed/hero.png',
+      value: 'https://images.uomarchive.com/seed/hero.png',
     },
     {
       key: 'journal.stories',
@@ -345,8 +338,7 @@ async function main() {
       nameEn: 'Vases & Jars',
       descriptionVi: 'Bình gốm thủ công dành cho trang trí không gian sống và cắm hoa.',
       descriptionEn: 'Handcrafted ceramic vases for floral styling and interior display.',
-      image:
-        'https://images.uomarchive.com/seed/cat-vases.png',
+      image: 'https://images.uomarchive.com/seed/cat-vases.png',
       order: 1,
       isActive: true,
     },
@@ -356,8 +348,7 @@ async function main() {
       nameEn: 'Dinnerware Sets',
       descriptionVi: 'Bộ chén đĩa và phụ kiện bàn ăn mang tinh thần thủ công tối giản.',
       descriptionEn: 'Dinnerware collections crafted for everyday rituals and minimal tables.',
-      image:
-        'https://images.uomarchive.com/seed/cat-dinnerware.png',
+      image: 'https://images.uomarchive.com/seed/cat-dinnerware.png',
       order: 2,
       isActive: true,
     },
@@ -367,8 +358,7 @@ async function main() {
       nameEn: 'Tea Cups',
       descriptionVi: 'Chén cốc gốm cầm tay vừa vặn, men mộc, phù hợp dùng hằng ngày.',
       descriptionEn: 'Tactile handcrafted cups made for daily tea rituals.',
-      image:
-        'https://images.uomarchive.com/seed/cat-tea.png',
+      image: 'https://images.uomarchive.com/seed/cat-tea.png',
       order: 3,
       isActive: true,
     },
@@ -378,8 +368,7 @@ async function main() {
       nameEn: 'Plates & Trays',
       descriptionVi: 'Đĩa gốm men rạn và khay phục vụ có độ hoàn thiện cao.',
       descriptionEn: 'Glazed ceramic plates and trays with balanced handcrafted finishes.',
-      image:
-        'https://images.uomarchive.com/seed/cat-trays.png',
+      image: 'https://images.uomarchive.com/seed/cat-trays.png',
       order: 4,
       isActive: true,
     },
@@ -689,8 +678,7 @@ async function main() {
       titleEn: 'Beauty in Stillness',
       subtitleVi: 'Gốm sứ thủ công từ Việt Nam',
       subtitleEn: 'Handcrafted ceramics from Vietnam',
-      imageUrl:
-        'https://images.uomarchive.com/seed/banner-main.png',
+      imageUrl: 'https://images.uomarchive.com/seed/banner-main.png',
       link: '/shop',
       order: 1,
       isActive: true,
@@ -703,8 +691,7 @@ async function main() {
       titleEn: 'New Collection',
       subtitleVi: 'Khám phá những mẫu thiết kế độc đáo',
       subtitleEn: 'Discover unique designs',
-      imageUrl:
-        'https://images.uomarchive.com/seed/banner-collection.png',
+      imageUrl: 'https://images.uomarchive.com/seed/banner-collection.png',
       link: '/shop?sort=newest',
       order: 2,
       isActive: true,

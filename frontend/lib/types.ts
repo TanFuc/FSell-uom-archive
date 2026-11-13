@@ -36,8 +36,8 @@ export interface Product {
   salePriceUSD?: number | null
   images: string[]
   hoverImage?: string | null
-  material: string
-  dimensions: string
+  material?: string | null
+  dimensions?: string | null
   stock: number
   isActive: boolean
   isFeatured: boolean
@@ -134,8 +134,8 @@ export interface CreateProductDto {
   salePriceUSD?: number
   images: string[]
   hoverImage?: string
-  material: string
-  dimensions: string
+  material?: string | null
+  dimensions?: string | null
   stock: number
   isActive?: boolean
   isFeatured?: boolean

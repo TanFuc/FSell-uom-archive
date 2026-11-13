@@ -12,6 +12,7 @@ import {
   truncateMetaDescription,
 } from '@/lib/seo'
 import { fetchBranding } from '@/lib/server-utils'
+import { DATA_REVALIDATE_SECONDS, PAGE_REVALIDATE_SECONDS } from '@/lib/cache-config'
 import {
   getStoryBySlug,
   getStorySlug,
@@ -31,6 +32,7 @@ const STORY_FETCH_TIMEOUT_MS = Number.parseInt(
   process.env.STORY_FETCH_TIMEOUT_MS || process.env.SERVER_FETCH_TIMEOUT_MS || '1800',
   10,
 )
+export const revalidate = PAGE_REVALIDATE_SECONDS
 
 type SiteContentResponse = Record<string, unknown>
 
@@ -46,7 +48,7 @@ async function fetchSiteContent(): Promise<FetchSiteContentResult> {
         ? STORY_FETCH_TIMEOUT_MS
         : 1800
     const response = await fetch(`${API_URL}/settings/site-content`, {
-      next: { revalidate: 300 },
+      next: { revalidate: DATA_REVALIDATE_SECONDS },
       signal: AbortSignal.timeout(timeout),
     })
 
@@ -106,28 +108,58 @@ export async function generateMetadata({ params }: StoryDetailProps): Promise<Me
     }
   }
 
-  const title = params.locale === 'vi' ? story.titleVi : story.titleEn
-  const description = truncateMetaDescription(
-    stripHtmlTags(params.locale === 'vi' ? story.summaryVi : story.summaryEn),
-  )
+  const isVi = params.locale === 'vi'
+  const title = (
+    isVi ? story.seoTitleVi || story.titleVi : story.seoTitleEn || story.titleEn
+  ).trim()
+  const rawDescription = isVi
+    ? story.seoDescriptionVi || story.summaryVi
+    : story.seoDescriptionEn || story.summaryEn
+  const description = truncateMetaDescription(stripHtmlTags(rawDescription))
   const viSlug = encodeURIComponent(getStorySlug(story, 'vi'))
   const enSlug = encodeURIComponent(getStorySlug(story, 'en'))
-  const canonicalPath = params.locale === 'vi' ? `/vi/journal/${viSlug}` : `/en/journal/${enSlug}`
+  const canonicalPath = isVi ? `/vi/journal/${viSlug}` : `/en/journal/${enSlug}`
+  const rawKeywords = (isVi ? story.seoKeywordsVi : story.seoKeywordsEn)?.trim()
+  const keywords = rawKeywords
+    ? rawKeywords
+        .split(',')
+        .map((k) => k.trim())
+        .filter(Boolean)
+    : undefined
 
-  return buildPageMetadata({
+  const metadata = buildPageMetadata({
     locale: params.locale,
-    path: canonicalPath,
+    path: story.canonicalUrl || canonicalPath,
     title,
     description,
     branding,
     image: story.imageUrl,
     type: 'article',
+    robots: story.noIndex
+      ? { index: false, follow: true }
+      : {
+          index: true,
+          follow: true,
+          googleBot: {
+            index: true,
+            follow: true,
+            'max-video-preview': -1,
+            'max-image-preview': 'large',
+            'max-snippet': -1,
+          },
+        },
     alternates: {
       vi: `/vi/journal/${viSlug}`,
       en: `/en/journal/${enSlug}`,
       'x-default': `/vi/journal/${viSlug}`,
     },
   })
+
+  if (keywords && keywords.length > 0) {
+    metadata.keywords = keywords
+  }
+
+  return metadata
 }
 
 export default async function StoryDetailPage({ params }: StoryDetailProps) {
@@ -152,15 +184,22 @@ export default async function StoryDetailPage({ params }: StoryDetailProps) {
     }
   }
 
-  const title = params.locale === 'vi' ? story.titleVi : story.titleEn
-  const summary = params.locale === 'vi' ? story.summaryVi : story.summaryEn
-  const content = params.locale === 'vi' ? story.contentVi : story.contentEn
+  const isVi = params.locale === 'vi'
+  const title = (
+    isVi ? story.seoTitleVi || story.titleVi : story.seoTitleEn || story.titleEn
+  ).trim()
+  const summary = (
+    isVi ? story.seoDescriptionVi || story.summaryVi : story.seoDescriptionEn || story.summaryEn
+  ).trim()
+  const content = isVi ? story.contentVi : story.contentEn
+  const rawKeywords = (isVi ? story.seoKeywordsVi : story.seoKeywordsEn)?.trim()
+  const wordCount = stripHtmlTags(content).split(/\s+/).filter(Boolean).length
   const relatedStories = stories.filter((item) => item.id !== story.id).slice(0, 4)
   const shopCta = params.locale === 'vi' ? 'Xem shop' : 'Visit the shop'
 
   const viSlug = encodeURIComponent(getStorySlug(story, 'vi'))
   const enSlug = encodeURIComponent(getStorySlug(story, 'en'))
-  const canonicalPath = params.locale === 'vi' ? `/vi/journal/${viSlug}` : `/en/journal/${enSlug}`
+  const canonicalPath = isVi ? `/vi/journal/${viSlug}` : `/en/journal/${enSlug}`
 
   const articleJsonLd = {
     '@context': 'https://schema.org',
@@ -172,6 +211,9 @@ export default async function StoryDetailPage({ params }: StoryDetailProps) {
       ? new Date(story.publishedAt).toISOString()
       : new Date().toISOString(),
     dateModified: story.updatedAt ? new Date(story.updatedAt).toISOString() : undefined,
+    inLanguage: params.locale,
+    wordCount,
+    ...(rawKeywords ? { keywords: rawKeywords } : {}),
     author: [
       {
         '@type': 'Organization',
@@ -183,6 +225,10 @@ export default async function StoryDetailPage({ params }: StoryDetailProps) {
       '@type': 'Organization',
       name: brandName,
       url: BASE_URL,
+      logo: {
+        '@type': 'ImageObject',
+        url: `${BASE_URL}/assets/logo.png`,
+      },
     },
     mainEntityOfPage: `${BASE_URL}${canonicalPath}`,
   }

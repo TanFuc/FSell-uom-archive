@@ -21,7 +21,9 @@ export class UploadService {
     private cloudinaryService: CloudinaryService,
   ) {
     const sharpConcurrency = Number(this.configService.get<string>('SHARP_CONCURRENCY') ?? '1')
-    sharp.concurrency(Number.isFinite(sharpConcurrency) && sharpConcurrency > 0 ? sharpConcurrency : 1)
+    sharp.concurrency(
+      Number.isFinite(sharpConcurrency) && sharpConcurrency > 0 ? sharpConcurrency : 1,
+    )
     sharp.cache(false)
 
     this.uploadProvider = (this.configService.get<string>('UPLOAD_PROVIDER') ??

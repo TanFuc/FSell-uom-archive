@@ -3,7 +3,14 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { apiClient } from '@/lib/api-client'
+import { getApiErrorMessage } from '@/lib/error-handler'
+import { revalidatePaths } from '@/lib/revalidate'
 import type { ThemeSettings, SocialLinks, SiteContent, BrandingSettings } from '@/lib/types'
+
+function getCurrentLocale(): string {
+  if (typeof window === 'undefined') return 'vi'
+  return window.location.pathname.startsWith('/en') ? 'en' : 'vi'
+}
 
 const BRANDING_CACHE_KEY = 'uom_branding_cache'
 
@@ -87,8 +94,9 @@ export function useSocialLinks(options?: SettingsQueryOptions<SocialLinks>) {
     queryFn: () => apiClient.getSocialLinks(),
     enabled: options?.enabled ?? true,
     initialData: options?.initialData,
-    staleTime: options?.staleTime ?? 10 * 60 * 1000,
-    refetchOnMount: options?.refetchOnMount,
+    initialDataUpdatedAt: options?.initialData ? 0 : undefined,
+    staleTime: options?.staleTime ?? 15 * 1000,
+    refetchOnMount: options?.refetchOnMount ?? true,
   })
 }
 
@@ -98,8 +106,9 @@ export function useExchangeRate(options?: SettingsQueryOptions) {
     queryFn: () => apiClient.getExchangeRate(),
     enabled: options?.enabled ?? true,
     initialData: options?.initialData,
-    staleTime: options?.staleTime ?? 30 * 60 * 1000,
-    refetchOnMount: options?.refetchOnMount,
+    initialDataUpdatedAt: options?.initialData ? 0 : undefined,
+    staleTime: options?.staleTime ?? 15 * 1000,
+    refetchOnMount: options?.refetchOnMount ?? true,
   })
 }
 
@@ -108,9 +117,10 @@ export function useSiteContent(options?: SiteContentQueryOptions) {
     queryKey: settingsKeys.content(),
     queryFn: () => apiClient.getSiteContent(),
     enabled: options?.enabled ?? true,
-    staleTime: options?.staleTime ?? 10 * 60 * 1000,
-    refetchOnMount: options?.refetchOnMount,
     initialData: options?.initialData,
+    initialDataUpdatedAt: options?.initialData ? 0 : undefined,
+    staleTime: options?.staleTime ?? 15 * 1000,
+    refetchOnMount: options?.refetchOnMount ?? true,
   })
 }
 
@@ -120,12 +130,23 @@ export function useUpdateTheme() {
   return useMutation({
     mutationFn: (data: Partial<ThemeSettings>) => apiClient.updateTheme(data),
     onSuccess: () => {
+      const locale = getCurrentLocale()
       queryClient.invalidateQueries({ queryKey: settingsKeys.theme() })
       queryClient.invalidateQueries({ queryKey: settingsKeys.all })
-      toast.success('Theme updated successfully')
+      void revalidatePaths(['/vi', '/en'])
+      toast.success(
+        locale === 'vi' ? 'Cập nhật giao diện thành công' : 'Theme updated successfully',
+      )
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Failed to update theme')
+      const locale = getCurrentLocale()
+      toast.error(
+        getApiErrorMessage(
+          error,
+          locale,
+          locale === 'vi' ? 'Không thể cập nhật giao diện' : 'Failed to update theme',
+        ),
+      )
     },
   })
 }
@@ -136,12 +157,27 @@ export function useUpdateSocialLinks() {
   return useMutation({
     mutationFn: (data: Partial<SocialLinks>) => apiClient.updateSocialLinks(data),
     onSuccess: () => {
+      const locale = getCurrentLocale()
       queryClient.invalidateQueries({ queryKey: settingsKeys.social() })
       queryClient.invalidateQueries({ queryKey: settingsKeys.all })
-      toast.success('Social links updated successfully')
+      void revalidatePaths(['/vi', '/en'])
+      toast.success(
+        locale === 'vi'
+          ? 'Cập nhật liên kết mạng xã hội thành công'
+          : 'Social links updated successfully',
+      )
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Failed to update social links')
+      const locale = getCurrentLocale()
+      toast.error(
+        getApiErrorMessage(
+          error,
+          locale,
+          locale === 'vi'
+            ? 'Không thể cập nhật mạng xã hội'
+            : 'Failed to update social links',
+        ),
+      )
     },
   })
 }
@@ -152,12 +188,23 @@ export function useUpdateExchangeRate() {
   return useMutation({
     mutationFn: (rate: number) => apiClient.updateExchangeRate(rate),
     onSuccess: () => {
+      const locale = getCurrentLocale()
       queryClient.invalidateQueries({ queryKey: settingsKeys.exchange() })
       queryClient.invalidateQueries({ queryKey: settingsKeys.all })
-      toast.success('Exchange rate updated successfully')
+      void revalidatePaths(['/vi', '/en'])
+      toast.success(
+        locale === 'vi' ? 'Cập nhật tỷ giá thành công' : 'Exchange rate updated successfully',
+      )
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Failed to update exchange rate')
+      const locale = getCurrentLocale()
+      toast.error(
+        getApiErrorMessage(
+          error,
+          locale,
+          locale === 'vi' ? 'Không thể cập nhật tỷ giá' : 'Failed to update exchange rate',
+        ),
+      )
     },
   })
 }
@@ -168,12 +215,23 @@ export function useUpdateSiteContent() {
   return useMutation({
     mutationFn: (data: Partial<SiteContent>) => apiClient.updateSiteContent(data),
     onSuccess: () => {
+      const locale = getCurrentLocale()
       queryClient.invalidateQueries({ queryKey: settingsKeys.content() })
       queryClient.invalidateQueries({ queryKey: settingsKeys.all })
-      toast.success('Site content updated successfully')
+      void revalidatePaths(['/vi', '/en', '/vi/journal', '/en/journal', '/vi/about', '/en/about'])
+      toast.success(
+        locale === 'vi' ? 'Cập nhật nội dung thành công' : 'Site content updated successfully',
+      )
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Failed to update site content')
+      const locale = getCurrentLocale()
+      toast.error(
+        getApiErrorMessage(
+          error,
+          locale,
+          locale === 'vi' ? 'Không thể cập nhật nội dung' : 'Failed to update site content',
+        ),
+      )
     },
   })
 }
@@ -186,8 +244,8 @@ export function useBranding() {
       saveBrandingToStorage(data)
       return data
     },
-    staleTime: 10 * 60 * 1000,
-    refetchOnMount: false,
+    staleTime: 15 * 1000,
+    refetchOnMount: true,
   })
 }
 
@@ -197,14 +255,27 @@ export function useUpdateBranding() {
   return useMutation({
     mutationFn: (data: Partial<BrandingSettings>) => apiClient.updateBranding(data),
     onSuccess: (updatedBranding) => {
+      const locale = getCurrentLocale()
       saveBrandingToStorage(updatedBranding)
       queryClient.invalidateQueries({ queryKey: settingsKeys.branding() })
       queryClient.invalidateQueries({ queryKey: settingsKeys.content() })
       queryClient.invalidateQueries({ queryKey: settingsKeys.all })
-      toast.success('Branding updated successfully')
+      void revalidatePaths(['/vi', '/en'])
+      toast.success(
+        locale === 'vi'
+          ? 'Cập nhật thương hiệu thành công'
+          : 'Branding updated successfully',
+      )
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Failed to update branding')
+      const locale = getCurrentLocale()
+      toast.error(
+        getApiErrorMessage(
+          error,
+          locale,
+          locale === 'vi' ? 'Không thể cập nhật thương hiệu' : 'Failed to update branding',
+        ),
+      )
     },
   })
 }

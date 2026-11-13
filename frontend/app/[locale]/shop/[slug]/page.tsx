@@ -2,6 +2,8 @@
 import { notFound } from 'next/navigation'
 import Script from 'next/script'
 import { getLocale } from 'next-intl/server'
+import { cache } from 'react'
+import { DATA_REVALIDATE_SECONDS, PAGE_REVALIDATE_SECONDS } from '@/lib/cache-config'
 import {
   buildPageMetadata,
   getCanonicalBaseUrl,
@@ -23,7 +25,7 @@ const PRODUCT_FETCH_TIMEOUT_MS = Number.parseInt(
   process.env.PRODUCT_FETCH_TIMEOUT_MS || process.env.SERVER_FETCH_TIMEOUT_MS || '1800',
   10,
 )
-export const revalidate = 300
+export const revalidate = PAGE_REVALIDATE_SECONDS
 
 type ProductDetail = Product
 
@@ -35,6 +37,8 @@ type FetchProductResult =
   | { status: 'ok'; product: ProductDetail }
   | { status: 'not-found' }
   | { status: 'error' }
+
+type FetchMode = 'revalidate' | 'no-store'
 
 function toAbsoluteUrl(value: string): string {
   if (/^https?:\/\//i.test(value)) {
@@ -64,21 +68,49 @@ function unwrapProductResponse(payload: unknown): ProductDetail | null {
   return null
 }
 
-async function fetchProduct(slug: string): Promise<FetchProductResult> {
+async function isVerifiedApiNotFound(res: Response): Promise<boolean> {
+  const contentType = res.headers.get('content-type')?.toLowerCase() ?? ''
+  if (!contentType.includes('application/json')) {
+    return false
+  }
+
   try {
-    const timeout =
+    const payload = (await res.json()) as unknown
+    if (!payload || typeof payload !== 'object') {
+      return false
+    }
+
+    return (payload as { statusCode?: unknown }).statusCode === 404
+  } catch {
+    return false
+  }
+}
+
+async function fetchProductAttempt(slug: string, mode: FetchMode): Promise<FetchProductResult> {
+  try {
+    const configuredTimeout =
       Number.isFinite(PRODUCT_FETCH_TIMEOUT_MS) && PRODUCT_FETCH_TIMEOUT_MS > 0
         ? PRODUCT_FETCH_TIMEOUT_MS
         : 1800
-    const res = await fetch(`${API_URL}/products/${slug}`, {
-      next: { revalidate: 300 },
+    const timeout = mode === 'no-store' ? Math.max(configuredTimeout, 5000) : configuredTimeout
+    const productUrl = `${API_URL}/products/${encodeURIComponent(slug)}`
+    const res = await fetch(productUrl, {
+      ...(mode === 'no-store'
+        ? { cache: 'no-store' as const }
+        : { next: { revalidate: DATA_REVALIDATE_SECONDS } }),
+      headers: {
+        Accept: 'application/json',
+      },
       signal: AbortSignal.timeout(timeout),
     })
+
     if (res.status === 404) {
-      return { status: 'not-found' }
+      console.warn(`[product] API returned 404 (${mode}) for ${productUrl}`)
+      return (await isVerifiedApiNotFound(res)) ? { status: 'not-found' } : { status: 'error' }
     }
 
     if (!res.ok) {
+      console.error(`[product] API returned ${res.status} (${mode}) for ${productUrl}`)
       return { status: 'error' }
     }
 
@@ -90,10 +122,34 @@ async function fetchProduct(slug: string): Promise<FetchProductResult> {
     }
 
     return { status: 'ok', product }
-  } catch {
+  } catch (error) {
+    console.error(`[product] request failed (${mode}) for slug "${slug}"`, error)
     return { status: 'error' }
   }
 }
+
+async function fetchProductWithVerification(slug: string): Promise<FetchProductResult> {
+  const firstAttempt = await fetchProductAttempt(slug, 'revalidate')
+
+  if (firstAttempt.status === 'ok') {
+    return firstAttempt
+  }
+
+  const verificationAttempt = await fetchProductAttempt(slug, 'no-store')
+
+  if (verificationAttempt.status === 'ok') {
+    return verificationAttempt
+  }
+
+  if (firstAttempt.status === 'not-found' && verificationAttempt.status === 'not-found') {
+    return { status: 'not-found' }
+  }
+
+  return { status: 'error' }
+}
+
+// Metadata and page rendering must agree on one product result per request.
+const fetchProduct = cache(fetchProductWithVerification)
 
 interface Props {
   params: { slug: string }

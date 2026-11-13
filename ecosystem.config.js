@@ -3,8 +3,8 @@ module.exports = {
     {
       name: 'uom-backend',
       cwd: './backend',
-      script: 'npm',
-      args: 'run start:prod',
+      script: 'main.js',
+      interpreter: 'node',
       env: {
         NODE_ENV: 'production',
         PORT: 8888,
@@ -13,8 +13,8 @@ module.exports = {
     {
       name: 'uom-frontend',
       cwd: './frontend',
-      script: 'npm',
-      args: 'run start',
+      script: 'scripts/start-standalone.mjs',
+      interpreter: 'node',
       env: {
         NODE_ENV: 'production',
         PORT: 7777,

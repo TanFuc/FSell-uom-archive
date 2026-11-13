@@ -12,6 +12,7 @@ const intlMiddleware = createMiddleware({
 export default function middleware(request: NextRequest) {
   const host = request.headers.get('host')
   const { pathname, search } = request.nextUrl
+  const isUnlocalizedAdminRoute = /^\/admin(?:\/|$)/.test(pathname)
   const isSeoSystemRoute =
     pathname.includes('sitemap') ||
     pathname.endsWith('.xml') ||
@@ -30,6 +31,10 @@ export default function middleware(request: NextRequest) {
   // 1. Force WWW redirection for SEO consistency
   if (host && host === 'uomarchive.com') {
     return NextResponse.redirect(`https://www.uomarchive.com${pathname}${search}`, 301)
+  }
+
+  if (isUnlocalizedAdminRoute) {
+    return NextResponse.redirect(new URL(`/vi${pathname}${search}`, request.url), 307)
   }
 
   if (isSeoSystemRoute) {
@@ -72,5 +77,5 @@ export default function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/:locale(vi|en)/admin/:path*'],
+  matcher: ['/((?!api|_next|.*\\..*).*)'],
 }

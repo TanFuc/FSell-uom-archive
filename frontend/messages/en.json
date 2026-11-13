@@ -236,8 +236,9 @@
     "englishDesc": "English Description",
     "priceVnd": "Price (VND)",
     "materialLabel": "Material",
+    "materialPlaceholder": "e.g. High-fire white clay, Stoneware...",
     "dimensionsLabel": "Dimensions",
-    "dimensionsPlaceholder": "15cm x 20cm",
+    "dimensionsPlaceholder": "e.g. 18cm x 45cm, 350ml...",
     "stockLabelForm": "Stock",
     "inquiryOptionsDesc": "Configure customer inquiry options",
     "allowInquiry": "Allow customers to ask about this product",
@@ -519,5 +520,19 @@
     "back": "Back",
     "next": "Next",
     "previous": "Previous"
+  },
+  "networkError": {
+    "serviceLabel": "Connection interrupted",
+    "offlineLabel": "You are offline",
+    "serviceTitle": "A quiet pause.",
+    "offlineTitle": "Connection lost.",
+    "serviceDescription": "We could not reach UOM just now. Your visit is still here — please try again in a moment.",
+    "offlineDescription": "It looks like your device is offline. Check your Wi-Fi or mobile connection, then try again.",
+    "retry": "Try again",
+    "retrying": "Trying again",
+    "backHome": "Return home",
+    "hint": "If this continues, wait a moment before refreshing the page.",
+    "offlineStatus": "Offline",
+    "checkingStatus": "Service unavailable"
   }
 }

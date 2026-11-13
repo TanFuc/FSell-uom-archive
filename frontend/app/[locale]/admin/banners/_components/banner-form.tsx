@@ -130,19 +130,30 @@ export default function BannerForm({ initialData }: BannerFormProps) {
       }
       router.push(`/${locale}/admin/banners`)
       router.refresh()
-    } catch (error) {
-      toast({ title: t('error'), description: 'Failed to save banner', variant: 'destructive' })
+    } catch (error: any) {
+      console.error('Failed to save banner:', error)
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        (Array.isArray(error?.response?.data?.errors)
+          ? error.response.data.errors.join(', ')
+          : 'Failed to save banner')
+      toast({
+        title: t('error'),
+        description: message,
+        variant: 'destructive',
+      })
     }
   }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Link href={`/${locale}/admin/banners`}>
-          <Button variant="ghost" size="icon">
+        <Button asChild variant="ghost" size="icon">
+          <Link href={`/${locale}/admin/banners`}>
             <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
+          </Link>
+        </Button>
         <div>
           <h1 className="font-serif text-2xl">{initialData ? 'Edit Banner' : 'Create Banner'}</h1>
         </div>
@@ -365,7 +376,9 @@ export default function BannerForm({ initialData }: BannerFormProps) {
                     name="imageUrl"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Hình ảnh (Desktop) *</FormLabel>
+                        <FormLabel className="flex items-center gap-1">
+                          Hình ảnh (Desktop) <span className="font-bold text-destructive">*</span>
+                        </FormLabel>
                         <FormControl>
                           <div className="space-y-4">
                             {field.value ? (

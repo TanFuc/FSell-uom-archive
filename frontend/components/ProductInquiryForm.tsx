@@ -107,7 +107,9 @@ export function ProductInquiryForm({ product, locale }: ProductInquiryFormProps)
             <div className="mb-4 flex items-center gap-4 border-b border-border/50 py-4">
               <div className="flex-1">
                 <h4 className="text-sm font-medium text-foreground">{productName}</h4>
-                <p className="mt-1 text-xs text-muted-foreground">{product.material}</p>
+                {product.material ? (
+                  <p className="mt-1 text-xs text-muted-foreground">{product.material}</p>
+                ) : null}
               </div>
             </div>
 

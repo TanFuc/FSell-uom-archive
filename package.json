@@ -20,6 +20,7 @@
     "check:precommit": "npm run cleanup:root:hard && npm run check:type && npm run format:check",
     "build:backend": "npm --prefix backend run build",
     "build:frontend": "npm --prefix frontend run build",
+    "deploy:plesk": "node deploy-plesk.js",
     "deploy:prod": "powershell -ExecutionPolicy Bypass -File ./backend/scripts/workspace/deploy-production.ps1 -BackendHealthTimeoutSeconds 180",
     "deploy:prod:skip-build": "powershell -ExecutionPolicy Bypass -File ./backend/scripts/workspace/deploy-production.ps1 -SkipBuild -BackendHealthTimeoutSeconds 180",
     "deploy:prod:skip-seed": "powershell -ExecutionPolicy Bypass -File ./backend/scripts/workspace/deploy-production.ps1 -SkipSeed -BackendHealthTimeoutSeconds 180",

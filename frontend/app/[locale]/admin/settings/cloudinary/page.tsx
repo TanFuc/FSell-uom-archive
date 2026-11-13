@@ -48,8 +48,8 @@ export default function StorageSettingsPage() {
         </CardHeader>
         <CardContent className="space-y-3 text-sm text-muted-foreground">
           <p>
-            The frontend only allows the production image domain and the API upload path, so seed and
-            uploaded images should stay under images.uomarchive.com.
+            The frontend only allows the production image domain and the API upload path, so seed
+            and uploaded images should stay under images.uomarchive.com.
           </p>
           <a
             href="https://dash.cloudflare.com/"

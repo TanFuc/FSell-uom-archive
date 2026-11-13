@@ -1,7 +1,7 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
@@ -34,6 +34,7 @@ type SocialLinksFormValues = z.infer<typeof socialLinksSchema>
 type ExchangeRateFormValues = z.infer<typeof exchangeRateSchema>
 
 export default function SettingsPage() {
+  const locale = useLocale()
   const t = useTranslations('admin')
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(true)
@@ -79,9 +80,9 @@ export default function SettingsPage() {
         facebookPageUrl: data.facebookPageUrl || '',
         instagramUsername: data.instagramUsername,
       })
-      toast({ title: t('success'), description: 'Social links updated' })
+      toast({ title: t('success'), description: t('socialLinksUpdated') })
     } catch (error) {
-      toast({ title: t('error'), description: 'Failed to update', variant: 'destructive' })
+      toast({ title: t('error'), description: t('failedToUpdate'), variant: 'destructive' })
     } finally {
       setIsSavingSocial(false)
     }
@@ -94,10 +95,13 @@ export default function SettingsPage() {
       const updatedCount = result.updatedProducts ?? 0
       toast({
         title: t('success'),
-        description: `Exchange rate updated. Recalculated ${updatedCount} products.`,
+        description:
+          locale === 'vi'
+            ? `Đã cập nhật tỷ giá. Đã tính toán lại cho ${updatedCount} sản phẩm.`
+            : `Exchange rate updated. Recalculated ${updatedCount} products.`,
       })
     } catch (error) {
-      toast({ title: t('error'), description: 'Failed to update', variant: 'destructive' })
+      toast({ title: t('error'), description: t('failedToUpdate'), variant: 'destructive' })
     } finally {
       setIsSavingRate(false)
     }

@@ -81,6 +81,8 @@ docker-compose.override.yml
 
 # Production
 /pm2
+/release-be
+/uom-backend-release.zip
 
 # Misc
 .terraform/

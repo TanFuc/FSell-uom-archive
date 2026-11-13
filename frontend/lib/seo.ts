@@ -260,7 +260,15 @@ export function buildPageMetadata({
       type,
       locale: locale === 'vi' ? 'vi_VN' : 'en_US',
       siteName: brandName,
-      images: [{ url: imageUrl, alt: fullTitle }],
+      images: [
+        {
+          url: imageUrl,
+          alt: fullTitle,
+          width: 1200,
+          height: 630,
+          type: 'image/png',
+        },
+      ],
     },
     twitter: {
       card: 'summary_large_image',

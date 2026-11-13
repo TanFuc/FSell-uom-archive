@@ -22,7 +22,9 @@ export function useCategories(
     queryFn: () => api.getCategories(params),
     enabled: options?.enabled ?? true,
     initialData: options?.initialData,
-    staleTime: 10 * 60 * 1000, // 10 minutes
+    initialDataUpdatedAt: options?.initialData ? 0 : undefined,
+    staleTime: 15 * 1000,
+    refetchOnMount: true,
   })
 }
 
@@ -31,7 +33,8 @@ export function useCategory(id: string) {
     queryKey: categoryKeys.detail(id),
     queryFn: () => api.getCategoryById(id),
     enabled: !!id,
-    staleTime: 10 * 60 * 1000,
+    staleTime: 15 * 1000,
+    refetchOnMount: true,
   })
 }
 

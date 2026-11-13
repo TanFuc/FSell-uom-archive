@@ -7,9 +7,11 @@ import { Toaster as SonnerToaster } from 'sonner'
 import { DisableRightClick } from '@/components/DisableRightClick'
 import { ConditionalLayout } from '@/components/layout/ConditionalLayout'
 import { QueryProvider } from '@/components/providers/QueryProvider'
+import { ConfirmationProvider } from '@/components/providers/ConfirmationProvider'
 import { Toaster } from '@/components/ui/toaster'
 import { locales } from '@/i18n'
 import {
+  buildAbsoluteUrl,
   getCanonicalBaseUrl,
   getSeoBrandName,
   getSeoSiteDescription,
@@ -42,7 +44,7 @@ const playfair = Playfair_Display({
 })
 
 export const viewport: Viewport = {
-  themeColor: '#000000',
+  themeColor: '#F9F7F1',
   width: 'device-width',
   initialScale: 1,
 }
@@ -61,7 +63,7 @@ export async function generateMetadata({
   const defaultTitle = getSeoSiteTitle(locale, branding)
   const brandName = getSeoBrandName(locale, branding)
   const description = getSeoSiteDescription(locale, branding)
-  const previewImageUrl = getSeoSocialImageUrl(branding)
+  const previewImageUrl = buildAbsoluteUrl(getSeoSocialImageUrl(branding), baseUrl)
   const tabIconUrl = '/assets/logo.png'
 
   return {
@@ -105,7 +107,15 @@ export async function generateMetadata({
       title: defaultTitle,
       description,
       siteName: brandName,
-      images: [{ url: previewImageUrl, alt: `${brandName} Logo` }],
+      images: [
+        {
+          url: previewImageUrl,
+          alt: `${brandName} Logo`,
+          width: 1200,
+          height: 630,
+          type: 'image/png',
+        },
+      ],
     },
     twitter: {
       card: 'summary_large_image',
@@ -144,7 +154,14 @@ export default async function RootLayout({ children, params: { locale } }: RootL
   }
 
   unstable_setRequestLocale(locale)
-  const messages = await getMessages()
+  let messages: any = {}
+  try {
+    messages = await getMessages({ locale })
+  } catch {
+    try {
+      messages = (await import(`@/messages/${locale}.json`)).default
+    } catch {}
+  }
 
   return (
     <html lang={locale} suppressHydrationWarning>
@@ -155,14 +172,17 @@ export default async function RootLayout({ children, params: { locale } }: RootL
         <link rel="dns-prefetch" href="https://api.uomarchive.com" />
       </head>
       <body
+        suppressHydrationWarning
         className={`${lora.variable} ${montserrat.variable} ${playfair.variable} flex min-h-screen flex-col bg-background font-serif antialiased`}
       >
         <DisableRightClick />
         <NextIntlClientProvider messages={messages}>
           <QueryProvider>
-            <ConditionalLayout>{children}</ConditionalLayout>
-            <Toaster />
-            <SonnerToaster />
+            <ConfirmationProvider>
+              <ConditionalLayout>{children}</ConditionalLayout>
+              <Toaster />
+              <SonnerToaster />
+            </ConfirmationProvider>
           </QueryProvider>
         </NextIntlClientProvider>
       </body>

@@ -1,4 +1,5 @@
 import axios, { type AxiosInstance, type AxiosError } from 'axios'
+import { triggerPublicRevalidation } from './revalidate'
 import { pingProductSeo, pingSitewideSeo, pingStoriesSeo } from './seo-ping'
 import { parseStories, STORIES_CONTENT_KEY } from './stories'
 import { normalizePublicImageUrl } from './utils'
@@ -243,6 +244,7 @@ class ApiClient {
       body: JSON.stringify(data),
     })
     void pingSitewideSeo()
+    void triggerPublicRevalidation(['/'])
     return banner
   }
 
@@ -252,6 +254,7 @@ class ApiClient {
       body: JSON.stringify(data),
     })
     void pingSitewideSeo()
+    void triggerPublicRevalidation(['/'])
     return banner
   }
 
@@ -260,6 +263,7 @@ class ApiClient {
       method: 'DELETE',
     })
     void pingSitewideSeo()
+    void triggerPublicRevalidation(['/'])
     return result
   }
 
@@ -307,8 +311,10 @@ class ApiClient {
     })
     if (product?.slug) {
       void pingProductSeo(product.slug)
+      void triggerPublicRevalidation(['/', '/shop', `/shop/${product.slug}`])
     } else {
       void pingSitewideSeo()
+      void triggerPublicRevalidation(['/', '/shop'])
     }
     return product
   }
@@ -320,8 +326,10 @@ class ApiClient {
     })
     if (product?.slug) {
       void pingProductSeo(product.slug)
+      void triggerPublicRevalidation(['/', '/shop', `/shop/${product.slug}`])
     } else {
       void pingSitewideSeo()
+      void triggerPublicRevalidation(['/', '/shop'])
     }
     return product
   }
@@ -331,6 +339,7 @@ class ApiClient {
       method: 'DELETE',
     })
     void pingSitewideSeo()
+    void triggerPublicRevalidation(['/', '/shop'])
     return result
   }
 
@@ -340,8 +349,10 @@ class ApiClient {
     })
     if (product?.slug) {
       void pingProductSeo(product.slug)
+      void triggerPublicRevalidation(['/', '/shop', `/shop/${product.slug}`])
     } else {
       void pingSitewideSeo()
+      void triggerPublicRevalidation(['/', '/shop'])
     }
     return product
   }
@@ -352,8 +363,10 @@ class ApiClient {
     })
     if (product?.slug) {
       void pingProductSeo(product.slug)
+      void triggerPublicRevalidation(['/', '/shop', `/shop/${product.slug}`])
     } else {
       void pingSitewideSeo()
+      void triggerPublicRevalidation(['/', '/shop'])
     }
     return product
   }
@@ -363,6 +376,7 @@ class ApiClient {
       method: 'DELETE',
     })
     void pingSitewideSeo()
+    void triggerPublicRevalidation(['/', '/shop'])
     return result
   }
 
@@ -372,6 +386,7 @@ class ApiClient {
       body: JSON.stringify(data),
     })
     void pingSitewideSeo()
+    void triggerPublicRevalidation(['/', '/shop', '/journal', '/about'])
     return theme
   }
 
@@ -381,6 +396,7 @@ class ApiClient {
       body: JSON.stringify(data),
     })
     void pingSitewideSeo()
+    void triggerPublicRevalidation(['/', '/shop', '/journal', '/about'])
     return socialLinks
   }
 
@@ -391,8 +407,10 @@ class ApiClient {
     })
     if (typeof data[STORIES_CONTENT_KEY] === 'string') {
       void pingStoriesSeo(parseStories(data[STORIES_CONTENT_KEY]))
+      void triggerPublicRevalidation(['/', '/journal', '/about'])
     } else {
       void pingSitewideSeo()
+      void triggerPublicRevalidation(['/', '/shop', '/journal', '/about'])
     }
     return result
   }
@@ -403,6 +421,7 @@ class ApiClient {
       body: JSON.stringify({ rate }),
     })
     void pingSitewideSeo()
+    void triggerPublicRevalidation(['/', '/shop'])
     return exchangeRate
   }
 
@@ -422,6 +441,7 @@ class ApiClient {
       body: JSON.stringify(data),
     })
     void pingSitewideSeo()
+    void triggerPublicRevalidation(['/', '/shop', '/journal', '/about'])
     return branding
   }
 

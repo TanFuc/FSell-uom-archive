@@ -236,10 +236,11 @@
     "englishDesc": "Mô tả tiếng Anh",
     "priceVND": "Giá (VND)",
     "materialLabel": "Chất liệu",
+    "materialPlaceholder": "Ví dụ: Đất sét trắng nung cao độ, Gốm men rạn...",
     "dimensionsLabel": "Kích thước",
     "material": "Chất liệu",
     "dimensions": "Kích thước",
-    "dimensionsPlaceholder": "15cm x 20cm",
+    "dimensionsPlaceholder": "Ví dụ: 18cm x 45cm, 350ml...",
     "stockLabelForm": "Tồn kho",
     "inquiryOptionsDesc": "Cấu hình tùy chọn hỏi đáp khách hàng",
     "allowInquiry": "Cho phép khách hàng hỏi về sản phẩm này",
@@ -516,5 +517,19 @@
     "back": "Quay lại",
     "next": "Tiếp theo",
     "previous": "Trước"
+  },
+  "networkError": {
+    "serviceLabel": "Kết nối bị gián đoạn",
+    "offlineLabel": "Thiết bị đang ngoại tuyến",
+    "serviceTitle": "Một nhịp nghỉ.",
+    "offlineTitle": "Mất kết nối.",
+    "serviceDescription": "Hiện tại chúng tôi chưa thể kết nối tới ƯƠM. Phiên truy cập vẫn được giữ nguyên — bạn hãy thử lại sau giây lát.",
+    "offlineDescription": "Thiết bị của bạn dường như đang mất mạng. Hãy kiểm tra Wi-Fi hoặc dữ liệu di động rồi thử lại.",
+    "retry": "Thử lại",
+    "retrying": "Đang thử lại",
+    "backHome": "Về trang chủ",
+    "hint": "Nếu tình trạng tiếp diễn, hãy đợi một chút trước khi tải lại trang.",
+    "offlineStatus": "Ngoại tuyến",
+    "checkingStatus": "Dịch vụ gián đoạn"
   }
 }
