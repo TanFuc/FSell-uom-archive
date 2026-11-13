@@ -61,13 +61,21 @@ export function slugify(str: string): string {
 }
 
 function getPublicImageBaseUrl(): string {
-  return (
+  if (typeof window !== 'undefined' && window.location.hostname.endsWith('uomarchive.com')) {
+    return 'https://images.uomarchive.com'
+  }
+  const configured =
     process.env.NEXT_PUBLIC_IMAGE_BASE_URL ||
     process.env.NEXT_PUBLIC_R2_PUBLIC_URL ||
     process.env.NEXT_PUBLIC_API_BASE_URL ||
-    process.env.NEXT_PUBLIC_API_URL ||
-    'http://localhost:3001'
-  ).replace(/\/$/, '')
+    process.env.NEXT_PUBLIC_API_URL
+  if (
+    process.env.NODE_ENV === 'production' &&
+    (!configured || configured.includes('localhost') || configured.includes('127.0.0.1'))
+  ) {
+    return 'https://images.uomarchive.com'
+  }
+  return (configured || 'http://localhost:3001').replace(/\/$/, '')
 }
 
 export function normalizePublicImageUrl(path: string): string {
@@ -80,11 +88,14 @@ export function normalizePublicImageUrl(path: string): string {
 
   // Local uploads served by backend server
   if (path.startsWith('/uploads/') || path.startsWith('uploads/')) {
-    const apiBase = (
+    let apiBase = (
       process.env.NEXT_PUBLIC_API_BASE_URL ||
       process.env.NEXT_PUBLIC_API_URL ||
-      'http://localhost:3006'
+      'https://api.uomarchive.com'
     ).replace(/\/$/, '')
+    if (typeof window !== 'undefined' && window.location.hostname.endsWith('uomarchive.com')) {
+      apiBase = 'https://api.uomarchive.com'
+    }
     const cleanPath = path.startsWith('/') ? path : `/${path}`
     return `${apiBase}${cleanPath}`
   }

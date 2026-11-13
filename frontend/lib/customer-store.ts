@@ -3,10 +3,12 @@ import { persist } from 'zustand/middleware'
 
 export interface CustomerUser {
   id: string
-  email: string
+  email: string | null
   fullName: string
   phone?: string | null
   address?: string | null
+  avatarUrl?: string | null
+  authProvider?: string | null
 }
 
 interface CustomerAuthState {
@@ -18,12 +20,14 @@ interface CustomerAuthState {
   authModalMessage?: string
   postLoginAction?: (() => void) | null
   cartCount: number
+  cachedCart: any | null
 
   setCustomerAuth: (data: { customer: CustomerUser; accessToken: string; refreshToken?: string }) => void
   logout: () => void
   openAuthModal: (message?: string, postAction?: () => void) => void
   closeAuthModal: () => void
   setCartCount: (count: number) => void
+  setCachedCart: (cart: any) => void
   fetchCartCount: () => Promise<void>
 }
 
@@ -38,6 +42,7 @@ export const useCustomerStore = create<CustomerAuthState>()(
       authModalMessage: undefined,
       postLoginAction: null,
       cartCount: 0,
+      cachedCart: null,
 
       setCustomerAuth: ({ customer, accessToken, refreshToken }) => {
         if (typeof window !== 'undefined') {
@@ -67,6 +72,7 @@ export const useCustomerStore = create<CustomerAuthState>()(
           refreshToken: null,
           isAuthenticated: false,
           cartCount: 0,
+          cachedCart: null,
         })
       },
 
@@ -90,19 +96,21 @@ export const useCustomerStore = create<CustomerAuthState>()(
         set({ cartCount: Math.max(0, count) })
       },
 
+      setCachedCart: (cart: any) => {
+        const productTypesCount = (cart?.items || []).length
+        set({ cachedCart: cart, cartCount: productTypesCount })
+      },
+
       fetchCartCount: async () => {
         if (!get().isAuthenticated) {
-          set({ cartCount: 0 })
+          set({ cartCount: 0, cachedCart: null })
           return
         }
         try {
           const { api } = await import('@/lib/api')
           const cart = await api.getCart()
-          const totalQty = (cart?.items || []).reduce(
-            (sum: number, item: any) => sum + (item.quantity || 1),
-            0,
-          )
-          set({ cartCount: totalQty })
+          const productTypesCount = (cart?.items || []).length
+          set({ cartCount: productTypesCount, cachedCart: cart })
         } catch {
           // ignore error
         }
@@ -116,6 +124,7 @@ export const useCustomerStore = create<CustomerAuthState>()(
         refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
         cartCount: state.cartCount,
+        cachedCart: state.cachedCart,
       }),
     },
   ),

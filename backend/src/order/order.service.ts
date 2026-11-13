@@ -2,13 +2,19 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
   Logger,
+  ServiceUnavailableException,
 } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import { PrismaService } from '../prisma/prisma.service'
 import { SapoService } from '../sapo/sapo.service'
 import { RedisService } from '../redis/redis.service'
+import { MailService } from '../mail/mail.service'
+import { UploadService } from '../upload/upload.service'
 import { CreateOrderCheckoutDto } from './dto/create-order.dto'
 import { CreateFulfillmentDto } from './dto/create-fulfillment.dto'
+import { createOrderAccessToken, matchesOrderAccessToken } from './order-access'
 
 @Injectable()
 export class OrderService {
@@ -18,12 +24,43 @@ export class OrderService {
     private readonly prisma: PrismaService,
     private readonly sapoService: SapoService,
     private readonly redisService: RedisService,
+    private readonly mailService: MailService,
+    private readonly uploadService: UploadService,
+    private readonly configService: ConfigService,
   ) {}
+
+  private getOrderAccessSecret(): string {
+    const secret = this.configService.get<string>('ORDER_ACCESS_SECRET') || this.configService.get<string>('JWT_ACCESS_SECRET')
+    if (!secret) throw new ServiceUnavailableException('Chưa cấu hình secret truy cập đơn hàng')
+    return secret
+  }
+
+  private assertPaymentAccess(orderId: string, token?: string): void {
+    if (!matchesOrderAccessToken(orderId, this.getOrderAccessSecret(), token)) {
+      throw new ForbiddenException('Liên kết xác nhận chuyển khoản không hợp lệ')
+    }
+  }
+
+  async assertPublicOrderAccess(identifier: string, token?: string): Promise<void> {
+    const order = await this.prisma.order.findFirst({
+      where: { OR: [{ id: identifier }, { orderNumber: identifier }], deletedAt: null },
+      select: { id: true },
+    })
+    if (!order) throw new NotFoundException('Không tìm thấy đơn hàng')
+    this.assertPaymentAccess(order.id, token)
+  }
 
   /**
    * Tạo đơn hàng từ giỏ hàng (Cart to Order), Soft-delete giỏ hàng, và bắn sang Sapo
    */
   async checkout(dto: CreateOrderCheckoutDto, customerId?: string) {
+    const accessSecret = this.getOrderAccessSecret()
+    const paymentSettings = await this.prisma.paymentSettings.findUnique({
+      where: { id: 'singleton' },
+    })
+    if (!paymentSettings?.qrCodeUrl && !(paymentSettings?.bankName && paymentSettings?.accountNumber)) {
+      throw new BadRequestException('Cửa hàng chưa cấu hình mã QR hoặc tài khoản chuyển khoản')
+    }
     // 1. Tìm giỏ hàng hiện tại (chưa soft-delete)
     const cart = await this.prisma.cart.findFirst({
       where: {
@@ -72,6 +109,8 @@ export class OrderService {
         totalVND,
         isDraft: false,
         status: 'pending',
+        paymentMethod: 'bank_transfer',
+        paymentStatus: 'unpaid',
         items: {
           create: itemsToOrder.map((ci) => ({
             productId: ci.productId,
@@ -163,7 +202,6 @@ export class OrderService {
         this.logger.log(
           `Đơn hàng web #${finalOrderNumber} đã liên kết thành công với Sapo Order ID #${sapoOrder.id} (#${cleanSapoNumber})`,
         )
-        return this.getOrderByIdOrNumber(finalOrderNumber)
       }
     } catch (sapoError: any) {
       this.logger.error(
@@ -172,7 +210,11 @@ export class OrderService {
       // Không throw error để khách vẫn hoàn tất đơn trên web, Sapo có thể retry
     }
 
-    return this.getOrderByIdOrNumber(newOrder.id)
+    const resultOrder = await this.getOrderByIdOrNumber(newOrder.id)
+    this.mailService.sendOrderConfirmation(resultOrder as any).catch((err) => {
+      this.logger.warn(`Lỗi gửi mail sau khi checkout đơn ${resultOrder.orderNumber}: ${err.message}`)
+    })
+    return { ...resultOrder, paymentAccessToken: createOrderAccessToken(resultOrder.id, accessSecret) }
   }
 
   /**
@@ -245,6 +287,10 @@ export class OrderService {
 
     if (!order) {
       throw new NotFoundException('Không tìm thấy đơn hàng')
+    }
+
+    if (order.paymentStatus !== 'paid') {
+      throw new BadRequestException('Cần duyệt thanh toán trước khi tạo vận đơn')
     }
 
     if (!order.sapoOrderId) {
@@ -506,6 +552,315 @@ export class OrderService {
       }),
     )
 
-    return syncedOrders
+    const secret = this.getOrderAccessSecret()
+    return syncedOrders.map((order) => ({
+      ...order,
+      paymentAccessToken: createOrderAccessToken(order.id, secret),
+    }))
+  }
+
+  /**
+   * Khách hàng tải lên ảnh biên nhận chuyển khoản (Proof of Payment)
+   */
+  async uploadPaymentProof(identifier: string, file: Express.Multer.File, accessToken?: string) {
+    if (!file) {
+      throw new BadRequestException('Vui lòng chọn hình ảnh biên nhận chuyển khoản')
+    }
+
+    const order = await this.prisma.order.findFirst({
+      where: {
+        OR: [{ id: identifier }, { orderNumber: identifier }],
+        deletedAt: null,
+      },
+      include: {
+        items: { where: { deletedAt: null } },
+      },
+    })
+
+    if (!order) {
+      throw new NotFoundException('Không tìm thấy đơn hàng')
+    }
+    this.assertPaymentAccess(order.id, accessToken)
+
+    if (order.paymentMethod !== 'bank_transfer' || order.status === 'cancelled' || order.paymentStatus === 'paid') {
+      throw new BadRequestException('Đơn hàng không thể nhận thêm biên nhận chuyển khoản')
+    }
+
+    // Upload ảnh lên R2 / local storage qua UploadService
+    const uploadResult = await this.uploadService.uploadProductImage(file, 'payment-proofs')
+
+    const updatedOrder = await this.prisma.order.update({
+      where: { id: order.id },
+      data: {
+        paymentProofUrl: uploadResult.url,
+        paymentProofUploadedAt: new Date(),
+        transferClaimedAt: order.transferClaimedAt || new Date(),
+        paymentStatus: 'pending_approval',
+        updatedAt: new Date(),
+      },
+      include: {
+        items: { where: { deletedAt: null } },
+      },
+    })
+
+    this.logger.log(
+      `Khách hàng đã tải ảnh chuyển khoản cho đơn #${updatedOrder.orderNumber}: ${uploadResult.url}`,
+    )
+
+    // Gửi email xác nhận đã nhận biên lai chuyển khoản
+    this.mailService.sendOrderConfirmation(updatedOrder as any).catch((err) => {
+      this.logger.warn(`Lỗi gửi mail sau khi upload bill đơn ${updatedOrder.orderNumber}: ${err.message}`)
+    })
+
+    return updatedOrder
+  }
+
+  async confirmTransfer(identifier: string, accessToken?: string) {
+    const order = await this.prisma.order.findFirst({
+      where: { OR: [{ id: identifier }, { orderNumber: identifier }], deletedAt: null },
+    })
+    if (!order) throw new NotFoundException('Không tìm thấy đơn hàng')
+    this.assertPaymentAccess(order.id, accessToken)
+    if (order.paymentMethod !== 'bank_transfer' || order.status === 'cancelled') {
+      throw new BadRequestException('Đơn hàng không thể xác nhận chuyển khoản')
+    }
+    if (order.paymentStatus === 'paid') return order
+    return this.prisma.order.update({
+      where: { id: order.id },
+      data: { transferClaimedAt: order.transferClaimedAt || new Date(), paymentStatus: 'pending_approval' },
+      include: { items: { where: { deletedAt: null } } },
+    })
+  }
+
+  /**
+   * ADMIN: Lấy danh sách đơn hàng với phân trang, bộ lọc và tìm kiếm
+   */
+  async getAdminOrders(query: {
+    page?: number
+    limit?: number
+    status?: string
+    paymentStatus?: string
+    search?: string
+  }) {
+    const page = Math.max(1, Number(query.page) || 1)
+    const limit = Math.max(1, Math.min(100, Number(query.limit) || 20))
+    const skip = (page - 1) * limit
+
+    const where: any = {
+      deletedAt: null,
+      isDraft: false,
+    }
+
+    if (query.status && query.status !== 'all') {
+      where.status = query.status
+    }
+
+    if (query.paymentStatus && query.paymentStatus !== 'all') {
+      where.paymentStatus = query.paymentStatus
+    }
+
+    if (query.search && query.search.trim()) {
+      const s = query.search.trim()
+      where.OR = [
+        { orderNumber: { contains: s } },
+        { customerName: { contains: s } },
+        { customerEmail: { contains: s } },
+        { phoneNumber: { contains: s } },
+        { sapoOrderNumber: { contains: s } },
+      ]
+    }
+
+    const [items, total] = await Promise.all([
+      this.prisma.order.findMany({
+        where,
+        include: {
+          items: { where: { deletedAt: null } },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.order.count({ where }),
+    ])
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    }
+  }
+
+  /**
+   * ADMIN: Cập nhật trạng thái đơn hàng (ví dụ: Chờ xác nhận -> Đang chuẩn bị / Đã xác nhận)
+   * TỰ ĐỘNG GỬI EMAIL XÁC NHẬN CHO KHÁCH HÀNG KHI XÁC NHẬN ĐƠN
+   */
+  async updateOrderStatus(identifier: string, status: string, _userId?: string) {
+    if (!['pending', 'processing', 'shipped', 'delivered', 'cancelled'].includes(status)) {
+      throw new BadRequestException('Trạng thái đơn hàng không hợp lệ')
+    }
+    const order = await this.prisma.order.findFirst({
+      where: {
+        OR: [{ id: identifier }, { orderNumber: identifier }],
+        deletedAt: null,
+      },
+      include: {
+        items: { where: { deletedAt: null } },
+      },
+    })
+
+    if (!order) {
+      throw new NotFoundException('Không tìm thấy đơn hàng')
+    }
+
+    if (['processing', 'shipped', 'delivered'].includes(status) && order.paymentStatus !== 'paid') {
+      throw new BadRequestException('Cần duyệt thanh toán trước khi xử lý đơn hàng')
+    }
+
+    const data: any = {
+      status,
+      updatedAt: new Date(),
+    }
+
+    // Nếu đơn được xác nhận (chuyển sang processing / confirmed)
+    if (status === 'processing' && !order.confirmedAt) {
+      data.confirmedAt = new Date()
+    }
+
+    const updatedOrder = await this.prisma.order.update({
+      where: { id: order.id },
+      data,
+      include: {
+        items: { where: { deletedAt: null } },
+      },
+    })
+
+    this.logger.log(`Admin (${_userId || 'system'}) đã cập nhật trạng thái đơn #${updatedOrder.orderNumber} sang: ${status}`)
+
+    // Tự động gửi email xác nhận cho khách hàng lúc xác nhận đơn!
+    if (status === 'processing') {
+      this.mailService.sendOrderConfirmation(updatedOrder as any).then((res) => {
+        if (res.success) {
+          this.prisma.order
+            .update({
+              where: { id: order.id },
+              data: { confirmationEmailSentAt: new Date() },
+            })
+            .catch(() => {})
+        }
+      }).catch((err) => {
+        this.logger.error(`Lỗi gửi email xác nhận đơn #${updatedOrder.orderNumber}: ${err.message}`)
+      })
+    }
+
+    return updatedOrder
+  }
+
+  /**
+   * ADMIN: Xác nhận thanh toán (Chuyển khoản thành công)
+   */
+  async updatePaymentStatus(identifier: string, paymentStatus: string, _userId?: string) {
+    if (!['unpaid', 'pending_approval', 'paid'].includes(paymentStatus)) {
+      throw new BadRequestException('Trạng thái thanh toán không hợp lệ')
+    }
+    const order = await this.prisma.order.findFirst({
+      where: {
+        OR: [{ id: identifier }, { orderNumber: identifier }],
+        deletedAt: null,
+      },
+      include: {
+        items: { where: { deletedAt: null } },
+      },
+    })
+
+    if (!order) {
+      throw new NotFoundException('Không tìm thấy đơn hàng')
+    }
+
+    if (order.status === 'cancelled' && paymentStatus === 'paid') {
+      throw new BadRequestException('Không thể duyệt thanh toán cho đơn hàng đã hủy')
+    }
+    if (['processing', 'shipped', 'delivered'].includes(order.status) && paymentStatus !== 'paid') {
+      throw new BadRequestException('Không thể chuyển đơn đang xử lý hoặc đã giao về chưa thanh toán')
+    }
+
+    const data: any = {
+      paymentStatus,
+      updatedAt: new Date(),
+    }
+
+    if (paymentStatus === 'paid') {
+      data.paymentConfirmedAt = new Date()
+      // Nếu đơn đang pending thì tự động chuyển sang processing khi đã nhận tiền
+      if (order.status === 'pending') {
+        data.status = 'processing'
+        data.confirmedAt = order.confirmedAt || new Date()
+      }
+    }
+
+    const updatedOrder = await this.prisma.order.update({
+      where: { id: order.id },
+      data,
+      include: {
+        items: { where: { deletedAt: null } },
+      },
+    })
+
+    this.logger.log(
+      `Admin cập nhật trạng thái thanh toán đơn #${updatedOrder.orderNumber} sang: ${paymentStatus}`,
+    )
+
+    // Nếu đã thanh toán, gửi email thông báo đã xác nhận thanh toán & đơn hàng
+    if (paymentStatus === 'paid') {
+      this.mailService.sendOrderConfirmation(updatedOrder as any).then((res) => {
+        if (res.success) {
+          this.prisma.order
+            .update({
+              where: { id: order.id },
+              data: { confirmationEmailSentAt: new Date() },
+            })
+            .catch(() => {})
+        }
+      }).catch((err) => {
+        this.logger.error(`Lỗi gửi email sau khi duyệt thanh toán đơn #${updatedOrder.orderNumber}: ${err.message}`)
+      })
+    }
+
+    return updatedOrder
+  }
+
+  /**
+   * ADMIN: Chủ động gửi lại email xác nhận đơn hàng
+   */
+  async sendOrderConfirmationEmail(identifier: string) {
+    const order = await this.prisma.order.findFirst({
+      where: {
+        OR: [{ id: identifier }, { orderNumber: identifier }],
+        deletedAt: null,
+      },
+      include: {
+        items: { where: { deletedAt: null } },
+      },
+    })
+
+    if (!order) {
+      throw new NotFoundException('Không tìm thấy đơn hàng')
+    }
+
+    const result = await this.mailService.sendOrderConfirmation(order as any)
+    if (result.success) {
+      await this.prisma.order.update({
+        where: { id: order.id },
+        data: { confirmationEmailSentAt: new Date() },
+      })
+    }
+
+    return {
+      success: result.success,
+      customerEmail: order.customerEmail,
+      messageId: result.messageId,
+      error: result.error,
+    }
   }
 }

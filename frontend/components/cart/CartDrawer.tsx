@@ -22,26 +22,34 @@ interface CartDrawerProps {
 }
 
 export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
-  const { isAuthenticated, openAuthModal, setCartCount } = useCustomerStore()
-  const [cart, setCart] = useState<any>(null)
+  const { isAuthenticated, openAuthModal, setCartCount, cachedCart, setCachedCart } = useCustomerStore()
+  const [cart, setCart] = useState<any>(cachedCart || null)
   const [loading, setLoading] = useState(false)
   const [selectedItemIds, setSelectedItemIds] = useState<string[]>([])
 
+  // Đồng bộ với cachedCart trong store nếu có
+  useEffect(() => {
+    if (cachedCart) {
+      setCart(cachedCart)
+    }
+  }, [cachedCart])
+
   const fetchCart = async (silent = false) => {
     if (!isAuthenticated) return
-    if (!silent) setLoading(true)
+    const hasInitialData = Boolean(cart?.items || cachedCart?.items)
+    if (!silent && !hasInitialData) {
+      setLoading(true)
+    }
     try {
       const data = await api.getCart()
       setCart(data)
-      const totalQty = (data?.items || []).reduce(
-        (sum: number, item: any) => sum + (item.quantity || 1),
-        0,
-      )
-      setCartCount(totalQty)
+      setCachedCart(data)
+      const productTypesCount = (data?.items || []).length
+      setCartCount(productTypesCount)
     } catch (err: any) {
       console.error('Lỗi khi tải giỏ hàng:', err)
     } finally {
-      if (!silent) setLoading(false)
+      setLoading(false)
     }
   }
 
@@ -51,24 +59,23 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
         onClose()
         openAuthModal('Vui lòng đăng nhập để xem giỏ hàng của bạn')
       } else {
-        fetchCart()
+        setSelectedItemIds([])
+        // Nếu đã có dữ liệu cache thì tải ngầm (silent), hiển thị giỏ hàng ngay lập tức 0ms
+        const hasCache = Boolean(cart?.items || cachedCart?.items)
+        fetchCart(hasCache)
       }
+    } else {
+      setSelectedItemIds([])
     }
   }, [isOpen, isAuthenticated])
 
-  // Tự động chọn tất cả sản phẩm khi tải giỏ hàng lần đầu hoặc bảo toàn mục đang chọn
+  // Khi danh sách sản phẩm thay đổi (ví dụ có sản phẩm bị xóa), chỉ loại bỏ các ID không còn tồn tại
   useEffect(() => {
     if (cart?.items) {
       const validIds = new Set(cart.items.map((i: any) => i.id))
-      setSelectedItemIds((prev) => {
-        if (prev.length === 0) {
-          return cart.items.map((i: any) => i.id)
-        }
-        const remaining = prev.filter((id) => validIds.has(id))
-        return remaining.length > 0 ? remaining : cart.items.map((i: any) => i.id)
-      })
+      setSelectedItemIds((prev) => prev.filter((id) => validIds.has(id)))
     }
-  }, [cart])
+  }, [cart?.items])
 
   const toggleSelectItem = (id: string) => {
     setSelectedItemIds((prev) =>
@@ -91,21 +98,17 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
     // Optimistic UI Update: Cập nhật ngay trên state để không bị nháy giỏ hàng
     const previousCart = cart
-    setCart((prev: any) => {
+    const applyUpdate = (prev: any) => {
       if (!prev?.items) return prev
       const updatedItems = prev.items.map((item: any) =>
         item.id === cartItemId ? { ...item, quantity: newQty } : item,
       )
       return { ...prev, items: updatedItems }
-    })
+    }
 
-    // Cập nhật tổng số lượng lên navbar badge ngay tức thì
-    const nextTotalQty = ((cart?.items || []) as any[]).reduce(
-      (sum: number, item: any) =>
-        sum + (item.id === cartItemId ? newQty : item.quantity || 1),
-      0,
-    )
-    setCartCount(nextTotalQty)
+    const updated = applyUpdate(previousCart)
+    setCart(updated)
+    setCachedCart(updated)
 
     try {
       await api.updateCartItem(cartItemId, newQty)
@@ -114,26 +117,21 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
     } catch (err) {
       // Rollback nếu có lỗi mạng
       setCart(previousCart)
-      const rollbackQty = (previousCart?.items || []).reduce(
-        (sum: number, item: any) => sum + (item.quantity || 1),
-        0,
-      )
-      setCartCount(rollbackQty)
+      setCachedCart(previousCart)
       toast.error('Không thể cập nhật số lượng')
     }
   }
 
   const handleRemoveItem = async (cartItemId: string) => {
     const previousCart = cart
+    const updatedItems = (cart?.items || []).filter((item: any) => item.id !== cartItemId)
+    const updatedCart = { ...cart, items: updatedItems }
+
     // Optimistic UI: Xóa ngay khỏi list
-    setCart((prev: any) => {
-      if (!prev?.items) return prev
-      return {
-        ...prev,
-        items: prev.items.filter((item: any) => item.id !== cartItemId),
-      }
-    })
+    setCart(updatedCart)
+    setCachedCart(updatedCart)
     setSelectedItemIds((prev) => prev.filter((id) => id !== cartItemId))
+    setCartCount(updatedItems.length)
 
     try {
       await api.removeCartItem(cartItemId)
@@ -141,7 +139,8 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
       fetchCart(true)
     } catch (err) {
       setCart(previousCart)
-      toast.error('Không thể xóa sản phẩm')
+      setCachedCart(previousCart)
+      toast.error('Không thể xóa sản phẩm khỏi giỏ hàng')
     }
   }
 
@@ -217,7 +216,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
           {/* Items List */}
           <div className="flex-1 overflow-y-auto p-6 divide-y divide-stone-100">
-            {loading ? (
+            {loading && items.length === 0 ? (
               <div className="h-40 flex items-center justify-center">
                 <div className="w-6 h-6 border-2 border-[#8C7E6A] border-t-transparent rounded-full animate-spin" />
               </div>

@@ -1,4 +1,7 @@
 import { type Metadata } from 'next'
+import { notFound } from 'next/navigation'
+import { fetchSiteContentServer } from '@/lib/server-utils'
+import { parseSitePages } from '@/lib/site-structure'
 import Image from 'next/image'
 import Link from 'next/link'
 import Script from 'next/script'
@@ -122,6 +125,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function JournalPage({ params }: PageProps) {
+  if (parseSitePages(await fetchSiteContentServer()).find((page) => page.slug === 'journal')?.isVisible === false) notFound()
   const locale = params.locale === 'vi' ? 'vi' : 'en'
   const t = await getTranslations({ locale, namespace: 'journal' })
   const tNav = await getTranslations({ locale, namespace: 'Navigation' })

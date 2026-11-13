@@ -1,4 +1,7 @@
 import { type Metadata } from 'next'
+import { notFound } from 'next/navigation'
+import { fetchSiteContentServer } from '@/lib/server-utils'
+import { parseSitePages } from '@/lib/site-structure'
 import Script from 'next/script'
 import { Suspense } from 'react'
 import { buildPageMetadata, getCanonicalBaseUrl, getSeoBrandName } from '@/lib/seo'
@@ -108,6 +111,7 @@ export async function generateMetadata({
 }
 
 export default async function ShopPage({ params }: { params: { locale: string } }) {
+  if (parseSitePages(await fetchSiteContentServer()).find((page) => page.slug === 'shop')?.isVisible === false) notFound()
   const locale = params.locale === 'vi' ? 'vi' : 'en'
   const branding = await fetchBranding()
   const brandName = getSeoBrandName(locale, branding)

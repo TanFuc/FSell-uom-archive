@@ -2,6 +2,8 @@ import { type Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import { notFound, permanentRedirect } from 'next/navigation'
+import { fetchSiteContentServer } from '@/lib/server-utils'
+import { parseSitePages } from '@/lib/site-structure'
 import Script from 'next/script'
 import { getTranslations } from 'next-intl/server'
 import { JournalRichContent } from '@/components/journal/JournalRichContent'
@@ -163,6 +165,7 @@ export async function generateMetadata({ params }: StoryDetailProps): Promise<Me
 }
 
 export default async function StoryDetailPage({ params }: StoryDetailProps) {
+  if (parseSitePages(await fetchSiteContentServer()).find((page) => page.slug === 'journal')?.isVisible === false) notFound()
   const t = await getTranslations({ locale: params.locale, namespace: 'journal' })
   const [siteContent, branding] = await Promise.all([fetchSiteContent(), fetchBranding()])
   const brandName = getSeoBrandName(params.locale, branding)

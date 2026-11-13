@@ -1,8 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import axios from 'axios'
 import { PrismaService } from '../prisma/prisma.service'
 import { SapoService } from './sapo.service'
 import { UploadService } from '../upload/upload.service'
+import { RedisService } from '../redis/redis.service'
 
 @Injectable()
 export class SapoSyncService {
@@ -12,6 +14,8 @@ export class SapoSyncService {
     private readonly prisma: PrismaService,
     private readonly sapoService: SapoService,
     private readonly uploadService: UploadService,
+    private readonly redisService: RedisService,
+    private readonly configService: ConfigService,
   ) {}
 
   /**
@@ -38,6 +42,9 @@ export class SapoSyncService {
         })
       }
     }
+
+    // Xóa sạch cache Redis và kích hoạt revalidate sau khi hoàn tất batch sync
+    await this.invalidateProductCache()
 
     return results
   }
@@ -113,7 +120,17 @@ export class SapoSyncService {
    * 3. Nếu tải/upload lỗi, luôn fallback giữ link gốc CDN Sapo để đảm bảo hình ảnh không bị mất
    * 4. Đối chiếu DB: Insert mới hoặc Update
    */
-  async syncSingleProduct(sapoProductId: string, userId?: string) {
+  async syncSingleProduct(
+    sapoProductId: string,
+    userId?: string,
+    options?: { onlyUpdateExisting?: boolean },
+  ) {
+    if (options?.onlyUpdateExisting) {
+      const linked = await this.prisma.product.findFirst({
+        where: { sapoProductId, deletedAt: null },
+      })
+      if (!linked) return null
+    }
     const sapoProduct = await this.sapoService.getProductDetail(sapoProductId)
     if (!sapoProduct) {
       throw new Error(`Không tìm thấy sản phẩm trên Sapo với ID ${sapoProductId}`)
@@ -124,8 +141,19 @@ export class SapoSyncService {
     const priceVND = Math.round(Number(firstVariant.price || 0))
     const stock = Number(firstVariant.inventory_quantity || 0)
 
+    const linkedProduct = await this.prisma.product.findFirst({
+      where: { sapoProductId: String(sapoProductId), hardDeletedAt: null, ...(options?.onlyUpdateExisting ? { deletedAt: null } : {}) },
+    })
+    const skuProduct = !linkedProduct && !options?.onlyUpdateExisting
+      ? await this.prisma.product.findFirst({ where: { sku, deletedAt: null } })
+      : null
+    if (skuProduct?.sapoProductId && skuProduct.sapoProductId !== String(sapoProductId)) {
+      throw new Error(`SKU ${sku} đã liên kết với sản phẩm Sapo khác`)
+    }
+    const existing = linkedProduct || skuProduct
+
     // 1. Tải ảnh từ Sapo và Upload lên hệ thống lưu trữ nội bộ (hoặc fallback Sapo CDN)
-    const sapoImageUrls = this.extractAllSapoImageUrls(sapoProduct)
+    const sapoImageUrls = existing ? [] : this.extractAllSapoImageUrls(sapoProduct)
     const finalImageUrls: string[] = []
 
     for (const imgUrl of sapoImageUrls) {
@@ -155,14 +183,6 @@ export class SapoSyncService {
       }
     }
 
-    // 2. Đối chiếu DB: Tìm theo sapoProductId hoặc SKU
-    const existing = await this.prisma.product.findFirst({
-      where: {
-        OR: [{ sapoProductId: String(sapoProductId) }, { sku }],
-        deletedAt: null,
-      },
-    })
-
     const name = sapoProduct.name || 'Sản phẩm Sapo'
     const slug = sapoProduct.alias
       ? `${sapoProduct.alias}-${Date.now().toString().slice(-4)}`
@@ -170,6 +190,11 @@ export class SapoSyncService {
     const description = sapoProduct.content || ''
 
     if (!existing) {
+      if (options?.onlyUpdateExisting) {
+        this.logger.log(`Bỏ qua tạo mới sản phẩm Sapo ID ${sapoProductId} vì tùy chọn onlyUpdateExisting=true (sản phẩm chưa được đồng bộ vào website)`)
+        return null
+      }
+
       // INSERT MỚI
       const newProduct = await this.prisma.product.create({
         data: {
@@ -189,24 +214,77 @@ export class SapoSyncService {
         },
       })
       this.logger.log(`Tạo mới sản phẩm từ Sapo thành công: ${newProduct.nameVi} (SKU: ${sku}, Ảnh: ${finalImageUrls.length})`)
+      await this.invalidateProductCache(newProduct.id, newProduct.slug)
       return newProduct
     } else {
       // UPDATE SẢN PHẨM HIỆN TẠI
       const updatedProduct = await this.prisma.product.update({
         where: { id: existing.id },
         data: {
-          nameVi: name,
-          sku,
           sapoProductId: String(sapoProductId),
           priceVND,
           stock,
-          images: finalImageUrls.length > 0 ? finalImageUrls : (existing.images as any),
-          hoverImage: finalImageUrls[1] || finalImageUrls[0] || existing.hoverImage,
+          ...(existing.deletedAt ? { deletedAt: null, isActive: true } : {}),
           updatedBy: userId || null,
         },
       })
       this.logger.log(`Cập nhật sản phẩm từ Sapo thành công: ${updatedProduct.nameVi} (SKU: ${sku}, Ảnh: ${finalImageUrls.length})`)
+      await this.invalidateProductCache(updatedProduct.id, updatedProduct.slug)
       return updatedProduct
+    }
+  }
+
+  /**
+   * Xóa sạch cache Redis cho sản phẩm và trigger revalidate frontend
+   */
+  async invalidateProductCache(productId?: string, slug?: string) {
+    try {
+      await this.redisService.delPattern('products:*')
+      await this.redisService.delPattern('product:*')
+      if (productId) {
+        await this.redisService.del(`product:${productId}`)
+      }
+      if (slug) {
+        await this.redisService.del(`product:slug:${slug}`)
+      }
+      this.logger.log('Đã xóa sạch cache Redis cho danh sách và chi tiết sản phẩm (products:*, product:*)')
+
+      // Gọi revalidate phía frontend (Next.js)
+      await this.triggerFrontendRevalidation(slug)
+    } catch (err: any) {
+      this.logger.warn(`Lỗi khi xóa cache Redis sau khi sync: ${err.message}`)
+    }
+  }
+
+  private async triggerFrontendRevalidation(slug?: string) {
+    try {
+      const frontendUrl =
+        this.configService.get<string>('FRONTEND_URL') ||
+        this.configService.get<string>('NEXT_PUBLIC_APP_URL') ||
+        'http://localhost:3005'
+      const revalidateSecret =
+        this.configService.get<string>('REVALIDATE_SECRET') ||
+        this.configService.get<string>('SITEMAP_REVALIDATE_SECRET') ||
+        '7f97bbe5e41cb9bf455a5d123bb2f4567a8717d456da6e92b5810a2b6b4039b5'
+
+      const paths = ['/', '/shop']
+      if (slug) {
+        paths.push(`/shop/${slug}`)
+      }
+
+      await axios.post(
+        `${frontendUrl.replace(/\/$/, '')}/api/revalidate`,
+        { paths, secret: revalidateSecret },
+        {
+          headers: {
+            'x-revalidate-secret': revalidateSecret,
+            'ngrok-skip-browser-warning': 'true',
+          },
+          timeout: 3000,
+        },
+      ).catch(() => {})
+    } catch {
+      // Best effort, ignore error
     }
   }
 }

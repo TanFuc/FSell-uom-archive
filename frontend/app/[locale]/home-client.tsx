@@ -11,6 +11,7 @@ import { ProductCard } from '@/components/ProductCard'
 import { useBanners } from '@/hooks/use-banners'
 import { useProducts } from '@/hooks/use-products'
 import { useSiteContent } from '@/hooks/use-settings'
+import { pageHref, parseHomeSections, parseSitePages } from '@/lib/site-structure'
 import { getStorySlug, parseStories, STORIES_CONTENT_KEY, type StoryItem } from '@/lib/stories'
 import { type Banner, type PaginatedResponse, type Product, type SiteContent } from '@/lib/types'
 import { cn, optimizeProductImage } from '@/lib/utils'
@@ -231,6 +232,23 @@ export default function HomeClient({
   const { data: siteContent, isLoading: isLoadingStories } = useSiteContent({
     initialData: initialSiteContent,
   }) as UseQueryResult<SiteContent>
+  const sitePages = parseSitePages(siteContent)
+  const sections = parseHomeSections(siteContent)
+  const sectionVisible = (key: string) => {
+    if (['products', 'journal'].includes(key) && sitePages.find((page) => page.slug === (key === 'products' ? 'shop' : 'journal'))?.isVisible === false) return false
+    return sections.find((item) => item.key === key)?.isVisible !== false
+  }
+  const sectionText = (key: string, field: 'title' | 'subtitle') => {
+    const section = sections.find((item) => item.key === key)
+    return locale === 'vi' ? section?.[`${field}Vi`] : section?.[`${field}En`]
+  }
+  const visibleHomepageLinks = [
+    ...homepageLinks.map((item, index) => {
+      const page = sitePages.find((entry) => entry.slug === ['shop', 'journal', 'about', 'contact'][index])
+      return page ? { ...item, title: locale === 'vi' ? page.titleVi : page.titleEn, description: locale === 'vi' ? page.descriptionVi : page.descriptionEn, isVisible: page.isVisible } : { ...item, isVisible: true }
+    }).filter((item) => item.isVisible && (item.href !== `/${locale}/about#contact` || sitePages.find((page) => page.slug === 'about')?.isVisible)),
+    ...sitePages.filter((page) => page.isVisible && !['home', 'shop', 'journal', 'about', 'contact'].includes(page.slug)).map((page) => ({ title: locale === 'vi' ? page.titleVi : page.titleEn, description: locale === 'vi' ? page.descriptionVi : page.descriptionEn, href: pageHref(locale, page.slug) })),
+  ]
   const stories = parseStories(siteContent?.[STORIES_CONTENT_KEY]).filter(
     (story) => story.isVisible !== false,
   )
@@ -255,7 +273,7 @@ export default function HomeClient({
   return (
     <div className="safe-screen pt-0">
       {/* Hero Banner Section */}
-      <section className="w-full">
+      <section className="w-full" hidden={!sectionVisible('hero')}>
         {isLoadingBanners ? (
           <div className="h-[82vh] w-full animate-pulse bg-muted/20 sm:h-[88vh] md:h-[92vh] lg:h-[96vh] xl:h-screen" />
         ) : (
@@ -264,7 +282,7 @@ export default function HomeClient({
       </section>
 
       {/* Section: New Arrivals */}
-      <section className="w-full bg-white py-16 pt-24">
+      <section className="w-full bg-white py-16 pt-24" hidden={!sectionVisible('products')}>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -273,10 +291,10 @@ export default function HomeClient({
         >
           <div className="min-w-0 space-y-3">
             <h2 className="text-mobile-safe text-[8px] font-bold uppercase tracking-[0.28em] text-foreground/40 sm:tracking-[0.4em]">
-              {locale === 'vi' ? 'BST MỚI NHẤT' : 'NEW COLLECTIONS'}
+              {sectionText('products', 'title')}
             </h2>
             <p className="text-mobile-safe font-sans text-lg font-bold uppercase tracking-[0.08em] sm:tracking-[0.1em]">
-              {locale === 'vi' ? 'Sản phẩm gợi ý' : 'Suggested for you'}
+              {sectionText('products', 'subtitle')}
             </p>
           </div>
           <Link
@@ -336,14 +354,14 @@ export default function HomeClient({
       </section>
 
       {/* Section: JOURNAL */}
-      <section className="w-full border-t border-foreground/[0.03] bg-white py-24">
+      <section className="w-full border-t border-foreground/[0.03] bg-white py-24" hidden={!sectionVisible('journal')}>
         <div className="mb-16 flex flex-wrap items-end justify-between gap-4 px-4 pb-8 sm:px-6 lg:px-12">
           <div className="min-w-0 space-y-3">
             <h2 className="text-mobile-safe text-[9px] font-bold uppercase tracking-[0.28em] text-foreground/40 sm:tracking-[0.35em] md:text-[10px]">
-              JOURNAL
+              {sectionText('journal', 'title')}
             </h2>
             <p className="text-mobile-safe font-sans text-base font-bold uppercase tracking-[0.08em] md:text-lg md:tracking-[0.1em]">
-              {locale === 'vi' ? 'Nhật ký & Câu chuyện' : 'Stories & Journal'}
+              {sectionText('journal', 'subtitle')}
             </p>
           </div>
           <Link
@@ -377,8 +395,8 @@ export default function HomeClient({
         ) : stories.length === 0 ? (
           <div className="px-4 text-sm text-foreground/50 sm:px-6 lg:px-12">
             {locale === 'vi'
-              ? 'Stories đang được cập nhật. Xem lại sau nhé.'
-              : 'Stories are being updated. Please check back soon.'}
+              ? sections.find((section) => section.key === 'journal')?.bodyVi
+              : sections.find((section) => section.key === 'journal')?.bodyEn}
           </div>
         ) : (
           <div className="group/container relative">
@@ -449,22 +467,22 @@ export default function HomeClient({
         )}
       </section>
 
-      <section className="w-full border-t border-foreground/[0.04] bg-white px-4 py-16 sm:px-6 lg:px-12">
+      <section className="w-full border-t border-foreground/[0.04] bg-white px-4 py-16 sm:px-6 lg:px-12" hidden={!sectionVisible('explore')}>
         <div className="mx-auto max-w-6xl">
           <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
             <div className="space-y-3">
               <h2 className="text-mobile-safe text-[9px] font-bold uppercase tracking-[0.28em] text-foreground/40 sm:tracking-[0.35em] md:text-[10px]">
-                {locale === 'vi' ? 'KHÁM PHÁ ƯƠM' : 'EXPLORE UOM'}
+                {sectionText('explore', 'title')}
               </h2>
               <p className="text-mobile-safe font-sans text-base font-bold uppercase tracking-[0.08em] md:text-lg md:tracking-[0.1em]">
-                {locale === 'vi' ? 'Các trang trong website' : 'Pages in this website'}
+                {sectionText('explore', 'subtitle')}
               </p>
             </div>
           </div>
 
           <nav aria-label={locale === 'vi' ? 'Các trang trong website' : 'Website pages'}>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {homepageLinks.map((item) => (
+              {visibleHomepageLinks.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
@@ -486,6 +504,7 @@ export default function HomeClient({
         </div>
       </section>
 
+      {sections.filter((section) => section.key.startsWith('custom-') && section.isVisible).map((section) => <section key={section.key} className="border-t border-foreground/10 bg-white px-4 py-16 sm:px-6 lg:px-12"><div className="mx-auto max-w-6xl"><h2 className="text-xs font-bold uppercase tracking-[0.25em] text-foreground/50">{locale === 'vi' ? section.titleVi : section.titleEn}</h2><p className="mt-4 font-serif text-xl text-foreground sm:text-3xl">{locale === 'vi' ? section.subtitleVi : section.subtitleEn}</p><p className="mt-5 max-w-3xl whitespace-pre-wrap text-sm leading-7 text-foreground/65">{locale === 'vi' ? section.bodyVi : section.bodyEn}</p></div></section>)}
       <div className="py-20" />
     </div>
   )

@@ -9,6 +9,7 @@ import {
   UpdateSocialLinksDto,
   UpdateExchangeRateDto,
   UpdateBrandingDto,
+  UpdatePaymentSettingsDto,
 } from './dto'
 import { SettingsService } from './settings.service'
 
@@ -123,5 +124,29 @@ export class SettingsController {
   @ApiResponse({ status: 200, description: 'Branding updated' })
   async updateBranding(@Body() dto: UpdateBrandingDto, @CurrentUser() user: JwtPayload) {
     return this.settingsService.updateBranding(dto, user.sub)
+  }
+
+  @Get('payment')
+  @ApiOperation({
+    summary: 'Get payment QR code and bank transfer settings (public)',
+  })
+  @ApiResponse({ status: 200, description: 'Payment settings' })
+  async getPaymentSettings() {
+    return this.settingsService.getPaymentSettings()
+  }
+
+  @Put('payment')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.MANAGER)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Update payment QR code and bank transfer settings (admin/manager)',
+  })
+  @ApiResponse({ status: 200, description: 'Payment settings updated' })
+  async updatePaymentSettings(
+    @Body() dto: UpdatePaymentSettingsDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.settingsService.updatePaymentSettings(dto, user.sub)
   }
 }

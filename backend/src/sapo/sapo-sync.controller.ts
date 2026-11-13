@@ -14,9 +14,13 @@ import { SapoService } from './sapo.service'
 import { SapoSyncService } from './sapo-sync.service'
 import { PrismaService } from '../prisma/prisma.service'
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
+import { RolesGuard } from '../auth/guards/roles.guard'
+import { Roles } from '../auth/decorators/roles.decorator'
+import { Role } from '@prisma/client'
 
 @Controller('admin/sapo-sync')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.ADMIN, Role.MANAGER)
 export class SapoSyncController {
   constructor(
     private readonly sapoService: SapoService,
@@ -30,18 +34,24 @@ export class SapoSyncController {
   @Get('preview')
   async getPreviewList(@Query('page') page = '1') {
     const sapoProducts = await this.sapoService.getProductsPreview(Number(page), 50)
+    const inbox = await this.prisma.sapoProductInbox.findMany({
+      orderBy: { receivedAt: 'desc' },
+      take: 100,
+    })
+    const inboxById = new Map(inbox.map((event) => [event.sapoProductId, event]))
+    const listedIds = new Set(sapoProducts.map((product) => String(product.id)))
+    const previewProducts = [
+      ...sapoProducts,
+      ...(Number(page) === 1
+        ? inbox.filter((event) => !listedIds.has(event.sapoProductId)).map((event) => event.payload)
+        : []),
+    ] as any[]
 
-    const sapoIds = sapoProducts.map((p) => String(p.id))
-    const skus = sapoProducts
-      .map((p) => p.variants?.[0]?.sku)
-      .filter((sku): sku is string => Boolean(sku))
+    const sapoIds = previewProducts.map((p) => String(p.id))
 
     const existingProducts = await this.prisma.product.findMany({
       where: {
-        OR: [
-          { sapoProductId: { in: sapoIds } },
-          { sku: { in: skus } },
-        ],
+        sapoProductId: { in: sapoIds },
         deletedAt: null,
       },
       select: {
@@ -54,13 +64,12 @@ export class SapoSyncController {
     })
 
     const existingSapoIds = new Set(existingProducts.map((p) => p.sapoProductId).filter(Boolean))
-    const existingSkus = new Set(existingProducts.map((p) => p.sku).filter(Boolean))
 
-    return sapoProducts.map((p) => {
+    const items = previewProducts.map((p) => {
       const firstVariant = p.variants?.[0] || {}
       const sku = firstVariant.sku ? String(firstVariant.sku).trim() : ''
-      const isSynced =
-        existingSapoIds.has(String(p.id)) || (sku ? existingSkus.has(sku) : false)
+      const isSynced = existingSapoIds.has(String(p.id))
+      const pendingEvent = inboxById.get(String(p.id))
 
       const rawImg =
         p.image?.src ||
@@ -85,8 +94,11 @@ export class SapoSyncController {
         stock: Number(firstVariant.inventory_quantity || 0),
         image: previewImg || null,
         isSynced,
+        webhookTopic: pendingEvent?.topic || null,
+        webhookReceivedAt: pendingEvent?.receivedAt || null,
       }
     })
+    return { items, page: Number(page), hasMore: sapoProducts.length === 50 }
   }
 
   /**

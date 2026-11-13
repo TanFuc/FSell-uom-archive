@@ -1,5 +1,6 @@
 import { type Metadata } from 'next'
 import Link from 'next/link'
+import { notFound } from 'next/navigation'
 import Script from 'next/script'
 import {
   buildAbsoluteUrl,
@@ -13,6 +14,7 @@ import {
 } from '@/lib/seo'
 import { fetchBranding } from '@/lib/server-utils'
 import { getStorySlug, parseStories, STORIES_CONTENT_KEY, type StoryItem } from '@/lib/stories'
+import { pageHref, parseHomeSections, parseSitePages } from '@/lib/site-structure'
 import { type Banner, type Product } from '@/lib/types'
 import { DATA_REVALIDATE_SECONDS, PAGE_REVALIDATE_SECONDS } from '@/lib/cache-config'
 import HomeClient from './home-client'
@@ -180,6 +182,7 @@ export default async function HomePage({ params }: { params: { locale: string } 
   const locale = params.locale === 'vi' ? 'vi' : 'en'
   const baseUrl = getCanonicalBaseUrl()
   const [branding, ssrData] = await Promise.all([fetchBranding(), fetchHomeSsrData()])
+  if (parseSitePages(ssrData.siteContent).find((page) => page.slug === 'home')?.isVisible === false) notFound()
 
   const isVi = locale === 'vi'
   const brandName = getSeoBrandName(locale, branding)
@@ -188,13 +191,11 @@ export default async function HomePage({ params }: { params: { locale: string } 
   const description = getSeoSiteDescription(locale, branding)
   const logo = buildAbsoluteUrl(getSeoLogoUrl(branding), baseUrl)
   const socialProfiles = ['https://instagram.com/uomarchive', 'https://facebook.com/uomarchive']
-  const navigationItems = [
-    { name: isVi ? 'Trang chủ' : 'Home', url: `${baseUrl}/${locale}` },
-    { name: isVi ? 'Sản phẩm' : 'Shop', url: `${baseUrl}/${locale}/shop` },
-    { name: isVi ? 'Về chúng tôi' : 'About Us', url: `${baseUrl}/${locale}/about` },
-    { name: isVi ? 'Tạp chí' : 'Journal', url: `${baseUrl}/${locale}/journal` },
-    { name: isVi ? 'Liên hệ' : 'Contact', url: `${baseUrl}/${locale}/about#contact` },
-  ]
+  const sitePages = parseSitePages(ssrData.siteContent)
+  const navigationItems = sitePages
+    .filter((page) => page.isVisible && (page.slug !== 'contact' || sitePages.find((item) => item.slug === 'about')?.isVisible))
+    .map((page) => ({ name: isVi ? page.titleVi : page.titleEn, url: `${baseUrl}${pageHref(locale, page.slug)}` }))
+  const journalVisible = parseHomeSections(ssrData.siteContent).find((section) => section.key === 'journal')?.isVisible !== false
 
   return (
     <>
@@ -272,7 +273,7 @@ export default async function HomePage({ params }: { params: { locale: string } 
           </ul>
         </nav>
 
-        {ssrData.products.data.length > 0 && (
+        {sitePages.find((page) => page.slug === 'shop')?.isVisible !== false && ssrData.products.data.length > 0 && (
           <div suppressHydrationWarning>
             <h2 suppressHydrationWarning>{isVi ? 'Sản phẩm mới' : 'New Arrivals'}</h2>
             <ul suppressHydrationWarning>
@@ -288,7 +289,7 @@ export default async function HomePage({ params }: { params: { locale: string } 
           </div>
         )}
 
-        {ssrData.stories.length > 0 && (
+        {journalVisible && sitePages.find((page) => page.slug === 'journal')?.isVisible && ssrData.stories.length > 0 && (
           <div suppressHydrationWarning>
             <h2 suppressHydrationWarning>Journal</h2>
             <ul suppressHydrationWarning>

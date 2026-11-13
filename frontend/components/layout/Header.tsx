@@ -13,6 +13,7 @@ import { createPortal } from 'react-dom'
 import { useCategories } from '@/hooks/use-categories'
 import { useProducts } from '@/hooks/use-products'
 import { useBranding, useExchangeRate, useSiteContent, useSocialLinks } from '@/hooks/use-settings'
+import { pageHref, parseSitePages } from '@/lib/site-structure'
 import { getDisplayPrice } from '@/lib/currency'
 import {
   parseTrendingTerms,
@@ -158,9 +159,8 @@ export function Header() {
   const { data: exchangeRate } = useExchangeRate({ enabled: showSearch })
   const { data: socialLinks } = useSocialLinks()
   const { data: siteContent } = useSiteContent({
-    enabled: showSearch,
-    staleTime: 30 * 60 * 1000,
-    refetchOnMount: false,
+    staleTime: 15 * 1000,
+    refetchOnMount: true,
   })
 
   useEffect(() => {
@@ -435,13 +435,9 @@ export function Header() {
     node?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' })
   }, [activeSearchIndex, resultBatchKey, showSearch])
 
-  const navigation = [
-    { name: locale === 'vi' ? 'Trang chủ' : 'Home', href: `/${locale}` },
-    { name: locale === 'vi' ? 'Sản phẩm' : 'Shop', href: `/${locale}/shop` },
-    { name: locale === 'vi' ? 'Về chúng tôi' : 'About Us', href: `/${locale}/about` },
-    { name: locale === 'vi' ? 'Tạp chí' : 'Journal', href: `/${locale}/journal` },
-    { name: locale === 'vi' ? 'Liên hệ' : 'Contact', href: `/${locale}/about#contact` },
-  ]
+  const navigation = parseSitePages(siteContent)
+    .filter((page) => page.isVisible && (page.slug !== 'contact' || parseSitePages(siteContent).find((item) => item.slug === 'about')?.isVisible))
+    .map((page) => ({ name: locale === 'vi' ? page.titleVi : page.titleEn, href: pageHref(locale, page.slug) }))
 
   const switchLocale = locale === 'vi' ? 'en' : 'vi'
   const newPath = pathname.replace(`/${locale}`, `/${switchLocale}`)

@@ -4,11 +4,13 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useLocale } from 'next-intl'
 import { useSiteContent, useSocialLinks } from '@/hooks/use-settings'
+import { parseSitePages } from '@/lib/site-structure'
 import { getImageUrl } from '@/lib/utils'
 
 export default function AboutClient() {
   const locale = useLocale() as 'vi' | 'en'
   const { data: content } = useSiteContent()
+  const contactVisible = parseSitePages(content).find((page) => page.slug === 'contact')?.isVisible !== false
   const { data: socialLinks } = useSocialLinks()
 
   const getVal = (key: string, fallback: string = '') => {
@@ -196,7 +198,7 @@ export default function AboutClient() {
         </div>
       </section>
 
-      <section id="contact" className="container-custom spacing-md scroll-mt-24">
+      <section id="contact" className="container-custom spacing-md scroll-mt-24" hidden={!contactVisible}>
         <div className="mx-auto max-w-3xl space-y-6 text-center">
           <h2 className="text-mobile-safe uppercase tracking-[0.16em] sm:tracking-[0.25em]">
             {contactTitle}

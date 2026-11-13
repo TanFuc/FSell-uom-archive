@@ -329,6 +329,16 @@ async function fetchSiteContentFromApi(apiUrl: string): Promise<SiteContentRespo
   return payload as SiteContentResponse
 }
 
+export async function fetchSitemapSiteContent(): Promise<Record<string, string>> {
+  for (const apiUrl of API_URLS) {
+    try {
+      const content = await fetchSiteContentFromApi(apiUrl)
+      if (content) return Object.fromEntries(Object.entries(content).filter((entry): entry is [string, string] => typeof entry[1] === 'string'))
+    } catch { /* try the next configured API */ }
+  }
+  return {}
+}
+
 function stripLoneSurrogates(value: string): string {
   return value.replace(
     /([\uD800-\uDBFF])(?![\uDC00-\uDFFF])|(^|[^\uD800-\uDBFF])([\uDC00-\uDFFF])/g,
