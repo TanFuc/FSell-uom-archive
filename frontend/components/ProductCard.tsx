@@ -133,14 +133,14 @@ export function ProductCard({ product, locale, priority }: ProductCardProps) {
         )}
         {/* Sale badge */}
         {priceDisplay.hasDiscount && priceDisplay.discountPercentage && (
-          <div className="absolute left-2 top-2 z-20 rounded-sm bg-[#991b1b]/90 px-2 py-0.5 text-[9px] font-bold tracking-wide text-white backdrop-blur-sm md:text-[10px]">
+          <div className="absolute left-2 top-2 z-20 rounded-sm bg-[#991b1b]/95 px-2 py-0.5 text-[9px] font-medium tracking-wide text-white backdrop-blur-sm md:text-[10px]">
             -{priceDisplay.discountPercentage}%
           </div>
         )}
 
         {/* Featured badge */}
         {product.isFeatured && (
-          <div className="absolute right-2 top-2 z-20 flex items-center gap-1 rounded-sm border border-[#d4af37]/40 bg-black/80 px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.14em] text-[#e5c158] shadow-sm backdrop-blur-md md:text-[9px]">
+          <div className="absolute right-2 top-2 z-20 flex items-center gap-1 rounded-sm border border-[#d4af37]/40 bg-black/85 px-2 py-0.5 text-[8px] font-medium uppercase tracking-[0.14em] text-[#e5c158] shadow-sm backdrop-blur-md md:text-[9px]">
             <span className="text-[10px] leading-none">★</span>
             <span>{locale === 'vi' ? 'Nổi bật' : 'Featured'}</span>
           </div>
@@ -167,9 +167,9 @@ export function ProductCard({ product, locale, priority }: ProductCardProps) {
           )}
         </button>
       </div>
-      <div className="mt-3 space-y-1">
+      <div className="mt-3 space-y-1.5">
         <h3
-          className="line-clamp-2 h-7 overflow-hidden text-ellipsis font-sans text-[10px] font-medium leading-tight tracking-wide md:h-8 md:text-xs"
+          className="line-clamp-2 min-h-[2.6rem] sm:min-h-[2.85rem] overflow-hidden text-ellipsis font-serif text-[15px] sm:text-base md:text-[16.5px] font-light uppercase leading-snug tracking-wider text-black transition-colors group-hover:opacity-60"
           title={name}
         >
           {name}
@@ -177,14 +177,14 @@ export function ProductCard({ product, locale, priority }: ProductCardProps) {
         <div className="flex flex-wrap items-center gap-2">
           <p
             className={cn(
-              'font-sans text-[10px] font-medium uppercase tracking-wide md:text-xs',
-              priceDisplay.hasDiscount ? 'font-semibold text-[#991b1b]' : 'text-foreground',
+              'font-serif text-base sm:text-[17px] md:text-lg font-light tracking-tight text-black',
+              priceDisplay.hasDiscount && 'text-[#991b1b]',
             )}
           >
             {priceDisplay.currentPrice}
           </p>
           {priceDisplay.hasDiscount && priceDisplay.originalPrice && (
-            <p className="text-[8px] text-muted-foreground/40 line-through md:text-[10px]">
+            <p className="font-serif text-xs sm:text-sm font-thin text-stone-400 line-through">
               {priceDisplay.originalPrice}
             </p>
           )}

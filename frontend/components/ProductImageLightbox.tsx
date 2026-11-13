@@ -184,11 +184,11 @@ export default function ProductImageLightbox({
           >
             {/* Product info & counter */}
             <div className="flex items-center gap-3">
-              <span className="text-xs font-semibold uppercase tracking-[0.15em] text-white">
+              <span className="text-xs font-light uppercase tracking-[0.15em] text-white">
                 {productName}
               </span>
               {images.length > 1 && (
-                <span className="text-[11px] font-medium tracking-wider text-white/50">
+                <span className="text-[11px] font-thin tracking-wider text-white/50">
                   ({currentIndex + 1} / {images.length})
                 </span>
               )}
@@ -212,7 +212,7 @@ export default function ProductImageLightbox({
                 onClick={resetZoom}
                 aria-label="Reset Zoom"
                 title="Đặt lại phóng to (0)"
-                className="hidden h-9 items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 text-[11px] font-medium tracking-wider text-white transition hover:bg-white/20 sm:flex"
+                className="hidden h-9 items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 text-[11px] font-light tracking-wider text-white transition hover:bg-white/20 sm:flex"
               >
                 <RotateCcw className="h-3 w-3" />
                 <span>{Math.round(zoom * 100)}%</span>
@@ -334,7 +334,7 @@ export default function ProductImageLightbox({
                 ))}
               </div>
             ) : (
-              <p className="text-[10px] uppercase tracking-widest text-white/40">
+              <p className="text-[10px] font-thin uppercase tracking-widest text-white/40">
                 Nhấp hoặc cuộn chuột để phóng to / thu nhỏ
               </p>
             )}

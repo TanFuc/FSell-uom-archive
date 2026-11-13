@@ -1,7 +1,7 @@
 'use client'
 
 import { motion, AnimatePresence, useMotionValue, useSpring } from 'framer-motion'
-import { Instagram, Facebook, ArrowLeft, ChevronLeft, ChevronRight, ShoppingBag, Plus, Minus } from 'lucide-react'
+import { Instagram, Facebook, ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, ShoppingBag, Plus, Minus } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useLocale, useTranslations } from 'next-intl'
@@ -251,6 +251,7 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
   const { data: exchangeRate } = useExchangeRate({ enabled: locale === 'en' })
   const { data: socialLinks } = useSocialLinks()
 
+
   const { data: relatedProducts } = useProducts({
     page: 1,
     limit: 8,
@@ -281,7 +282,7 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
     if (!product) return
 
     if (!isAuthenticated) {
-      openAuthModal('Vui lòng đăng nhập tài khoản để thêm sản phẩm vào giỏ hàng', () => {
+      openAuthModal(t('loginToAddToCart'), () => {
         handleAddToCart(qty)
       })
       return
@@ -291,20 +292,20 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
     try {
       await api.addToCart(product.id, qty)
       useCustomerStore.getState().fetchCartCount()
-      toast.success('Đã thêm sản phẩm vào giỏ hàng!', {
+      toast.success(t('addedToCartSuccess'), {
         duration: 2000,
         action: {
-          label: 'Xem giỏ',
+          label: t('viewCart'),
           onClick: () => setIsCartDrawerOpen(true),
         },
       })
     } catch (err: any) {
       if (err?.response?.status === 401) {
-        openAuthModal('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại', () => {
+        openAuthModal(t('sessionExpiredLoginAgain'), () => {
           handleAddToCart(qty)
         })
       } else {
-        toast.error(err?.response?.data?.message || 'Không thể thêm sản phẩm vào giỏ hàng')
+        toast.error(err?.response?.data?.message || t('cannotAddToCart'))
       }
     } finally {
       setAddingToCart(false)
@@ -352,8 +353,6 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
   const variants = parseVariantSummary(shortDescriptionRaw, locale)
   const shortDescription = variants.cleanText
   const priceDisplay = getDisplayPrice(product, locale, exchangeRate?.rate)
-  const journalCta = locale === 'vi' ? 'Xem Journal' : 'Read the journal'
-  const shopCta = locale === 'vi' ? 'Xem shop' : 'Visit the shop'
   const faqTitle = locale === 'vi' ? 'Câu hỏi thường gặp' : 'Frequently asked questions'
   const faqItems =
     locale === 'vi'
@@ -526,26 +525,26 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
               <div className="md:sticky md:top-24 md:self-start lg:top-28">
                 <div className="w-full space-y-6 pb-12 pt-6 md:space-y-8 md:pb-0 md:pt-0">
                   {/* Info Header */}
-                  <div className="space-y-2">
-                    <h1 className="text-mobile-safe font-sans text-sm font-bold leading-tight tracking-[0.08em] text-foreground sm:text-base sm:tracking-[0.1em]">
+                  <div className="space-y-3">
+                    <h1 className="text-mobile-safe font-serif text-2xl sm:text-3xl md:text-4xl font-light uppercase tracking-wider leading-tight text-black">
                       {name}
                     </h1>
-                    <div className="flex flex-wrap items-center gap-2.5">
+                    <div className="flex flex-wrap items-baseline gap-3">
                       <p
                         className={cn(
-                          'font-sans text-xs font-semibold tracking-[0.05em] sm:text-sm',
-                          priceDisplay.hasDiscount ? 'text-[#991b1b]' : 'text-foreground',
+                          'font-serif text-2xl sm:text-3xl md:text-4xl font-light tracking-tight text-black',
+                          priceDisplay.hasDiscount && 'text-[#991b1b]',
                         )}
                       >
                         {priceDisplay.currentPrice}
                       </p>
                       {priceDisplay.hasDiscount && priceDisplay.originalPrice && (
                         <>
-                          <p className="text-xs font-light text-foreground/30 line-through">
+                          <p className="font-serif text-sm sm:text-base font-thin text-neutral-400 line-through">
                             {priceDisplay.originalPrice}
                           </p>
                           {priceDisplay.discountPercentage && (
-                            <span className="rounded-sm bg-[#991b1b]/10 px-1.5 py-0.5 text-[9px] font-bold tracking-wide text-[#991b1b]">
+                            <span className="rounded-xs bg-[#991b1b] px-2 py-0.5 font-serif text-xs font-light tracking-wide text-white">
                               −{priceDisplay.discountPercentage}%
                             </span>
                           )}
@@ -554,97 +553,80 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                     </div>
                   </div>
 
-                  {/* Details Section */}
-                  <div className="space-y-4">
-                    <h4 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-foreground">
-                      {t('details')}
-                    </h4>
-
+                  {/* Details Section - Clean Unboxed Editorial Presentation matching Design Spec */}
+                  <div className="space-y-3.5 pt-1 text-black">
+                    {/* Short Description (body Thin) */}
                     {shortDescription ? (
-                      <p className="text-[12px] font-medium leading-[1.75] tracking-[0.02em] text-foreground/90">
+                      <p className="font-serif font-thin text-sm sm:text-base leading-relaxed text-black">
                         {shortDescription}
                       </p>
                     ) : null}
 
-                    {/* Chất liệu & Kích thước */}
-                    {(product.material || product.dimensions) && (
-                      <div className="flex flex-col gap-1 text-[12px] font-normal leading-[1.7] tracking-[0.02em] text-foreground/90">
-                        {product.material && (
-                          <p>
-                            <span className="font-semibold uppercase tracking-[0.08em]">
-                              {locale === 'vi' ? 'Chất liệu' : 'Material'}:{' '}
-                            </span>
-                            {product.material}
-                          </p>
-                        )}
-                        {product.dimensions && (
-                          <p>
-                            <span className="font-semibold uppercase tracking-[0.08em]">
-                              {locale === 'vi' ? 'Kích thước' : 'Dimensions'}:{' '}
-                            </span>
-                            {product.dimensions}
-                          </p>
-                        )}
-                      </div>
+                    {/* Specifications (Material & Dimensions - nhấn Light) */}
+                    {product.material && (
+                      <p className="font-serif text-sm sm:text-base text-black leading-relaxed">
+                        <span className="font-light">{locale === 'vi' ? 'Chất liệu ' : 'Material '}</span>
+                        <span className="font-light">{product.material}</span>
+                      </p>
                     )}
 
-                    {/* Combined Description & Technical Specs */}
-                    {variants.groups.length > 0 && (
-                      <div className="flex flex-col gap-1.5 text-[12px] font-normal leading-[1.7] tracking-[0.02em] text-foreground/90">
-                        {variants.groups.map((group) => (
-                          <p key={group.label}>
-                            <span className="font-semibold uppercase">{group.label}: </span>
-                            <span>{group.values.join(', ')}</span>
-                          </p>
-                        ))}
-                      </div>
+                    {product.dimensions && (
+                      <p className="font-serif text-sm sm:text-base text-black leading-relaxed">
+                        <span className="font-light">{locale === 'vi' ? 'Kích thước ' : 'Dimensions '}</span>
+                        <span className="font-thin">{product.dimensions}</span>
+                      </p>
                     )}
 
-                    {/* HTML Description */}
+                    {variants.groups.map((group) => (
+                      <p key={group.label} className="font-serif text-sm sm:text-base text-black leading-relaxed">
+                        <span className="font-light">{group.label}: </span>
+                        <span className="font-thin">{group.values.join(', ')}</span>
+                      </p>
+                    ))}
+
+                    {/* Detailed Description HTML (body Thin, nhấn Light) */}
                     {description && (
                       <div
-                        className="prose prose-sm max-w-none overflow-hidden font-sans text-[12px] font-normal tracking-[0.02em] text-foreground/90 [overflow-wrap:anywhere] [&_a]:underline [&_a]:underline-offset-2 [&_blockquote]:border-l [&_blockquote]:border-foreground/30 [&_blockquote]:pl-4 [&_h1]:text-base [&_h1]:font-bold [&_h2]:text-sm [&_h2]:font-bold [&_h3]:text-xs [&_h3]:font-semibold [&_img]:my-4 [&_img]:h-auto [&_img]:max-w-full [&_img]:rounded-lg [&_li]:leading-[1.7] [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:leading-[1.75] [&_ul]:list-disc [&_ul]:pl-5"
+                        className="prose prose-stone max-w-none overflow-hidden font-serif text-sm sm:text-base font-thin leading-relaxed text-black [overflow-wrap:anywhere] pt-1 [&_p]:leading-[1.75] [&_p]:mb-3 [&_p]:text-black [&_strong]:font-bold [&_strong]:text-black [&_strong]:[font-synthesis:weight] [&_b]:font-bold [&_b]:text-black [&_b]:[font-synthesis:weight] [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1.5 [&_li]:text-black [&_li]:leading-relaxed"
                         dangerouslySetInnerHTML={{ __html: description }}
                       />
                     )}
 
-                    <div className="flex flex-wrap gap-4 pt-2">
-                      <Link
-                        href={`/${locale}/journal`}
-                        className="text-[9px] font-bold uppercase tracking-[0.3em] text-foreground underline decoration-foreground/15 underline-offset-8 transition hover:opacity-70"
-                      >
-                        {journalCta}
-                      </Link>
+                    {/* Explore all products CTA */}
+                    <div className="pt-2">
                       <Link
                         href={`/${locale}/shop`}
-                        className="text-[9px] font-bold uppercase tracking-[0.3em] text-foreground underline decoration-foreground/15 underline-offset-8 transition hover:opacity-70"
+                        className="group inline-flex items-center gap-2 font-serif text-xs sm:text-[13px] uppercase tracking-[0.18em] text-black hover:opacity-60 transition-all duration-300 py-1"
                       >
-                        {shopCta}
+                        <span className="relative font-light pb-0.5 border-b border-black/40 group-hover:border-black transition-colors duration-300">
+                          {t('viewAllProducts')}
+                        </span>
+                        <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1.5 text-black" />
                       </Link>
                     </div>
                   </div>
 
                   {/* Add to Cart Section - Enforcing Login */}
-                  <div className="space-y-3 pt-6 border-t border-foreground/10">
+                  <div className="space-y-4 pt-6 border-t border-stone-200">
                     <div className="flex items-center gap-3">
                       {/* Quantity Selector */}
-                      <div className="flex items-center border border-foreground/20 bg-white">
+                      <div className="flex items-center border border-neutral-300 bg-white rounded-xs">
                         <button
                           type="button"
                           onClick={() => setQuantity((prev) => Math.max(1, prev - 1))}
-                          className="px-3 py-2.5 text-foreground/70 hover:text-foreground transition-colors"
-                          aria-label="Giảm số lượng"
+                          className="px-3.5 py-2.5 text-black hover:opacity-60 transition-opacity"
+                          aria-label={t('decreaseQuantity')}
                         >
                           <Minus className="w-3.5 h-3.5" />
                         </button>
-                        <span className="font-mono text-xs px-2 min-w-[28px] text-center font-medium">
+                        <span className="font-serif text-xs px-2 min-w-[32px] text-center font-light text-black">
                           {quantity}
                         </span>
                         <button
                           type="button"
                           onClick={() => setQuantity((prev) => prev + 1)}
-                          className="px-3 py-2.5 text-foreground/70 hover:text-foreground transition-colors"
-                          aria-label="Tăng số lượng"
+                          className="px-3.5 py-2.5 text-black hover:opacity-60 transition-opacity"
+                          aria-label={t('increaseQuantity')}
                         >
                           <Plus className="w-3.5 h-3.5" />
                         </button>
@@ -655,54 +637,54 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
                         type="button"
                         onClick={() => handleAddToCart(quantity)}
                         disabled={addingToCart}
-                        className="flex-1 py-3 px-6 bg-[#4A4238] text-white hover:bg-[#8C7E6A] transition-colors uppercase tracking-[0.2em] text-xs font-medium flex items-center justify-center gap-2 shadow-sm disabled:opacity-60"
+                        className="flex-1 py-3 px-6 bg-black text-white hover:bg-neutral-800 transition-colors uppercase tracking-[0.2em] text-xs font-light flex items-center justify-center gap-2 shadow-xs disabled:opacity-60 rounded-xs"
                       >
                         <ShoppingBag className="w-4 h-4" />
-                        <span>{addingToCart ? 'Đang thêm...' : 'Thêm vào giỏ hàng'}</span>
+                        <span>{addingToCart ? t('addingToCart') : t('addToCart')}</span>
                       </button>
                     </div>
 
-                    <p className="text-[10px] text-foreground/50 tracking-wider">
-                      * Yêu cầu đăng nhập tài khoản để lưu giỏ hàng và đồng bộ thanh toán.
+                    <p className="text-[11px] text-neutral-500 font-serif font-thin tracking-wide">
+                      {t('cartLoginNotice')}
                     </p>
+
+                    
                   </div>
 
-                  {/* Inquiry Buttons */}
-                  <div className="space-y-4 pt-4">
-                    <h4 className="text-[9px] font-bold uppercase tracking-[0.3em] text-foreground/40">
-                      {t('orderInquiry')}
-                    </h4>
-                    <div className="flex max-w-sm flex-col gap-2.5">
-                      {socialLinks?.instagramUsername && (
-                        <a
-                          href={`https://instagram.com/${socialLinks.instagramUsername}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="group flex w-full items-center justify-between gap-4 border border-foreground/15 bg-white px-5 py-3.5 transition-all duration-200 hover:border-foreground hover:bg-foreground hover:text-white"
-                          aria-label="Instagram Inquiry"
-                        >
-                          <span className="min-w-0 text-[10px] font-bold uppercase tracking-[0.2em] sm:tracking-[0.25em]">
-                            Instagram
-                          </span>
-                          <Instagram className="h-4 w-4 shrink-0 transition-transform duration-200 group-hover:scale-110" />
-                        </a>
-                      )}
-                      {socialLinks?.facebookPageUrl && (
-                        <a
-                          href={socialLinks.facebookPageUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="group flex w-full items-center justify-between gap-4 border border-foreground/15 bg-white px-5 py-3.5 transition-all duration-200 hover:border-foreground hover:bg-foreground hover:text-white"
-                          aria-label="Facebook Inquiry"
-                        >
-                          <span className="min-w-0 text-[10px] font-bold uppercase tracking-[0.2em] sm:tracking-[0.25em]">
-                            Facebook
-                          </span>
-                          <Facebook className="h-4 w-4 shrink-0 transition-transform duration-200 group-hover:scale-110" />
-                        </a>
-                      )}
+                  {/* Subtle / Compact Direct Inquiry */}
+                  {(socialLinks?.instagramUsername || socialLinks?.facebookPageUrl) && (
+                    <div className="pt-4 border-t border-stone-200/60 flex items-center justify-between flex-wrap gap-2 text-xs">
+                      <span className="font-serif text-[11px] font-light text-stone-500 uppercase tracking-wider">
+                        {locale === 'vi' ? 'Hỗ trợ tư vấn trực tiếp:' : 'Direct consultation:'}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        {socialLinks?.instagramUsername && (
+                          <a
+                            href={`https://instagram.com/${socialLinks.instagramUsername}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-light uppercase tracking-[0.12em] border border-stone-200 hover:border-[#4A4238] hover:text-[#4A4238] text-stone-600 transition-colors rounded-xs bg-stone-50/50"
+                            aria-label="Instagram Inquiry"
+                          >
+                            <Instagram className="h-3.5 w-3.5 text-stone-500" />
+                            <span>Instagram</span>
+                          </a>
+                        )}
+                        {socialLinks?.facebookPageUrl && (
+                          <a
+                            href={socialLinks.facebookPageUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-light uppercase tracking-[0.12em] border border-stone-200 hover:border-[#4A4238] hover:text-[#4A4238] text-stone-600 transition-colors rounded-xs bg-stone-50/50"
+                            aria-label="Facebook Inquiry"
+                          >
+                            <Facebook className="h-3.5 w-3.5 text-stone-500" />
+                            <span>Facebook</span>
+                          </a>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -714,16 +696,16 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
       <section className="w-full bg-white px-4 py-24 sm:px-6 lg:px-12">
         <div className="mb-16 flex flex-wrap items-end justify-between gap-4">
           <div className="min-w-0 space-y-3">
-            <h2 className="text-mobile-safe text-[8px] font-bold uppercase tracking-[0.28em] text-foreground/40 sm:tracking-[0.4em]">
+            <h2 className="text-mobile-safe text-[8px] font-light uppercase tracking-[0.28em] text-foreground/40 sm:tracking-[0.4em]">
               {locale === 'vi' ? 'CÓ THỂ BẠN THÍCH' : 'YOU MAY ALSO LIKE'}
             </h2>
-            <p className="text-mobile-safe font-sans text-lg font-bold uppercase tracking-[0.08em] sm:tracking-[0.1em]">
+            <p className="text-mobile-safe font-serif text-lg sm:text-xl font-normal uppercase tracking-[0.08em] sm:tracking-[0.1em] text-black">
               {locale === 'vi' ? 'Sản phẩm tương tự' : 'Related pieces'}
             </p>
           </div>
           <Link
             href={`/${locale}/shop`}
-            className="group flex items-center gap-2 text-[8px] font-bold uppercase tracking-[0.2em] transition-colors hover:opacity-60"
+            className="group flex items-center gap-2 font-sans text-xs font-medium uppercase tracking-[0.15em] transition-colors hover:text-black"
           >
             <span>{tHome('viewAll')}</span>
             <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
@@ -765,16 +747,16 @@ export default function ProductClient({ params, initialProduct }: ProductPagePro
 
       <section className="w-full bg-white px-4 pb-24 sm:px-6 lg:px-12">
         <div className="mx-auto max-w-4xl rounded-2xl border border-foreground/10 bg-foreground/[0.02] p-5 shadow-sm sm:p-8">
-          <h2 className="text-mobile-safe text-center text-[10px] font-bold uppercase tracking-[0.22em] text-foreground/70 sm:tracking-[0.35em]">
+          <h2 className="text-mobile-safe text-center font-serif text-sm sm:text-base font-normal uppercase tracking-[0.15em] text-black">
             {faqTitle}
           </h2>
           <div className="mt-8 grid gap-6 md:grid-cols-2">
             {faqItems.map((item) => (
               <div key={item.question} className="space-y-3">
-                <h3 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-foreground">
+                <h3 className="font-serif text-sm sm:text-base font-normal tracking-normal text-black">
                   {item.question}
                 </h3>
-                <p className="text-[11px] leading-relaxed text-foreground/70">{item.answer}</p>
+                <p className="text-xs leading-relaxed text-black/80 font-thin">{item.answer}</p>
               </div>
             ))}
           </div>

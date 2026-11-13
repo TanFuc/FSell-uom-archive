@@ -49,10 +49,28 @@ async function main() {
   console.log('✓ Backend includes pre-packaged node_modules with Linux sharp binaries.')
   console.log('✓ Frontend uses Next.js standalone runtime (.next/standalone/node_modules).')
 
+  // Validation checks for Plesk environment readiness
+  const prismaClientDir = path.join(backendDir, 'node_modules', '.prisma', 'client')
+  const backendImgDir = path.join(backendDir, 'node_modules', '@img')
+  const frontendStandaloneImgDir = path.join(frontendDir, '.next', 'standalone', 'node_modules', '@img')
+
+  const hasLinuxPrismaEngine = existsSync(path.join(prismaClientDir, 'libquery_engine-debian-openssl-3.0.x.so.node'))
+  const hasBackendLinuxSharp = existsSync(path.join(backendImgDir, 'sharp-linux-x64'))
+  const hasFrontendLinuxSharp = existsSync(path.join(frontendStandaloneImgDir, 'sharp-linux-x64'))
+
+  console.log(`  - Linux Prisma Engine: ${hasLinuxPrismaEngine ? '✓ Verified' : '⚠ Missing'}`)
+  console.log(`  - Backend Linux Sharp: ${hasBackendLinuxSharp ? '✓ Verified' : '⚠ Missing'}`)
+  console.log(`  - Frontend Linux Sharp: ${hasFrontendLinuxSharp ? '✓ Verified' : '⚠ Missing'}`)
+
+  if (!hasLinuxPrismaEngine) {
+    console.warn('WARNING: Debian OpenSSL 3.0.x Prisma engine is missing in backend!')
+  }
+
   // 1. Backend files to include
   const backendMappings = [
     { type: 'directory', source: path.join(backendDir, 'dist'), target: 'dist' },
     { type: 'directory', source: path.join(backendDir, 'prisma'), target: 'prisma' },
+    { type: 'directory', source: path.join(backendDir, 'scripts'), target: 'scripts' },
     {
       type: 'directory',
       source: path.join(backendDir, 'node_modules'),
@@ -98,6 +116,7 @@ async function main() {
     },
     { type: 'directory', source: path.join(frontendDir, 'public'), target: 'public' },
     { type: 'directory', source: path.join(frontendDir, 'messages'), target: 'messages' },
+    { type: 'directory', source: path.join(frontendDir, 'scripts'), target: 'scripts' },
     { type: 'file', source: path.join(frontendDir, 'package.json'), target: 'package.json' },
     { type: 'file', source: path.join(frontendDir, 'package-lock.json'), target: 'package-lock.json' },
     { type: 'file', source: path.join(frontendDir, 'next.config.js'), target: 'next.config.js' },

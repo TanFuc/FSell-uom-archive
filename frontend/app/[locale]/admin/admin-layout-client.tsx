@@ -205,7 +205,7 @@ export default function AdminLayoutClient({ children }: AdminLayoutProps) {
   const userInitial = user?.fullName ? user.fullName.charAt(0).toUpperCase() : 'U'
 
   return (
-    <div className="fixed inset-0 z-0 flex overflow-hidden bg-background text-foreground">
+    <div className="fixed inset-0 z-0 flex overflow-hidden bg-background text-foreground font-admin font-normal">
       {/* Mobile Top Bar */}
       <div className="fixed left-0 right-0 top-0 z-30 flex h-16 items-center justify-between border-b bg-background/95 px-4 backdrop-blur-md md:hidden">
         <div className="flex min-w-0 items-center gap-2">

@@ -24,7 +24,7 @@ export type HomeSection = {
 
 export const SITE_PAGES_KEY = 'site.pages'
 export const HOME_SECTIONS_KEY = 'site.sections'
-export const BUILTIN_PAGE_SLUGS = ['home', 'shop', 'journal', 'about', 'contact'] as const
+export const BUILTIN_PAGE_SLUGS = ['home', 'shop', 'about', 'journal', 'contact'] as const
 
 export const DEFAULT_SITE_PAGES: SitePage[] = [
   {
@@ -48,21 +48,21 @@ export const DEFAULT_SITE_PAGES: SitePage[] = [
     isVisible: true,
   },
   {
-    slug: 'journal',
-    titleVi: 'Tạp chí',
-    titleEn: 'Journal',
-    descriptionVi: 'Đọc câu chuyện về chất liệu, nghệ nhân và không gian sống.',
-    descriptionEn: 'Read stories about materials, artisans, and living spaces.',
-    contentVi: '',
-    contentEn: '',
-    isVisible: true,
-  },
-  {
     slug: 'about',
     titleVi: 'Về chúng tôi',
     titleEn: 'About Us',
     descriptionVi: 'Tìm hiểu triết lý tuyển chọn và câu chuyện của ƯƠM.',
     descriptionEn: 'Learn about the curation philosophy and story behind UOM.',
+    contentVi: '',
+    contentEn: '',
+    isVisible: true,
+  },
+  {
+    slug: 'journal',
+    titleVi: 'Tạp chí',
+    titleEn: 'Journal',
+    descriptionVi: 'Đọc câu chuyện về chất liệu, nghệ nhân và không gian sống.',
+    descriptionEn: 'Read stories about materials, artisans, and living spaces.',
     contentVi: '',
     contentEn: '',
     isVisible: true,

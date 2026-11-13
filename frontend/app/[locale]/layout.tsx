@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
-import { Lora, Montserrat, Playfair_Display } from 'next/font/google'
+import localFont from 'next/font/local'
+import { Montserrat } from 'next/font/google'
 import { notFound } from 'next/navigation'
 import { NextIntlClientProvider } from 'next-intl'
 import { getMessages, unstable_setRequestLocale } from 'next-intl/server'
@@ -20,15 +21,65 @@ import {
   getSeoSiteTitle,
   getSeoSocialImageUrl,
 } from '@/lib/seo'
-import { fetchBranding } from '@/lib/server-utils'
+import { fetchBranding, fetchSiteContentServer } from '@/lib/server-utils'
 import '@/styles/globals.css'
 import '@/styles/loading-animations.css'
 
-const lora = Lora({
-  subsets: ['latin', 'vietnamese'],
-  variable: '--font-lora',
+const abcArizona = localFont({
+  src: [
+    {
+      path: '../../public/fonts/VL ABCArizonaFlare-Thin.otf',
+      weight: '100',
+      style: 'normal',
+    },
+    {
+      path: '../../public/fonts/VL ABCArizonaFlare-Thin.otf',
+      weight: '200',
+      style: 'normal',
+    },
+    {
+      path: '../../public/fonts/VL ABCArizonaFlare-ThinItalic.otf',
+      weight: '100',
+      style: 'italic',
+    },
+    {
+      path: '../../public/fonts/VL ABCArizonaFlare-ThinItalic.otf',
+      weight: '200',
+      style: 'italic',
+    },
+    {
+      path: '../../public/fonts/VL ABCArizonaFlare-Light.otf',
+      weight: '300',
+      style: 'normal',
+    },
+    {
+      path: '../../public/fonts/VL ABCArizonaFlare-Light.otf',
+      weight: '400',
+      style: 'normal',
+    },
+    {
+      path: '../../public/fonts/VL ABCArizonaFlare-Light.otf',
+      weight: '500',
+      style: 'normal',
+    },
+    {
+      path: '../../public/fonts/VL ABCArizonaFlare-LightItalic.otf',
+      weight: '300',
+      style: 'italic',
+    },
+    {
+      path: '../../public/fonts/VL ABCArizonaFlare-RegIta.otf',
+      weight: '400',
+      style: 'italic',
+    },
+    {
+      path: '../../public/fonts/VL ABCArizonaFlare-RegIta.otf',
+      weight: '500',
+      style: 'italic',
+    },
+  ],
+  variable: '--font-arizona',
   display: 'swap',
-  weight: ['400', '500', '600', '700'],
 })
 
 const montserrat = Montserrat({
@@ -36,13 +87,6 @@ const montserrat = Montserrat({
   variable: '--font-montserrat',
   display: 'swap',
   weight: ['300', '400', '500', '600', '700'],
-})
-
-const playfair = Playfair_Display({
-  subsets: ['latin', 'vietnamese'],
-  variable: '--font-playfair',
-  display: 'block',
-  weight: ['400', '500', '600', '700'],
 })
 
 export const viewport: Viewport = {
@@ -66,7 +110,6 @@ export async function generateMetadata({
   const brandName = getSeoBrandName(locale, branding)
   const description = getSeoSiteDescription(locale, branding)
   const previewImageUrl = buildAbsoluteUrl(getSeoSocialImageUrl(branding), baseUrl)
-  const tabIconUrl = '/assets/logo.png'
 
   return {
     metadataBase: new URL(baseUrl),
@@ -127,11 +170,12 @@ export async function generateMetadata({
     },
     icons: {
       icon: [
-        { url: tabIconUrl, type: 'image/png' },
-        { url: '/assets/logo.svg', type: 'image/svg+xml' },
+        { url: '/icon.svg', type: 'image/svg+xml' },
+        { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+        { url: '/favicon.ico', sizes: 'any' },
       ],
-      shortcut: [{ url: tabIconUrl, type: 'image/png' }],
-      apple: [{ url: tabIconUrl, sizes: '180x180', type: 'image/png' }],
+      shortcut: [{ url: '/favicon.ico' }],
+      apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
     },
     manifest: '/manifest.webmanifest',
     alternates: {
@@ -156,6 +200,7 @@ export default async function RootLayout({ children, params: { locale } }: RootL
   }
 
   unstable_setRequestLocale(locale)
+  const siteContent = await fetchSiteContentServer()
   let messages: any = {}
   try {
     messages = await getMessages({ locale })
@@ -165,6 +210,8 @@ export default async function RootLayout({ children, params: { locale } }: RootL
     } catch {}
   }
 
+  const clientCacheVersion = siteContent['system.client_cache_version'] || 'v1.0'
+
   return (
     <html lang={locale} suppressHydrationWarning>
       <head>
@@ -172,16 +219,24 @@ export default async function RootLayout({ children, params: { locale } }: RootL
         <link rel="dns-prefetch" href="https://images.uomarchive.com" />
         <link rel="preconnect" href="https://api.uomarchive.com" crossOrigin="" />
         <link rel="dns-prefetch" href="https://api.uomarchive.com" />
+        <script
+          id="uom-cache-buster"
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var v=${JSON.stringify(
+              clientCacheVersion,
+            )};var k='uom_ui_cache_version';var s=localStorage.getItem(k);if(s!==v){if('serviceWorker'in navigator){navigator.serviceWorker.getRegistrations().then(function(r){for(var i=0;i<r.length;i++){r[i].unregister();}});}if('caches'in window){caches.keys().then(function(c){for(var j=0;j<c.length;j++){caches.delete(c[j]);}});}try{var t=localStorage.getItem('accessToken');var rt=localStorage.getItem('refreshToken');var cs=localStorage.getItem('uom-customer-storage');sessionStorage.clear();if(t)localStorage.setItem('accessToken',t);if(rt)localStorage.setItem('refreshToken',rt);if(cs)localStorage.setItem('uom-customer-storage',cs);}catch(e){}localStorage.setItem(k,v);}}catch(e){}})();`,
+          }}
+        />
       </head>
       <body
         suppressHydrationWarning
-        className={`${lora.variable} ${montserrat.variable} ${playfair.variable} flex min-h-screen flex-col bg-background font-serif antialiased`}
+        className={`${abcArizona.variable} ${montserrat.variable} flex min-h-screen flex-col bg-background font-serif font-thin antialiased`}
       >
         <DisableRightClick />
         <NextIntlClientProvider messages={messages}>
           <QueryProvider>
             <ConfirmationProvider>
-              <ConditionalLayout>{children}</ConditionalLayout>
+              <ConditionalLayout initialSiteContent={siteContent}>{children}</ConditionalLayout>
               <Toaster />
               <SonnerToaster duration={2200} />
               <CustomerAuthModal />

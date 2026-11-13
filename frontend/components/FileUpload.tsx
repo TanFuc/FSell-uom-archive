@@ -55,12 +55,24 @@ export function FileUpload({
             headers: {
               Authorization: `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('accessToken') : ''}`,
             },
-            onload: (response) => {
-              const data = JSON.parse(response)
-              if (data.success && data.data) {
-                onUploadSuccess?.(data.data.url, data.data.publicId)
+            ondata: (formData: any) => {
+              if (_folder) {
+                formData.append('folder', _folder)
               }
-              return data.data?.publicId || response
+              return formData
+            },
+            onload: (response: any) => {
+              try {
+                const data = typeof response === "string" ? JSON.parse(response) : response
+                const fileUrl = data?.data?.url || data?.url
+                const publicId = data?.data?.publicId || data?.publicId || ""
+                if (fileUrl) {
+                  onUploadSuccess?.(fileUrl, publicId)
+                }
+                return publicId || response
+              } catch {
+                return response
+              }
             },
             onerror: (response) => {
               const errorMessage = response || 'Upload failed'
@@ -122,18 +134,28 @@ export function MultipleFileUpload({
             headers: {
               Authorization: `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('accessToken') : ''}`,
             },
-            onload: (response) => {
-              const data = JSON.parse(response)
-              if (data.success && data.data) {
-                const newUrls = [...uploadedUrls, data.data.url]
-                const newPublicIds = [...uploadedPublicIds, data.data.publicId]
-
-                setUploadedUrls(newUrls)
-                setUploadedPublicIds(newPublicIds)
-
-                onUploadSuccess?.(newUrls, newPublicIds)
+            ondata: (formData: any) => {
+              if (_folder) {
+                formData.append('folder', _folder)
               }
-              return data.data?.publicId || response
+              return formData
+            },
+            onload: (response: any) => {
+              try {
+                const data = typeof response === "string" ? JSON.parse(response) : response
+                const fileUrl = data?.data?.url || data?.url
+                const publicId = data?.data?.publicId || data?.publicId || ""
+                if (fileUrl) {
+                  const newUrls = [...uploadedUrls, fileUrl]
+                  const newPublicIds = [...uploadedPublicIds, publicId]
+                  setUploadedUrls(newUrls)
+                  setUploadedPublicIds(newPublicIds)
+                  onUploadSuccess?.(newUrls, newPublicIds)
+                }
+                return publicId || response
+              } catch {
+                return response
+              }
             },
             onerror: (response) => {
               const errorMessage = response || 'Upload failed'

@@ -11,6 +11,19 @@ const apiPort = apiUrlObj.port
 
 const nextConfig = {
   output: 'standalone',
+  async rewrites() {
+    const rawApiUrl =
+      process.env.NEXT_PUBLIC_API_BASE_URL ||
+      process.env.NEXT_PUBLIC_API_URL ||
+      'http://localhost:3006'
+    const apiBase = rawApiUrl.replace(/\/$/, '')
+    return [
+      {
+        source: '/uploads/:path*',
+        destination: `${apiBase}/uploads/:path*`,
+      },
+    ]
+  },
   async redirects() {
     return [
       {
@@ -64,13 +77,14 @@ const nextConfig = {
     ]
   },
   async headers() {
+    const isDev = process.env.NODE_ENV !== 'production'
     return [
       {
         source: '/_next/static/:path*',
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
+            value: isDev ? 'no-store, must-revalidate' : 'public, max-age=31536000, immutable',
           },
         ],
       },

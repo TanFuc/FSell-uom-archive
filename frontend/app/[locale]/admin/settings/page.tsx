@@ -21,8 +21,10 @@ import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api'
 import { DEFAULT_SOCIAL_LINKS, DEFAULT_EXCHANGE_RATE } from '@/lib/constants'
+import { getImageUrl } from '@/lib/utils'
 import { FileUpload } from '@/components/FileUpload'
 import { QrCode, Building, CreditCard, User, Trash2 } from 'lucide-react'
+import { GlobalCacheManager } from '@/components/admin/GlobalCacheManager'
 
 const socialLinksSchema = z.object({
   facebookPageUrl: z.string().url('Must be a valid URL').optional().or(z.literal('')),
@@ -45,7 +47,6 @@ export default function SettingsPage() {
   const [isSavingRate, setIsSavingRate] = useState(false)
   const [isRecalculatingUsd, setIsRecalculatingUsd] = useState(false)
 
-  // Payment settings state
   const [paymentSettings, setPaymentSettings] = useState({
     qrCodeUrl: '',
     bankName: 'MB Bank',
@@ -56,6 +57,7 @@ export default function SettingsPage() {
     activeTemplateId: '',
   })
   const [isSavingPayment, setIsSavingPayment] = useState(false)
+  const [cacheVersion, setCacheVersion] = useState('v1.0')
 
   const socialForm = useForm<SocialLinksFormValues>({
     resolver: zodResolver(socialLinksSchema),
@@ -70,11 +72,16 @@ export default function SettingsPage() {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const [social, rate, payment] = await Promise.all([
+        const [social, rate, payment, siteContent] = await Promise.all([
           api.getSocialLinks(),
           api.getExchangeRate(),
           api.getPaymentSettings(),
+          api.getSiteContent().catch(() => ({} as any)),
         ])
+
+        if (siteContent && siteContent['system.client_cache_version']) {
+          setCacheVersion(siteContent['system.client_cache_version'])
+        }
 
         socialForm.reset({
           facebookPageUrl: social.facebookPageUrl || '',
@@ -192,6 +199,9 @@ export default function SettingsPage() {
       </div>
 
       <div className="grid gap-6">
+        {/* Global Client Cache & UI Reset Manager */}
+        <GlobalCacheManager initialVersion={cacheVersion} />
+
         {/* Social Links */}
         <Card>
           <CardHeader>
@@ -311,8 +321,19 @@ export default function SettingsPage() {
                   <div className="flex items-center gap-4 p-3 bg-neutral-50 border border-neutral-200 max-w-md">
                     <div className="w-24 h-24 bg-white border border-neutral-200 p-1 flex items-center justify-center shrink-0">
                       <img
-                        src={paymentSettings.qrCodeUrl}
+                        src={getImageUrl(paymentSettings.qrCodeUrl)}
                         alt="QR Code"
+                        onError={(e) => {
+                          const target = e.currentTarget
+                          const raw = paymentSettings.qrCodeUrl || ''
+                          if (!target.dataset.triedFallback && raw.startsWith('/uploads')) {
+                            target.dataset.triedFallback = '1'
+                            target.src = raw.startsWith('http') ? raw : `http://localhost:3006${raw}`
+                          } else if (target.dataset.triedFallback === '1' && raw.startsWith('/uploads')) {
+                            target.dataset.triedFallback = '2'
+                            target.src = raw
+                          }
+                        }}
                         className="w-full h-full object-contain"
                       />
                     </div>

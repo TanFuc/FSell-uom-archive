@@ -122,8 +122,8 @@ export function OrderTrackingTimeline({
       <div className="p-5 rounded-sm border border-red-200 bg-red-50/70 text-red-900 flex items-start gap-4">
         <XCircle className="w-5 h-5 text-red-600 mt-0.5 shrink-0" />
         <div className="space-y-1">
-          <h4 className="font-serif font-semibold text-sm uppercase tracking-wider">Đơn hàng đã bị hủy</h4>
-          <p className="text-xs text-red-700/80 leading-relaxed">
+          <h4 className="font-serif font-light text-sm uppercase tracking-wider">Đơn hàng đã bị hủy</h4>
+          <p className="text-xs text-red-700/80 leading-relaxed font-thin">
             Đơn hàng này đã được xác nhận hủy trên hệ thống. Nếu có bất kỳ thắc mắc nào, quý khách vui lòng liên hệ hotline hỗ trợ ƯƠM. Archive để được trợ giúp kịp thời.
           </p>
         </div>
@@ -197,7 +197,7 @@ export function OrderTrackingTimeline({
                 <div className="flex flex-wrap items-center justify-between gap-2.5 pb-2 border-b border-stone-200/60">
                   <div className="flex items-center gap-2.5 flex-wrap">
                     <h4
-                      className={`text-xs sm:text-sm uppercase tracking-[0.2em] font-serif font-bold ${isCurrent
+                      className={`text-xs sm:text-sm uppercase tracking-[0.2em] font-serif font-light ${isCurrent
                           ? 'text-[#4A4238]'
                           : isDone
                             ? 'text-[#4A4238]'
@@ -209,7 +209,7 @@ export function OrderTrackingTimeline({
 
                     {/* Badge trạng thái */}
                     <span
-                      className={`px-2 py-0.5 text-[9px] uppercase tracking-wider font-semibold rounded-xs border ${isCurrent
+                      className={`px-2 py-0.5 text-[9px] uppercase tracking-wider font-light rounded-xs border ${isCurrent
                           ? 'bg-[#4A4238] text-white border-[#4A4238]'
                           : isDone
                             ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
@@ -235,7 +235,7 @@ export function OrderTrackingTimeline({
                 </div>
 
                 {/* Mô tả giai đoạn */}
-                <p className="text-xs text-stone-600 mt-2 leading-relaxed">
+                <p className="text-xs text-stone-600 mt-2 leading-relaxed font-thin">
                   {step.description}
                 </p>
 
@@ -246,7 +246,7 @@ export function OrderTrackingTimeline({
                       <button
                         type="button"
                         onClick={() => setIsDetailOpen((prev) => !prev)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#4A4238] text-white hover:bg-[#8C7E6A] transition-colors text-xs uppercase tracking-wider font-medium shadow-xs"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#4A4238] text-white hover:bg-[#8C7E6A] transition-colors text-xs uppercase tracking-wider font-light shadow-xs"
                       >
                         <Compass className="w-3.5 h-3.5 text-stone-200" />
                         <span>{isDetailOpen ? 'Thu gọn hành trình' : 'Xem chi tiết giai đoạn vận chuyển'}</span>
@@ -262,7 +262,7 @@ export function OrderTrackingTimeline({
                           type="button"
                           onClick={() => onSyncTracking()}
                           disabled={isSyncing}
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-white border border-stone-200 hover:border-[#8C7E6A] text-stone-700 hover:text-[#4A4238] transition-colors text-[11px] font-medium"
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-white border border-stone-200 hover:border-[#8C7E6A] text-stone-700 hover:text-[#4A4238] transition-colors text-[11px] font-light"
                           title="Cập nhật dữ liệu vận chuyển mới nhất"
                         >
                           <RefreshCw className={`w-3 h-3 text-[#8C7E6A] ${isSyncing ? 'animate-spin' : ''}`} />
@@ -275,28 +275,28 @@ export function OrderTrackingTimeline({
                     {isDetailOpen && (
                       <div className="mt-3 p-4 bg-white border border-stone-200 rounded-xs shadow-xs space-y-4">
                         {/* Hàng thông tin mã vận đơn & đơn vị */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-3 border-b border-stone-200 text-xs">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-3 border-b border-stone-200 text-xs font-thin">
                           <div>
-                            <span className="text-[10px] text-stone-400 uppercase tracking-wider block">
+                            <span className="text-[10px] text-stone-400 uppercase tracking-wider block font-thin">
                               Đối tác giao vận
                             </span>
-                            <span className="font-medium text-[#4A4238]">
+                            <span className="font-light text-[#4A4238]">
                               {trackingCompany || 'Đối tác vận chuyển liên kết'}
                             </span>
                             {orderId && (
-                              <span className="block text-[10px] text-stone-400 font-mono mt-0.5">
+                              <span className="block text-[10px] text-stone-400 font-mono mt-0.5 font-thin">
                                 Đơn hàng: #{orderId}
                               </span>
                             )}
                           </div>
 
                           <div>
-                            <span className="text-[10px] text-stone-400 uppercase tracking-wider block">
+                            <span className="text-[10px] text-stone-400 uppercase tracking-wider block font-thin">
                               Mã vận đơn (Tracking Code)
                             </span>
                             {trackingNumber ? (
                               <div className="flex items-center gap-2">
-                                <span className="font-mono font-semibold text-[#8C7E6A]">
+                                <span className="font-mono font-light text-[#8C7E6A]">
                                   {trackingNumber}
                                 </span>
                                 <button
@@ -309,14 +309,14 @@ export function OrderTrackingTimeline({
                                 </button>
                               </div>
                             ) : (
-                              <span className="text-stone-400 italic">Đang cập nhật mã vận đơn</span>
+                              <span className="text-stone-400 italic font-thin">Đang cập nhật mã vận đơn</span>
                             )}
                           </div>
                         </div>
 
                         {/* Danh sách 4 chặng vận chuyển */}
                         <div className="space-y-3 pt-1">
-                          <p className="text-[10px] uppercase tracking-[0.2em] font-serif font-bold text-[#8C7E6A]">
+                          <p className="text-[10px] uppercase tracking-[0.2em] font-serif font-light text-[#8C7E6A]">
                             Các chặng giao vận chi tiết
                           </p>
 
@@ -343,11 +343,11 @@ export function OrderTrackingTimeline({
 
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center justify-between gap-2">
-                                    <span className="text-[10px] uppercase tracking-wider font-semibold text-[#8C7E6A]">
+                                    <span className="text-[10px] uppercase tracking-wider font-light text-[#8C7E6A]">
                                       {stg.stage}
                                     </span>
                                     {stg.time && (
-                                      <span className="text-[10px] text-stone-400 font-mono">
+                                      <span className="text-[10px] text-stone-400 font-mono font-thin">
                                         {new Date(stg.time).toLocaleDateString('vi-VN', {
                                           hour: '2-digit',
                                           minute: '2-digit',
@@ -357,8 +357,8 @@ export function OrderTrackingTimeline({
                                       </span>
                                     )}
                                   </div>
-                                  <p className="text-xs font-medium text-[#4A4238] mt-0.5">{stg.title}</p>
-                                  <p className="text-[11px] text-stone-500 mt-0.5 leading-relaxed">{stg.desc}</p>
+                                  <p className="text-xs font-light text-[#4A4238] mt-0.5">{stg.title}</p>
+                                  <p className="text-[11px] text-stone-500 mt-0.5 leading-relaxed font-thin">{stg.desc}</p>
                                 </div>
                               </div>
                             ))}
@@ -372,7 +372,7 @@ export function OrderTrackingTimeline({
                               href={trackingUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center justify-center gap-2 w-full py-2.5 px-3 border border-[#8C7E6A] text-[#8C7E6A] hover:bg-[#8C7E6A] hover:text-white transition-all text-xs uppercase tracking-wider font-medium"
+                              className="inline-flex items-center justify-center gap-2 w-full py-2.5 px-3 border border-[#8C7E6A] text-[#8C7E6A] hover:bg-[#8C7E6A] hover:text-white transition-all text-xs uppercase tracking-wider font-light"
                             >
                               <span>Mở cổng tra cứu trực tiếp của nhà vận chuyển</span>
                               <ExternalLink className="w-3.5 h-3.5" />

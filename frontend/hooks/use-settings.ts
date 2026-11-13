@@ -56,6 +56,7 @@ export const settingsKeys = {
   exchange: () => [...settingsKeys.all, 'exchange'] as const,
   content: () => [...settingsKeys.all, 'content'] as const,
   branding: () => [...settingsKeys.all, 'branding'] as const,
+  trustBadges: () => [...settingsKeys.all, 'trust-badges'] as const,
 }
 
 type SiteContentQueryOptions = {
@@ -279,3 +280,80 @@ export function useUpdateBranding() {
     },
   })
 }
+
+export type TrustBadge = {
+  id: string
+  icon: string
+  titleVi: string
+  titleEn: string
+  descriptionVi?: string
+  descriptionEn?: string
+  isVisible: boolean
+  order: number
+}
+
+export function useTrustBadges() {
+  return useQuery({
+    queryKey: settingsKeys.trustBadges(),
+    queryFn: () => apiClient.getTrustBadges(),
+    staleTime: 30 * 1000,
+  })
+}
+
+export function useCreateTrustBadge() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (data: Omit<TrustBadge, 'id'>) => apiClient.createTrustBadge(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: settingsKeys.trustBadges() })
+      toast.success('Đã thêm huy hiệu cam kết')
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || 'Không thể tạo huy hiệu')
+    },
+  })
+}
+
+export function useUpdateTrustBadge() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<TrustBadge> }) =>
+      apiClient.updateTrustBadge(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: settingsKeys.trustBadges() })
+      toast.success('Đã cập nhật huy hiệu')
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || 'Không thể cập nhật huy hiệu')
+    },
+  })
+}
+
+export function useDeleteTrustBadge() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => apiClient.deleteTrustBadge(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: settingsKeys.trustBadges() })
+      toast.success('Đã xoá huy hiệu')
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || 'Không thể xoá huy hiệu')
+    },
+  })
+}
+
+export function useToggleTrustBadgesGlobal() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (enabled: boolean) => apiClient.toggleTrustBadgesGlobal(enabled),
+    onSuccess: (_, enabled) => {
+      queryClient.invalidateQueries({ queryKey: settingsKeys.trustBadges() })
+      toast.success(enabled ? 'Đã bật hiển thị cam kết' : 'Đã ẩn hiển thị cam kết')
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || 'Không thể thay đổi trạng thái')
+    },
+  })
+}
+

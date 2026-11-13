@@ -134,6 +134,79 @@ export class CustomerAuthService {
     return { success: true, message: 'Đăng xuất thành công' }
   }
 
+  async updateProfile(
+    customerId: string,
+    dto: { fullName?: string; phone?: string; address?: string },
+  ) {
+    const customer = await this.prisma.customer.findFirst({
+      where: { id: customerId, deletedAt: null },
+    })
+
+    if (!customer) {
+      throw new NotFoundException('Không tìm thấy thông tin khách hàng')
+    }
+
+    const updated = await this.prisma.customer.update({
+      where: { id: customerId },
+      data: {
+        ...(dto.fullName !== undefined && { fullName: dto.fullName.trim() }),
+        ...(dto.phone !== undefined && { phone: dto.phone.trim() || null }),
+        ...(dto.address !== undefined && { address: dto.address.trim() || null }),
+      },
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        phone: true,
+        address: true,
+        avatarUrl: true,
+        authProvider: true,
+        createdAt: true,
+      },
+    })
+
+    return updated
+  }
+
+  async changePassword(
+    customerId: string,
+    dto: { currentPassword?: string; newPassword: string },
+  ) {
+    const customer = await this.prisma.customer.findFirst({
+      where: { id: customerId, deletedAt: null },
+    })
+
+    if (!customer) {
+      throw new NotFoundException('Không tìm thấy thông tin khách hàng')
+    }
+
+    // Nếu tài khoản đã có mật khẩu thì bắt buộc phải nhập đúng mật khẩu hiện tại
+    if (customer.passwordHash) {
+      if (!dto.currentPassword) {
+        throw new BadRequestException('Vui lòng nhập mật khẩu hiện tại của bạn')
+      }
+      const isMatch = await bcrypt.compare(dto.currentPassword, customer.passwordHash)
+      if (!isMatch) {
+        throw new BadRequestException('Mật khẩu hiện tại không chính xác')
+      }
+    }
+
+    if (!dto.newPassword || dto.newPassword.length < 6) {
+      throw new BadRequestException('Mật khẩu mới phải có tối thiểu 6 ký tự')
+    }
+
+    const newPasswordHash = await bcrypt.hash(dto.newPassword, 10)
+
+    await this.prisma.customer.update({
+      where: { id: customerId },
+      data: {
+        passwordHash: newPasswordHash,
+      },
+    })
+
+    return { success: true, message: 'Đổi mật khẩu thành công' }
+  }
+
   // ==============================================================================
   // FACEBOOK OAUTH 2.0
   // ==============================================================================

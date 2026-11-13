@@ -84,7 +84,7 @@ export function ProductInquiryForm({ product, locale }: ProductInquiryFormProps)
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button
-          className="group relative w-full overflow-hidden uppercase tracking-wider md:w-auto"
+          className="group relative w-full overflow-hidden uppercase tracking-wider md:w-auto font-light"
           variant="outline"
         >
           <span className="relative z-10 flex items-center gap-2">
@@ -98,17 +98,17 @@ export function ProductInquiryForm({ product, locale }: ProductInquiryFormProps)
         {!isSuccess ? (
           <>
             <DialogHeader>
-              <DialogTitle className="font-serif text-xl uppercase tracking-wide">
+              <DialogTitle className="font-serif text-xl uppercase tracking-wide font-light">
                 {t('title')}
               </DialogTitle>
-              <DialogDescription>{t('description')}</DialogDescription>
+              <DialogDescription className="font-thin">{t('description')}</DialogDescription>
             </DialogHeader>
 
             <div className="mb-4 flex items-center gap-4 border-b border-border/50 py-4">
               <div className="flex-1">
-                <h4 className="text-sm font-medium text-foreground">{productName}</h4>
+                <h4 className="text-sm font-light text-foreground">{productName}</h4>
                 {product.material ? (
-                  <p className="mt-1 text-xs text-muted-foreground">{product.material}</p>
+                  <p className="mt-1 text-xs font-thin text-muted-foreground">{product.material}</p>
                 ) : null}
               </div>
             </div>
@@ -120,14 +120,14 @@ export function ProductInquiryForm({ product, locale }: ProductInquiryFormProps)
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground">
+                      <FormLabel className="text-xs uppercase tracking-wider font-light text-muted-foreground">
                         {t('name')}
                       </FormLabel>
                       <FormControl>
                         <Input
                           placeholder=""
                           {...field}
-                          className="rounded-none border-x-0 border-b border-t-0 bg-transparent px-0 focus-visible:border-primary focus-visible:ring-0"
+                          className="rounded-none border-x-0 border-b border-t-0 bg-transparent px-0 font-thin focus-visible:border-primary focus-visible:ring-0"
                         />
                       </FormControl>
                       <FormMessage />
@@ -140,14 +140,14 @@ export function ProductInquiryForm({ product, locale }: ProductInquiryFormProps)
                   name="contact"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground">
+                      <FormLabel className="text-xs uppercase tracking-wider font-light text-muted-foreground">
                         {t('contact')}
                       </FormLabel>
                       <FormControl>
                         <Input
                           placeholder=""
                           {...field}
-                          className="rounded-none border-x-0 border-b border-t-0 bg-transparent px-0 focus-visible:border-primary focus-visible:ring-0"
+                          className="rounded-none border-x-0 border-b border-t-0 bg-transparent px-0 font-thin focus-visible:border-primary focus-visible:ring-0"
                         />
                       </FormControl>
                       <FormMessage />
@@ -160,14 +160,14 @@ export function ProductInquiryForm({ product, locale }: ProductInquiryFormProps)
                   name="message"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs uppercase tracking-wider text-muted-foreground">
+                      <FormLabel className="text-xs uppercase tracking-wider font-light text-muted-foreground">
                         {t('message')}
                       </FormLabel>
                       <FormControl>
                         <Textarea
                           {...field}
                           rows={3}
-                          className="resize-none rounded-none border-x-0 border-b border-t-0 bg-transparent px-0 focus-visible:border-primary focus-visible:ring-0"
+                          className="resize-none rounded-none border-x-0 border-b border-t-0 bg-transparent px-0 font-thin focus-visible:border-primary focus-visible:ring-0"
                         />
                       </FormControl>
                       <FormMessage />
@@ -176,7 +176,7 @@ export function ProductInquiryForm({ product, locale }: ProductInquiryFormProps)
                 />
 
                 <DialogFooter className="pt-4">
-                  <Button type="submit" className="w-full">
+                  <Button type="submit" className="w-full font-light">
                     {t('submit')}
                   </Button>
                 </DialogFooter>
@@ -188,11 +188,11 @@ export function ProductInquiryForm({ product, locale }: ProductInquiryFormProps)
             <div className="mb-2 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
               <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
             </div>
-            <DialogTitle className="font-serif text-xl">{t('successTitle')}</DialogTitle>
-            <DialogDescription className="mx-auto max-w-xs">
+            <DialogTitle className="font-serif text-xl font-light">{t('successTitle')}</DialogTitle>
+            <DialogDescription className="mx-auto max-w-xs font-thin">
               {t('successMessage')}
             </DialogDescription>
-            <Button onClick={() => setOpen(false)} variant="outline" className="mt-4">
+            <Button onClick={() => setOpen(false)} variant="outline" className="mt-4 font-light">
               {t('close')}
             </Button>
           </div>

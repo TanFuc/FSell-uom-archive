@@ -42,7 +42,7 @@ export function UomLoader({ isLoading, showLoadingBar = true }: UomLoaderProps) 
       <div className="flex flex-col items-center gap-8">
         {/* Animated "ƯƠM." text with Vietnamese accents */}
         <div className="relative">
-          <h1 className="select-none font-serif text-8xl tracking-wide text-foreground antialiased">
+          <h1 className="select-none font-serif font-light text-8xl tracking-wide text-foreground antialiased">
             <span className="animate-pulse-char animation-delay-0 inline-block">Ư</span>
             <span className="animate-pulse-char animation-delay-100 inline-block">ơ</span>
             <span className="animate-pulse-char animation-delay-200 inline-block">m</span>
@@ -77,7 +77,7 @@ export function UomLoaderBreathing({ isLoading }: { isLoading: boolean }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background">
       <div className="flex flex-col items-center">
-        <h1 className="animate-breathe select-none font-serif text-8xl tracking-wide text-foreground">
+        <h1 className="animate-breathe select-none font-serif font-light text-8xl tracking-wide text-foreground">
           ƯƠM..
         </h1>
       </div>
@@ -102,7 +102,7 @@ export function UomLoaderTypewriter({ isLoading }: { isLoading: boolean }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background">
       <div className="flex flex-col items-center">
-        <h1 className="select-none font-serif text-8xl tracking-wide text-foreground">
+        <h1 className="select-none font-serif font-light text-8xl tracking-wide text-foreground">
           {characters.map((char, i) => (
             <span
               key={i}

@@ -32,7 +32,7 @@ export default function InquiryButton({
   const t = useTranslations('product')
 
   if (!product.inquiryEnabled) {
-    return <p className="italic text-muted-foreground">{t('contactForAvailability')}</p>
+    return <p className="italic font-thin text-muted-foreground">{t('contactForAvailability')}</p>
   }
 
   const message = getInquiryMessage(product, locale, exchangeRate)
@@ -52,7 +52,7 @@ export default function InquiryButton({
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className="h-auto p-0 font-normal uppercase tracking-wide hover:bg-transparent hover:italic"
+          className="h-auto p-0 font-light uppercase tracking-wide hover:bg-transparent hover:italic"
         >
           <MessageSquare className="mr-2 h-4 w-4" />
           {t('askAboutProduct')}
@@ -63,7 +63,7 @@ export default function InquiryButton({
         {socialLinks.facebookPageUrl && (
           <DropdownMenuItem
             onClick={handleFacebookClick}
-            className="cursor-pointer hover:bg-accent"
+            className="cursor-pointer font-light hover:bg-accent"
           >
             <Facebook className="mr-2 h-4 w-4" />
             {t('facebook')}
@@ -73,7 +73,7 @@ export default function InquiryButton({
         {socialLinks.instagramUsername && (
           <DropdownMenuItem
             onClick={handleInstagramClick}
-            className="cursor-pointer hover:bg-accent"
+            className="cursor-pointer font-light hover:bg-accent"
           >
             <Instagram className="mr-2 h-4 w-4" />
             {t('instagram')}

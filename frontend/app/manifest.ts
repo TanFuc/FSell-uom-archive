@@ -11,20 +11,20 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: '/',
     display: 'standalone',
     background_color: '#FFFFFF',
-    theme_color: '#4A4238',
+    theme_color: '#FFFFFF',
     orientation: 'portrait',
     icons: [
       {
-        src: `${BASE_URL}/assets/logo-remove.png`,
+        src: `${BASE_URL}/icon-192.png`,
         sizes: '192x192',
         type: 'image/png',
-        purpose: 'maskable',
+        purpose: 'any',
       },
       {
-        src: `${BASE_URL}/assets/logo-remove.png`,
+        src: `${BASE_URL}/icon-512.png`,
         sizes: '512x512',
         type: 'image/png',
-        purpose: 'maskable',
+        purpose: 'any',
       },
     ],
   }

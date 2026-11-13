@@ -69,10 +69,18 @@ if (!existsSync(serverSrc) || !existsSync(staticSrc)) {
 }
 
 copyDirIfNeeded(staticSrc, staticDest)
-copyDirIfNeeded(staticSrc, publicNextStaticDest)
+if (existsSync(publicNextStaticDest)) {
+  rmSync(path.join(publicSrc, '_next'), { recursive: true, force: true })
+}
 copyDirIfNeeded(publicSrc, publicDest)
 copyDirIfNeeded(staticSrc, standalonePublicNextStaticDest)
 copyDirIfNeeded(serverSrc, serverDest)
+
+const imgModuleSrc = path.join(root, 'node_modules', '@img')
+const imgModuleDest = path.join(standaloneDir, 'node_modules', '@img')
+if (existsSync(imgModuleSrc)) {
+  copyDirIfNeeded(imgModuleSrc, imgModuleDest)
+}
 
 for (const envFile of envFiles) {
   const envPath = path.join(standaloneDir, envFile)

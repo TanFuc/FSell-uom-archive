@@ -2,6 +2,7 @@ import {
   Controller,
   Post,
   Get,
+  Put,
   Body,
   UseGuards,
   Req,
@@ -16,6 +17,7 @@ import { ConfigService } from '@nestjs/config'
 import { CustomerAuthService } from './customer-auth.service'
 import { CustomerRegisterDto } from './dto/customer-register.dto'
 import { CustomerLoginDto } from './dto/customer-login.dto'
+import { UpdateCustomerProfileDto, ChangeCustomerPasswordDto } from './dto/customer-profile.dto'
 import { CustomerAuthGuard } from './customer-auth.guard'
 import { RedisRateLimiterGuard } from '../common/guards/redis-rate-limiter.guard'
 import { RateLimit } from '../common/decorators/rate-limit.decorator'
@@ -54,6 +56,18 @@ export class CustomerAuthController {
   @UseGuards(CustomerAuthGuard)
   async logout(@Req() req: any) {
     return this.customerAuthService.logout(req.user.id)
+  }
+
+  @Put('profile')
+  @UseGuards(CustomerAuthGuard)
+  async updateProfile(@Req() req: any, @Body() dto: UpdateCustomerProfileDto) {
+    return this.customerAuthService.updateProfile(req.user.id, dto)
+  }
+
+  @Put('change-password')
+  @UseGuards(CustomerAuthGuard)
+  async changePassword(@Req() req: any, @Body() dto: ChangeCustomerPasswordDto) {
+    return this.customerAuthService.changePassword(req.user.id, dto)
   }
 
   // ==============================================================================

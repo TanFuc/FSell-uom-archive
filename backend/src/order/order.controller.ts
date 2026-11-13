@@ -54,6 +54,11 @@ export class OrderController {
     @Query('status') status?: string,
     @Query('paymentStatus') paymentStatus?: string,
     @Query('search') search?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('hasProof') hasProof?: string,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: string,
   ) {
     return this.orderService.getAdminOrders({
       page: page ? Number(page) : 1,
@@ -61,6 +66,11 @@ export class OrderController {
       status,
       paymentStatus,
       search,
+      startDate,
+      endDate,
+      hasProof,
+      sortBy,
+      sortOrder,
     })
   }
 
@@ -117,27 +127,39 @@ export class OrderController {
   async uploadPaymentProof(
     @Param('idOrNumber') idOrNumber: string,
     @UploadedFile() file: Express.Multer.File,
-    @Headers('x-order-payment-token') accessToken?: string,
+    @Headers('x-order-payment-token') headerToken?: string,
+    @Query('access') queryAccess?: string,
+    @Query('token') queryToken?: string,
+    @Req() req?: any,
   ) {
-    return this.orderService.uploadPaymentProof(idOrNumber, file, accessToken)
+    const accessToken = headerToken || queryAccess || queryToken
+    return this.orderService.uploadPaymentProof(idOrNumber, file, accessToken, req)
   }
 
   @Post(':idOrNumber/confirm-transfer')
   @RateLimit({ limit: 10, ttl: 60 })
   async confirmTransfer(
     @Param('idOrNumber') idOrNumber: string,
-    @Headers('x-order-payment-token') accessToken?: string,
+    @Headers('x-order-payment-token') headerToken?: string,
+    @Query('access') queryAccess?: string,
+    @Query('token') queryToken?: string,
+    @Req() req?: any,
   ) {
-    return this.orderService.confirmTransfer(idOrNumber, accessToken)
+    const accessToken = headerToken || queryAccess || queryToken
+    return this.orderService.confirmTransfer(idOrNumber, accessToken, req)
   }
 
   @Get(':idOrNumber')
   @RateLimit({ limit: 60, ttl: 60 })
   async getOrder(
     @Param('idOrNumber') idOrNumber: string,
-    @Headers('x-order-payment-token') accessToken?: string,
+    @Headers('x-order-payment-token') headerToken?: string,
+    @Query('access') queryAccess?: string,
+    @Query('token') queryToken?: string,
+    @Req() req?: any,
   ) {
-    await this.orderService.assertPublicOrderAccess(idOrNumber, accessToken)
+    const accessToken = headerToken || queryAccess || queryToken
+    await this.orderService.assertPublicOrderAccess(idOrNumber, accessToken, req)
     return this.orderService.getOrderByIdOrNumber(idOrNumber)
   }
 
@@ -148,9 +170,13 @@ export class OrderController {
   @RateLimit({ limit: 30, ttl: 60 })
   async syncTracking(
     @Param('idOrNumber') idOrNumber: string,
-    @Headers('x-order-payment-token') accessToken?: string,
+    @Headers('x-order-payment-token') headerToken?: string,
+    @Query('access') queryAccess?: string,
+    @Query('token') queryToken?: string,
+    @Req() req?: any,
   ) {
-    await this.orderService.assertPublicOrderAccess(idOrNumber, accessToken)
+    const accessToken = headerToken || queryAccess || queryToken
+    await this.orderService.assertPublicOrderAccess(idOrNumber, accessToken, req)
     return this.orderService.syncOrderFulfillmentFromSapo(idOrNumber)
   }
 

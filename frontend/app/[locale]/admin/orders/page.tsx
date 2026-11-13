@@ -15,9 +15,12 @@ import {
   Phone,
   MapPin,
   Calendar,
+  RotateCcw,
+  ArrowUpDown,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { api } from '@/lib/api'
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -28,6 +31,33 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 
+const formatDateInput = (date: Date): string => {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
+const getTodayStr = () => formatDateInput(new Date())
+
+const getYesterdayStr = () => {
+  const d = new Date()
+  d.setDate(d.getDate() - 1)
+  return formatDateInput(d)
+}
+
+const getSevenDaysAgoStr = () => {
+  const d = new Date()
+  d.setDate(d.getDate() - 6)
+  return formatDateInput(d)
+}
+
+const getStartOfMonthStr = () => {
+  const d = new Date()
+  d.setDate(1)
+  return formatDateInput(d)
+}
+
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<any[]>([])
   const [total, setTotal] = useState(0)
@@ -35,9 +65,15 @@ export default function AdminOrdersPage() {
   const [totalPages, setTotalPages] = useState(1)
   const [loading, setLoading] = useState(true)
 
-  // Filters
+  // Filters - Mặc định khi vào trang là "Hôm nay"
+  const [datePreset, setDatePreset] = useState<'today' | 'yesterday' | '7days' | 'thisMonth' | 'all' | 'custom'>('today')
+  const [startDate, setStartDate] = useState(getTodayStr())
+  const [endDate, setEndDate] = useState(getTodayStr())
+
   const [statusFilter, setStatusFilter] = useState('all')
   const [paymentStatusFilter, setPaymentStatusFilter] = useState('all')
+  const [hasProofFilter, setHasProofFilter] = useState('all')
+  const [sortOption, setSortOption] = useState('createdAt_desc')
   const [searchQuery, setSearchQuery] = useState('')
   const [submittedSearch, setSubmittedSearch] = useState('')
 
@@ -49,17 +85,23 @@ export default function AdminOrdersPage() {
   const fetchOrders = async () => {
     setLoading(true)
     try {
+      const [sortField, sortDirection] = sortOption.split('_')
       const data = await api.getAdminOrders({
         page,
         limit: 20,
         status: statusFilter,
         paymentStatus: paymentStatusFilter,
+        hasProof: hasProofFilter !== 'all' ? hasProofFilter : undefined,
+        startDate: startDate || undefined,
+        endDate: endDate || undefined,
+        sortBy: sortField,
+        sortOrder: sortDirection,
         search: submittedSearch,
       })
       setOrders(data.items || [])
       setTotal(data.total || 0)
       setTotalPages(data.totalPages || 1)
-    } catch (err: any) {
+    } catch {
       toast.error('Không thể tải danh sách đơn hàng')
     } finally {
       setLoading(false)
@@ -68,12 +110,62 @@ export default function AdminOrdersPage() {
 
   useEffect(() => {
     fetchOrders()
-  }, [page, statusFilter, paymentStatusFilter, submittedSearch])
+  }, [page, statusFilter, paymentStatusFilter, hasProofFilter, startDate, endDate, sortOption, submittedSearch])
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setPage(1)
     setSubmittedSearch(searchQuery.trim())
+  }
+
+  const handlePresetChange = (preset: 'today' | 'yesterday' | '7days' | 'thisMonth' | 'all') => {
+    setDatePreset(preset)
+    setPage(1)
+    switch (preset) {
+      case 'today':
+        setStartDate(getTodayStr())
+        setEndDate(getTodayStr())
+        break
+      case 'yesterday':
+        setStartDate(getYesterdayStr())
+        setEndDate(getYesterdayStr())
+        break
+      case '7days':
+        setStartDate(getSevenDaysAgoStr())
+        setEndDate(getTodayStr())
+        break
+      case 'thisMonth':
+        setStartDate(getStartOfMonthStr())
+        setEndDate(getTodayStr())
+        break
+      case 'all':
+        setStartDate('')
+        setEndDate('')
+        break
+    }
+  }
+
+  const handleCustomDateChange = (type: 'start' | 'end', val: string) => {
+    setDatePreset('custom')
+    setPage(1)
+    if (type === 'start') {
+      setStartDate(val)
+    } else {
+      setEndDate(val)
+    }
+  }
+
+  const handleResetFilters = () => {
+    setDatePreset('today')
+    setStartDate(getTodayStr())
+    setEndDate(getTodayStr())
+    setStatusFilter('all')
+    setPaymentStatusFilter('all')
+    setHasProofFilter('all')
+    setSortOption('createdAt_desc')
+    setSearchQuery('')
+    setSubmittedSearch('')
+    setPage(1)
   }
 
   const handleUpdateStatus = async (orderId: string, newStatus: string) => {
@@ -132,51 +224,52 @@ export default function AdminOrdersPage() {
     }
   }
 
-  const getOrderStatusBadge = (status: string) => {
+  // Cấu hình style và nhãn gọn gàng, đồng bộ cho nút Select Trạng thái đơn (căn lề trái đồng đều, có chấm tròn trạng thái)
+  const getStatusStyle = (status: string) => {
     switch (status) {
       case 'pending':
-        return (
-          <span className="inline-block px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-700 bg-amber-50 border border-amber-200">
-            Chờ xử lý
-          </span>
-        )
+        return {
+          label: 'Chờ xử lý',
+          className: 'bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100/80',
+          dotClass: 'bg-amber-500',
+        }
       case 'processing':
-        return (
-          <span className="inline-block px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-blue-700 bg-blue-50 border border-blue-200">
-            Đang chuẩn bị
-          </span>
-        )
+        return {
+          label: 'Đang chuẩn bị',
+          className: 'bg-blue-50 text-blue-900 border-blue-300 hover:bg-blue-100/80',
+          dotClass: 'bg-blue-500',
+        }
       case 'shipped':
-        return (
-          <span className="inline-block px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-purple-700 bg-purple-50 border border-purple-200">
-            Đang vận chuyển
-          </span>
-        )
+        return {
+          label: 'Đang vận chuyển',
+          className: 'bg-purple-50 text-purple-900 border-purple-300 hover:bg-purple-100/80',
+          dotClass: 'bg-purple-500',
+        }
       case 'delivered':
-        return (
-          <span className="inline-block px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-200">
-            Đã hoàn thành
-          </span>
-        )
+        return {
+          label: 'Đã hoàn thành',
+          className: 'bg-emerald-50 text-emerald-900 border-emerald-300 hover:bg-emerald-100/80',
+          dotClass: 'bg-emerald-500',
+        }
       case 'cancelled':
-        return (
-          <span className="inline-block px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-neutral-600 bg-neutral-100 border border-neutral-300">
-            Đã hủy
-          </span>
-        )
+        return {
+          label: 'Đã hủy',
+          className: 'bg-neutral-100 text-neutral-700 border-neutral-300 hover:bg-neutral-200/80',
+          dotClass: 'bg-neutral-400',
+        }
       default:
-        return (
-          <span className="inline-block px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-neutral-600 bg-neutral-100 border border-neutral-200">
-            {status}
-          </span>
-        )
+        return {
+          label: status,
+          className: 'bg-neutral-50 text-neutral-700 border-neutral-300',
+          dotClass: 'bg-neutral-400',
+        }
     }
   }
 
   const getPaymentStatusBadge = (paymentStatus: string, hasProof: boolean) => {
     if (paymentStatus === 'paid') {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-200">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xs">
           <CheckCircle2 className="w-3 h-3 text-emerald-600" />
           Đã thanh toán
         </span>
@@ -185,15 +278,15 @@ export default function AdminOrdersPage() {
 
     if (paymentStatus === 'pending_approval' || hasProof) {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-800 bg-amber-50 border border-amber-200">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-800 bg-amber-50 border border-amber-200 rounded-xs">
           <Clock className="w-3 h-3 text-amber-600" />
-          Chờ duyệt chuyển khoản
+          Chờ duyệt CK
         </span>
       )
     }
 
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-red-700 bg-red-50 border border-red-200">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-red-700 bg-red-50 border border-red-200 rounded-xs">
         Chưa chuyển khoản
       </span>
     )
@@ -227,9 +320,10 @@ export default function AdminOrdersPage() {
       </div>
 
       {/* Filters & Search Toolbar */}
-      <div className="bg-white p-4 border border-neutral-200 shadow-2xs space-y-3">
-        <form onSubmit={handleSearchSubmit} className="grid grid-cols-1 sm:grid-cols-12 gap-3">
-          <div className="sm:col-span-4 relative">
+      <div className="bg-white p-4 border border-neutral-200 shadow-2xs space-y-3.5">
+        {/* Hàng 1: Tìm kiếm + Trạng thái đơn + Thanh toán + Biên lai CK + Sắp xếp */}
+        <form onSubmit={handleSearchSubmit} className="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
+          <div className="sm:col-span-3 relative">
             <Search className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <Input
               value={searchQuery}
@@ -239,7 +333,7 @@ export default function AdminOrdersPage() {
             />
           </div>
 
-          <div className="sm:col-span-3">
+          <div className="sm:col-span-2">
             <Select
               value={statusFilter}
               onValueChange={(val) => {
@@ -248,7 +342,7 @@ export default function AdminOrdersPage() {
               }}
             >
               <SelectTrigger className="text-xs h-9">
-                <SelectValue placeholder="Trạng thái đơn hàng" />
+                <SelectValue placeholder="Trạng thái đơn" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tất cả trạng thái đơn</SelectItem>
@@ -261,7 +355,7 @@ export default function AdminOrdersPage() {
             </Select>
           </div>
 
-          <div className="sm:col-span-3">
+          <div className="sm:col-span-2">
             <Select
               value={paymentStatusFilter}
               onValueChange={(val) => {
@@ -270,7 +364,7 @@ export default function AdminOrdersPage() {
               }}
             >
               <SelectTrigger className="text-xs h-9">
-                <SelectValue placeholder="Trạng thái thanh toán" />
+                <SelectValue placeholder="Thanh toán" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tất cả thanh toán</SelectItem>
@@ -282,11 +376,159 @@ export default function AdminOrdersPage() {
           </div>
 
           <div className="sm:col-span-2">
+            <Select
+              value={hasProofFilter}
+              onValueChange={(val) => {
+                setHasProofFilter(val)
+                setPage(1)
+              }}
+            >
+              <SelectTrigger className="text-xs h-9">
+                <SelectValue placeholder="Ảnh biên lai" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả biên lai</SelectItem>
+                <SelectItem value="true">Đã tải ảnh CK</SelectItem>
+                <SelectItem value="false">Chưa có ảnh CK</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="sm:col-span-2">
+            <Select
+              value={sortOption}
+              onValueChange={(val) => {
+                setSortOption(val)
+                setPage(1)
+              }}
+            >
+              <SelectTrigger className="text-xs h-9">
+                <ArrowUpDown className="w-3.5 h-3.5 mr-1.5 text-neutral-400" />
+                <SelectValue placeholder="Sắp xếp" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="createdAt_desc">Mới nhất trước</SelectItem>
+                <SelectItem value="createdAt_asc">Cũ nhất trước</SelectItem>
+                <SelectItem value="totalVND_desc">Tổng tiền cao nhất</SelectItem>
+                <SelectItem value="totalVND_asc">Tổng tiền thấp nhất</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="sm:col-span-1">
             <Button type="submit" className="w-full text-xs h-9 bg-[#4A4238] hover:bg-[#8C7E6A] text-white">
-              Tìm kiếm
+              Tìm
             </Button>
           </div>
         </form>
+
+        {/* Hàng 2: Bộ lọc ngày tháng năm (Hôm nay mặc định) + Chọn khoảng ngày */}
+        <div className="flex flex-wrap items-center justify-between gap-2.5 pt-2 border-t border-neutral-100 text-xs">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-neutral-500 font-medium flex items-center gap-1 mr-1 text-[11px] uppercase tracking-wider">
+              <Calendar className="w-3.5 h-3.5 text-[#8C7E6A]" />
+              Thời gian:
+            </span>
+
+            <button
+              type="button"
+              onClick={() => handlePresetChange('today')}
+              className={cn(
+                'px-2.5 py-1 text-xs rounded transition-colors font-medium',
+                datePreset === 'today'
+                  ? 'bg-[#4A4238] text-white shadow-2xs'
+                  : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200',
+              )}
+            >
+              Hôm nay
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handlePresetChange('yesterday')}
+              className={cn(
+                'px-2.5 py-1 text-xs rounded transition-colors font-medium',
+                datePreset === 'yesterday'
+                  ? 'bg-[#4A4238] text-white shadow-2xs'
+                  : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200',
+              )}
+            >
+              Hôm qua
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handlePresetChange('7days')}
+              className={cn(
+                'px-2.5 py-1 text-xs rounded transition-colors font-medium',
+                datePreset === '7days'
+                  ? 'bg-[#4A4238] text-white shadow-2xs'
+                  : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200',
+              )}
+            >
+              7 ngày qua
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handlePresetChange('thisMonth')}
+              className={cn(
+                'px-2.5 py-1 text-xs rounded transition-colors font-medium',
+                datePreset === 'thisMonth'
+                  ? 'bg-[#4A4238] text-white shadow-2xs'
+                  : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200',
+              )}
+            >
+              Tháng này
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handlePresetChange('all')}
+              className={cn(
+                'px-2.5 py-1 text-xs rounded transition-colors font-medium',
+                datePreset === 'all'
+                  ? 'bg-[#4A4238] text-white shadow-2xs'
+                  : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200',
+              )}
+            >
+              Tất cả thời gian
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1.5 text-neutral-500">
+              <span className="text-[11px]">Từ:</span>
+              <Input
+                type="date"
+                value={startDate}
+                onChange={(e) => handleCustomDateChange('start', e.target.value)}
+                className="h-8 text-xs w-[130px] px-2"
+              />
+            </div>
+            <div className="flex items-center gap-1.5 text-neutral-500">
+              <span className="text-[11px]">Đến:</span>
+              <Input
+                type="date"
+                value={endDate}
+                onChange={(e) => handleCustomDateChange('end', e.target.value)}
+                className="h-8 text-xs w-[130px] px-2"
+              />
+            </div>
+
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={handleResetFilters}
+              className="h-8 px-2 text-xs text-neutral-500 hover:text-neutral-900 flex items-center gap-1"
+              title="Khôi phục bộ lọc về mặc định"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Đặt lại</span>
+            </Button>
+          </div>
+        </div>
       </div>
 
       {/* Orders Table */}
@@ -294,7 +536,7 @@ export default function AdminOrdersPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr className="bg-neutral-50/80 border-b border-neutral-200 text-neutral-500 font-medium uppercase tracking-wider text-[11px]">
+              <tr className="bg-neutral-50/80 border-b border-neutral-200 text-neutral-600 font-medium uppercase tracking-wider text-[11px]">
                 <th className="py-3 px-4">Mã đơn hàng</th>
                 <th className="py-3 px-4">Khách hàng</th>
                 <th className="py-3 px-4">Ngày đặt</th>
@@ -315,14 +557,33 @@ export default function AdminOrdersPage() {
                 </tr>
               ) : orders.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-neutral-400">
-                    Không tìm thấy đơn hàng nào phù hợp với bộ lọc.
+                  <td colSpan={8} className="py-12 text-center text-neutral-500">
+                    <div className="space-y-2 max-w-sm mx-auto">
+                      <p className="font-medium text-neutral-700">
+                        {datePreset === 'today'
+                          ? 'Hôm nay chưa có đơn hàng nào mới.'
+                          : 'Không tìm thấy đơn hàng nào phù hợp với bộ lọc.'}
+                      </p>
+                      {datePreset === 'today' && (
+                        <div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handlePresetChange('all')}
+                            className="text-xs text-[#8C7E6A] border-[#8C7E6A]/30 hover:bg-[#8C7E6A]/10 mt-1"
+                          >
+                            Xem tất cả đơn hàng từ trước đến nay
+                          </Button>
+                        </div>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ) : (
                 orders.map((order) => {
                   const hasProof = Boolean(order.paymentProofUrl)
                   const isPaid = order.paymentStatus === 'paid'
+                  const statusStyle = getStatusStyle(order.status)
 
                   return (
                     <tr key={order.id} className="hover:bg-neutral-50/70 transition-colors">
@@ -358,7 +619,7 @@ export default function AdminOrdersPage() {
                           month: '2-digit',
                           year: 'numeric',
                         })}
-                        <span className="block text-[10px] text-neutral-400">
+                        <span className="block text-[10px] text-neutral-400 font-mono">
                           {new Date(order.createdAt).toLocaleTimeString('vi-VN', {
                             hour: '2-digit',
                             minute: '2-digit',
@@ -381,7 +642,7 @@ export default function AdminOrdersPage() {
                         {order.paymentProofUrl ? (
                           <div
                             onClick={() => setSelectedProofUrl(order.paymentProofUrl)}
-                            className="inline-block relative cursor-pointer group border border-neutral-200 overflow-hidden w-11 h-11 bg-neutral-100 rounded-sm"
+                            className="inline-block relative cursor-pointer group border border-neutral-200 overflow-hidden w-10 h-10 bg-neutral-100 rounded-sm"
                             title="Bấm để xem ảnh biên lai lớn"
                           >
                             <img
@@ -398,24 +659,59 @@ export default function AdminOrdersPage() {
                         )}
                       </td>
 
-                      {/* Trạng thái đơn */}
+                      {/* Trạng thái đơn - Dropdown chuẩn mực, căn lề trái đồng đều 100%, có chấm trạng thái, hover nhẹ nhàng */}
                       <td className="py-3.5 px-4 text-center">
-                        <Select
-                          value={order.status}
-                          onValueChange={(val) => handleUpdateStatus(order.id, val)}
-                          disabled={actionLoading === `status-${order.id}`}
-                        >
-                          <SelectTrigger className="h-7 text-[11px] px-2 w-[130px] mx-auto">
-                            <SelectValue>{getOrderStatusBadge(order.status)}</SelectValue>
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="pending">Chờ xử lý</SelectItem>
-                            <SelectItem value="processing">Đang chuẩn bị (Xác nhận)</SelectItem>
-                            <SelectItem value="shipped">Đang vận chuyển</SelectItem>
-                            <SelectItem value="delivered">Đã hoàn thành</SelectItem>
-                            <SelectItem value="cancelled">Đã hủy</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <div className="flex justify-center text-left">
+                          <Select
+                            value={order.status}
+                            onValueChange={(val) => handleUpdateStatus(order.id, val)}
+                            disabled={actionLoading === `status-${order.id}`}
+                          >
+                            <SelectTrigger
+                              className={cn(
+                                'h-8 w-[150px] text-[11px] font-medium px-2.5 rounded shadow-2xs border transition-colors flex items-center justify-between text-left',
+                                statusStyle.className,
+                              )}
+                            >
+                              <div className="flex items-center gap-1.5 truncate text-left min-w-0">
+                                <span className={cn('w-2 h-2 rounded-full shrink-0', statusStyle.dotClass)} />
+                                <span className="truncate text-left font-medium">{statusStyle.label}</span>
+                              </div>
+                            </SelectTrigger>
+                            <SelectContent align="center" className="min-w-[175px] bg-white border border-neutral-200 shadow-lg p-1">
+                              <SelectItem value="pending" className="cursor-pointer py-1.5 focus:bg-amber-50">
+                                <div className="flex items-center gap-2">
+                                  <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
+                                  <span className="text-amber-900 font-medium text-xs">Chờ xử lý</span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="processing" className="cursor-pointer py-1.5 focus:bg-blue-50">
+                                <div className="flex items-center gap-2">
+                                  <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
+                                  <span className="text-blue-900 font-medium text-xs">Đang chuẩn bị (Xác nhận)</span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="shipped" className="cursor-pointer py-1.5 focus:bg-purple-50">
+                                <div className="flex items-center gap-2">
+                                  <span className="w-2 h-2 rounded-full bg-purple-500 shrink-0" />
+                                  <span className="text-purple-900 font-medium text-xs">Đang vận chuyển</span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="delivered" className="cursor-pointer py-1.5 focus:bg-emerald-50">
+                                <div className="flex items-center gap-2">
+                                  <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                                  <span className="text-emerald-900 font-medium text-xs">Đã hoàn thành</span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="cancelled" className="cursor-pointer py-1.5 focus:bg-neutral-100">
+                                <div className="flex items-center gap-2">
+                                  <span className="w-2 h-2 rounded-full bg-neutral-400 shrink-0" />
+                                  <span className="text-neutral-700 font-medium text-xs">Đã hủy</span>
+                                </div>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </td>
 
                       {/* Thao tác */}

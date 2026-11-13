@@ -87,7 +87,7 @@ try {
       NEXT_PUBLIC_API_BASE_URL: 'https://api.uomarchive.com',
       NEXT_PUBLIC_IMAGE_BASE_URL: 'https://images.uomarchive.com',
       NEXT_PUBLIC_R2_PUBLIC_URL: 'https://images.uomarchive.com',
-      NEXT_PUBLIC_APP_URL: 'https://uomarchive.com',
+      NEXT_PUBLIC_APP_URL: 'https://www.uomarchive.com',
       SERVER_API_URL: 'https://api.uomarchive.com',
       SITEMAP_API_URL: 'https://api.uomarchive.com',
     })

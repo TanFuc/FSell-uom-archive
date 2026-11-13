@@ -35,19 +35,85 @@ export class OrderService {
     return secret
   }
 
-  private assertPaymentAccess(orderId: string, token?: string): void {
-    if (!matchesOrderAccessToken(orderId, this.getOrderAccessSecret(), token)) {
-      throw new ForbiddenException('Liên kết xác nhận chuyển khoản không hợp lệ')
+  extractUserFromRequest(req?: any): { id?: string; email?: string; role?: string } | null {
+    if (!req) return null
+    if (req.user?.id) return req.user
+
+    const authHeader = req.headers?.authorization || req.headers?.Authorization
+    const cookieToken = req.cookies?.customer_access_token || req.cookies?.customerAccessToken || req.cookies?.accessToken
+    const rawToken = authHeader && typeof authHeader === 'string' && authHeader.toLowerCase().startsWith('bearer ')
+      ? authHeader.replace(/^bearer\s+/i, '').trim()
+      : cookieToken
+
+    if (rawToken && typeof rawToken === 'string') {
+      try {
+        const jwt = require('jsonwebtoken')
+        const secret = this.configService.get<string>('JWT_ACCESS_SECRET')
+        if (secret) {
+          const payload = jwt.verify(rawToken, secret) as any
+          if (payload?.sub) {
+            return {
+              id: payload.sub,
+              email: payload.email,
+              role: payload.role || (payload.type === 'CUSTOMER' ? 'CUSTOMER' : undefined),
+            }
+          }
+        }
+      } catch {}
     }
+    return null
   }
 
-  async assertPublicOrderAccess(identifier: string, token?: string): Promise<void> {
+  private assertPaymentAccess(
+    orderId: string,
+    token?: string,
+    customerId?: string,
+    user?: any,
+    customerEmail?: string,
+    orderNumber?: string,
+  ): void {
+    if (matchesOrderAccessToken(orderId, this.getOrderAccessSecret(), token, orderNumber)) {
+      return
+    }
+    if (user?.id && customerId && user.id === customerId) {
+      return
+    }
+    if (
+      user?.email &&
+      customerEmail &&
+      user.email.toLowerCase() === customerEmail.toLowerCase()
+    ) {
+      return
+    }
+    if (user?.role === 'ADMIN' || user?.role === 'MANAGER') {
+      return
+    }
+    throw new ForbiddenException('Liên kết xác nhận chuyển khoản không hợp lệ')
+  }
+
+  async assertPublicOrderAccess(identifier: string, token?: string, reqOrUser?: any): Promise<void> {
+    const cleanId = (identifier || '').trim()
     const order = await this.prisma.order.findFirst({
-      where: { OR: [{ id: identifier }, { orderNumber: identifier }], deletedAt: null },
-      select: { id: true },
+      where: {
+        OR: [
+          { id: cleanId },
+          { orderNumber: cleanId },
+          { orderNumber: cleanId.toUpperCase() },
+        ],
+        deletedAt: null,
+      },
+      select: { id: true, orderNumber: true, customerId: true, customerEmail: true },
     })
     if (!order) throw new NotFoundException('Không tìm thấy đơn hàng')
-    this.assertPaymentAccess(order.id, token)
+    const user = reqOrUser?.id ? reqOrUser : this.extractUserFromRequest(reqOrUser)
+    this.assertPaymentAccess(
+      order.id,
+      token?.trim(),
+      order.customerId ?? undefined,
+      user,
+      order.customerEmail ?? undefined,
+      order.orderNumber,
+    )
   }
 
   /**
@@ -223,9 +289,14 @@ export class OrderService {
    * hệ thống sẽ tự động gọi Sapo API để kéo tracking number và cập nhật DB.
    */
   async getOrderByIdOrNumber(identifier: string) {
+    const cleanId = (identifier || '').trim()
     let order = await this.prisma.order.findFirst({
       where: {
-        OR: [{ id: identifier }, { orderNumber: identifier }],
+        OR: [
+          { id: cleanId },
+          { orderNumber: cleanId },
+          { orderNumber: cleanId.toUpperCase() },
+        ],
         deletedAt: null,
       },
       include: {
@@ -265,7 +336,11 @@ export class OrderService {
       }
     }
 
-    return order
+    const secret = this.getOrderAccessSecret()
+    return {
+      ...order,
+      paymentAccessToken: createOrderAccessToken(order.id, secret),
+    }
   }
 
   /**
@@ -562,7 +637,12 @@ export class OrderService {
   /**
    * Khách hàng tải lên ảnh biên nhận chuyển khoản (Proof of Payment)
    */
-  async uploadPaymentProof(identifier: string, file: Express.Multer.File, accessToken?: string) {
+  async uploadPaymentProof(
+    identifier: string,
+    file: Express.Multer.File,
+    accessToken?: string,
+    reqOrUser?: any,
+  ) {
     if (!file) {
       throw new BadRequestException('Vui lòng chọn hình ảnh biên nhận chuyển khoản')
     }
@@ -580,7 +660,15 @@ export class OrderService {
     if (!order) {
       throw new NotFoundException('Không tìm thấy đơn hàng')
     }
-    this.assertPaymentAccess(order.id, accessToken)
+    const user = reqOrUser?.id ? reqOrUser : this.extractUserFromRequest(reqOrUser)
+    this.assertPaymentAccess(
+      order.id,
+      accessToken,
+      order.customerId ?? undefined,
+      user,
+      order.customerEmail ?? undefined,
+      order.orderNumber,
+    )
 
     if (order.paymentMethod !== 'bank_transfer' || order.status === 'cancelled' || order.paymentStatus === 'paid') {
       throw new BadRequestException('Đơn hàng không thể nhận thêm biên nhận chuyển khoản')
@@ -612,24 +700,41 @@ export class OrderService {
       this.logger.warn(`Lỗi gửi mail sau khi upload bill đơn ${updatedOrder.orderNumber}: ${err.message}`)
     })
 
-    return updatedOrder
+    const secret = this.getOrderAccessSecret()
+    return {
+      ...updatedOrder,
+      paymentAccessToken: createOrderAccessToken(updatedOrder.id, secret),
+    }
   }
 
-  async confirmTransfer(identifier: string, accessToken?: string) {
+  async confirmTransfer(identifier: string, accessToken?: string, reqOrUser?: any) {
     const order = await this.prisma.order.findFirst({
       where: { OR: [{ id: identifier }, { orderNumber: identifier }], deletedAt: null },
     })
     if (!order) throw new NotFoundException('Không tìm thấy đơn hàng')
-    this.assertPaymentAccess(order.id, accessToken)
+    const user = reqOrUser?.id ? reqOrUser : this.extractUserFromRequest(reqOrUser)
+    this.assertPaymentAccess(
+      order.id,
+      accessToken,
+      order.customerId ?? undefined,
+      user,
+      order.customerEmail ?? undefined,
+      order.orderNumber,
+    )
     if (order.paymentMethod !== 'bank_transfer' || order.status === 'cancelled') {
       throw new BadRequestException('Đơn hàng không thể xác nhận chuyển khoản')
     }
     if (order.paymentStatus === 'paid') return order
-    return this.prisma.order.update({
+    const updated = await this.prisma.order.update({
       where: { id: order.id },
       data: { transferClaimedAt: order.transferClaimedAt || new Date(), paymentStatus: 'pending_approval' },
       include: { items: { where: { deletedAt: null } } },
     })
+    const secret = this.getOrderAccessSecret()
+    return {
+      ...updated,
+      paymentAccessToken: createOrderAccessToken(updated.id, secret),
+    }
   }
 
   /**
@@ -641,6 +746,11 @@ export class OrderService {
     status?: string
     paymentStatus?: string
     search?: string
+    startDate?: string
+    endDate?: string
+    hasProof?: string
+    sortBy?: string
+    sortOrder?: string
   }) {
     const page = Math.max(1, Number(query.page) || 1)
     const limit = Math.max(1, Math.min(100, Number(query.limit) || 20))
@@ -659,6 +769,28 @@ export class OrderService {
       where.paymentStatus = query.paymentStatus
     }
 
+    if (query.hasProof === 'true') {
+      where.paymentProofUrl = { not: null }
+    } else if (query.hasProof === 'false') {
+      where.paymentProofUrl = null
+    }
+
+    if (query.startDate) {
+      const start = new Date(query.startDate)
+      if (!isNaN(start.getTime())) {
+        start.setHours(0, 0, 0, 0)
+        where.createdAt = { ...(where.createdAt || {}), gte: start }
+      }
+    }
+
+    if (query.endDate) {
+      const end = new Date(query.endDate)
+      if (!isNaN(end.getTime())) {
+        end.setHours(23, 59, 59, 999)
+        where.createdAt = { ...(where.createdAt || {}), lte: end }
+      }
+    }
+
     if (query.search && query.search.trim()) {
       const s = query.search.trim()
       where.OR = [
@@ -670,13 +802,17 @@ export class OrderService {
       ]
     }
 
+    const sortField = query.sortBy === 'totalVND' ? 'totalVND' : 'createdAt'
+    const sortDirection = query.sortOrder === 'asc' ? 'asc' : 'desc'
+    const orderBy = { [sortField]: sortDirection }
+
     const [items, total] = await Promise.all([
       this.prisma.order.findMany({
         where,
         include: {
           items: { where: { deletedAt: null } },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy,
         skip,
         take: limit,
       }),

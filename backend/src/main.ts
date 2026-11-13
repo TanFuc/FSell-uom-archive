@@ -208,12 +208,15 @@ async function startApplication(): Promise<void> {
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    exposedHeaders: ['x-order-payment-token', 'X-Order-Payment-Token'],
     allowedHeaders: [
       'Content-Type',
       'Authorization',
       'Accept-Language',
       'X-Requested-With',
       'ngrok-skip-browser-warning',
+      'x-order-payment-token',
+      'X-Order-Payment-Token',
     ],
   })
 
@@ -247,11 +250,20 @@ async function startApplication(): Promise<void> {
   app.use('/auth/login', express.text({ type: '*/*', limit: '1mb' }))
   app.use('/auth/login', loginPayloadNormalizerMiddleware)
 
-  const uploadsStaticPath = existsSync(join(process.cwd(), 'uploads'))
-    ? join(process.cwd(), 'uploads')
-    : join(__dirname, '..', 'uploads')
+  const candidateUploads = [
+    join(process.cwd(), 'backend', 'uploads'),
+    join(process.cwd(), 'uploads'),
+    join(__dirname, '..', 'uploads'),
+    join(__dirname, '..', '..', 'uploads'),
+  ]
+  const uploadsStaticPath = candidateUploads.find((p) => existsSync(p)) || join(process.cwd(), 'uploads')
   app.useStaticAssets(uploadsStaticPath, {
     prefix: '/uploads/',
+    setHeaders: (res: any) => {
+      res.setHeader('Access-Control-Allow-Origin', '*')
+      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin')
+      res.setHeader('Cache-Control', 'public, max-age=86400')
+    },
   })
 
   if (nodeEnv === 'development') {

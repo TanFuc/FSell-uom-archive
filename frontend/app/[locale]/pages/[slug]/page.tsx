@@ -32,11 +32,11 @@ export default async function CustomPage({ params }: Props) {
   return (
     <main className="safe-screen min-h-screen bg-white px-4 pb-24 pt-36 text-[#4A4238] sm:px-6 lg:px-12">
       <article className="mx-auto max-w-3xl">
-        <h1 className="font-playfair text-3xl sm:text-5xl">{isVi ? page.titleVi : page.titleEn}</h1>
-        <p className="mt-6 text-sm leading-7 text-[#8C7E6A]">
+        <h1 className="font-playfair text-3xl sm:text-5xl font-light">{isVi ? page.titleVi : page.titleEn}</h1>
+        <p className="mt-6 text-sm font-thin leading-7 text-[#8C7E6A]">
           {isVi ? page.descriptionVi : page.descriptionEn}
         </p>
-        <div className="mt-12 whitespace-pre-wrap text-sm leading-8 sm:text-base">
+        <div className="mt-12 whitespace-pre-wrap text-sm font-thin leading-8 sm:text-base">
           {isVi ? page.contentVi : page.contentEn}
         </div>
       </article>
