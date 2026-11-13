@@ -58,10 +58,8 @@ export default function LoginPage() {
     try {
       const response = await api.login(data.email, data.password)
 
-      // Store token in cookie for middleware
       document.cookie = `accessToken=${response.accessToken}; path=/; secure; samesite=strict`
 
-      // Set user from login response (already includes user info)
       if (response.user) {
         setUser(response.user)
       }
@@ -71,23 +69,18 @@ export default function LoginPage() {
         description: tAuth('loginSuccess'),
       })
 
-      // Redirect to dashboard
       router.push(`/${locale}/admin/dashboard`)
     } catch (error: any) {
-      // Extract detailed error information from API response
       let errorTitle = tAuth('loginError')
       let errorMessage = tAuth('genericError')
       let statusCode: number | undefined
 
       if (error.response) {
-        // API returned an error response
         const errorData = error.response.data
         statusCode = error.response.status
 
-        // Extract error details from backend response
         errorMessage = errorData?.message || error.response.statusText || tAuth('genericError')
 
-        // Customize error title based on status code
         if (statusCode === 401) {
           errorTitle = tAuth('authFailed')
           if (!errorData?.message) {
@@ -104,11 +97,9 @@ export default function LoginPage() {
           errorMessage = tAuth('tooManyAttemptsMessage')
         }
       } else if (error.request) {
-        // Request was made but no response received
         errorTitle = tAuth('connectionError')
         errorMessage = tAuth('connectionErrorMessage')
       } else {
-        // Something else happened
         errorMessage = error.message || tAuth('genericError')
       }
 

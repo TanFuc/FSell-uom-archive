@@ -56,7 +56,6 @@ export function RichTextEditor({
   const [isMaximized, setIsMaximized] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Prevent scroll on body when maximized
   useEffect(() => {
     if (isMaximized) {
       document.body.style.overflow = 'hidden'
@@ -102,7 +101,17 @@ export function RichTextEditor({
     },
   })
 
-  // ... (handleImageUpload, handleFileSelect, setLink consts remain the same)
+  useEffect(() => {
+    if (!editor) return
+
+    const incoming = content || ''
+    const current = editor.getHTML()
+
+    if (incoming !== current) {
+      editor.commands.setContent(incoming, { emitUpdate: false })
+    }
+  }, [content, editor])
+
   const handleImageUpload = useCallback(
     async (file: File) => {
       if (!editor) return
@@ -368,7 +377,7 @@ export function RichTextEditor({
       <EditorContent
         editor={editor}
         className={cn(
-          'prose prose-sm min-h-[150px] w-full max-w-none flex-1 overflow-y-auto p-4 transition-all duration-300 focus:outline-none',
+          'prose prose-sm min-h-[150px] w-full max-w-none flex-1 overflow-y-auto p-4 font-sans text-[11px] tracking-[0.05em] transition-all duration-300 focus:outline-none',
           '[&_.ProseMirror]:min-h-[130px] [&_.ProseMirror]:outline-none',
           '[&_.ProseMirror_p.is-editor-empty:first-child::before]:text-muted-foreground',
           '[&_.ProseMirror_p.is-editor-empty:first-child::before]:content-[attr(data-placeholder)]',

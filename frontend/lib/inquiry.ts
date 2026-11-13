@@ -3,7 +3,7 @@ import { type Product, type Locale } from './types'
 
 export function generateFacebookInquiryUrl(facebookPageUrl: string, message: string): string {
   const encodedMessage = encodeURIComponent(message)
-  // Ensure URL has proper format
+
   const baseUrl = facebookPageUrl.startsWith('http')
     ? facebookPageUrl
     : `https://m.me/${facebookPageUrl}`
@@ -12,7 +12,7 @@ export function generateFacebookInquiryUrl(facebookPageUrl: string, message: str
 
 export function generateInstagramInquiryUrl(instagramUsername: string, message: string): string {
   const encodedMessage = encodeURIComponent(message)
-  // Remove @ if present
+
   const username = instagramUsername.replace('@', '')
   return `https://ig.me/m/${username}?text=${encodedMessage}`
 }
@@ -47,7 +47,6 @@ Could you provide more information?`
 export function getInquiryMessage(product: Product, locale: Locale, exchangeRate?: number): string {
   const message = locale === 'vi' ? product.inquiryMessageVi : product.inquiryMessageEn
 
-  // If message is empty, generate default
   if (!message || message.trim() === '') {
     return generateDefaultInquiryMessage(product, locale, exchangeRate)
   }

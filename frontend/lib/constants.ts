@@ -30,6 +30,20 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
   'hero.title.en': 'Beauty in Stillness',
   'hero.subtitle.vi': 'Gốm sứ thủ công từ Việt Nam',
   'hero.subtitle.en': 'Handcrafted ceramics from Vietnam',
+  'search.trending.vi': JSON.stringify([
+    'binh gom',
+    'chen tra',
+    'men ran',
+    'bo suu tap moi',
+    'lo hoa toi gian',
+  ]),
+  'search.trending.en': JSON.stringify([
+    'ceramic vase',
+    'tea cup',
+    'crackle glaze',
+    'new collection',
+    'minimal decor',
+  ]),
 }
 
 export const DEFAULT_EXCHANGE_RATE = 25000

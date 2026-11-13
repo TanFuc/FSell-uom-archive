@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from 'next-intl'
 import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
+import { SeoSnippetPreview } from '@/components/admin/SeoSnippetPreview'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -54,8 +55,8 @@ export default function BrandingPage() {
       brandNameEn: 'ƯƠM. Archive',
       brandTaglineVi: '',
       brandTaglineEn: '',
-      siteTitleVi: 'ƯƠM. Archive - Gốm sứ thủ công Việt Nam',
-      siteTitleEn: 'ƯƠM. Archive - Handcrafted Ceramics from Vietnam',
+      siteTitleVi: 'ƯƠM. - Gốm sứ thủ công Việt Nam',
+      siteTitleEn: 'ƯƠM. - Handcrafted Ceramics from Vietnam',
       siteDescriptionVi: '',
       siteDescriptionEn: '',
       logoUrl: '',
@@ -125,6 +126,19 @@ export default function BrandingPage() {
   const brandNameEn = form.watch('brandNameEn')
   const brandTaglineVi = form.watch('brandTaglineVi')
   const brandTaglineEn = form.watch('brandTaglineEn')
+  const siteTitleVi = form.watch('siteTitleVi')
+  const siteTitleEn = form.watch('siteTitleEn')
+  const siteDescriptionVi = form.watch('siteDescriptionVi')
+  const siteDescriptionEn = form.watch('siteDescriptionEn')
+  const previewBranding = {
+    brandNameVi,
+    brandNameEn,
+    siteTitleVi,
+    siteTitleEn,
+    siteDescriptionVi,
+    siteDescriptionEn,
+    logoUrl,
+  }
 
   return (
     <div className="space-y-6">
@@ -349,6 +363,29 @@ export default function BrandingPage() {
                       <FormMessage />
                     </FormItem>
                   )}
+                />
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <SeoSnippetPreview
+                  locale="vi"
+                  path="/vi"
+                  title={siteTitleVi || 'ƯƠM. - Gốm sứ thủ công Việt Nam'}
+                  description={
+                    siteDescriptionVi ||
+                    'ƯƠM. tuyển chọn gốm sứ thủ công Việt Nam, lưu giữ vẻ đẹp mộc mạc, tinh tế và câu chuyện của nghệ nhân bản địa.'
+                  }
+                  branding={previewBranding}
+                />
+                <SeoSnippetPreview
+                  locale="en"
+                  path="/en"
+                  title={siteTitleEn || 'ƯƠM. - Handcrafted Ceramics from Vietnam'}
+                  description={
+                    siteDescriptionEn ||
+                    'Discover Vietnamese handcrafted ceramics curated for quiet beauty, refined living, and artisan stories.'
+                  }
+                  branding={previewBranding}
                 />
               </div>
             </CardContent>

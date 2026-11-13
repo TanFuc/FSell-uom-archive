@@ -51,7 +51,7 @@ export function Footer() {
   const brandName =
     locale === 'vi'
       ? branding?.brandNameVi || cachedBranding?.brandNameVi || 'ƯƠM. Archive'
-      : branding?.brandNameEn || cachedBranding?.brandNameEn || 'Uom Archive'
+      : branding?.brandNameEn || cachedBranding?.brandNameEn || 'ƯƠM.'
 
   const brandTagline =
     locale === 'vi'
@@ -59,55 +59,57 @@ export function Footer() {
       : branding?.brandTaglineEn || cachedBranding?.brandTaglineEn || t('description')
 
   const currentYear = new Date().getFullYear()
+  const navigationItems = [
+    { label: locale === 'vi' ? 'Trang chủ' : 'Home', href: `/${locale}` },
+    { label: t('shop'), href: `/${locale}/shop` },
+    { label: t('about'), href: `/${locale}/about` },
+    { label: t('journal'), href: `/${locale}/journal` },
+    { label: locale === 'vi' ? 'Liên hệ' : 'Contact', href: `/${locale}/about#contact` },
+  ]
 
   return (
-    <footer className="bg-white px-6 py-12 text-foreground lg:px-12">
-      <div className="flex w-full flex-col gap-10">
+    <footer className="safe-screen border-t border-foreground/[0.04] bg-white px-4 py-8 text-foreground sm:px-6 sm:py-10 lg:px-12 lg:py-12">
+      <div className="flex w-full flex-col gap-6 sm:gap-8 lg:gap-10">
         {/* Main Footer: Compact Grid */}
-        <div className="grid grid-cols-2 gap-8 md:grid-cols-4 lg:grid-cols-4">
+        <div className="grid grid-cols-3 gap-x-4 gap-y-6 sm:grid-cols-4 md:gap-8">
           {/* Brand */}
-          <div className="space-y-4">
+          <div className="col-span-3 space-y-2 border-b border-foreground/[0.06] pb-5 sm:col-span-1 sm:border-b-0 sm:pb-0">
             <Link
               href={`/${locale}`}
-              className="inline-block font-playfair text-2xl font-bold tracking-tighter text-foreground transition-opacity hover:opacity-70"
+              className="text-mobile-safe inline-block font-playfair text-xl font-bold tracking-tighter text-foreground transition-opacity hover:opacity-70 sm:text-2xl"
             >
               {brandName}
             </Link>
-            <p className="hidden text-[9px] font-medium uppercase leading-relaxed tracking-[0.2em] text-foreground/40 md:block">
+            <p className="max-w-[24rem] text-[9px] font-medium uppercase leading-relaxed tracking-[0.12em] text-foreground/40 sm:hidden md:block md:tracking-[0.2em]">
               {brandTagline}
             </p>
           </div>
 
           {/* Navigation - Compact */}
-          <div className="space-y-4">
-            <h4 className="text-[10px] font-bold uppercase tracking-[0.4em] text-foreground">
+          <div className="space-y-3">
+            <h4 className="text-[9px] font-bold uppercase tracking-[0.18em] text-foreground sm:text-[10px] sm:tracking-[0.28em] lg:tracking-[0.4em]">
               {t('navigation')}
             </h4>
-            <nav className="flex flex-col gap-2">
-              <Link
-                href={`/${locale}/shop`}
-                className="text-[10px] font-medium uppercase tracking-[0.15em] transition-all hover:opacity-60"
-              >
-                {t('shop')}
-              </Link>
-              <Link
-                href={`/${locale}/about`}
-                className="text-[10px] font-medium uppercase tracking-[0.15em] transition-all hover:opacity-60"
-              >
-                ABOUT US
-              </Link>
-              <Link
-                href={`/${locale}/journal`}
-                className="text-[10px] font-medium uppercase tracking-[0.15em] transition-all hover:opacity-60"
-              >
-                JOURNAL
-              </Link>
+            <nav aria-label={locale === 'vi' ? 'Điều hướng chân trang' : 'Footer navigation'}>
+              <ul className="flex flex-col gap-2">
+                {navigationItems.map((item) => (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      title={item.label}
+                      className="block text-[9px] font-medium uppercase tracking-[0.1em] transition-all hover:opacity-60 sm:text-[10px] sm:tracking-[0.15em]"
+                    >
+                      {item.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
             </nav>
           </div>
 
           {/* Connect - Compact */}
-          <div className="space-y-4">
-            <h4 className="text-[10px] font-bold uppercase tracking-[0.4em] text-foreground">
+          <div className="space-y-3">
+            <h4 className="text-[9px] font-bold uppercase tracking-[0.18em] text-foreground sm:text-[10px] sm:tracking-[0.28em] lg:tracking-[0.4em]">
               {t('connect')}
             </h4>
             <div className="flex flex-col gap-2">
@@ -116,7 +118,8 @@ export function Footer() {
                   href={`https://instagram.com/${socialLinks.instagramUsername}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[10px] font-medium uppercase tracking-[0.15em] transition-all hover:opacity-60"
+                  className="text-[9px] font-medium uppercase tracking-[0.1em] transition-all hover:opacity-60 sm:text-[10px] sm:tracking-[0.15em]"
+                  aria-label="Instagram"
                 >
                   Instagram
                 </a>
@@ -126,7 +129,8 @@ export function Footer() {
                   href={socialLinks.facebookPageUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[10px] font-medium uppercase tracking-[0.15em] transition-all hover:opacity-60"
+                  className="text-[9px] font-medium uppercase tracking-[0.1em] transition-all hover:opacity-60 sm:text-[10px] sm:tracking-[0.15em]"
+                  aria-label="Facebook"
                 >
                   Facebook
                 </a>
@@ -135,15 +139,15 @@ export function Footer() {
           </div>
 
           {/* Legal - Compact */}
-          <div className="space-y-4">
-            <h4 className="text-[10px] font-bold uppercase tracking-[0.4em] text-foreground">
+          <div className="space-y-3">
+            <h4 className="text-[9px] font-bold uppercase tracking-[0.18em] text-foreground sm:text-[10px] sm:tracking-[0.28em] lg:tracking-[0.4em]">
               LEGAL
             </h4>
             <div className="flex flex-col gap-2">
-              <span className="text-[10px] font-medium uppercase tracking-[0.15em] text-foreground/30">
+              <span className="text-[9px] font-medium uppercase tracking-[0.1em] text-foreground/30 sm:text-[10px] sm:tracking-[0.15em]">
                 Terms
               </span>
-              <span className="text-[10px] font-medium uppercase tracking-[0.15em] text-foreground/30">
+              <span className="text-[9px] font-medium uppercase tracking-[0.1em] text-foreground/30 sm:text-[10px] sm:tracking-[0.15em]">
                 Privacy
               </span>
             </div>
@@ -151,13 +155,13 @@ export function Footer() {
         </div>
 
         {/* Bottom Bar: Merged into the flow, no border */}
-        <div className="flex items-center justify-between pt-4">
-          <p className="text-[8px] font-bold uppercase tracking-[0.4em] text-foreground/30">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-foreground/[0.04] pt-4">
+          <p className="text-[8px] font-bold uppercase tracking-[0.16em] text-foreground/30 sm:tracking-[0.3em] lg:tracking-[0.4em]">
             © {currentYear} <span className="font-playfair text-xs lowercase">ƯƠM.</span>
           </p>
-          <div className="flex gap-6 opacity-20">
-            <span className="text-[8px] font-bold tracking-[0.5em]">VI</span>
-            <span className="text-[8px] font-bold tracking-[0.5em]">EN</span>
+          <div className="flex gap-4 opacity-20 sm:gap-6">
+            <span className="text-[8px] font-bold tracking-[0.3em] sm:tracking-[0.5em]">VI</span>
+            <span className="text-[8px] font-bold tracking-[0.3em] sm:tracking-[0.5em]">EN</span>
           </div>
         </div>
       </div>

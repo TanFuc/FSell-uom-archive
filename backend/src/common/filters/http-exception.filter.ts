@@ -7,6 +7,7 @@ import {
   Logger,
 } from '@nestjs/common'
 import { Request, Response } from 'express'
+import { isProbePath } from '../security/probe-paths'
 
 interface ExceptionResponse {
   message: string | string[]
@@ -19,7 +20,7 @@ function isMalformedJsonMessage(message: string): boolean {
   return normalized.includes('json') && normalized.includes('position')
 }
 
-function normalizeClientMessage(status: number, message: string | string[]): string | string[] {
+function normalizeClientMessage(status: HttpStatus, message: string | string[]): string | string[] {
   if (Array.isArray(message)) {
     return message
   }
@@ -58,7 +59,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       message = exception.message
     }
 
-    const normalizedMessage = normalizeClientMessage(status, message)
+    const normalizedMessage = normalizeClientMessage(status as HttpStatus, message)
 
     const errorResponse = {
       statusCode: status,
@@ -69,6 +70,15 @@ export class AllExceptionsFilter implements ExceptionFilter {
     }
 
     const logPayload = JSON.stringify(errorResponse)
+    const statusCode = status as HttpStatus
+    const probe404 = statusCode === HttpStatus.NOT_FOUND && isProbePath(request.url)
+
+    if (probe404) {
+      this.logger.debug(`${request.method} ${request.url} - ${status}`, logPayload)
+      response.status(status).json(errorResponse)
+      return
+    }
+
     if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
       this.logger.error(`${request.method} ${request.url} - ${status}`, logPayload)
     } else {

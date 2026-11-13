@@ -23,8 +23,9 @@ export function ProductCard({ product, locale, priority }: ProductCardProps) {
   const mainImage = hasImages ? product.images[0] : null
   const hoverImage = product.hoverImage
   const [shouldLoadHoverImage, setShouldLoadHoverImage] = useState(false)
+  const anchorLabel =
+    locale === 'vi' ? `San pham gom su thu cong: ${name}` : `Handcrafted ceramic product: ${name}`
 
-  // Get price display with sale logic
   const priceDisplay = getDisplayPrice(product, locale, exchangeRate?.rate)
 
   return (
@@ -36,6 +37,7 @@ export function ProductCard({ product, locale, priority }: ProductCardProps) {
       onMouseEnter={() => setShouldLoadHoverImage(true)}
       onTouchStart={() => setShouldLoadHoverImage(true)}
     >
+      <span className="sr-only">{anchorLabel}</span>
       <div
         className="relative mb-4 w-full overflow-hidden rounded-sm bg-muted/20"
         style={{ aspectRatio: '4 / 5' }}
@@ -44,7 +46,11 @@ export function ProductCard({ product, locale, priority }: ProductCardProps) {
           <>
             <Image
               src={optimizeProductImage(mainImage)}
-              alt={name}
+              alt={
+                locale === 'vi'
+                  ? `${name} - Gốm sứ thủ công nghệ thuật ƯƠM. Archive`
+                  : `${name} - Handcrafted Art Ceramics by ƯƠM. Archive`
+              }
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
               className="z-0 object-cover object-center transition-transform duration-500 group-hover:scale-105"
@@ -56,7 +62,11 @@ export function ProductCard({ product, locale, priority }: ProductCardProps) {
             {hoverImage && shouldLoadHoverImage && (
               <Image
                 src={optimizeProductImage(hoverImage)}
-                alt={name}
+                alt={
+                  locale === 'vi'
+                    ? `${name} (Chi tiết) - Gốm sứ Việt Nam ƯƠM. Archive`
+                    : `${name} (Details) - Vietnamese Ceramics by ƯƠM. Archive`
+                }
                 fill
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                 className="z-10 object-cover object-center opacity-0 transition-all duration-500 group-hover:scale-105 group-hover:opacity-100"
@@ -86,7 +96,7 @@ export function ProductCard({ product, locale, priority }: ProductCardProps) {
           {name}
         </h3>
         <div className="flex flex-wrap items-center gap-2">
-          <p className="font-sans text-[10px] font-medium text-foreground md:text-xs">
+          <p className="font-sans text-[10px] font-medium uppercase tracking-wide text-foreground md:text-xs">
             {priceDisplay.currentPrice}
           </p>
           {priceDisplay.hasDiscount && priceDisplay.originalPrice && (

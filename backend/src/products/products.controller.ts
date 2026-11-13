@@ -29,8 +29,6 @@ import { ProductsService } from './products.service'
 export class ProductsController {
   constructor(private productsService: ProductsService) {}
 
-  // ==================== PUBLIC ENDPOINTS ====================
-
   @Get()
   @ApiOperation({ summary: 'Get all products (public)' })
   @ApiResponse({ status: 200, description: 'List of active products' })
@@ -46,8 +44,6 @@ export class ProductsController {
   async findOne(@Param('slug') slug: string) {
     return this.productsService.findBySlug(slug)
   }
-
-  // ==================== ADMIN ENDPOINTS ====================
 
   @Get('admin/list')
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -108,8 +104,6 @@ export class ProductsController {
     return this.productsService.update(id, dto, user.sub)
   }
 
-  // ==================== DELETE ENDPOINTS ====================
-
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MANAGER)
@@ -135,8 +129,6 @@ export class ProductsController {
     return this.productsService.hardDelete(id, user.role as Role)
   }
 
-  // ==================== RESTORE ENDPOINT ====================
-
   @Post(':id/restore')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
@@ -150,8 +142,6 @@ export class ProductsController {
     return this.productsService.restore(id, user.sub, user.role as Role)
   }
 
-  // ==================== DUPLICATE ENDPOINT ====================
-
   @Post(':id/duplicate')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MANAGER)
@@ -163,8 +153,6 @@ export class ProductsController {
   async duplicate(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.productsService.duplicate(id, user.sub)
   }
-
-  // ==================== BULK OPERATIONS ====================
 
   @Post('bulk/delete')
   @UseGuards(JwtAuthGuard, RolesGuard)

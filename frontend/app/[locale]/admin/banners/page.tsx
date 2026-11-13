@@ -29,8 +29,6 @@ import { api } from '@/lib/api'
 import { type Banner } from '@/lib/types'
 import { optimizeProductImage } from '@/lib/utils'
 
-// ... (keep other imports)
-
 export default function BannersPage() {
   const router = useRouter()
   const locale = useLocale()
@@ -47,11 +45,10 @@ export default function BannersPage() {
   const updateBanner = useUpdateBanner()
   const deleteBanner = useDeleteBanner()
 
-  // We want to see all banners, including inactive ones
   const fetchBanners = async () => {
     try {
       setIsLoading(true)
-      // Pass false to get all banners (active and inactive)
+
       const data = await api.getBanners(false)
       setBanners(data)
     } catch (error) {
@@ -70,12 +67,6 @@ export default function BannersPage() {
     fetchBanners()
   }, [])
 
-  // Since we are using manual fetch in useEffect for this admin page (to bypass the useBanners hook which might be tailored for public view or we just want simpler logic here),
-  // we need to manually refresh the list after mutations, OR ideally convert this page to use useQuery too.
-  // For now, to minimize changes, we'll keep fetchBanners but call it after mutation success.
-  // Actually, useDeleteBanner invalidates cache, but fetchBanners calls API directly!
-  // It's better to refetch explicitly.
-
   const handleDelete = async () => {
     if (!deleteDialog.banner) return
 
@@ -92,14 +83,29 @@ export default function BannersPage() {
 
   const handleToggleActive = async (banner: Banner, e: React.MouseEvent) => {
     e.stopPropagation()
+
+    // Optimistic update — flip the status immediately so the UI doesn't flash
+    const newIsActive = !banner.isActive
+    setBanners((prev) =>
+      prev.map((b) => (b.id === banner.id ? { ...b, isActive: newIsActive } : b)),
+    )
+
     try {
-      await updateBanner.mutateAsync({ id: banner.id, data: { isActive: !banner.isActive } })
+      const updated = await updateBanner.mutateAsync({
+        id: banner.id,
+        data: { isActive: newIsActive },
+      })
+      // Sync with server response to ensure consistency
+      setBanners((prev) => prev.map((b) => (b.id === banner.id ? { ...b, ...updated } : b)))
       toast({
         title: t('success'),
-        description: banner.isActive ? t('banners.deactivated') : t('banners.activated'),
+        description: newIsActive ? t('banners.activated') : t('banners.deactivated'),
       })
-      fetchBanners() // Re-fetch list
     } catch (error) {
+      // Rollback on failure
+      setBanners((prev) =>
+        prev.map((b) => (b.id === banner.id ? { ...b, isActive: banner.isActive } : b)),
+      )
       toast({
         title: t('error'),
         description: t('banners.statusUpdateError'),
@@ -110,13 +116,13 @@ export default function BannersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="font-serif text-2xl">{t('banners.pageTitle')}</h1>
           <p className="text-muted-foreground">{t('banners.pageDesc')}</p>
         </div>
         <Link href={`/${locale}/admin/banners/new`}>
-          <Button>
+          <Button className="w-full sm:w-auto">
             <Plus className="mr-2 h-4 w-4" />
             {t('banners.create')}
           </Button>

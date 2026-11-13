@@ -1,6 +1,5 @@
 'use client'
 
-import Image from 'next/image'
 import Link from 'next/link'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import type { Banner as BannerType } from '@/lib/types'
@@ -20,7 +19,6 @@ export function BannerCarousel({ banners, locale, autoPlayInterval = 5000 }: Ban
   const shouldPreventClick = useRef(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  // Block horizontal wheel/trackpad swipe from triggering browser back/forward navigation
   useEffect(() => {
     const el = containerRef.current
     if (!el) return
@@ -33,10 +31,8 @@ export function BannerCarousel({ banners, locale, autoPlayInterval = 5000 }: Ban
     return () => el.removeEventListener('wheel', onWheel)
   }, [])
 
-  // Sort banners by order
   const sortedBanners = [...banners].sort((a, b) => a.order - b.order)
 
-  // Auto-play functionality
   useEffect(() => {
     if (!isAutoPlaying || sortedBanners.length <= 1) return
 
@@ -47,15 +43,13 @@ export function BannerCarousel({ banners, locale, autoPlayInterval = 5000 }: Ban
     return () => clearInterval(interval)
   }, [isAutoPlaying, sortedBanners.length, autoPlayInterval])
 
-  // Navigate to specific banner
   const goToSlide = useCallback((index: number) => {
     setCurrentIndex(index)
     setIsAutoPlaying(false)
-    // Resume auto-play after 10 seconds
+
     setTimeout(() => setIsAutoPlaying(true), 10000)
   }, [])
 
-  // Navigate to next/previous
   const goToNext = useCallback(() => {
     setCurrentIndex((prev) => (prev + 1) % sortedBanners.length)
     setIsAutoPlaying(false)
@@ -68,7 +62,6 @@ export function BannerCarousel({ banners, locale, autoPlayInterval = 5000 }: Ban
     setTimeout(() => setIsAutoPlaying(true), 10000)
   }, [sortedBanners.length])
 
-  // Touch/Swipe handlers for mobile
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchStart(e.targetTouches[0].clientX)
     shouldPreventClick.current = false
@@ -92,7 +85,6 @@ export function BannerCarousel({ banners, locale, autoPlayInterval = 5000 }: Ban
       goToPrevious()
       shouldPreventClick.current = true
     } else {
-      // Small movement, treat as click could happen
       shouldPreventClick.current = false
     }
 
@@ -116,33 +108,42 @@ export function BannerCarousel({ banners, locale, autoPlayInterval = 5000 }: Ban
   const BannerContent = () => (
     <>
       {/* Background Image - Hero Style */}
-      <div className="relative aspect-[4/5] w-full md:aspect-[21/9] lg:aspect-[3/1]">
-        <Image
-          src={optimizeProductImage(currentBanner.imageUrl)}
-          alt={title || 'Banner'}
-          fill
-          className="object-cover transition-transform duration-300"
-          priority
-          draggable={false}
-        />
+      <div className="relative aspect-[4/5] w-full max-w-full overflow-hidden md:aspect-[21/9] lg:aspect-[3/1]">
+        <picture className="absolute inset-0 block h-full w-full">
+          {currentBanner.mobileImageUrl && (
+            <source
+              media="(max-width: 767px)"
+              srcSet={optimizeProductImage(currentBanner.mobileImageUrl)}
+            />
+          )}
+          <img
+            src={optimizeProductImage(currentBanner.imageUrl)}
+            alt={title || 'Banner'}
+            className="h-full w-full object-cover transition-transform duration-300"
+            loading="eager"
+            fetchPriority="high"
+            decoding="async"
+            draggable={false}
+          />
+        </picture>
 
         {/* Subtle overlay for text readability */}
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/5 to-black/30" />
 
         {/* Text Content - Positioned at bottom left */}
         {(title || subtitle || description) && (
-          <div className="absolute inset-0 flex items-end px-6 pb-12 md:px-16 md:pb-16 lg:px-24 lg:pb-20">
+          <div className="absolute inset-0 flex items-end px-4 pb-10 sm:px-6 sm:pb-12 md:px-16 md:pb-16 lg:px-24 lg:pb-20">
             <div
-              className="animate-fade-in max-w-3xl space-y-3 md:space-y-3"
+              className="animate-fade-in min-w-0 max-w-3xl space-y-3 md:space-y-3"
               style={{ color: currentBanner.textColor || '#FFFFFF' }}
             >
               {title && (
-                <h2 className="text-3xl font-light uppercase leading-tight tracking-[0.15em] sm:text-4xl md:text-5xl lg:text-6xl">
+                <h2 className="text-mobile-safe text-2xl font-light uppercase leading-tight tracking-[0.08em] sm:text-4xl sm:tracking-[0.15em] md:text-5xl lg:text-6xl">
                   {title}
                 </h2>
               )}
               {subtitle && (
-                <p className="text-xs font-light uppercase tracking-[0.25em] opacity-90 md:text-sm">
+                <p className="text-mobile-safe text-xs font-light uppercase tracking-[0.14em] opacity-90 sm:tracking-[0.25em] md:text-sm">
                   {subtitle}
                 </p>
               )}

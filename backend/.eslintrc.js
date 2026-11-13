@@ -20,8 +20,7 @@ module.exports = {
     jest: true,
   },
   ignorePatterns: ['.eslintrc.js', 'dist', 'node_modules', 'coverage'],
-  rules: {
-    // TypeScript rules
+  rules: {
     '@typescript-eslint/interface-name-prefix': 'off',
     '@typescript-eslint/explicit-function-return-type': 'off',
     '@typescript-eslint/explicit-module-boundary-types': 'off',
@@ -37,9 +36,7 @@ module.exports = {
     '@typescript-eslint/await-thenable': 'error',
     '@typescript-eslint/no-unnecessary-type-assertion': 'warn',
     '@typescript-eslint/prefer-nullish-coalescing': 'warn',
-    '@typescript-eslint/prefer-optional-chain': 'warn',
-
-    // Import rules
+    '@typescript-eslint/prefer-optional-chain': 'warn',
     'import/order': [
       'error',
       {
@@ -49,9 +46,7 @@ module.exports = {
       },
     ],
     'import/no-duplicates': 'error',
-    'import/no-unresolved': 'off',
-
-    // General rules
+    'import/no-unresolved': 'off',
     'no-console': ['warn', { allow: ['warn', 'error'] }],
     'prefer-const': 'error',
     'no-var': 'error',

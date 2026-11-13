@@ -59,7 +59,6 @@ export function Banner({ banner, locale, className = '' }: BannerProps) {
     </div>
   )
 
-  // If banner has a link, wrap in Link component
   if (banner.link) {
     return (
       <Link href={banner.link} className="group block">
@@ -71,7 +70,6 @@ export function Banner({ banner, locale, className = '' }: BannerProps) {
   return content
 }
 
-// Banner list component for displaying multiple banners
 interface BannerListProps {
   banners: BannerType[]
   locale: 'vi' | 'en'
@@ -81,7 +79,6 @@ interface BannerListProps {
 export function BannerList({ banners, locale, className = '' }: BannerListProps) {
   if (!banners || banners.length === 0) return null
 
-  // Sort by order field
   const sortedBanners = [...banners].sort((a, b) => a.order - b.order)
 
   return (

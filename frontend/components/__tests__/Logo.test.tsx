@@ -5,7 +5,6 @@ jest.mock('next-intl', () => ({
   useLocale: () => 'en',
 }))
 
-// Mock useSettings hook to avoid API calls in tests
 jest.mock('@/hooks/use-settings', () => ({
   useSettings: () => ({
     data: {

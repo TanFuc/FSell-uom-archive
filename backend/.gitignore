@@ -85,3 +85,7 @@ docker-compose.override.yml
 .terraform/
 *.tfstate
 *.tfstate.backup
+
+# AI Codex
+.codex/
+AGENTS.md

@@ -37,18 +37,15 @@ module.exports = {
     },
   },
   rules: {
-    // React rules
     'react/react-in-jsx-scope': 'off',
     'react/prop-types': 'off',
     'react/jsx-no-target-blank': 'error',
     'react/jsx-curly-brace-presence': ['warn', { props: 'never', children: 'never' }],
     'react/self-closing-comp': 'warn',
 
-    // React Hooks rules
     'react-hooks/rules-of-hooks': 'error',
     'react-hooks/exhaustive-deps': 'warn',
 
-    // TypeScript rules
     '@typescript-eslint/no-explicit-any': 'error',
     '@typescript-eslint/no-unused-vars': 'off',
     'unused-imports/no-unused-imports': 'error',
@@ -67,7 +64,6 @@ module.exports = {
       { prefer: 'type-imports', fixStyle: 'inline-type-imports' },
     ],
 
-    // Import rules
     'import/order': [
       'error',
       {
@@ -79,7 +75,6 @@ module.exports = {
     'import/no-duplicates': 'error',
     'import/no-unresolved': 'off',
 
-    // General rules
     'no-console': ['warn', { allow: ['warn', 'error'] }],
     'prefer-const': 'error',
     'no-var': 'error',

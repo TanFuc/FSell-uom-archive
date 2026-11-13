@@ -1,16 +1,41 @@
-import { type MetadataRoute } from 'next'
+import type { MetadataRoute } from 'next'
+import { getCanonicalBaseUrl, getCanonicalHost } from '@/lib/seo'
+
+const BASE_URL = getCanonicalBaseUrl()
+const CANONICAL_HOST = getCanonicalHost()
+const DISALLOWED_PATHS = [
+  '/admin/',
+  '/vi/admin/',
+  '/en/admin/',
+  '/api/',
+  '/vi/page-new',
+  '/en/page-new',
+  '/manifest.json/',
+  '/*?*token=',
+  '/*?*preview=',
+]
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://uomarchive.com'
-
   return {
     rules: [
       {
+        userAgent: 'Googlebot',
+        allow: '/',
+        disallow: DISALLOWED_PATHS,
+      },
+      {
         userAgent: '*',
         allow: '/',
-        disallow: ['/admin/', '/vi/admin/', '/en/admin/'],
+        disallow: DISALLOWED_PATHS,
       },
+      { userAgent: 'GPTBot', disallow: '/' },
+      { userAgent: 'ChatGPT-User', disallow: '/' },
+      { userAgent: 'Google-Extended', disallow: '/' },
+      { userAgent: 'CCBot', disallow: '/' },
+      { userAgent: 'ClaudeBot', disallow: '/' },
+      { userAgent: 'OAI-SearchBot', disallow: '/' },
     ],
-    sitemap: `${baseUrl}/sitemap.xml`,
+    sitemap: `${BASE_URL}/sitemap.xml`,
+    host: CANONICAL_HOST,
   }
 }

@@ -12,7 +12,6 @@ export default function Navigation() {
   const router = useRouter()
 
   const switchLocale = (newLocale: string) => {
-    // Remove current locale from path and add new one
     const pathWithoutLocale = pathname.replace(`/${locale}`, '') || '/'
     router.push(`/${newLocale}${pathWithoutLocale}`)
   }

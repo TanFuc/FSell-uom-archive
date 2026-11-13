@@ -91,7 +91,6 @@ export class CategoriesService {
   async remove(id: string, userId?: string) {
     await this.findOne(id)
 
-    // Soft delete
     return this.prisma.category.update({
       where: { id },
       data: {

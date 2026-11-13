@@ -1,16 +1,18 @@
 'use client'
 
 import { motion, AnimatePresence, useMotionValue, useSpring } from 'framer-motion'
-import { Instagram, Facebook, Loader2, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Instagram, Facebook, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { ProductCard } from '@/components/ProductCard'
+import { LoadingScreen } from '@/components/ui/loading-screen'
 import { useProduct, useProducts } from '@/hooks/use-products'
 import { useExchangeRate, useSocialLinks } from '@/hooks/use-settings'
 import { getDisplayPrice } from '@/lib/currency'
+import { type Product } from '@/lib/types'
 import { optimizeProductImage, cn } from '@/lib/utils'
 
 interface ProductPageProps {
@@ -138,7 +140,6 @@ function parseVariantSummary(raw: string | undefined, locale: 'vi' | 'en'): Vari
   }
 }
 
-// Reusable Hook for Drag Scroll
 function useDragScroll() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -244,12 +245,10 @@ export default function ProductClient({ params }: ProductPageProps) {
     sortOrder: 'desc',
   })
 
-  // Hook for Related Products
   const relatedDrag = useDragScroll()
 
-  // Hook for Image Carousel (Mouse Drag)
   const imageDrag = useDragScroll()
-  // Custom Cursor Logic
+
   const cursorX = useMotionValue(0)
   const cursorY = useMotionValue(0)
   const springConfig = { damping: 25, stiffness: 700 }
@@ -285,11 +284,7 @@ export default function ProductClient({ params }: ProductPageProps) {
   const name = product ? (locale === 'vi' ? product.nameVi : product.nameEn) : t('loading')
 
   if (isLoading) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    )
+    return <LoadingScreen fullscreen />
   }
 
   if (error || !product) {
@@ -302,16 +297,56 @@ export default function ProductClient({ params }: ProductPageProps) {
   const variants = parseVariantSummary(shortDescriptionRaw, locale)
   const shortDescription = variants.cleanText
   const priceDisplay = getDisplayPrice(product, locale, exchangeRate?.rate)
+  const journalCta = locale === 'vi' ? 'Xem Journal' : 'Read the journal'
+  const shopCta = locale === 'vi' ? 'Xem shop' : 'Visit the shop'
+  const faqTitle = locale === 'vi' ? 'Câu hỏi thường gặp' : 'Frequently asked questions'
+  const faqItems =
+    locale === 'vi'
+      ? [
+          {
+            question: `${name} phù hợp với không gian nào?`,
+            answer:
+              'Sản phẩm phù hợp với không gian sống tối giản hoặc góc trưng bày thủ công, tôn bật chất liệu gốm.',
+          },
+          {
+            question: 'Cách bảo quản gốm sứ thủ công?',
+            answer:
+              'Hạn chế va đập mạnh, vệ sinh nhẹ nhàng bằng khăn mềm và tránh thay đổi nhiệt độ đột ngột.',
+          },
+          {
+            question: 'Làm sao để đặt hàng hoặc tư vấn?',
+            answer:
+              'Bạn có thể nhắn qua Instagram/Facebook hoặc gửi yêu cầu tư vấn ngay trên trang sản phẩm.',
+          },
+        ]
+      : [
+          {
+            question: `Where does ${name} fit best?`,
+            answer:
+              'It complements minimal interiors or curated display corners, highlighting handcrafted ceramic textures.',
+          },
+          {
+            question: 'How should I care for handcrafted ceramics?',
+            answer:
+              'Avoid heavy impact, clean gently with a soft cloth, and keep away from sudden temperature changes.',
+          },
+          {
+            question: 'How can I inquire or place an order?',
+            answer:
+              'Message us via Instagram/Facebook or send an inquiry directly on the product page.',
+          },
+        ]
   return (
-    <div className="w-full">
+    <div className="safe-screen">
       {/* Header padding for fixed header */}
-      <div className="h-16 lg:h-20" />
+      <div className="h-24 lg:h-28" />
 
       {/* Floating Left-Side Back Navigation (Desktop Only) */}
       <Link
         href={`/${locale}/shop`}
         className="group fixed left-0 top-0 z-50 hidden h-full w-24 cursor-pointer items-center justify-center transition-all hover:bg-gradient-to-r hover:from-black/5 lg:flex"
         title={t('back')}
+        aria-label={t('back')}
       >
         <div className="flex h-12 w-12 translate-x-[-16px] transform items-center justify-center rounded-full bg-white opacity-0 shadow-lg transition-all duration-300 group-hover:translate-x-[12px] group-hover:opacity-100">
           <ArrowLeft className="h-5 w-5 text-foreground" />
@@ -339,20 +374,21 @@ export default function ProductClient({ params }: ProductPageProps) {
       </AnimatePresence>
 
       <div className="w-full bg-white pb-24">
-        <div className="px-6 lg:px-12">
+        <div className="px-4 sm:px-6 lg:px-12">
           {/* Back Button - Arrow only */}
           {/* Back Button (Mobile/Tablet Only) */}
           <Link
             href={`/${locale}/shop`}
             className="mb-6 inline-flex items-center pt-8 transition-all hover:translate-x-[-4px] lg:hidden"
+            aria-label={t('back')}
           >
             <ArrowLeft className="h-4 w-4" />
           </Link>
 
           {/* Main Product Layout: Image Vertical Stack + Sticky Info */}
-          <div className="grid grid-cols-1 justify-center gap-0 md:grid-cols-[1fr_400px] md:gap-12 lg:grid-cols-[55vw_400px] lg:gap-32">
+          <div className="grid min-w-0 grid-cols-1 justify-center gap-0 md:grid-cols-[minmax(0,1fr)_minmax(320px,400px)] md:gap-12 lg:grid-cols-[minmax(0,55vw)_400px] lg:gap-32">
             {/* 1. Left Column: Vertical Image Stack (Desktop) / Carousel (Mobile) */}
-            <div className="relative w-full pb-0 md:max-w-[700px] md:pb-24">
+            <div className="relative w-full min-w-0 pb-0 md:max-w-[700px] md:pb-24">
               {product.images && product.images.length > 0 ? (
                 <>
                   {/* Mobile Navigation Arrows */}
@@ -394,7 +430,7 @@ export default function ProductClient({ params }: ProductPageProps) {
                     onMouseEnter={() => setIsHoveringImage(true)}
                     onClickCapture={imageDrag.onClickCapture}
                     className={cn(
-                      'hide-scrollbar -ml-6 flex w-[calc(100%+48px)] snap-x snap-mandatory gap-0 overflow-x-auto pb-0 md:ml-0 md:w-full md:flex-col md:gap-12 md:px-0 lg:cursor-none',
+                      'hide-scrollbar -mx-4 flex w-[calc(100%+32px)] snap-x snap-mandatory gap-0 overflow-x-auto pb-0 sm:-mx-6 sm:w-[calc(100%+48px)] md:mx-0 md:w-full md:flex-col md:gap-12 md:px-0 lg:cursor-none',
                       imageDrag.isDragging ? 'cursor-grabbing' : 'cursor-grab lg:cursor-none',
                     )}
                   >
@@ -405,7 +441,7 @@ export default function ProductClient({ params }: ProductPageProps) {
                       >
                         <Image
                           src={optimizeProductImage(image, { width: 1200, height: 1600 })}
-                          alt={`${name} - ${index + 1}`}
+                          alt={`${name} - Ceramic Archive Piece ${index + 1} - ƯƠM. Archive`}
                           fill
                           sizes="(max-width: 768px) 100vw, 60vw"
                           className="object-cover object-center md:h-full md:w-full"
@@ -424,19 +460,19 @@ export default function ProductClient({ params }: ProductPageProps) {
             </div>
 
             {/* 2. Right Column: Sticky Product Details */}
-            <div className="relative px-0 md:px-0">
+            <div className="relative min-w-0 px-0 md:px-0">
               <div className="space-y-4 pb-12 pt-10 md:sticky md:top-32 md:space-y-12 md:pb-24 md:pt-0">
                 {/* Info Header */}
                 <div className="mb-8 space-y-2">
-                  <h1 className="font-sans text-[10px] font-bold uppercase leading-tight tracking-[0.2em] text-foreground">
+                  <h1 className="text-mobile-safe font-sans text-[13px] font-bold leading-tight tracking-[0.08em] text-foreground sm:tracking-[0.1em]">
                     {name}
                   </h1>
                   <div className="flex items-center gap-4">
-                    <p className="font-sans text-[10px] font-medium tracking-wide text-foreground">
+                    <p className="font-sans text-[11px] font-semibold tracking-[0.05em] text-foreground">
                       {priceDisplay.currentPrice}
                     </p>
                     {priceDisplay.hasDiscount && priceDisplay.originalPrice && (
-                      <p className="text-[10px] font-light text-foreground/30 line-through">
+                      <p className="text-[11px] font-light text-foreground/30 line-through">
                         {priceDisplay.originalPrice}
                       </p>
                     )}
@@ -445,60 +481,52 @@ export default function ProductClient({ params }: ProductPageProps) {
 
                 {/* Details Section */}
                 <div className="space-y-4">
-                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-foreground">
-                    DETAILS
+                  <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-foreground">
+                    {t('details')}
                   </h4>
 
                   {shortDescription ? (
-                    <p className="text-[10px] font-normal leading-relaxed text-foreground/80">
+                    <p className="text-[11px] font-normal leading-relaxed tracking-[0.05em] text-foreground/80">
                       {shortDescription}
                     </p>
                   ) : null}
 
-                  {variants.groups.length > 0 && (
-                    <div className="space-y-4 rounded-sm border border-foreground/10 p-4">
-                      {variants.groups.map((group) => (
-                        <div key={group.label} className="space-y-2">
-                          <p className="text-[9px] font-bold uppercase tracking-[0.3em] text-foreground/50">
-                            {`${group.label} (${group.values.length})`}
-                          </p>
-                          <div className="flex flex-wrap gap-2">
-                            {group.values.map((item) => (
-                              <span
-                                key={`${group.label}-${item}`}
-                                className="rounded-full border border-foreground/15 px-3 py-1 text-[10px] uppercase tracking-wide"
-                              >
-                                {item}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Technical Specs List */}
-                  <div className="flex flex-col gap-1 text-[10px] font-normal leading-relaxed text-foreground">
-                    {product.dimensions && <p>Height: {product.dimensions}</p>}
-                    {product.material && <p>Material: {product.material}</p>}
+                  {/* Combined Description & Technical Specs */}
+                  <div className="flex flex-col gap-1 text-[11px] font-normal leading-relaxed tracking-[0.05em] text-foreground">
+                    {variants.groups.map((group) => (
+                      <p key={group.label}>
+                        <span className="font-bold uppercase">{group.label}: </span>
+                        <span className="text-foreground/80">{group.values.join(', ')}</span>
+                      </p>
+                    ))}
                   </div>
 
                   {/* HTML Description */}
                   <div
-                    className="prose prose-sm max-w-none text-[10px] font-normal leading-relaxed text-foreground"
+                    className="prose prose-sm max-w-none overflow-hidden font-sans text-[11px] font-medium tracking-[0.05em] text-foreground [overflow-wrap:anywhere] [&_a]:underline [&_a]:underline-offset-2 [&_blockquote]:border-l [&_blockquote]:border-foreground/30 [&_blockquote]:pl-4 [&_h1]:text-lg [&_h1]:font-bold [&_h2]:text-base [&_h2]:font-bold [&_h3]:text-sm [&_h3]:font-semibold [&_img]:my-4 [&_img]:h-auto [&_img]:max-w-full [&_img]:rounded-lg [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:leading-relaxed [&_ul]:list-disc [&_ul]:pl-5"
                     dangerouslySetInnerHTML={{ __html: description || '' }}
                   />
 
-                  {/* Caring & Warranty Link (Placeholder flavor) */}
-                  <p className="mt-2 cursor-pointer text-[10px] text-foreground/70 hover:underline">
-                    (Caring & Warranty)
-                  </p>
+                  <div className="flex flex-wrap gap-4 pt-4">
+                    <Link
+                      href={`/${locale}/journal`}
+                      className="text-[9px] font-bold uppercase tracking-[0.3em] text-foreground underline decoration-foreground/15 underline-offset-8 transition hover:opacity-70"
+                    >
+                      {journalCta}
+                    </Link>
+                    <Link
+                      href={`/${locale}/shop`}
+                      className="text-[9px] font-bold uppercase tracking-[0.3em] text-foreground underline decoration-foreground/15 underline-offset-8 transition hover:opacity-70"
+                    >
+                      {shopCta}
+                    </Link>
+                  </div>
                 </div>
 
                 {/* Inquiry Buttons */}
                 <div className="space-y-8 pt-8">
                   <h4 className="text-[9px] font-bold uppercase tracking-[0.3em] text-foreground/30">
-                    Order Inquiry
+                    {t('orderInquiry')}
                   </h4>
                   <div className="flex flex-col gap-3">
                     {socialLinks?.instagramUsername && (
@@ -506,9 +534,10 @@ export default function ProductClient({ params }: ProductPageProps) {
                         href={`https://instagram.com/${socialLinks.instagramUsername}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="group flex items-center justify-between border border-foreground/10 px-6 py-4 transition-all duration-300 hover:bg-foreground hover:text-white"
+                        className="group flex max-w-full items-center justify-between gap-4 border border-foreground/10 px-4 py-4 transition-all duration-300 hover:bg-foreground hover:text-white sm:px-6"
+                        aria-label="Instagram Inquiry"
                       >
-                        <span className="text-[10px] font-bold uppercase tracking-[0.3em]">
+                        <span className="min-w-0 text-[10px] font-bold uppercase tracking-[0.2em] sm:tracking-[0.3em]">
                           Instagram
                         </span>
                         <Instagram className="h-4 w-4" />
@@ -519,9 +548,10 @@ export default function ProductClient({ params }: ProductPageProps) {
                         href={socialLinks.facebookPageUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="group flex items-center justify-between border border-foreground/10 px-6 py-4 transition-all duration-300 hover:bg-foreground hover:text-white"
+                        className="group flex max-w-full items-center justify-between gap-4 border border-foreground/10 px-4 py-4 transition-all duration-300 hover:bg-foreground hover:text-white sm:px-6"
+                        aria-label="Facebook Inquiry"
                       >
-                        <span className="text-[10px] font-bold uppercase tracking-[0.3em]">
+                        <span className="min-w-0 text-[10px] font-bold uppercase tracking-[0.2em] sm:tracking-[0.3em]">
                           Facebook
                         </span>
                         <Facebook className="h-4 w-4" />
@@ -536,13 +566,13 @@ export default function ProductClient({ params }: ProductPageProps) {
       </div>
 
       {/* Related Products Section */}
-      <section className="w-full bg-white px-6 py-24 lg:px-12">
-        <div className="mb-16 flex items-end justify-between">
-          <div className="space-y-3">
-            <h2 className="text-[8px] font-bold uppercase tracking-[0.4em] text-foreground/40">
+      <section className="w-full bg-white px-4 py-24 sm:px-6 lg:px-12">
+        <div className="mb-16 flex flex-wrap items-end justify-between gap-4">
+          <div className="min-w-0 space-y-3">
+            <h2 className="text-mobile-safe text-[8px] font-bold uppercase tracking-[0.28em] text-foreground/40 sm:tracking-[0.4em]">
               {locale === 'vi' ? 'CÓ THỂ BẠN THÍCH' : 'YOU MAY ALSO LIKE'}
             </h2>
-            <p className="font-sans text-lg font-bold uppercase tracking-[0.1em]">
+            <p className="text-mobile-safe font-sans text-lg font-bold uppercase tracking-[0.08em] sm:tracking-[0.1em]">
               {locale === 'vi' ? 'Sản phẩm tương tự' : 'Related pieces'}
             </p>
           </div>
@@ -564,14 +594,14 @@ export default function ProductClient({ params }: ProductPageProps) {
             onMouseLeave={relatedDrag.onMouseLeave}
             onClickCapture={relatedDrag.onClickCapture}
             className={cn(
-              'hide-scrollbar -mx-6 flex w-[calc(100%+48px)] select-none gap-6 overflow-x-auto px-4 pb-12 transition-transform duration-500 ease-out lg:mx-0 lg:w-full lg:px-0',
+              'hide-scrollbar -mx-4 flex w-[calc(100%+32px)] select-none gap-6 overflow-x-auto px-4 pb-12 transition-transform duration-500 ease-out sm:-mx-6 sm:w-[calc(100%+48px)] lg:mx-0 lg:w-full lg:px-0',
               relatedDrag.isDragging ? 'scale-[0.995] cursor-grabbing' : 'cursor-grab',
             )}
           >
             <AnimatePresence mode="popLayout">
               {relatedProducts?.data
-                ?.filter((p) => p.id !== product.id)
-                .map((item, idx) => (
+                ?.filter((p: Product) => p.id !== product.id)
+                .map((item: Product, idx: number) => (
                   <motion.div
                     key={item.id}
                     initial={{ opacity: 0, y: 20 }}
@@ -584,6 +614,24 @@ export default function ProductClient({ params }: ProductPageProps) {
                   </motion.div>
                 ))}
             </AnimatePresence>
+          </div>
+        </div>
+      </section>
+
+      <section className="w-full bg-white px-4 pb-24 sm:px-6 lg:px-12">
+        <div className="mx-auto max-w-4xl rounded-2xl border border-foreground/10 bg-foreground/[0.02] p-5 shadow-sm sm:p-8">
+          <h2 className="text-mobile-safe text-center text-[10px] font-bold uppercase tracking-[0.22em] text-foreground/70 sm:tracking-[0.35em]">
+            {faqTitle}
+          </h2>
+          <div className="mt-8 grid gap-6 md:grid-cols-2">
+            {faqItems.map((item) => (
+              <div key={item.question} className="space-y-3">
+                <h3 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-foreground">
+                  {item.question}
+                </h3>
+                <p className="text-[11px] leading-relaxed text-foreground/70">{item.answer}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>

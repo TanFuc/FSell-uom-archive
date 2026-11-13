@@ -46,9 +46,6 @@ export default function CloudinarySettingsPage() {
   const onSubmit = async (data: CloudinaryFormValues) => {
     setIsLoading(true)
     try {
-      // In a real application, you would send this to your backend
-      // which would update the environment variables securely
-      // For now, we'll show a warning that these need to be set in .env
       toast({
         title: 'Lưu ý quan trọng',
         description: (
@@ -71,7 +68,6 @@ export default function CloudinarySettingsPage() {
         duration: 10000,
       })
 
-      // Store in localStorage for reference (NOT for production use!)
       if (typeof window !== 'undefined') {
         localStorage.setItem('cloudinarySettings', JSON.stringify(data))
       }
@@ -86,7 +82,6 @@ export default function CloudinarySettingsPage() {
     }
   }
 
-  // Load saved settings from localStorage on mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('cloudinarySettings')

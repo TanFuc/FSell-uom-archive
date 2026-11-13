@@ -1,8 +1,8 @@
-import { Controller, Post, Body, UseGuards, Get, HttpCode, HttpStatus } from '@nestjs/common'
+import { Controller, Post, Body, UseGuards, Get, HttpCode, HttpStatus, Patch } from '@nestjs/common'
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger'
 import { AuthService } from './auth.service'
 import { CurrentUser, JwtPayload } from './decorators'
-import { LoginDto, RegisterDto } from './dto'
+import { LoginDto, RegisterDto, UpdateProfileDto } from './dto'
 import { JwtAuthGuard, JwtRefreshGuard } from './guards'
 
 @ApiTags('auth')
@@ -56,5 +56,17 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getProfile(@CurrentUser() user: JwtPayload) {
     return this.authService.getProfile(user.sub)
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('profile')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Update current user login account and password' })
+  @ApiResponse({ status: 200, description: 'Profile updated successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid update payload' })
+  @ApiResponse({ status: 401, description: 'Current password is incorrect' })
+  @ApiResponse({ status: 409, description: 'Email already exists' })
+  async updateProfile(@CurrentUser() user: JwtPayload, @Body() dto: UpdateProfileDto) {
+    return this.authService.updateProfile(user.sub, dto)
   }
 }

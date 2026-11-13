@@ -12,7 +12,6 @@ export function useDocumentTitle(title: string, suffix: string = 'ƯƠM. Archive
     const fullTitle = title ? `${title} | ${suffix}` : suffix
     document.title = fullTitle
 
-    // Cleanup: restore default title when component unmounts
     return () => {
       document.title = suffix
     }

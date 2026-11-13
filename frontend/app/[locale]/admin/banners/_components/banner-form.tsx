@@ -59,7 +59,6 @@ interface BannerFormProps {
 }
 
 import { useCreateBanner, useUpdateBanner } from '@/hooks/use-banners'
-// ... (keep other imports)
 
 export default function BannerForm({ initialData }: BannerFormProps) {
   const router = useRouter()
@@ -75,7 +74,6 @@ export default function BannerForm({ initialData }: BannerFormProps) {
   const isSaving = createBanner.isPending || updateBanner.isPending
 
   const defaultValues: BannerFormValues = {
-    // ... (keep defaults)
     titleVi: initialData?.titleVi || '',
     titleEn: initialData?.titleEn || '',
     subtitleVi: initialData?.subtitleVi || '',
@@ -100,7 +98,6 @@ export default function BannerForm({ initialData }: BannerFormProps) {
     e: React.ChangeEvent<HTMLInputElement>,
     fieldName: 'imageUrl' | 'mobileImageUrl',
   ) => {
-    // ... (keep upload logic, it uses api directly which is fine for simple upload, or use upload hook)
     const file = e.target.files?.[0]
     if (!file) return
 

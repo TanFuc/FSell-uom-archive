@@ -50,8 +50,32 @@ export class UpdateSiteContentDto {
   @ApiPropertyOptional({ example: '© 2026 ƯƠM. Archive. All rights reserved.' })
   @IsString()
   @IsOptional()
-  'footer.text.en'?: string;
+  'footer.text.en'?: string
 
-  // Allow any additional content keys
+  @ApiPropertyOptional({
+    description: 'Serialized JSON array of trending search terms for Vietnamese locale',
+    example: '["binh gom","chen tra","men ran"]',
+  })
+  @IsString()
+  @IsOptional()
+  'search.trending.vi'?: string
+
+  @ApiPropertyOptional({
+    description: 'Serialized JSON array of trending search terms for English locale',
+    example: '["ceramic vase","tea cup","crackle glaze"]',
+  })
+  @IsString()
+  @IsOptional()
+  'search.trending.en'?: string
+
+  @ApiPropertyOptional({
+    description: 'Serialized JSON stories payload for journal section',
+    example:
+      '[{"id":"story-1","titleVi":"...","titleEn":"...","summaryVi":"...","summaryEn":"...","contentVi":"...","contentEn":"...","imageUrl":"..."}]',
+  })
+  @IsString()
+  @IsOptional()
+  'journal.stories'?: string;
+
   [key: string]: string | undefined
 }

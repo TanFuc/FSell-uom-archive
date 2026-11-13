@@ -166,7 +166,6 @@ export class CreateProductDto {
   @IsOptional()
   isFeatured?: boolean
 
-  // Inquiry Feature Fields
   @ApiPropertyOptional({
     example: true,
     description: 'Enable inquiry button for this product',

@@ -29,7 +29,7 @@ export class CloudinaryService {
 
   async uploadFile(file: Express.Multer.File, folder?: string): Promise<CloudinaryResponse> {
     const uploadFolder =
-      folder || this.configService.get<string>('CLOUDINARY_FOLDER') || 'uom-archive'
+      folder ?? this.configService.get<string>('CLOUDINARY_FOLDER') ?? 'uom-archive'
 
     return new Promise((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(

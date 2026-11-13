@@ -112,7 +112,6 @@ export default function ProductsPage() {
     }
   }
 
-  // Quick toggle for active status
   const handleToggleActive = async (product: Product, e: React.MouseEvent) => {
     e.stopPropagation()
     try {
@@ -127,7 +126,6 @@ export default function ProductsPage() {
     }
   }
 
-  // Quick toggle for featured status
   const handleToggleFeatured = async (product: Product, e: React.MouseEvent) => {
     e.stopPropagation()
     try {
@@ -142,7 +140,6 @@ export default function ProductsPage() {
     }
   }
 
-  // Bulk actions
   const handleBulkDelete = async () => {
     try {
       await Promise.all(selectedProducts.map((id) => api.deleteProduct(id)))

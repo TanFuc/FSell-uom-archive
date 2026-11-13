@@ -1,9 +1,9 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
+import { SplashScreen } from '@/components/ui/SplashScreen'
 import { Footer } from './Footer'
 import { Header } from './Header'
-import { SplashScreen } from '@/components/ui/SplashScreen'
 
 interface ConditionalLayoutProps {
   children: React.ReactNode
@@ -12,15 +12,12 @@ interface ConditionalLayoutProps {
 export function ConditionalLayout({ children }: ConditionalLayoutProps) {
   const pathname = usePathname()
 
-  // Check if current path is an admin page
   const isAdminPage = pathname.includes('/admin')
 
-  // Admin pages have their own layout with sidebar, no header/footer needed
   if (isAdminPage) {
     return <>{children}</>
   }
 
-  // Regular pages get header, footer, and splash screen
   return (
     <>
       <SplashScreen />

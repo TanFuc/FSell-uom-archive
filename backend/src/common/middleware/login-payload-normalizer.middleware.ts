@@ -39,9 +39,7 @@ function parseRawPayload(raw: string): LoginPayload | null {
     if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
       return normalizeObjectPayload(parsed as Record<string, unknown>)
     }
-  } catch {
-    // Ignore JSON parse errors and fallback to urlencoded parsing.
-  }
+  } catch {}
 
   return parseUrlEncodedPayload(trimmed)
 }

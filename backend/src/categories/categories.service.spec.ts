@@ -30,9 +30,10 @@ describe('CategoriesService', () => {
 
   describe('findAll', () => {
     it('should return categories', async () => {
+      const findManySpy = jest.spyOn(prisma.category, 'findMany')
       const result = await service.findAll(false, false)
       expect(result).toEqual([{ id: '1', nameVi: 'Gốm' }])
-      expect(prisma.category.findMany).toHaveBeenCalled()
+      expect(findManySpy).toHaveBeenCalled()
     })
   })
 })
