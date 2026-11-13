@@ -1,27 +1,20 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import {
-  ArrowLeft,
-  Upload,
-  X,
-  Plus,
-  RefreshCw,
-  PanelLeftClose,
-  PanelLeftOpen,
-  PanelRightClose,
-  PanelRightOpen,
-} from 'lucide-react'
+import { ArrowLeft, Upload, X, Plus, RefreshCw, Save, Eye, FileEdit } from 'lucide-react'
 import Image from 'next/image'
-import Link from 'next/link'
 import { useRouter, useParams } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 import { useEffect, useState, useCallback } from 'react'
-import { useForm, useWatch } from 'react-hook-form'
+import { useForm, useWatch, type FieldErrors } from 'react-hook-form'
 import * as z from 'zod'
+import { SeoSnippetPreview } from '@/components/admin/SeoSnippetPreview'
+import { ProductStorefrontPreview } from '@/components/admin/ProductStorefrontPreview'
 import { RichTextEditor } from '@/components/RichTextEditor'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { useConfirm } from '@/hooks/use-confirm'
+import { getApiErrorMessage } from '@/lib/error-handler'
 import {
   Dialog,
   DialogContent,
@@ -52,13 +45,13 @@ import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { useDocumentTitle } from '@/hooks/use-document-title'
-import { useExchangeRate } from '@/hooks/use-settings'
+import { useBranding, useExchangeRate, useTrustBadges } from '@/hooks/use-settings'
 import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api'
 import { vndToUsd } from '@/lib/currency'
 import { optimizeAndResizeImage, optimizeAndResizeImages } from '@/lib/image-upload'
 import { type Category } from '@/lib/types'
-import { getImageUrl, slugify } from '@/lib/utils'
+import { getImageUrl, slugify, cn } from '@/lib/utils'
 
 const productSchema = z.object({
   slug: z.string().min(1, 'Slug is required'),
@@ -70,12 +63,18 @@ const productSchema = z.object({
   descriptionEn: z.string().min(1, 'English description is required'),
   priceVND: z.coerce.number().min(0, 'Price must be positive'),
   priceUSD: z.coerce.number().min(0).optional(),
-  salePriceVND: z.coerce.number().min(0).optional().nullable(),
-  salePriceUSD: z.coerce.number().min(0).optional().nullable(),
+  salePriceVND: z.preprocess(
+    (val) => (val === '' || val === null || val === undefined ? null : Number(val)),
+    z.number().min(0).nullable().optional(),
+  ),
+  salePriceUSD: z.preprocess(
+    (val) => (val === '' || val === null || val === undefined ? null : Number(val)),
+    z.number().min(0).nullable().optional(),
+  ),
   categoryId: z.string().optional().nullable(),
-  material: z.string().optional(),
-  dimensions: z.string().optional(),
   stock: z.coerce.number().int().min(0, 'Stock must be non-negative'),
+  material: z.string().optional().nullable().or(z.literal('')),
+  dimensions: z.string().optional().nullable().or(z.literal('')),
   isActive: z.boolean().default(true),
   isFeatured: z.boolean().default(false),
   inquiryEnabled: z.boolean().default(true),
@@ -261,10 +260,12 @@ export default function ProductFormPage() {
   const [newCatNameVi, setNewCatNameVi] = useState('')
   const [newCatNameEn, setNewCatNameEn] = useState('')
   const [variantGroups, setVariantGroups] = useState<VariantGroupDraft[]>([])
-  const [isLeftColumnCollapsed, setIsLeftColumnCollapsed] = useState(false)
-  const [isRightColumnCollapsed, setIsRightColumnCollapsed] = useState(false)
+  const confirm = useConfirm()
   const { data: exchangeRateData } = useExchangeRate()
+  const { data: branding } = useBranding()
   const exchangeRate = exchangeRateData?.rate
+  const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit')
+  const { data: trustBadgesData } = useTrustBadges()
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
@@ -281,9 +282,9 @@ export default function ProductFormPage() {
       salePriceVND: null,
       salePriceUSD: null,
       categoryId: null,
+      stock: 0,
       material: '',
       dimensions: '',
-      stock: 0,
       isActive: true,
       isFeatured: false,
       inquiryEnabled: true,
@@ -331,6 +332,10 @@ export default function ProductFormPage() {
   const priceVND = useWatch({ control: form.control, name: 'priceVND' })
   const salePriceVND = useWatch({ control: form.control, name: 'salePriceVND' })
   const nameViWatch = useWatch({ control: form.control, name: 'nameVi' })
+  const nameEnWatch = useWatch({ control: form.control, name: 'nameEn' })
+  const slugWatch = useWatch({ control: form.control, name: 'slug' })
+  const shortDescriptionViWatch = useWatch({ control: form.control, name: 'shortDescriptionVi' })
+  const shortDescriptionEnWatch = useWatch({ control: form.control, name: 'shortDescriptionEn' })
 
   useEffect(() => {
     const nextSlug = slugify(nameViWatch || '')
@@ -373,9 +378,9 @@ export default function ProductFormPage() {
         salePriceVND: product.salePriceVND || null,
         salePriceUSD: product.salePriceUSD || null,
         categoryId: product.categoryId || null,
-        material: product.material,
-        dimensions: product.dimensions,
         stock: product.stock,
+        material: product.material || '',
+        dimensions: product.dimensions || '',
         isActive: product.isActive,
         isFeatured: product.isFeatured,
         inquiryEnabled: product.inquiryEnabled,
@@ -394,7 +399,11 @@ export default function ProductFormPage() {
       }
     } catch (error) {
       console.error('Failed to fetch product:', error)
-      toast({ title: t('error'), description: 'Product not found', variant: 'destructive' })
+      toast({
+        title: t('error'),
+        description: locale === 'vi' ? 'Không tìm thấy sản phẩm' : 'Product not found',
+        variant: 'destructive',
+      })
       router.push(`/${locale}/admin/products`)
     } finally {
       setIsLoading(false)
@@ -432,9 +441,20 @@ export default function ProductFormPage() {
       const uploadPromises = optimizedFiles.map((file) => api.uploadImage(file, 'products'))
       const results = await Promise.all(uploadPromises)
       setImages((prev) => [...prev, ...results.map((r) => r.url)])
-      toast({ title: t('success'), description: 'Images uploaded' })
+      toast({
+        title: t('success'),
+        description: locale === 'vi' ? 'Đã tải ảnh lên thành công' : 'Images uploaded',
+      })
     } catch (error) {
-      toast({ title: t('error'), description: 'Upload failed', variant: 'destructive' })
+      toast({
+        title: t('error'),
+        description: getApiErrorMessage(
+          error,
+          locale,
+          locale === 'vi' ? 'Tải ảnh thất bại' : 'Upload failed',
+        ),
+        variant: 'destructive',
+      })
     } finally {
       setIsUploading(false)
     }
@@ -447,9 +467,16 @@ export default function ProductFormPage() {
   const copyImageUrl = async (image: string) => {
     try {
       await navigator.clipboard.writeText(getImageUrl(image))
-      toast({ title: t('success'), description: 'Image URL copied' })
+      toast({
+        title: t('success'),
+        description: locale === 'vi' ? 'Đã sao chép liên kết hình ảnh' : 'Image URL copied',
+      })
     } catch {
-      toast({ title: t('error'), description: 'Failed to copy URL', variant: 'destructive' })
+      toast({
+        title: t('error'),
+        description: locale === 'vi' ? 'Không thể sao chép liên kết' : 'Failed to copy URL',
+        variant: 'destructive',
+      })
     }
   }
 
@@ -458,14 +485,23 @@ export default function ProductFormPage() {
     const imageHtml = `<p><img src="${getImageUrl(image)}" alt="product-image" /></p>`
     const nextValue = current ? `${current}\n${imageHtml}` : imageHtml
     form.setValue(field, nextValue, { shouldDirty: true })
-    toast({ title: t('success'), description: `Inserted image into ${field}` })
+    toast({
+      title: t('success'),
+      description:
+        locale === 'vi'
+          ? 'Đã chèn hình ảnh vào nội dung'
+          : `Inserted image into ${field}`,
+    })
   }
 
   const onSubmit = async (data: ProductFormValues) => {
     if (images.length === 0) {
       toast({
         title: t('error'),
-        description: 'At least one image is required',
+        description:
+          locale === 'vi'
+            ? 'Vui lòng tải lên ít nhất một hình ảnh sản phẩm'
+            : 'At least one image is required',
         variant: 'destructive',
       })
       return
@@ -502,6 +538,8 @@ export default function ProductFormPage() {
 
       const productData = {
         ...restData,
+        material: data.material?.trim() || null,
+        dimensions: data.dimensions?.trim() || null,
         shortDescriptionVi,
         shortDescriptionEn,
         images,
@@ -510,19 +548,98 @@ export default function ProductFormPage() {
 
       if (isNew) {
         await api.createProduct(productData)
-        toast({ title: t('success'), description: 'Product created' })
+        toast({
+          title: t('success'),
+          description: locale === 'vi' ? 'Đã tạo sản phẩm thành công' : 'Product created successfully',
+        })
+        window.location.href = `/${locale}/admin/products`
+        return
       } else {
         await api.updateProduct(id, productData)
-        toast({ title: t('success'), description: 'Product updated' })
+        toast({
+          title: t('success'),
+          description: locale === 'vi' ? 'Đã cập nhật sản phẩm thành công' : 'Product updated successfully',
+        })
+        router.push(`/${locale}/admin/products`)
+        router.refresh()
       }
-
-      router.push(`/${locale}/admin/products`)
-    } catch (error) {
-      toast({ title: t('error'), description: 'Failed to save product', variant: 'destructive' })
+    } catch (error: any) {
+      const serverMsg = getApiErrorMessage(
+        error,
+        locale,
+        locale === 'vi'
+          ? 'Không thể lưu sản phẩm lúc này. Vui lòng kiểm tra lại thông tin.'
+          : 'Failed to save product. Please check your inputs.',
+      )
+      toast({
+        title: t('error'),
+        description: serverMsg,
+        variant: 'destructive',
+      })
     } finally {
       setIsSaving(false)
     }
   }
+
+  const onInvalid = (errors: FieldErrors<ProductFormValues>) => {
+    const errorKeys = Object.keys(errors) as (keyof ProductFormValues)[]
+    if (errorKeys.length > 0) {
+      const firstKey = errorKeys[0]
+      const firstError = errors[firstKey]
+      const fieldNames: Record<string, string> = {
+        nameVi: 'Tên sản phẩm (Tiếng Việt)',
+        nameEn: 'Tên sản phẩm (Tiếng Anh)',
+        descriptionVi: 'Mô tả chi tiết (Tiếng Việt)',
+        descriptionEn: 'Mô tả chi tiết (Tiếng Anh)',
+        priceVND: 'Giá niêm yết (VND)',
+        stock: 'Số lượng tồn kho',
+        slug: 'Đường dẫn (Slug)',
+      }
+      const fieldLabel = fieldNames[firstKey] || firstKey
+      toast({
+        title: locale === 'vi' ? 'Thông tin chưa đầy đủ' : 'Incomplete Information',
+        description:
+          firstError?.message ||
+          (locale === 'vi'
+            ? `Vui lòng kiểm tra lại trường "${fieldLabel}".`
+            : `Please check field "${fieldLabel}".`),
+        variant: 'destructive',
+      })
+      const element = document.querySelector(`[name="${firstKey}"]`)
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        ;(element as HTMLElement).focus?.({ preventScroll: true })
+      }
+    }
+  }
+
+  const handleCancel = async () => {
+    if (form.formState.isDirty) {
+      const confirmed = await confirm({
+        title: locale === 'vi' ? 'Hủy bỏ thay đổi?' : 'Discard changes?',
+        description:
+          locale === 'vi'
+            ? 'Bạn có thay đổi chưa được lưu. Bạn có chắc chắn muốn rời khỏi trang không?'
+            : 'You have unsaved changes. Are you sure you want to leave this page?',
+        confirmText: locale === 'vi' ? 'Rời khỏi trang' : 'Discard & Leave',
+        cancelText: locale === 'vi' ? 'Tiếp tục sửa' : 'Keep editing',
+        variant: 'destructive',
+      })
+      if (!confirmed) return
+    }
+    router.push(`/${locale}/admin/products`)
+  }
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault()
+        void form.handleSubmit(onSubmit, onInvalid)()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [form, onSubmit, onInvalid])
 
   const handleQuickCreateCategory = async () => {
     if (!newCatNameVi || !newCatNameEn) {
@@ -573,776 +690,1072 @@ export default function ProductFormPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Link href={`/${locale}/admin/products`}>
-          <Button variant="ghost" size="icon">
+    <div className="flex flex-col lg:h-[calc(100dvh-4rem)] lg:overflow-hidden">
+      {/* Top Action Header */}
+      <div className="flex-shrink-0 mb-4 flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={handleCancel}
+            title={locale === 'vi' ? 'Quay lại danh sách' : 'Back to products'}
+            className="h-9 w-9 rounded-full"
+          >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-        </Link>
-        <div>
-          <h1 className="font-serif text-2xl">{isNew ? t('create') : t('edit')} Product</h1>
-          <p className="text-muted-foreground">
-            {isNew ? 'Add a new product' : 'Update product details'}
-          </p>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="line-clamp-1 font-serif text-lg font-semibold tracking-tight text-foreground sm:text-2xl">
+                {isNew
+                  ? locale === 'vi'
+                    ? 'Tạo sản phẩm mới'
+                    : 'Create Product'
+                  : productName || t('updateProduct')}
+              </h1>
+              {!isNew && (
+                <span
+                  className={cn(
+                    'rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider',
+                    form.watch('isActive')
+                      ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                      : 'bg-neutral-200 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300',
+                  )}
+                >
+                  {form.watch('isActive')
+                    ? locale === 'vi'
+                      ? 'Đang bán'
+                      : 'Active'
+                    : locale === 'vi'
+                      ? 'Tạm ẩn'
+                      : 'Draft'}
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {isNew
+                ? locale === 'vi'
+                  ? 'Điền thông tin và hình ảnh để đưa sản phẩm lên danh mục'
+                  : 'Add product details and images'
+                : locale === 'vi'
+                  ? `Mã: ${id}`
+                  : `ID: ${id}`}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 self-end sm:self-center">
+          {/* View Mode Toggle: Form vs Storefront Live Preview */}
+          <div className="flex items-center rounded-lg border bg-muted/60 p-0.5 text-xs mr-1">
+            <button
+              type="button"
+              onClick={() => setViewMode('edit')}
+              className={cn(
+                'flex items-center gap-1.5 rounded-md px-3 py-1.5 font-medium transition-all cursor-pointer',
+                viewMode === 'edit'
+                  ? 'bg-background text-foreground shadow-xs font-semibold'
+                  : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              <FileEdit className="h-3.5 w-3.5" />
+              <span>{locale === 'vi' ? 'Biểu mẫu' : 'Form'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('preview')}
+              className={cn(
+                'flex items-center gap-1.5 rounded-md px-3 py-1.5 font-medium transition-all cursor-pointer',
+                viewMode === 'preview'
+                  ? 'bg-background text-foreground shadow-xs font-semibold'
+                  : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              <Eye className="h-3.5 w-3.5" />
+              <span>{locale === 'vi' ? 'Mô phỏng Storefront' : 'Storefront Preview'}</span>
+            </button>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleCancel}
+            disabled={isSaving}
+            className="h-9 px-4 text-xs"
+          >
+            {t('cancel')}
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            disabled={isSaving}
+            onClick={form.handleSubmit(onSubmit, onInvalid)}
+            className="h-9 px-5 text-xs font-semibold shadow-sm"
+          >
+            {isSaving ? (
+              <>
+                <RefreshCw className="mr-2 h-3.5 w-3.5 animate-spin" />
+                {locale === 'vi' ? 'Đang lưu...' : 'Saving...'}
+              </>
+            ) : (
+              <>
+                <Save className="mr-2 h-3.5 w-3.5" />
+                {isNew
+                  ? locale === 'vi'
+                    ? 'Tạo sản phẩm'
+                    : 'Create'
+                  : locale === 'vi'
+                    ? 'Lưu thay đổi'
+                    : 'Save changes'}
+              </>
+            )}
+          </Button>
         </div>
       </div>
 
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <div className="flex flex-wrap gap-2 rounded-lg border bg-muted/20 p-3">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                if (isLeftColumnCollapsed && isRightColumnCollapsed) {
-                  setIsRightColumnCollapsed(false)
-                }
-                setIsLeftColumnCollapsed((prev) => !prev)
-              }}
-            >
-              {isLeftColumnCollapsed ? (
-                <PanelLeftOpen className="mr-2 h-4 w-4" />
-              ) : (
-                <PanelLeftClose className="mr-2 h-4 w-4" />
-              )}
-              {isLeftColumnCollapsed ? 'Hiện cột trái' : 'Ẩn cột trái'}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                if (isRightColumnCollapsed && isLeftColumnCollapsed) {
-                  setIsLeftColumnCollapsed(false)
-                }
-                setIsRightColumnCollapsed((prev) => !prev)
-              }}
-            >
-              {isRightColumnCollapsed ? (
-                <PanelRightOpen className="mr-2 h-4 w-4" />
-              ) : (
-                <PanelRightClose className="mr-2 h-4 w-4" />
-              )}
-              {isRightColumnCollapsed ? 'Hiện cột phải' : 'Ẩn cột phải'}
-            </Button>
-          </div>
-
-          <div className="grid gap-6 lg:grid-cols-3">
-            {/* Main content - 2 columns */}
-            {!isLeftColumnCollapsed && (
-              <div
-                className={`space-y-6 ${isRightColumnCollapsed ? 'lg:col-span-3' : 'lg:col-span-2'}`}
-              >
-                {/* Basic Info */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="uppercase tracking-wide">Basic Information</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid gap-4 lg:grid-cols-2">
-                      <Card className="border-primary/20">
-                        <CardHeader className="pb-3">
-                          <CardTitle className="text-sm uppercase tracking-wide">
-                            Vietnamese Content
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                          <FormField
-                            control={form.control}
-                            name="nameVi"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>{t('vietnameseName')}</FormLabel>
-                                <FormControl>
-                                  <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="shortDescriptionVi"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Mo ta ngan (Tieng Viet)</FormLabel>
-                                <FormControl>
-                                  <Textarea {...field} rows={3} placeholder="Mo ta tom tat..." />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="descriptionVi"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>{t('vietnameseDescription')}</FormLabel>
-                                <FormControl>
-                                  <RichTextEditor
-                                    content={field.value}
-                                    onChange={field.onChange}
-                                    placeholder={t('enterDescription')}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </CardContent>
-                      </Card>
-
-                      <Card className="border-primary/20">
-                        <CardHeader className="pb-3">
-                          <CardTitle className="text-sm uppercase tracking-wide">
-                            English Content
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                          <FormField
-                            control={form.control}
-                            name="nameEn"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>{t('englishName')}</FormLabel>
-                                <FormControl>
-                                  <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="shortDescriptionEn"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Short Description (English)</FormLabel>
-                                <FormControl>
-                                  <Textarea
-                                    {...field}
-                                    rows={3}
-                                    placeholder="Summary description..."
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="descriptionEn"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>{t('englishDescription')}</FormLabel>
-                                <FormControl>
-                                  <RichTextEditor
-                                    content={field.value}
-                                    onChange={field.onChange}
-                                    placeholder={t('enterDescription')}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </CardContent>
-                      </Card>
-                    </div>
-
-                    {/* Price Fields */}
-                    <Card className="bg-muted/30">
+      {viewMode === 'preview' ? (
+        <div className="flex-1 min-h-0 overflow-hidden rounded-md border border-stone-200 bg-white">
+          <ProductStorefrontPreview
+            product={form.watch()}
+            images={images}
+            categories={categories}
+            categoryId={form.watch('categoryId')}
+            exchangeRate={exchangeRate}
+            trustBadges={trustBadgesData?.items}
+            trustBadgesEnabled={trustBadgesData?.enabled}
+            onSwitchToEdit={() => setViewMode('edit')}
+          />
+        </div>
+      ) : (
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="flex-1 min-h-0 lg:overflow-hidden flex flex-col">
+            <div className="grid items-start gap-6 lg:grid-cols-3 flex-1 min-h-0 lg:h-full lg:overflow-hidden">
+            {/* Main content - 2 columns (Independent scroll) */}
+            <div className="space-y-6 lg:col-span-2 lg:h-full lg:overflow-y-auto lg:pr-3 lg:pb-10">
+              {/* Basic Info */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="uppercase tracking-wide">{t('basicInfo')}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    <Card className="border-primary/20">
                       <CardHeader className="pb-3">
-                        <CardTitle className="text-base">{t('pricing')}</CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        {/* Original Price */}
-                        <div className="grid gap-4 md:grid-cols-2">
-                          <FormField
-                            control={form.control}
-                            name="priceVND"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>{t('priceVND')} *</FormLabel>
-                                <FormControl>
-                                  <Input {...field} type="number" placeholder="1,000,000" />
-                                </FormControl>
-                                <FormDescription>{t('originalPrice')}</FormDescription>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="priceUSD"
-                            render={({ field }) => (
-                              <FormItem>
-                                <div className="flex items-center justify-between">
-                                  <FormLabel>{t('priceUSD')}</FormLabel>
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => setAutoConvertPrice(!autoConvertPrice)}
-                                    className="h-6 text-xs"
-                                  >
-                                    <RefreshCw
-                                      className={`mr-1 h-3 w-3 ${autoConvertPrice ? 'text-green-500' : ''}`}
-                                    />
-                                    {autoConvertPrice ? t('autoOn') : t('autoOff')}
-                                  </Button>
-                                </div>
-                                <FormControl>
-                                  <Input
-                                    {...field}
-                                    type="number"
-                                    step="0.01"
-                                    value={field.value || ''}
-                                    onChange={(e) => {
-                                      setAutoConvertPrice(false)
-                                      field.onChange(
-                                        e.target.value ? parseFloat(e.target.value) : undefined,
-                                      )
-                                    }}
-                                  />
-                                </FormControl>
-                                <FormDescription>{t('autoCalculated')}</FormDescription>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-
-                        <Separator />
-
-                        {/* Sale Price */}
-                        <div className="grid gap-4 md:grid-cols-2">
-                          <FormField
-                            control={form.control}
-                            name="salePriceVND"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>{t('salePriceVND')}</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    {...field}
-                                    type="number"
-                                    placeholder={t('optional')}
-                                    value={field.value || ''}
-                                    onChange={(e) =>
-                                      field.onChange(
-                                        e.target.value ? parseInt(e.target.value) : null,
-                                      )
-                                    }
-                                  />
-                                </FormControl>
-                                <FormDescription>{t('discountPrice')}</FormDescription>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="salePriceUSD"
-                            render={({ field }) => (
-                              <FormItem>
-                                <div className="flex items-center justify-between">
-                                  <FormLabel>{t('salePriceUSD')}</FormLabel>
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => setAutoConvertSalePrice(!autoConvertSalePrice)}
-                                    className="h-6 text-xs"
-                                  >
-                                    <RefreshCw
-                                      className={`mr-1 h-3 w-3 ${autoConvertSalePrice ? 'text-green-500' : ''}`}
-                                    />
-                                    {autoConvertSalePrice ? t('autoOn') : t('autoOff')}
-                                  </Button>
-                                </div>
-                                <FormControl>
-                                  <Input
-                                    {...field}
-                                    type="number"
-                                    step="0.01"
-                                    placeholder={t('optional')}
-                                    value={field.value || ''}
-                                    onChange={(e) => {
-                                      setAutoConvertSalePrice(false)
-                                      field.onChange(
-                                        e.target.value ? parseFloat(e.target.value) : null,
-                                      )
-                                    }}
-                                  />
-                                </FormControl>
-                                <FormDescription>{t('autoCalculated')}</FormDescription>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="bg-muted/30">
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-base">
-                          {t('variantClassificationTitle')}
+                        <CardTitle className="text-sm uppercase tracking-wide">
+                          {locale === 'vi' ? 'Nội dung Tiếng Việt' : 'Vietnamese Content'}
                         </CardTitle>
-                        <CardDescription>{t('variantClassificationDesc')}</CardDescription>
                       </CardHeader>
                       <CardContent className="space-y-4">
-                        {variantGroups.length === 0 ? (
-                          <p className="text-sm text-muted-foreground">{t('variantNoGroups')}</p>
-                        ) : null}
-
-                        {variantGroups.map((group, index) => (
-                          <div key={group.id} className="space-y-3 rounded-md border p-4">
-                            <div className="flex items-center justify-between">
-                              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                                {t('variantGroupLabel', { index: index + 1 })}
-                              </p>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => removeVariantGroup(group.id)}
-                                className="h-7 px-2 text-xs"
-                              >
-                                <X className="mr-1 h-3 w-3" />
-                                {t('delete')}
-                              </Button>
-                            </div>
-
-                            <div className="grid gap-3 md:grid-cols-2">
-                              <div className="space-y-2">
-                                <Label htmlFor={`${group.id}-label-vi`}>
-                                  {t('variantLabelVi')}
-                                </Label>
-                                <Input
-                                  id={`${group.id}-label-vi`}
-                                  value={group.labelVi}
-                                  onChange={(e) =>
-                                    updateVariantGroup(group.id, 'labelVi', e.target.value)
-                                  }
-                                  placeholder="Loai"
-                                />
-                              </div>
-                              <div className="space-y-2">
-                                <Label htmlFor={`${group.id}-label-en`}>
-                                  {t('variantLabelEn')}
-                                </Label>
-                                <Input
-                                  id={`${group.id}-label-en`}
-                                  value={group.labelEn}
-                                  onChange={(e) =>
-                                    updateVariantGroup(group.id, 'labelEn', e.target.value)
-                                  }
-                                  placeholder="Types"
-                                />
-                              </div>
-                            </div>
-
-                            <div className="grid gap-3 md:grid-cols-2">
-                              <div className="space-y-2">
-                                <Label htmlFor={`${group.id}-values-vi`}>
-                                  {t('variantValuesVi')}
-                                </Label>
+                        <FormField
+                          control={form.control}
+                          name="nameVi"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>
+                                {t('vietnameseName')}{' '}
+                                <span className="font-bold text-destructive">*</span>
+                              </FormLabel>
+                              <FormControl>
+                                <Input {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="shortDescriptionVi"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>
+                                {locale === 'vi'
+                                  ? 'Mô tả ngắn (Tiếng Việt)'
+                                  : 'Short Description (Vietnamese)'}
+                              </FormLabel>
+                              <FormControl>
                                 <Textarea
-                                  id={`${group.id}-values-vi`}
-                                  rows={2}
-                                  value={group.valuesVi}
-                                  onChange={(e) =>
-                                    updateVariantGroup(group.id, 'valuesVi', e.target.value)
+                                  {...field}
+                                  rows={3}
+                                  placeholder={
+                                    locale === 'vi'
+                                      ? 'Mô tả tóm tắt...'
+                                      : 'Summary description...'
                                   }
-                                  placeholder="Thuong, Cao cap"
                                 />
-                                <FormDescription>
-                                  {t('variantValuesCount', {
-                                    count: parseVariantValues(group.valuesVi).length,
-                                  })}
-                                </FormDescription>
-                              </div>
-                              <div className="space-y-2">
-                                <Label htmlFor={`${group.id}-values-en`}>
-                                  {t('variantValuesEn')}
-                                </Label>
-                                <Textarea
-                                  id={`${group.id}-values-en`}
-                                  rows={2}
-                                  value={group.valuesEn}
-                                  onChange={(e) =>
-                                    updateVariantGroup(group.id, 'valuesEn', e.target.value)
-                                  }
-                                  placeholder="Classic, Premium"
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="descriptionVi"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>
+                                {t('vietnameseDescription')}{' '}
+                                <span className="font-bold text-destructive">*</span>
+                              </FormLabel>
+                              <FormControl>
+                                <RichTextEditor
+                                  content={field.value}
+                                  onChange={field.onChange}
+                                  placeholder={t('enterDescription')}
                                 />
-                                <FormDescription>
-                                  {t('variantValuesCount', {
-                                    count: parseVariantValues(group.valuesEn).length,
-                                  })}
-                                </FormDescription>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-
-                        <div className="flex items-center justify-between">
-                          <p className="text-xs text-muted-foreground">{t('variantValuesHint')}</p>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={addVariantGroup}
-                          >
-                            <Plus className="mr-2 h-4 w-4" />
-                            {t('addVariantGroup')}
-                          </Button>
-                        </div>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
                       </CardContent>
                     </Card>
 
-                    {/* Category and Stock */}
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <FormField
-                        control={form.control}
-                        name="categoryId"
-                        render={({ field }) => (
-                          <FormItem>
-                            <div className="flex items-center justify-between">
-                              <FormLabel>{t('category')}</FormLabel>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                className="h-6 px-2 text-xs"
-                                onClick={() => setIsCategoryDialogOpen(true)}
-                              >
-                                <Plus className="mr-1 h-3 w-3" />
-                                Thêm mới
-                              </Button>
-                            </div>
-                            <Select
-                              onValueChange={(val) => field.onChange(val === 'none' ? null : val)}
-                              value={field.value || 'none'}
-                            >
+                    <Card className="border-primary/20">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-sm uppercase tracking-wide">
+                          {locale === 'vi' ? 'Nội dung Tiếng Anh' : 'English Content'}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <FormField
+                          control={form.control}
+                          name="nameEn"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>
+                                {t('englishName')}{' '}
+                                <span className="font-bold text-destructive">*</span>
+                              </FormLabel>
                               <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder={t('selectCategory')} />
-                                </SelectTrigger>
+                                <Input {...field} />
                               </FormControl>
-                              <SelectContent>
-                                <SelectItem value="none">{t('noCategory')}</SelectItem>
-                                {categories.map((category) => (
-                                  <SelectItem key={category.id} value={category.id}>
-                                    {locale === 'vi' ? category.nameVi : category.nameEn}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="stock"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{t('stockLabelForm')}</FormLabel>
-                            <FormControl>
-                              <Input {...field} type="number" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Inquiry Settings */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="uppercase tracking-wide">
-                      {t('inquirySettings')}
-                    </CardTitle>
-                    <CardDescription>Configure customer inquiry options</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="inquiryEnabled"
-                      render={({ field }) => (
-                        <FormItem className="flex items-center justify-between">
-                          <div>
-                            <FormLabel>{t('inquiryEnabled')}</FormLabel>
-                            <FormDescription>
-                              Allow customers to ask about this product
-                            </FormDescription>
-                          </div>
-                          <FormControl>
-                            <Switch checked={field.value} onCheckedChange={field.onChange} />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-
-                    <Separator />
-
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <FormField
-                        control={form.control}
-                        name="inquiryMessageVi"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{t('inquiryMessageVi')}</FormLabel>
-                            <FormControl>
-                              <Textarea {...field} rows={4} placeholder={t('autoGenerated')} />
-                            </FormControl>
-                            <FormDescription>
-                              Leave empty for auto-generated message
-                            </FormDescription>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="inquiryMessageEn"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{t('inquiryMessageEn')}</FormLabel>
-                            <FormControl>
-                              <Textarea {...field} rows={4} placeholder={t('autoGenerated')} />
-                            </FormControl>
-                            <FormDescription>
-                              Leave empty for auto-generated message
-                            </FormDescription>
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-
-            {/* Sidebar - 1 column */}
-            {!isRightColumnCollapsed && (
-              <div className={`space-y-6 ${isLeftColumnCollapsed ? 'lg:col-span-3' : ''}`}>
-                {/* Status */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="uppercase tracking-wide">{t('status')}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="isActive"
-                      render={({ field }) => (
-                        <FormItem className="flex items-center justify-between">
-                          <FormLabel>{t('active')}</FormLabel>
-                          <FormControl>
-                            <Switch checked={field.value} onCheckedChange={field.onChange} />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="isFeatured"
-                      render={({ field }) => (
-                        <FormItem className="flex items-center justify-between">
-                          <FormLabel>{t('featured')}</FormLabel>
-                          <FormControl>
-                            <Switch checked={field.value} onCheckedChange={field.onChange} />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                  </CardContent>
-                </Card>
-
-                {/* Images */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="uppercase tracking-wide">Images</CardTitle>
-                    <CardDescription>Upload product images (4:5 ratio recommended)</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      {images.map((image, index) => (
-                        <div
-                          key={index}
-                          className="aspect-product group relative cursor-move overflow-hidden rounded-md border"
-                        >
-                          <Image
-                            src={getImageUrl(image)}
-                            alt={`Product ${index + 1}`}
-                            fill
-                            sizes="150px"
-                            className="object-cover transition-transform duration-300 group-hover:scale-105"
-                          />
-                          {index === 0 && (
-                            <div className="absolute left-2 top-2 z-10 rounded-sm bg-primary/90 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-primary-foreground shadow-sm backdrop-blur-sm">
-                              Main Display
-                            </div>
+                              <FormMessage />
+                            </FormItem>
                           )}
-                          <div className="absolute inset-x-0 bottom-0 grid translate-y-full grid-cols-2 gap-1 bg-black/70 p-2 transition-transform duration-300 group-hover:translate-y-0">
+                        />
+                        <FormField
+                          control={form.control}
+                          name="shortDescriptionEn"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>
+                                {locale === 'vi'
+                                  ? 'Mô tả ngắn (Tiếng Anh)'
+                                  : 'Short Description (English)'}
+                              </FormLabel>
+                              <FormControl>
+                                <Textarea
+                                  {...field}
+                                  rows={3}
+                                  placeholder="Summary description..."
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="descriptionEn"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>
+                                {t('englishDescription')}{' '}
+                                <span className="font-bold text-destructive">*</span>
+                              </FormLabel>
+                              <FormControl>
+                                <RichTextEditor
+                                  content={field.value}
+                                  onChange={field.onChange}
+                                  placeholder={t('enterDescription')}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  <Card className="bg-muted/20">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base">
+                        {locale === 'vi' ? 'Xem trước SEO' : 'SEO Preview'}
+                      </CardTitle>
+                      <CardDescription>
+                        {locale === 'vi'
+                          ? 'Đoạn trích Google được tạo tự động từ tên sản phẩm, mô tả tóm tắt và đường dẫn.'
+                          : 'Google snippet auto-generated from product name, summary, and slug.'}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="grid gap-4 md:grid-cols-2">
+                      <SeoSnippetPreview
+                        locale="vi"
+                        path={`/vi/shop/${slugWatch || 'product-slug'}`}
+                        title={nameViWatch || 'Tên sản phẩm'}
+                        description={
+                          shortDescriptionViWatch || 'Mô tả ngắn của sản phẩm sẽ hiển thị ở đây.'
+                        }
+                        branding={branding}
+                      />
+                      <SeoSnippetPreview
+                        locale="en"
+                        path={`/en/shop/${slugWatch || 'product-slug'}`}
+                        title={nameEnWatch || 'Product name'}
+                        description={
+                          shortDescriptionEnWatch ||
+                          'The product summary shown in Google search results appears here.'
+                        }
+                        branding={branding}
+                      />
+                    </CardContent>
+                  </Card>
+
+                  {/* Price Fields */}
+                  <Card className="bg-muted/30">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base">{t('pricing')}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {/* Original Price */}
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <FormField
+                          control={form.control}
+                          name="priceVND"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>{t('priceVND')} *</FormLabel>
+                              <FormControl>
+                                <Input {...field} type="number" placeholder="1,000,000" />
+                              </FormControl>
+                              <FormDescription>{t('originalPrice')}</FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="priceUSD"
+                          render={({ field }) => (
+                            <FormItem>
+                              <div className="flex items-center justify-between">
+                                <FormLabel>{t('priceUSD')}</FormLabel>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setAutoConvertPrice(!autoConvertPrice)}
+                                  className="h-6 text-xs"
+                                >
+                                  <RefreshCw
+                                    className={`mr-1 h-3 w-3 ${autoConvertPrice ? 'text-green-500' : ''}`}
+                                  />
+                                  {autoConvertPrice ? t('autoOn') : t('autoOff')}
+                                </Button>
+                              </div>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  type="number"
+                                  step="0.01"
+                                  value={field.value || ''}
+                                  onChange={(e) => {
+                                    setAutoConvertPrice(false)
+                                    field.onChange(
+                                      e.target.value ? parseFloat(e.target.value) : undefined,
+                                    )
+                                  }}
+                                />
+                              </FormControl>
+                              <FormDescription>{t('autoCalculated')}</FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <Separator />
+
+                      {/* Sale Price */}
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <FormField
+                          control={form.control}
+                          name="salePriceVND"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>{t('salePriceVND')}</FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  type="number"
+                                  placeholder={t('optional')}
+                                  value={field.value || ''}
+                                  onChange={(e) =>
+                                    field.onChange(e.target.value ? parseInt(e.target.value) : null)
+                                  }
+                                />
+                              </FormControl>
+                              <FormDescription>{t('discountPrice')}</FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="salePriceUSD"
+                          render={({ field }) => (
+                            <FormItem>
+                              <div className="flex items-center justify-between">
+                                <FormLabel>{t('salePriceUSD')}</FormLabel>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setAutoConvertSalePrice(!autoConvertSalePrice)}
+                                  className="h-6 text-xs"
+                                >
+                                  <RefreshCw
+                                    className={`mr-1 h-3 w-3 ${autoConvertSalePrice ? 'text-green-500' : ''}`}
+                                  />
+                                  {autoConvertSalePrice ? t('autoOn') : t('autoOff')}
+                                </Button>
+                              </div>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  type="number"
+                                  step="0.01"
+                                  placeholder={t('optional')}
+                                  value={field.value || ''}
+                                  onChange={(e) => {
+                                    setAutoConvertSalePrice(false)
+                                    field.onChange(
+                                      e.target.value ? parseFloat(e.target.value) : null,
+                                    )
+                                  }}
+                                />
+                              </FormControl>
+                              <FormDescription>{t('autoCalculated')}</FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Material & Dimensions (Optional) */}
+                  <Card className="bg-muted/30">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base">
+                        {locale === 'vi' ? 'Thông số kỹ thuật (Tùy chọn)' : 'Technical Specs (Optional)'}
+                      </CardTitle>
+                      <CardDescription>
+                        {locale === 'vi'
+                          ? 'Chất liệu và kích thước sẽ hiển thị trên trang sản phẩm.'
+                          : 'Material and dimensions shown on the product page.'}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <FormField
+                          control={form.control}
+                          name="material"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>
+                                {locale === 'vi' ? 'Chất liệu' : 'Material'}
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  value={field.value ?? ''}
+                                  placeholder={locale === 'vi' ? 'VD: Gốm sứ, đất sét...' : 'E.g.: Ceramic, clay...'}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="dimensions"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>
+                                {locale === 'vi' ? 'Kích thước' : 'Dimensions'}
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  value={field.value ?? ''}
+                                  placeholder={locale === 'vi' ? 'VD: 15cm × 30cm...' : 'E.g.: 15cm × 30cm...'}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-muted/30">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base">{t('variantClassificationTitle')}</CardTitle>
+                      <CardDescription>{t('variantClassificationDesc')}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {variantGroups.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">{t('variantNoGroups')}</p>
+                      ) : null}
+
+                      {variantGroups.map((group, index) => (
+                        <div key={group.id} className="space-y-3 rounded-md border p-4">
+                          <div className="flex items-center justify-between">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                              {t('variantGroupLabel', { index: index + 1 })}
+                            </p>
                             <Button
                               type="button"
-                              variant="secondary"
+                              variant="ghost"
                               size="sm"
-                              className="h-7 text-[10px]"
-                              onClick={() => copyImageUrl(image)}
+                              onClick={() => removeVariantGroup(group.id)}
+                              className="h-7 px-2 text-xs"
                             >
-                              Copy URL
+                              <X className="mr-1 h-3 w-3" />
+                              {t('delete')}
                             </Button>
-                            <Button
-                              type="button"
-                              variant="secondary"
-                              size="sm"
-                              className="h-7 text-[10px]"
-                              onClick={() => insertImageIntoDescription('descriptionVi', image)}
-                            >
-                              Insert VI
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="secondary"
-                              size="sm"
-                              className="h-7 text-[10px]"
-                              onClick={() => insertImageIntoDescription('descriptionEn', image)}
-                            >
-                              Insert EN
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="destructive"
-                              size="sm"
-                              className="h-7 text-[10px]"
-                              onClick={() => removeImage(index)}
-                            >
-                              Remove
-                            </Button>
+                          </div>
+
+                          <div className="grid gap-3 md:grid-cols-2">
+                            <div className="space-y-2">
+                              <Label htmlFor={`${group.id}-label-vi`}>{t('variantLabelVi')}</Label>
+                              <Input
+                                id={`${group.id}-label-vi`}
+                                value={group.labelVi}
+                                onChange={(e) =>
+                                  updateVariantGroup(group.id, 'labelVi', e.target.value)
+                                }
+                                placeholder={locale === 'vi' ? 'Loại' : 'Type'}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor={`${group.id}-label-en`}>{t('variantLabelEn')}</Label>
+                              <Input
+                                id={`${group.id}-label-en`}
+                                value={group.labelEn}
+                                onChange={(e) =>
+                                  updateVariantGroup(group.id, 'labelEn', e.target.value)
+                                }
+                                placeholder="Types"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="grid gap-3 md:grid-cols-2">
+                            <div className="space-y-2">
+                              <Label htmlFor={`${group.id}-values-vi`}>
+                                {t('variantValuesVi')}
+                              </Label>
+                              <Textarea
+                                id={`${group.id}-values-vi`}
+                                rows={2}
+                                value={group.valuesVi}
+                                onChange={(e) =>
+                                  updateVariantGroup(group.id, 'valuesVi', e.target.value)
+                                }
+                                placeholder={locale === 'vi' ? 'Thường, Cao cấp' : 'Classic, Premium'}
+                              />
+                              <FormDescription>
+                                {t('variantValuesCount', {
+                                  count: parseVariantValues(group.valuesVi).length,
+                                })}
+                              </FormDescription>
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor={`${group.id}-values-en`}>
+                                {t('variantValuesEn')}
+                              </Label>
+                              <Textarea
+                                id={`${group.id}-values-en`}
+                                rows={2}
+                                value={group.valuesEn}
+                                onChange={(e) =>
+                                  updateVariantGroup(group.id, 'valuesEn', e.target.value)
+                                }
+                                placeholder="Classic, Premium"
+                              />
+                              <FormDescription>
+                                {t('variantValuesCount', {
+                                  count: parseVariantValues(group.valuesEn).length,
+                                })}
+                              </FormDescription>
+                            </div>
                           </div>
                         </div>
                       ))}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Tip: Use Insert VI/EN to quickly place selected image into product
-                      description.
-                    </p>
 
-                    <div className="relative">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        onChange={handleImageUpload}
-                        className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-                        disabled={isUploading}
-                      />
-                      <Button variant="outline" className="w-full" disabled={isUploading}>
-                        <Upload className="mr-2 h-4 w-4" />
-                        {isUploading ? 'Uploading...' : 'Upload Images'}
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Hover Image */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="uppercase tracking-wide">Hover Image</CardTitle>
-                    <CardDescription>Image shown when user hovers over product</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {hoverImage && (
-                      <div className="aspect-product relative border">
-                        <Image
-                          src={getImageUrl(hoverImage)}
-                          alt="Hover image"
-                          fill
-                          sizes="300px"
-                          className="object-cover"
-                        />
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="icon"
-                          className="absolute right-1 top-1 h-6 w-6"
-                          onClick={() => setHoverImage(null)}
-                        >
-                          <X className="h-4 w-4" />
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs text-muted-foreground">{t('variantValuesHint')}</p>
+                        <Button type="button" variant="outline" size="sm" onClick={addVariantGroup}>
+                          <Plus className="mr-2 h-4 w-4" />
+                          {t('addVariantGroup')}
                         </Button>
                       </div>
-                    )}
+                    </CardContent>
+                  </Card>
 
-                    <div className="relative">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={async (e) => {
-                          const file = e.target.files?.[0]
-                          if (!file) return
-                          setIsUploading(true)
-                          try {
-                            const optimizedFile = await optimizeAndResizeImage(file, {
-                              maxWidth: 1800,
-                              maxHeight: 1800,
-                              quality: 0.86,
-                              outputType: 'image/webp',
-                            })
-                            const result = await api.uploadImage(optimizedFile, 'products')
-                            setHoverImage(result.url)
-                            toast({ title: t('success'), description: 'Hover image uploaded' })
-                          } catch (error) {
-                            toast({
-                              title: t('error'),
-                              description: 'Upload failed',
-                              variant: 'destructive',
-                            })
-                          } finally {
-                            setIsUploading(false)
-                          }
-                        }}
-                        className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-                        disabled={isUploading}
+                  {/* Category and Stock */}
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name="categoryId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <div className="flex items-center justify-between">
+                            <FormLabel>
+                              {t('category')} <span className="font-bold text-destructive">*</span>
+                            </FormLabel>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-2 text-xs"
+                              onClick={() => setIsCategoryDialogOpen(true)}
+                            >
+                              <Plus className="mr-1 h-3 w-3" />
+                              {locale === 'vi' ? 'Thêm mới' : 'Add new'}
+                            </Button>
+                          </div>
+                          <Select
+                            onValueChange={(val) => field.onChange(val === 'none' ? null : val)}
+                            value={field.value || 'none'}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder={t('selectCategory')} />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="none">{t('noCategory')}</SelectItem>
+                              {categories.map((category) => (
+                                <SelectItem key={category.id} value={category.id}>
+                                  {locale === 'vi' ? category.nameVi : category.nameEn}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="stock"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            {t('stockLabelForm')}{' '}
+                            <span className="font-bold text-destructive">*</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input {...field} type="number" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+
+                </CardContent>
+              </Card>
+
+              {/* Inquiry Settings */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="uppercase tracking-wide">{t('inquirySettings')}</CardTitle>
+                  <CardDescription>
+                    {locale === 'vi'
+                      ? 'Cấu hình tùy chọn hỏi đáp cho khách hàng'
+                      : 'Configure customer inquiry options'}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="inquiryEnabled"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center justify-between">
+                        <div>
+                          <FormLabel>{t('inquiryEnabled')}</FormLabel>
+                          <FormDescription>
+                            {locale === 'vi'
+                              ? 'Cho phép khách hàng gửi câu hỏi về sản phẩm này'
+                              : 'Allow customers to ask about this product'}
+                          </FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+
+                  <Separator />
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name="inquiryMessageVi"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('inquiryMessageVi')}</FormLabel>
+                          <FormControl>
+                            <Textarea {...field} rows={4} placeholder={t('autoGenerated')} />
+                          </FormControl>
+                          <FormDescription>
+                            {locale === 'vi'
+                              ? 'Để trống để tự động tạo tin nhắn'
+                              : 'Leave empty for auto-generated message'}
+                          </FormDescription>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="inquiryMessageEn"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('inquiryMessageEn')}</FormLabel>
+                          <FormControl>
+                            <Textarea {...field} rows={4} placeholder={t('autoGenerated')} />
+                          </FormControl>
+                          <FormDescription>
+                            {locale === 'vi'
+                              ? 'Để trống để tự động tạo tin nhắn'
+                              : 'Leave empty for auto-generated message'}
+                          </FormDescription>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Sidebar - 1 column (Independent scroll) */}
+            <div className="space-y-6 lg:col-span-1 lg:h-full lg:overflow-y-auto lg:pl-1 lg:pr-2 lg:pb-10">
+              {/* Status */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="uppercase tracking-wide">{t('status')}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="isActive"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center justify-between">
+                        <FormLabel>{t('active')}</FormLabel>
+                        <FormControl>
+                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="isFeatured"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center justify-between">
+                        <FormLabel>{t('featured')}</FormLabel>
+                        <FormControl>
+                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Images */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="uppercase tracking-wide">
+                    {locale === 'vi' ? 'Hình ảnh' : 'Images'}{' '}
+                    <span className="font-bold text-destructive">*</span>
+                  </CardTitle>
+                  <CardDescription>
+                    {locale === 'vi'
+                      ? 'Tải ảnh sản phẩm (tối thiểu 1 ảnh, khuyến nghị tỷ lệ 4:5)'
+                      : 'Upload product images (minimum 1 image, 4:5 ratio recommended)'}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    {images.map((image, index) => (
+                      <div
+                        key={index}
+                        className="aspect-product group relative cursor-move overflow-hidden rounded-md border"
+                      >
+                        <Image
+                          src={getImageUrl(image)}
+                          alt={`Product ${index + 1}`}
+                          fill
+                          sizes="150px"
+                          className="object-cover transition-transform duration-300 group-hover:scale-105"
+                        />
+                        {index === 0 && (
+                          <div className="absolute left-2 top-2 z-10 rounded-sm bg-primary/90 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-primary-foreground shadow-sm backdrop-blur-sm">
+                            {locale === 'vi' ? 'Hiển thị chính' : 'Main Display'}
+                          </div>
+                        )}
+                        <div className="absolute inset-x-0 bottom-0 grid translate-y-full grid-cols-2 gap-1 bg-black/70 p-2 transition-transform duration-300 group-hover:translate-y-0">
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            className="h-7 text-[10px]"
+                            onClick={() => copyImageUrl(image)}
+                          >
+                            {locale === 'vi' ? 'Sao chép URL' : 'Copy URL'}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            className="h-7 text-[10px]"
+                            onClick={() => insertImageIntoDescription('descriptionVi', image)}
+                          >
+                            {locale === 'vi' ? 'Chèn VI' : 'Insert VI'}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            className="h-7 text-[10px]"
+                            onClick={() => insertImageIntoDescription('descriptionEn', image)}
+                          >
+                            {locale === 'vi' ? 'Chèn EN' : 'Insert EN'}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            className="h-7 text-[10px]"
+                            onClick={() => removeImage(index)}
+                          >
+                            {locale === 'vi' ? 'Xóa' : 'Remove'}
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {locale === 'vi'
+                      ? 'Mẹo: Dùng Chèn VI/EN để đưa nhanh ảnh vào phần mô tả sản phẩm.'
+                      : 'Tip: Use Insert VI/EN to quickly place selected image into product description.'}
+                  </p>
+
+                  <div className="relative">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleImageUpload}
+                      className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                      disabled={isUploading}
+                    />
+                    <Button variant="outline" className="w-full" disabled={isUploading}>
+                      <Upload className="mr-2 h-4 w-4" />
+                      {isUploading
+                        ? locale === 'vi'
+                          ? 'Đang tải lên...'
+                          : 'Uploading...'
+                        : locale === 'vi'
+                          ? 'Tải ảnh lên'
+                          : 'Upload Images'}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Hover Image */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="uppercase tracking-wide">
+                    {locale === 'vi' ? 'Ảnh khi di chuột' : 'Hover Image'}
+                  </CardTitle>
+                  <CardDescription>
+                    {locale === 'vi'
+                      ? 'Ảnh hiển thị khi người dùng di chuột qua sản phẩm'
+                      : 'Image shown when user hovers over product'}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {hoverImage && (
+                    <div className="aspect-product relative border">
+                      <Image
+                        src={getImageUrl(hoverImage)}
+                        alt="Hover image"
+                        fill
+                        sizes="300px"
+                        className="object-cover"
                       />
-                      <Button variant="outline" className="w-full" disabled={isUploading}>
-                        <Upload className="mr-2 h-4 w-4" />
-                        {isUploading
-                          ? 'Uploading...'
-                          : hoverImage
-                            ? 'Change Hover Image'
-                            : 'Upload Hover Image'}
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute right-1 top-1 h-6 w-6"
+                        onClick={() => setHoverImage(null)}
+                      >
+                        <X className="h-4 w-4" />
                       </Button>
                     </div>
-                  </CardContent>
-                </Card>
+                  )}
 
-                {/* Actions */}
-                <div className="flex flex-col gap-2">
-                  <Button type="submit" disabled={isSaving}>
-                    {isSaving ? t('loading') : t('save')}
+                  <div className="relative">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0]
+                        if (!file) return
+                        setIsUploading(true)
+                        try {
+                          const optimizedFile = await optimizeAndResizeImage(file, {
+                            maxWidth: 1800,
+                            maxHeight: 1800,
+                            quality: 0.86,
+                            outputType: 'image/webp',
+                          })
+                          const result = await api.uploadImage(optimizedFile, 'products')
+                          setHoverImage(result.url)
+                          toast({
+                            title: t('success'),
+                            description: locale === 'vi' ? 'Đã tải ảnh di chuột thành công' : 'Hover image uploaded',
+                          })
+                        } catch (error) {
+                          toast({
+                            title: t('error'),
+                            description: getApiErrorMessage(
+                              error,
+                              locale,
+                              locale === 'vi' ? 'Tải ảnh di chuột thất bại' : 'Upload failed',
+                            ),
+                            variant: 'destructive',
+                          })
+                        } finally {
+                          setIsUploading(false)
+                        }
+                      }}
+                      className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                      disabled={isUploading}
+                    />
+                    <Button variant="outline" className="w-full" disabled={isUploading}>
+                      <Upload className="mr-2 h-4 w-4" />
+                      {isUploading
+                        ? locale === 'vi'
+                          ? 'Đang tải lên...'
+                          : 'Uploading...'
+                        : hoverImage
+                          ? locale === 'vi'
+                            ? 'Đổi ảnh di chuột'
+                            : 'Change Hover Image'
+                          : locale === 'vi'
+                            ? 'Tải ảnh di chuột'
+                            : 'Upload Hover Image'}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Actions Card */}
+              <Card className="border bg-gradient-to-br from-card to-muted/20 shadow-sm">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-semibold uppercase tracking-wide">
+                    {locale === 'vi' ? 'Thao tác lưu' : 'Save Actions'}
+                  </CardTitle>
+                  <CardDescription className="text-xs">
+                    {locale === 'vi'
+                      ? 'Phím tắt: Ctrl + S để lưu nhanh'
+                      : 'Shortcut: Ctrl + S to save'}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <Button
+                    type="submit"
+                    disabled={isSaving}
+                    className="h-10 w-full text-xs font-semibold shadow-sm"
+                  >
+                    {isSaving ? (
+                      <>
+                        <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                        {locale === 'vi' ? 'Đang lưu...' : 'Saving...'}
+                      </>
+                    ) : (
+                      <>
+                        <Save className="mr-2 h-4 w-4" />
+                        {isNew
+                          ? locale === 'vi'
+                            ? 'Tạo sản phẩm'
+                            : 'Create Product'
+                          : locale === 'vi'
+                            ? 'Lưu thay đổi'
+                            : 'Save Changes'}
+                      </>
+                    )}
                   </Button>
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => router.push(`/${locale}/admin/products`)}
+                    disabled={isSaving}
+                    onClick={handleCancel}
+                    className="h-10 w-full text-xs"
                   >
                     {t('cancel')}
                   </Button>
-                </div>
-              </div>
-            )}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          {/* Mobile Sticky Bottom Bar */}
+          <div className="sticky bottom-0 z-20 flex items-center justify-between gap-3 rounded-t-xl border-t bg-background/95 p-3.5 shadow-lg backdrop-blur-md sm:hidden">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleCancel}
+              disabled={isSaving}
+              className="h-9 flex-1 text-xs"
+            >
+              {t('cancel')}
+            </Button>
+            <Button
+              type="submit"
+              size="sm"
+              disabled={isSaving}
+              className="h-9 flex-1 text-xs font-semibold"
+            >
+              {isSaving ? (
+                <>
+                  <RefreshCw className="mr-2 h-3.5 w-3.5 animate-spin" />
+                  {locale === 'vi' ? 'Đang lưu...' : 'Saving...'}
+                </>
+              ) : (
+                <>
+                  <Save className="mr-2 h-3.5 w-3.5" />
+                  {isNew ? (locale === 'vi' ? 'Tạo' : 'Create') : locale === 'vi' ? 'Lưu' : 'Save'}
+                </>
+              )}
+            </Button>
           </div>
         </form>
       </Form>
+      )}
 
       {/* Quick Category Dialog */}
       <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>

@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api-client'
+import { revalidatePaths } from '@/lib/revalidate'
 
 export const bannerKeys = {
   all: ['banners'] as const,
@@ -20,7 +21,9 @@ export function useBanners(activeOnly = true, options?: BannerQueryOptions) {
     queryKey: bannerKeys.list(activeOnly),
     queryFn: () => apiClient.getBanners(activeOnly),
     initialData: options?.initialData,
-    staleTime: 10 * 60 * 1000, // 10 minutes - banners don't change often
+    initialDataUpdatedAt: options?.initialData ? 0 : undefined,
+    staleTime: 15 * 1000,
+    refetchOnMount: true,
   })
 }
 
@@ -29,7 +32,8 @@ export function useBanner(id: string) {
     queryKey: bannerKeys.detail(id),
     queryFn: () => apiClient.getBannerById(id),
     enabled: !!id,
-    staleTime: 10 * 60 * 1000,
+    staleTime: 15 * 1000,
+    refetchOnMount: true,
   })
 }
 
@@ -39,6 +43,7 @@ export function useCreateBanner() {
     mutationFn: (data: any) => apiClient.createBanner(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: bannerKeys.all })
+      void revalidatePaths(['/vi', '/en'])
     },
   })
 }
@@ -49,6 +54,7 @@ export function useUpdateBanner() {
     mutationFn: ({ id, data }: { id: string; data: any }) => apiClient.updateBanner(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: bannerKeys.all })
+      void revalidatePaths(['/vi', '/en'])
     },
   })
 }
@@ -59,6 +65,7 @@ export function useDeleteBanner() {
     mutationFn: (id: string) => apiClient.deleteBanner(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: bannerKeys.all })
+      void revalidatePaths(['/vi', '/en'])
     },
   })
 }

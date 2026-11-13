@@ -1,9 +1,9 @@
+import { getCanonicalBaseUrl, normalizeSeoImageDomain } from '@/lib/seo'
 import { getStorySlug, parseStories, STORIES_CONTENT_KEY, type StoryItem } from '@/lib/stories'
-import { getCanonicalBaseUrl } from '@/lib/seo'
 
 export const BASE_URL = getCanonicalBaseUrl()
 export const LOCALES = ['vi', 'en'] as const
-export const SITEMAP_REVALIDATE = 0 // Disable cache for sitemap to prevent stale data conflicts
+export const SITEMAP_REVALIDATE = 3600
 export const SITEMAP_CHUNK_SIZE = 1000
 export const SITEMAP_PRODUCTS_TAG = 'sitemap-products'
 export const SITEMAP_STORIES_TAG = 'sitemap-stories'
@@ -13,13 +13,18 @@ const FETCH_TIMEOUT_MS = Number.parseInt(process.env.SITEMAP_FETCH_TIMEOUT_MS ||
 const PAGE_SIZE = 200
 const API_CANDIDATES = [
   process.env.SITEMAP_API_URL,
+  process.env.SERVER_API_URL,
+  process.env.NEXT_PUBLIC_API_BASE_URL,
   process.env.NEXT_PUBLIC_API_URL,
-  'https://www.uomarchive.com/api',
-  'https://uomarchive.com/api',
-  'http://localhost:8888/api',
-].filter((value): value is string => Boolean(value))
+  'https://api.uomarchive.com',
+  ...(process.env.NODE_ENV === 'production' ? [] : ['http://localhost:8888']),
+]
+  .filter((value): value is string => Boolean(value))
+  .map((value) => value.replace(/\/$/, ''))
 
-const API_URLS = Array.from(new Set(API_CANDIDATES.map((value) => value.replace(/\/$/, ''))))
+const API_URLS = Array.from(
+  new Set(API_CANDIDATES.map((value) => value.replace(/\/api$/, '').replace(/\/$/, ''))),
+)
 
 export type Product = {
   id: string
@@ -33,14 +38,23 @@ export type Product = {
   priceVND: number
 }
 
+type SitemapProductPayload = {
+  id?: string
+  _id?: string
+  slug?: string
+  nameVi?: string
+  nameEn?: string
+  shortDescriptionVi?: string
+  shortDescriptionEn?: string
+  updatedAt?: string | null
+  image?: string
+  images?: string[]
+  hoverImage?: string
+  priceVND?: number
+}
+
 type ProductsResponse = {
-  data?: Array<{
-    slug?: string
-    updatedAt?: string
-    image?: string
-    images?: string[]
-    hoverImage?: string
-  }>
+  data?: SitemapProductPayload[]
   meta?: {
     page?: number
     limit?: number
@@ -58,6 +72,11 @@ export type SitemapUrlEntry = {
   images?: string[]
   alternates?: Record<string, string>
 }
+
+let productsRequest: Promise<Product[]> | null = null
+let storiesRequest: Promise<StoryItem[]> | null = null
+let lastProductsSnapshot: Product[] | null = null
+let lastStoriesSnapshot: StoryItem[] | null = null
 
 async function fetchWithTimeout(input: string, init?: RequestInit): Promise<Response> {
   const controller = new AbortController()
@@ -120,12 +139,12 @@ function toAbsoluteUrl(value: string): string {
     if (value.includes(' ')) {
       try {
         const url = new URL(value)
-        return url.toString()
+        return normalizeSeoImageDomain(url.toString())
       } catch {
         return value.replace(/ /g, '%20')
       }
     }
-    return value
+    return normalizeSeoImageDomain(value)
   }
 
   const normalizedPath = value.startsWith('/') ? value : `/${value}`
@@ -139,7 +158,7 @@ function toAbsoluteUrl(value: string): string {
   return `${BASE_URL}${encodedPath}`
 }
 
-function parseProduct(product: any): Product | null {
+function parseProduct(product: SitemapProductPayload): Product | null {
   if (!product?.slug) {
     return null
   }
@@ -214,7 +233,7 @@ async function fetchAllProductsFromApi(apiUrl: string): Promise<Product[]> {
       `${apiUrl}/products?page=${page}&limit=${PAGE_SIZE}&isActive=true`,
       {
         next: {
-          revalidate: 0,
+          revalidate: SITEMAP_REVALIDATE,
           tags: [SITEMAP_PRODUCTS_TAG, SITEMAP_STATIC_TAG],
         },
       },
@@ -245,17 +264,12 @@ async function fetchAllProductsFromApi(apiUrl: string): Promise<Product[]> {
   return products
 }
 
-export async function fetchAllProducts(): Promise<Product[]> {
-  let bestProducts: Product[] = []
-  let hasSuccessfulSource = false
-
+async function fetchAllProductsFromConfiguredSources(): Promise<Product[]> {
   for (const apiUrl of API_URLS) {
     try {
       const products = dedupeProducts(await fetchAllProductsFromApi(apiUrl))
-      hasSuccessfulSource = true
-      if (products.length > bestProducts.length) {
-        bestProducts = products
-      }
+      lastProductsSnapshot = products
+      return products
     } catch (error) {
       console.warn(
         `[sitemap] products source failed: ${apiUrl}`,
@@ -265,17 +279,35 @@ export async function fetchAllProducts(): Promise<Product[]> {
     }
   }
 
-  if (!hasSuccessfulSource) {
-    throw new Error('[sitemap] failed to fetch products from all configured API sources')
+  if (lastProductsSnapshot) {
+    console.warn('[sitemap] all product API sources failed — serving the in-memory snapshot')
+    return lastProductsSnapshot
   }
 
-  return bestProducts
+  throw new Error('[sitemap] failed to fetch products from all configured API sources')
+}
+
+export async function fetchAllProducts(): Promise<Product[]> {
+  if (productsRequest) {
+    return productsRequest
+  }
+
+  const request = fetchAllProductsFromConfiguredSources()
+  productsRequest = request
+
+  try {
+    return await request
+  } finally {
+    if (productsRequest === request) {
+      productsRequest = null
+    }
+  }
 }
 
 async function fetchSiteContentFromApi(apiUrl: string): Promise<SiteContentResponse | null> {
   const res = await fetchWithTimeout(`${apiUrl}/settings/site-content`, {
     next: {
-      revalidate: 0,
+      revalidate: SITEMAP_REVALIDATE,
       tags: [SITEMAP_STORIES_TAG, SITEMAP_STATIC_TAG],
     },
   })
@@ -297,6 +329,16 @@ async function fetchSiteContentFromApi(apiUrl: string): Promise<SiteContentRespo
   return payload as SiteContentResponse
 }
 
+export async function fetchSitemapSiteContent(): Promise<Record<string, string>> {
+  for (const apiUrl of API_URLS) {
+    try {
+      const content = await fetchSiteContentFromApi(apiUrl)
+      if (content) return Object.fromEntries(Object.entries(content).filter((entry): entry is [string, string] => typeof entry[1] === 'string'))
+    } catch { /* try the next configured API */ }
+  }
+  return {}
+}
+
 function stripLoneSurrogates(value: string): string {
   return value.replace(
     /([\uD800-\uDBFF])(?![\uDC00-\uDFFF])|(^|[^\uD800-\uDBFF])([\uDC00-\uDFFF])/g,
@@ -314,20 +356,15 @@ export function safeEncodePathSegment(value: string): string {
     return encodeURIComponent(stripLoneSurrogates(value))
   }
 }
-export async function fetchStories(): Promise<StoryItem[]> {
-  let bestStories = parseStories(undefined)
-  let hasSuccessfulSource = false
-
+async function fetchStoriesFromConfiguredSources(): Promise<StoryItem[]> {
   for (const apiUrl of API_URLS) {
     try {
       const siteContent = await fetchSiteContentFromApi(apiUrl)
-      hasSuccessfulSource = true
       const stories = parseStories(siteContent?.[STORIES_CONTENT_KEY]).filter(
         (story) => story.isVisible !== false,
       )
-      if (stories.length > bestStories.length) {
-        bestStories = stories
-      }
+      lastStoriesSnapshot = stories
+      return stories
     } catch (error) {
       console.warn(
         `[sitemap] stories source failed: ${apiUrl}`,
@@ -337,14 +374,30 @@ export async function fetchStories(): Promise<StoryItem[]> {
     }
   }
 
-  if (!hasSuccessfulSource) {
-    // Return empty array instead of throwing — the unified sitemap.xml uses Promise.allSettled
-    // and degrades gracefully. Throwing here would crash static page lastmod calculations too.
-    console.warn('[sitemap] all story API sources failed — returning empty story list')
-    return []
+  if (lastStoriesSnapshot) {
+    console.warn('[sitemap] all story API sources failed — serving the in-memory snapshot')
+    return lastStoriesSnapshot
   }
 
-  return bestStories
+  console.warn('[sitemap] all story API sources failed — returning empty story list')
+  return parseStories(undefined)
+}
+
+export async function fetchStories(): Promise<StoryItem[]> {
+  if (storiesRequest) {
+    return storiesRequest
+  }
+
+  const request = fetchStoriesFromConfiguredSources()
+  storiesRequest = request
+
+  try {
+    return await request
+  } finally {
+    if (storiesRequest === request) {
+      storiesRequest = null
+    }
+  }
 }
 
 function getLatestDate(values: Array<string | null | undefined>, fallback: Date): Date {
@@ -382,12 +435,6 @@ export function buildStaticEntries(products: Product[], stories: StoryItem[]): S
     latestProductDate.getTime() > latestStoryDate.getTime() ? latestProductDate : latestStoryDate
 
   return [
-    {
-      loc: `${BASE_URL}/`,
-      lastmod: latestContentDate.toISOString(),
-      changefreq: 'daily' as const,
-      priority: 1.0,
-    },
     ...LOCALES.flatMap((locale) => [
       {
         loc: `${BASE_URL}/${locale}`,
@@ -444,39 +491,41 @@ export function buildProductEntries(products: Product[]): SitemapUrlEntry[] {
 export function buildStoryEntries(stories: StoryItem[]): SitemapUrlEntry[] {
   const now = new Date()
 
-  return stories.flatMap((story) => {
-    const viSlug = safeEncodePathSegment(getStorySlug(story, 'vi'))
-    const enSlug = safeEncodePathSegment(getStorySlug(story, 'en'))
-    const lastmod = toIsoDate(story.updatedAt ?? story.publishedAt, now)
-    const image = story.imageUrl ? [toAbsoluteUrl(story.imageUrl)] : undefined
+  return stories
+    .filter((story) => story.isVisible !== false && story.noIndex !== true)
+    .flatMap((story) => {
+      const viSlug = safeEncodePathSegment(getStorySlug(story, 'vi'))
+      const enSlug = safeEncodePathSegment(getStorySlug(story, 'en'))
+      const lastmod = toIsoDate(story.updatedAt ?? story.publishedAt, now)
+      const image = story.imageUrl ? [toAbsoluteUrl(story.imageUrl)] : undefined
 
-    return [
-      {
-        loc: `${BASE_URL}/vi/journal/${viSlug}`,
-        lastmod,
-        changefreq: 'daily' as const,
-        priority: 0.75,
-        alternates: {
-          vi: `${BASE_URL}/vi/journal/${viSlug}`,
-          en: `${BASE_URL}/en/journal/${enSlug}`,
-          'x-default': `${BASE_URL}/vi/journal/${viSlug}`,
+      return [
+        {
+          loc: `${BASE_URL}/vi/journal/${viSlug}`,
+          lastmod,
+          changefreq: 'daily' as const,
+          priority: 0.75,
+          alternates: {
+            vi: `${BASE_URL}/vi/journal/${viSlug}`,
+            en: `${BASE_URL}/en/journal/${enSlug}`,
+            'x-default': `${BASE_URL}/vi/journal/${viSlug}`,
+          },
+          images: image,
         },
-        images: image,
-      },
-      {
-        loc: `${BASE_URL}/en/journal/${enSlug}`,
-        lastmod,
-        changefreq: 'daily' as const,
-        priority: 0.75,
-        alternates: {
-          vi: `${BASE_URL}/vi/journal/${viSlug}`,
-          en: `${BASE_URL}/en/journal/${enSlug}`,
-          'x-default': `${BASE_URL}/vi/journal/${viSlug}`,
+        {
+          loc: `${BASE_URL}/en/journal/${enSlug}`,
+          lastmod,
+          changefreq: 'daily' as const,
+          priority: 0.75,
+          alternates: {
+            vi: `${BASE_URL}/vi/journal/${viSlug}`,
+            en: `${BASE_URL}/en/journal/${enSlug}`,
+            'x-default': `${BASE_URL}/vi/journal/${viSlug}`,
+          },
+          images: image,
         },
-        images: image,
-      },
-    ]
-  })
+      ]
+    })
 }
 
 export function chunkEntries<T>(entries: T[], chunkSize = SITEMAP_CHUNK_SIZE): T[][] {

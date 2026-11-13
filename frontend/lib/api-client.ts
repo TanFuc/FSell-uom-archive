@@ -1,5 +1,8 @@
 import axios, { type AxiosInstance, type AxiosError } from 'axios'
-import { pingProductSeo, pingSitewideSeo } from './seo-ping'
+import { triggerPublicRevalidation } from './revalidate'
+import { pingProductSeo, pingSitewideSeo, pingStoriesSeo } from './seo-ping'
+import { parseStories, STORIES_CONTENT_KEY } from './stories'
+import { normalizePublicImageUrl } from './utils'
 import type {
   Product,
   CreateProductDto,
@@ -38,7 +41,24 @@ interface AuthResponse {
   user: User
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888/api'
+function getEffectiveApiBaseUrl(): string {
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname
+    if (hostname.endsWith('uomarchive.com')) {
+      return 'https://api.uomarchive.com'
+    }
+  }
+  const envUrl = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL
+  if (
+    process.env.NODE_ENV === 'production' &&
+    (!envUrl || envUrl.includes('localhost') || envUrl.includes('127.0.0.1'))
+  ) {
+    return 'https://api.uomarchive.com'
+  }
+  return envUrl || 'http://localhost:8888'
+}
+
+const API_BASE_URL = getEffectiveApiBaseUrl()
 
 class ApiClient {
   private client: AxiosInstance
@@ -55,6 +75,18 @@ class ApiClient {
 
     this.client.interceptors.request.use(
       (config) => {
+        const effectiveBase = getEffectiveApiBaseUrl()
+        if (
+          config.baseURL &&
+          (config.baseURL.includes('localhost') || config.baseURL.includes('127.0.0.1')) &&
+          effectiveBase.startsWith('https://')
+        ) {
+          config.baseURL = effectiveBase
+        }
+        if (config.url && (config.url.startsWith('http://localhost') || config.url.startsWith('http://127.0.0.1'))) {
+          config.url = config.url.replace(/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?/, effectiveBase)
+        }
+
         if (typeof window !== 'undefined') {
           const token = localStorage.getItem('accessToken')
           if (token) {
@@ -92,7 +124,8 @@ class ApiClient {
             originalRequest.headers.Authorization = `Bearer ${data.data.accessToken}`
             return this.client(originalRequest)
           } catch (refreshError) {
-            localStorage.clear()
+            localStorage.removeItem("accessToken")
+            localStorage.removeItem("refreshToken")
             if (typeof window !== 'undefined') {
               window.location.href = '/login'
             }
@@ -158,8 +191,10 @@ class ApiClient {
     const product = await this.client.post<any, Product>('/products', data)
     if (product?.slug) {
       void pingProductSeo(product.slug)
+      void triggerPublicRevalidation(['/', '/shop', `/shop/${product.slug}`])
     } else {
       void pingSitewideSeo()
+      void triggerPublicRevalidation(['/', '/shop'])
     }
     return product
   }
@@ -168,8 +203,10 @@ class ApiClient {
     const product = await this.client.put<any, Product>(`/products/${id}`, data)
     if (product?.slug) {
       void pingProductSeo(product.slug)
+      void triggerPublicRevalidation(['/', '/shop', `/shop/${product.slug}`])
     } else {
       void pingSitewideSeo()
+      void triggerPublicRevalidation(['/', '/shop'])
     }
     return product
   }
@@ -177,12 +214,14 @@ class ApiClient {
   async softDeleteProduct(id: string): Promise<void> {
     const result = await this.client.delete<any, void>(`/products/${id}`)
     void pingSitewideSeo()
+    void triggerPublicRevalidation(['/', '/shop'])
     return result
   }
 
   async hardDeleteProduct(id: string): Promise<void> {
     const result = await this.client.delete<any, void>(`/products/${id}/permanent`)
     void pingSitewideSeo()
+    void triggerPublicRevalidation(['/', '/shop'])
     return result
   }
 
@@ -190,8 +229,10 @@ class ApiClient {
     const product = await this.client.post<any, Product>(`/products/${id}/restore`)
     if (product?.slug) {
       void pingProductSeo(product.slug)
+      void triggerPublicRevalidation(['/', '/shop', `/shop/${product.slug}`])
     } else {
       void pingSitewideSeo()
+      void triggerPublicRevalidation(['/', '/shop'])
     }
     return product
   }
@@ -200,8 +241,10 @@ class ApiClient {
     const product = await this.client.post<any, Product>(`/products/${id}/duplicate`)
     if (product?.slug) {
       void pingProductSeo(product.slug)
+      void triggerPublicRevalidation(['/', '/shop', `/shop/${product.slug}`])
     } else {
       void pingSitewideSeo()
+      void triggerPublicRevalidation(['/', '/shop'])
     }
     return product
   }
@@ -212,6 +255,7 @@ class ApiClient {
       data,
     )
     void pingSitewideSeo()
+    void triggerPublicRevalidation(['/', '/shop'])
     return result
   }
 
@@ -221,6 +265,7 @@ class ApiClient {
       data,
     )
     void pingSitewideSeo()
+    void triggerPublicRevalidation(['/', '/shop'])
     return result
   }
 
@@ -230,6 +275,7 @@ class ApiClient {
       { ids },
     )
     void pingSitewideSeo()
+    void triggerPublicRevalidation(['/', '/shop'])
     return result
   }
 
@@ -244,6 +290,7 @@ class ApiClient {
   async updateTheme(data: Partial<ThemeSettings>): Promise<ThemeSettings> {
     const theme = await this.client.put<any, ThemeSettings>('/settings/theme', data)
     void pingSitewideSeo()
+    void triggerPublicRevalidation(['/', '/shop', '/journal', '/about'])
     return theme
   }
 
@@ -253,7 +300,13 @@ class ApiClient {
 
   async updateSiteContent(data: Partial<SiteContent>): Promise<SiteContent> {
     const siteContent = await this.client.put<any, SiteContent>('/settings/site-content', data)
-    void pingSitewideSeo()
+    if (typeof data[STORIES_CONTENT_KEY] === 'string') {
+      void pingStoriesSeo(parseStories(data[STORIES_CONTENT_KEY]))
+      void triggerPublicRevalidation(['/', '/journal', '/about'])
+    } else {
+      void pingSitewideSeo()
+      void triggerPublicRevalidation(['/', '/shop', '/journal', '/about'])
+    }
     return siteContent
   }
 
@@ -264,6 +317,7 @@ class ApiClient {
   async updateSocialLinks(data: Partial<SocialLinks>): Promise<SocialLinks> {
     const socialLinks = await this.client.put<any, SocialLinks>('/settings/social-links', data)
     void pingSitewideSeo()
+    void triggerPublicRevalidation(['/', '/shop', '/journal', '/about'])
     return socialLinks
   }
 
@@ -276,6 +330,7 @@ class ApiClient {
       rate,
     })
     void pingSitewideSeo()
+    void triggerPublicRevalidation(['/', '/shop'])
     return exchangeRate
   }
 
@@ -290,6 +345,7 @@ class ApiClient {
   async updateBranding(data: Partial<BrandingSettings>): Promise<BrandingSettings> {
     const branding = await this.client.put<any, BrandingSettings>('/settings/branding', data)
     void pingSitewideSeo()
+    void triggerPublicRevalidation(['/', '/shop', '/journal', '/about'])
     return branding
   }
 
@@ -318,7 +374,8 @@ class ApiClient {
   }
 
   async getBanners(activeOnly = true): Promise<Banner[]> {
-    return this.client.get('/banners', { params: { activeOnly: activeOnly.toString() } })
+    const params = activeOnly ? { activeOnly: true } : {}
+    return this.client.get('/banners', { params })
   }
 
   async getBannerById(id: string): Promise<Banner> {
@@ -328,39 +385,123 @@ class ApiClient {
   async createBanner(data: any): Promise<Banner> {
     const banner = await this.client.post<any, Banner>('/banners', data)
     void pingSitewideSeo()
+    void triggerPublicRevalidation(['/'])
     return banner
   }
 
   async updateBanner(id: string, data: any): Promise<Banner> {
     const banner = await this.client.patch<any, Banner>(`/banners/${id}`, data)
     void pingSitewideSeo()
+    void triggerPublicRevalidation(['/'])
     return banner
   }
 
   async deleteBanner(id: string): Promise<void> {
     const result = await this.client.delete<any, void>(`/banners/${id}`)
     void pingSitewideSeo()
+    void triggerPublicRevalidation(['/'])
     return result
   }
 
-  async uploadImage(file: File): Promise<{ url: string }> {
+  async uploadImage(
+    file: File,
+    folder: string = 'products',
+  ): Promise<{ url: string; publicId?: string }> {
     const formData = new FormData()
     formData.append('file', file)
-    return this.client.post('/upload/product-image', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    })
+    formData.append('folder', folder)
+    const upload = await this.client.post<any, { url: string; publicId?: string }>(
+      '/upload/product-image',
+      formData,
+      {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      },
+    )
+    return {
+      ...upload,
+      url: normalizePublicImageUrl(upload.url),
+    }
   }
 
-  async uploadImages(files: File[]): Promise<{ urls: string[] }> {
+  async uploadImages(
+    files: File[],
+    folder: string = 'products',
+  ): Promise<{ urls: string[]; publicIds?: string[] }> {
     const formData = new FormData()
     files.forEach((file) => formData.append('files', file))
-    return this.client.post('/upload/product-images', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    })
+    formData.append('folder', folder)
+    const upload = await this.client.post<any, { urls: string[]; publicIds?: string[] }>(
+      '/upload/product-images',
+      formData,
+      {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      },
+    )
+    return {
+      ...upload,
+      urls: upload.urls.map((url) => normalizePublicImageUrl(url)),
+    }
   }
 
   async deleteFile(url: string): Promise<void> {
     return this.client.delete('/upload/file', { data: { url } })
+  }
+
+  // ==================== TRUST BADGES ====================
+  async getTrustBadges(): Promise<{
+    enabled: boolean
+    items: Array<{
+      id: string
+      icon: string
+      titleVi: string
+      titleEn: string
+      descriptionVi?: string
+      descriptionEn?: string
+      isVisible: boolean
+      order: number
+    }>
+  }> {
+    const res = await this.client.get('/settings/trust-badges')
+    return (res.data as any)?.data !== undefined ? (res.data as any).data : res.data
+  }
+
+  async createTrustBadge(data: {
+    icon: string
+    titleVi: string
+    titleEn: string
+    descriptionVi?: string
+    descriptionEn?: string
+    isVisible?: boolean
+    order?: number
+  }) {
+    const res = await this.client.post('/settings/trust-badges', data)
+    return (res.data as any)?.data !== undefined ? (res.data as any).data : res.data
+  }
+
+  async updateTrustBadge(
+    id: string,
+    data: {
+      icon?: string
+      titleVi?: string
+      titleEn?: string
+      descriptionVi?: string
+      descriptionEn?: string
+      isVisible?: boolean
+      order?: number
+    },
+  ) {
+    const res = await this.client.put(`/settings/trust-badges/${id}`, data)
+    return (res.data as any)?.data !== undefined ? (res.data as any).data : res.data
+  }
+
+  async deleteTrustBadge(id: string) {
+    const res = await this.client.delete(`/settings/trust-badges/${id}`)
+    return (res.data as any)?.data !== undefined ? (res.data as any).data : res.data
+  }
+
+  async toggleTrustBadgesGlobal(enabled: boolean) {
+    const res = await this.client.put('/settings/trust-badges/toggle-global', { enabled })
+    return (res.data as any)?.data !== undefined ? (res.data as any).data : res.data
   }
 }
 

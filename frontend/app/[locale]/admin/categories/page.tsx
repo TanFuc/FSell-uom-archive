@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { useDocumentTitle } from '@/hooks/use-document-title'
 import { useToast } from '@/hooks/use-toast'
+import { useConfirm } from '@/hooks/use-confirm'
 import { api } from '@/lib/api'
 import { type Category } from '@/lib/types'
 
@@ -15,6 +16,7 @@ export default function CategoriesPage() {
   const locale = useLocale()
   const t = useTranslations('admin')
   const { toast } = useToast()
+  const confirm = useConfirm()
 
   useDocumentTitle(t('categories'), 'Admin - ƯƠM. Archive')
 
@@ -44,7 +46,21 @@ export default function CategoriesPage() {
   }, [])
 
   const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`${t('confirmDelete')} "${name}"?`)) return
+    const confirmed = await confirm({
+      title: locale === 'vi' ? 'Xóa danh mục?' : 'Delete category?',
+      description:
+        locale === 'vi'
+          ? `Bạn có chắc chắn muốn xóa danh mục "${name}" không? Các sản phẩm thuộc danh mục này có thể bị ảnh hưởng.`
+          : `Are you sure you want to delete category "${name}"? Products in this category may be affected.`,
+      confirmText: locale === 'vi' ? 'Xóa danh mục' : 'Delete',
+      cancelText: locale === 'vi' ? 'Hủy' : 'Cancel',
+      variant: 'destructive',
+      icon: 'trash',
+    })
+
+    if (!confirmed) return
+
+    setCategories((prev) => prev.filter((c) => c.id !== id))
 
     try {
       await api.deleteCategory(id)
@@ -52,13 +68,13 @@ export default function CategoriesPage() {
         title: t('success'),
         description: t('categoryDeleted'),
       })
-      fetchCategories()
     } catch (error) {
       toast({
         title: t('error'),
         description: t('failedToDelete'),
         variant: 'destructive',
       })
+      fetchCategories()
     }
   }
 
@@ -88,7 +104,7 @@ export default function CategoriesPage() {
           categories.map((category) => (
             <div
               key={category.id}
-              className="flex flex-col gap-3 rounded-lg border p-4 transition-colors hover:bg-accent/50 sm:flex-row sm:items-center sm:gap-4"
+              className="flex flex-col gap-3 rounded-lg border p-4 transition-colors hover:bg-neutral-50/80 sm:flex-row sm:items-center sm:gap-4"
             >
               <div className="flex w-full items-center gap-3 sm:gap-4">
                 {/* Category Image */}
@@ -132,6 +148,7 @@ export default function CategoriesPage() {
                   variant="ghost"
                   size="icon"
                   onClick={() => router.push(`/${locale}/admin/categories/${category.id}`)}
+                  className="text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
                 >
                   <Edit className="h-4 w-4" />
                 </Button>
@@ -141,7 +158,7 @@ export default function CategoriesPage() {
                   onClick={() =>
                     handleDelete(category.id, locale === 'vi' ? category.nameVi : category.nameEn)
                   }
-                  className="text-destructive hover:text-destructive"
+                  className="text-red-500 hover:bg-red-50 hover:text-red-700"
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>

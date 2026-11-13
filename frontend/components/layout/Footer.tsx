@@ -1,34 +1,53 @@
 'use client'
 
 import Link from 'next/link'
+import { LegalModal } from '@/components/legal/LegalModal'
 import { useLocale, useTranslations } from 'next-intl'
 import { useEffect, useState } from 'react'
-import { useBranding, useSocialLinks } from '@/hooks/use-settings'
+import { useBranding, useSiteContent, useSocialLinks } from '@/hooks/use-settings'
+import { pageHref, parseSitePages } from '@/lib/site-structure'
+import type { SiteContent } from '@/lib/types'
 
-export function Footer() {
+interface FooterProps {
+  initialSiteContent?: SiteContent
+}
+
+export function Footer({ initialSiteContent }: FooterProps) {
   const locale = useLocale() as 'vi' | 'en'
   const t = useTranslations('Footer')
   const { data: branding } = useBranding()
   const { data: socialLinks } = useSocialLinks()
+  const { data: siteContent } = useSiteContent({
+    initialData: initialSiteContent,
+  })
   const BRANDING_CACHE_KEY = 'uom_branding_cache'
 
   const getCachedBranding = () => {
     if (typeof window === 'undefined') return undefined
     try {
       const stored = localStorage.getItem(BRANDING_CACHE_KEY)
-      return stored
-        ? (JSON.parse(stored) as {
-            brandNameVi?: string
-            brandNameEn?: string
-            brandTaglineVi?: string
-            brandTaglineEn?: string
-          })
-        : undefined
+      if (!stored) return undefined
+      const parsed = JSON.parse(stored) as {
+        brandNameVi?: string
+        brandNameEn?: string
+        brandTaglineVi?: string
+        brandTaglineEn?: string
+      }
+      if (
+        [parsed.brandNameVi, parsed.brandNameEn, parsed.brandTaglineVi, parsed.brandTaglineEn].some(
+          (value) => typeof value === 'string' && (value.includes('UOM.') || value.includes('Æ')),
+        )
+      ) {
+        localStorage.removeItem(BRANDING_CACHE_KEY)
+        return undefined
+      }
+      return parsed
     } catch {
       return undefined
     }
   }
 
+  const [legalModalType, setLegalModalType] = useState<'terms' | 'privacy' | null>(null)
   const [cachedBranding, setCachedBranding] = useState<
     | {
         brandNameVi?: string
@@ -58,56 +77,60 @@ export function Footer() {
       ? branding?.brandTaglineVi || cachedBranding?.brandTaglineVi || t('description')
       : branding?.brandTaglineEn || cachedBranding?.brandTaglineEn || t('description')
 
-  const currentYear = new Date().getFullYear()
+  const copyrightYear = 2026
+  const sitePages = parseSitePages(siteContent)
+  const navigationItems = sitePages
+    .filter((page) => page.isVisible && (page.slug !== 'contact' || sitePages.find((item) => item.slug === 'about')?.isVisible))
+    .map((page) => ({ label: locale === 'vi' ? page.titleVi : page.titleEn, href: pageHref(locale, page.slug) }))
 
   return (
-    <footer className="bg-white px-6 py-12 text-foreground lg:px-12">
-      <div className="flex w-full flex-col gap-10">
+    <footer className="safe-screen border-t border-foreground/[0.04] bg-white px-4 py-8 text-foreground sm:px-6 sm:py-10 lg:px-12 lg:py-12">
+      <div className="flex w-full flex-col gap-6 sm:gap-8 lg:gap-10">
         {/* Main Footer: Compact Grid */}
-        <div className="grid grid-cols-2 gap-8 md:grid-cols-4 lg:grid-cols-4">
+        <div className="grid grid-cols-3 gap-x-4 gap-y-6 sm:grid-cols-4 md:gap-8">
           {/* Brand */}
-          <div className="space-y-4">
+          <div className="col-span-3 space-y-2 border-b border-foreground/[0.06] pb-5 sm:col-span-1 sm:border-b-0 sm:pb-0">
             <Link
               href={`/${locale}`}
-              className="inline-block font-playfair text-2xl font-bold tracking-tighter text-foreground transition-opacity hover:opacity-70"
+              className="text-mobile-safe inline-block font-serif text-xl font-light tracking-tight text-[#4A4238] transition-opacity hover:opacity-70 sm:text-2xl"
+              suppressHydrationWarning
             >
               {brandName}
             </Link>
-            <p className="hidden text-[9px] font-medium uppercase leading-relaxed tracking-[0.2em] text-foreground/40 md:block">
+            <p
+              className="max-w-[24rem] font-serif italic text-xs leading-relaxed text-[#8C7E6A] sm:hidden md:block"
+              suppressHydrationWarning
+            >
               {brandTagline}
             </p>
           </div>
 
           {/* Navigation - Compact */}
-          <div className="space-y-4">
-            <h4 className="text-[10px] font-bold uppercase tracking-[0.4em] text-foreground">
+          <div className="space-y-3">
+            <h4 className="font-sans text-xs font-semibold uppercase tracking-[0.15em] text-[#4A4238]">
               {t('navigation')}
             </h4>
-            <nav className="flex flex-col gap-2">
-              <Link
-                href={`/${locale}/shop`}
-                className="text-[10px] font-medium uppercase tracking-[0.15em] transition-all hover:opacity-60"
-              >
-                {t('shop')}
-              </Link>
-              <Link
-                href={`/${locale}/about`}
-                className="text-[10px] font-medium uppercase tracking-[0.15em] transition-all hover:opacity-60"
-              >
-                {t('about')}
-              </Link>
-              <Link
-                href={`/${locale}/journal`}
-                className="text-[10px] font-medium uppercase tracking-[0.15em] transition-all hover:opacity-60"
-              >
-                {t('journal')}
-              </Link>
+            <nav aria-label={locale === 'vi' ? 'Điều hướng chân trang' : 'Footer navigation'}>
+              <ul className="flex flex-col gap-2">
+                {navigationItems.map((item) => (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      title={item.label}
+                      className="block font-sans text-xs font-medium text-stone-600 hover:text-[#4A4238] transition-colors"
+                      suppressHydrationWarning
+                    >
+                      {item.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
             </nav>
           </div>
 
           {/* Connect - Compact */}
-          <div className="space-y-4">
-            <h4 className="text-[10px] font-bold uppercase tracking-[0.4em] text-foreground">
+          <div className="space-y-3">
+            <h4 className="font-sans text-xs font-semibold uppercase tracking-[0.15em] text-[#4A4238]">
               {t('connect')}
             </h4>
             <div className="flex flex-col gap-2">
@@ -116,7 +139,7 @@ export function Footer() {
                   href={`https://instagram.com/${socialLinks.instagramUsername}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[10px] font-medium uppercase tracking-[0.15em] transition-all hover:opacity-60"
+                  className="block font-sans text-xs font-medium text-stone-600 hover:text-[#4A4238] transition-colors"
                   aria-label="Instagram"
                 >
                   Instagram
@@ -127,7 +150,7 @@ export function Footer() {
                   href={socialLinks.facebookPageUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[10px] font-medium uppercase tracking-[0.15em] transition-all hover:opacity-60"
+                  className="block font-sans text-xs font-medium text-stone-600 hover:text-[#4A4238] transition-colors"
                   aria-label="Facebook"
                 >
                   Facebook
@@ -137,32 +160,49 @@ export function Footer() {
           </div>
 
           {/* Legal - Compact */}
-          <div className="space-y-4">
-            <h4 className="text-[10px] font-bold uppercase tracking-[0.4em] text-foreground">
+          <div className="space-y-3">
+            <h4 className="font-sans text-xs font-semibold uppercase tracking-[0.15em] text-[#4A4238]">
               LEGAL
             </h4>
             <div className="flex flex-col gap-2">
-              <span className="text-[10px] font-medium uppercase tracking-[0.15em] text-foreground/30">
-                Terms
-              </span>
-              <span className="text-[10px] font-medium uppercase tracking-[0.15em] text-foreground/30">
-                Privacy
-              </span>
+              <button
+                type="button"
+                onClick={() => setLegalModalType('terms')}
+                className="text-left font-sans text-xs font-normal text-stone-500 hover:text-[#4A4238] transition-colors"
+              >
+                {locale === 'vi' ? 'Điều khoản dịch vụ' : 'Terms of Service'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setLegalModalType('privacy')}
+                className="text-left font-sans text-xs font-normal text-stone-500 hover:text-[#4A4238] transition-colors"
+              >
+                {locale === 'vi' ? 'Chính sách bảo mật' : 'Privacy Policy'}
+              </button>
             </div>
           </div>
         </div>
 
         {/* Bottom Bar: Merged into the flow, no border */}
-        <div className="flex items-center justify-between pt-4">
-          <p className="text-[8px] font-bold uppercase tracking-[0.4em] text-foreground/30">
-            © {currentYear} <span className="font-playfair text-xs lowercase">ƯƠM.</span>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-foreground/[0.04] pt-4">
+          <p
+            className="font-sans text-xs text-stone-400 font-normal tracking-wide"
+            suppressHydrationWarning
+          >
+            © {copyrightYear} <span className="font-serif text-sm font-light text-[#4A4238]">ƯƠM.</span>
           </p>
-          <div className="flex gap-6 opacity-20">
-            <span className="text-[8px] font-bold tracking-[0.5em]">VI</span>
-            <span className="text-[8px] font-bold tracking-[0.5em]">EN</span>
+          <div className="flex gap-4 opacity-40 sm:gap-6 font-sans text-xs font-medium">
+            <span>VI</span>
+            <span>EN</span>
           </div>
         </div>
       </div>
+    {/* Legal Dialog for Footer Links */}
+      <LegalModal
+        isOpen={Boolean(legalModalType)}
+        type={legalModalType || 'privacy'}
+        onClose={() => setLegalModalType(null)}
+      />
     </footer>
   )
 }

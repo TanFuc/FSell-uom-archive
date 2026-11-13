@@ -6,7 +6,7 @@ import {
   Logger,
 } from '@nestjs/common'
 import { Prisma } from '@prisma/client'
-import * as bcrypt from 'bcrypt'
+import * as bcrypt from 'bcryptjs'
 import { PrismaService } from '../prisma/prisma.service'
 import { RedisService } from '../redis/redis.service'
 import { CreateUserDto, UpdateUserDto, QueryUsersDto } from './dto'
@@ -32,10 +32,7 @@ export class UsersService {
     }
 
     if (search) {
-      where.OR = [
-        { email: { contains: search, mode: 'insensitive' } },
-        { fullName: { contains: search, mode: 'insensitive' } },
-      ]
+      where.OR = [{ email: { contains: search } }, { fullName: { contains: search } }]
     }
 
     if (role) where.role = role

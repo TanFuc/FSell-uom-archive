@@ -11,6 +11,11 @@ import { RedisModule } from './redis'
 import { SettingsModule } from './settings/settings.module'
 import { UploadModule } from './upload/upload.module'
 import { UsersModule } from './users/users.module'
+import { CustomerModule } from './customer/customer.module'
+import { SapoModule } from './sapo/sapo.module'
+import { CartModule } from './cart/cart.module'
+import { OrderModule } from './order/order.module'
+import { MailModule } from './mail/mail.module'
 
 @Module({
   imports: [
@@ -33,12 +38,17 @@ import { UsersModule } from './users/users.module'
     MonitoringModule,
 
     AuthModule,
+    CustomerModule,
     ProductsModule,
     CategoriesModule,
     SettingsModule,
     UploadModule,
     UsersModule,
     BannersModule,
+    SapoModule,
+    CartModule,
+    OrderModule,
+    MailModule,
   ],
 })
 export class AppModule {}

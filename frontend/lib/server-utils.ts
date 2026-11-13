@@ -1,5 +1,25 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888/api'
-const BRANDING_FETCH_TIMEOUT_MS = 5000
+import { cache } from 'react'
+import { BRANDING_REVALIDATE_SECONDS } from '@/lib/cache-config'
+
+export function getServerApiUrl(): string {
+  const envApiUrl =
+    process.env.SERVER_API_URL ||
+    process.env.NEXT_PUBLIC_API_BASE_URL ||
+    process.env.NEXT_PUBLIC_API_URL
+  if (
+    process.env.NODE_ENV === 'production' &&
+    (!envApiUrl || envApiUrl.includes('localhost') || envApiUrl.includes('127.0.0.1'))
+  ) {
+    return 'https://api.uomarchive.com'
+  }
+  return envApiUrl || 'http://localhost:8888'
+}
+
+const API_URL = getServerApiUrl()
+const BRANDING_FETCH_TIMEOUT_MS = Number.parseInt(
+  process.env.BRANDING_FETCH_TIMEOUT_MS || process.env.SERVER_FETCH_TIMEOUT_MS || '1200',
+  10,
+)
 
 export interface BrandingData {
   brandNameVi?: string
@@ -33,9 +53,15 @@ async function fetchBrandingInternal(
 ): Promise<BrandingData | null> {
   try {
     const isRevalidateMode = cacheMode === 'revalidate'
+    const timeout =
+      Number.isFinite(BRANDING_FETCH_TIMEOUT_MS) && BRANDING_FETCH_TIMEOUT_MS > 0
+        ? BRANDING_FETCH_TIMEOUT_MS
+        : 1200
     const res = await fetch(`${API_URL}/settings/branding`, {
-      ...(isRevalidateMode ? { next: { revalidate: 60 } } : { cache: cacheMode }),
-      signal: AbortSignal.timeout(BRANDING_FETCH_TIMEOUT_MS),
+      ...(isRevalidateMode
+        ? { next: { revalidate: BRANDING_REVALIDATE_SECONDS } }
+        : { cache: cacheMode }),
+      signal: AbortSignal.timeout(timeout),
     })
 
     if (!res.ok) {
@@ -49,10 +75,23 @@ async function fetchBrandingInternal(
   }
 }
 
-export async function fetchBranding(): Promise<BrandingData | null> {
+export const fetchBranding = cache(async (): Promise<BrandingData | null> => {
   return fetchBrandingInternal('revalidate')
-}
+})
 
 export async function fetchBrandingNoStore(): Promise<BrandingData | null> {
   return fetchBrandingInternal('no-store')
 }
+
+export const fetchSiteContentServer = cache(async (): Promise<Record<string, string>> => {
+  try {
+    const response = await fetch(`${API_URL}/settings/site-content`, {
+      next: { revalidate: 60, tags: ['site-content'] },
+      signal: AbortSignal.timeout(1800),
+    })
+    if (!response.ok) return {}
+    const payload = await response.json()
+    const content = payload?.data && typeof payload.data === 'object' ? payload.data : payload
+    return content && typeof content === 'object' ? content : {}
+  } catch { return {} }
+})

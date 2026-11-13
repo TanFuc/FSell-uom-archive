@@ -86,8 +86,11 @@ export class UploadController {
   })
   @ApiResponse({ status: 201, description: 'Images uploaded successfully' })
   @ApiResponse({ status: 400, description: 'Invalid files' })
-  async uploadImages(@UploadedFiles() files: Express.Multer.File[]) {
-    return this.uploadService.uploadMultipleImages(files)
+  async uploadImages(
+    @UploadedFiles() files: Express.Multer.File[],
+    @Body('folder') folder?: string,
+  ) {
+    return this.uploadService.uploadMultipleImages(files, folder)
   }
 
   @Delete('file')

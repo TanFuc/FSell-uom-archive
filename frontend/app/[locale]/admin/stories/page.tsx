@@ -1,21 +1,27 @@
 'use client'
 
-import { CheckCircle2, ExternalLink } from 'lucide-react'
+import { CheckCircle2, ExternalLink, Zap, RefreshCw, Sparkles } from 'lucide-react'
 import Image from 'next/image'
 import { useLocale, useTranslations } from 'next-intl'
 import { useEffect, useMemo, useState } from 'react'
+import { SeoSnippetPreview } from '@/components/admin/SeoSnippetPreview'
 import { RichTextEditor } from '@/components/RichTextEditor'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { useBranding } from '@/hooks/use-settings'
 import { useToast } from '@/hooks/use-toast'
+import { useConfirm } from '@/hooks/use-confirm'
 import { api } from '@/lib/api'
 import { pingStorySeo } from '@/lib/seo-ping'
+import { revalidatePaths } from '@/lib/revalidate'
+import { cn } from '@/lib/utils'
 import {
   getStorySlug,
   parseStories,
   serializeStories,
   stripHtmlTags,
+  toStorySlug,
   STORIES_CONTENT_KEY,
   type StoryItem,
 } from '@/lib/stories'
@@ -34,12 +40,22 @@ const EMPTY_STORY: Omit<StoryItem, 'id'> = {
   imageUrl: '',
   publishedAt: '',
   updatedAt: '',
+  seoTitleVi: '',
+  seoTitleEn: '',
+  seoDescriptionVi: '',
+  seoDescriptionEn: '',
+  seoKeywordsVi: '',
+  seoKeywordsEn: '',
+  canonicalUrl: '',
+  noIndex: false,
 }
 
 export default function AdminStoriesPage() {
   const t = useTranslations('admin')
   const locale = useLocale()
   const { toast } = useToast()
+  const confirm = useConfirm()
+  const { data: branding } = useBranding()
 
   const [stories, setStories] = useState<StoryItem[]>([])
   const [draft, setDraft] = useState(EMPTY_STORY)
@@ -53,6 +69,7 @@ export default function AdminStoriesPage() {
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [filterMode, setFilterMode] = useState<'all' | 'visible' | 'hidden'>('all')
   const [pendingPublishPingIds, setPendingPublishPingIds] = useState<string[]>([])
+  const [isPingingId, setIsPingingId] = useState<string | null>(null)
 
   useEffect(() => {
     const loadStories = async () => {
@@ -178,6 +195,14 @@ export default function AdminStoriesPage() {
       imageUrl: story.imageUrl,
       publishedAt: story.publishedAt || '',
       updatedAt: story.updatedAt || '',
+      seoTitleVi: story.seoTitleVi || '',
+      seoTitleEn: story.seoTitleEn || '',
+      seoDescriptionVi: story.seoDescriptionVi || '',
+      seoDescriptionEn: story.seoDescriptionEn || '',
+      seoKeywordsVi: story.seoKeywordsVi || '',
+      seoKeywordsEn: story.seoKeywordsEn || '',
+      canonicalUrl: story.canonicalUrl || '',
+      noIndex: story.noIndex || false,
     })
 
     restoreScrollPosition(currentScrollY)
@@ -192,121 +217,52 @@ export default function AdminStoriesPage() {
     }, 320)
   }
 
-  const handleUpsert = () => {
-    const updatedAt = new Date().toISOString()
+  const handlePingGoogle = async (story: StoryItem, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation()
+    setIsPingingId(story.id)
 
-    if (
-      !draft.titleVi.trim() ||
-      !draft.titleEn.trim() ||
-      !draft.summaryVi.trim() ||
-      !draft.summaryEn.trim() ||
-      !draft.contentVi.trim() ||
-      !draft.contentEn.trim() ||
-      !draft.imageUrl.trim()
-    ) {
-      toast({ title: t('error'), description: t('stories.requiredFields'), variant: 'destructive' })
-      return
-    }
+    try {
+      const viSlug = getStorySlug(story, 'vi')
+      const enSlug = getStorySlug(story, 'en')
+      const pathsToRevalidate = [
+        `/vi/journal/${encodeURIComponent(viSlug)}`,
+        `/en/journal/${encodeURIComponent(enSlug)}`,
+        '/vi/journal',
+        '/en/journal',
+        '/vi',
+        '/en',
+        '/sitemap.xml',
+      ]
 
-    if (editingId) {
-      const targetId = editingId
-      const previousStory = stories.find((story) => story.id === targetId)
-      const shouldPingOnSave =
-        previousStory?.isVisible === false && (draft.isVisible === undefined || draft.isVisible)
-
-      setStories((prev) =>
-        prev.map((story) =>
-          story.id === editingId
-            ? {
-                ...story,
-                ...draft,
-                ...buildAutoSlugs({
-                  id: story.id,
-                  slug: '',
-                  slugVi: draft.slugVi,
-                  slugEn: draft.slugEn,
-                  titleVi: draft.titleVi,
-                  titleEn: draft.titleEn,
-                }),
-                slug: getStorySlug(
-                  {
-                    id: story.id,
-                    slug: '',
-                    slugVi: draft.slugVi,
-                    slugEn: draft.slugEn,
-                    titleVi: draft.titleVi,
-                    titleEn: draft.titleEn,
-                  },
-                  'en',
-                ),
-                publishedAt: draft.publishedAt?.trim() || undefined,
-                updatedAt,
-              }
-            : story,
-        ),
-      )
-
-      setDraft((prev) => ({
-        ...prev,
-        publishedAt: prev.publishedAt?.trim() || '',
-        updatedAt,
-      }))
-      if (shouldPingOnSave) {
-        setPendingPublishPingIds((prev) => Array.from(new Set([...prev, targetId])))
-      }
-      setJustUpdatedId(targetId)
-      setLastUpdatedTitle((locale === 'vi' ? draft.titleVi : draft.titleEn).trim())
-      toast({
-        title: t('success'),
-        description: locale === 'vi' ? 'Đã cập nhật story.' : 'Story updated successfully.',
-      })
-
-      window.setTimeout(() => {
-        setJustUpdatedId((prev) => (prev === targetId ? null : prev))
-      }, 1500)
-    } else {
-      const newId = crypto.randomUUID()
-      setStories((prev) => [
-        {
-          id: newId,
-          ...draft,
-          ...buildAutoSlugs({
-            id: newId,
-            slug: '',
-            slugVi: draft.slugVi,
-            slugEn: draft.slugEn,
-            titleVi: draft.titleVi,
-            titleEn: draft.titleEn,
-          }),
-          slug: getStorySlug(
-            {
-              id: newId,
-              slug: '',
-              slugVi: draft.slugVi,
-              slugEn: draft.slugEn,
-              titleVi: draft.titleVi,
-              titleEn: draft.titleEn,
-            },
-            'en',
-          ),
-          publishedAt: draft.publishedAt?.trim() || undefined,
-          updatedAt,
-        },
-        ...prev,
+      const [revalResult] = await Promise.all([
+        revalidatePaths(pathsToRevalidate),
+        pingStorySeo(viSlug, enSlug),
       ])
 
+      if (revalResult.success) {
+        toast({
+          title: locale === 'vi' ? 'Làm mới chỉ mục thành công' : 'SEO Indexing Refreshed',
+          description:
+            locale === 'vi'
+              ? `Đã xóa cache & gửi yêu cầu làm mới chỉ mục tới Googlebot & IndexNow cho story "${story.titleVi || story.titleEn}".`
+              : `Cache cleared & indexing signal sent to Googlebot and IndexNow for story "${story.titleEn || story.titleVi}".`,
+        })
+      } else {
+        throw new Error(revalResult.message || 'Làm mới cache thất bại')
+      }
+    } catch (error: any) {
       toast({
-        title: t('success'),
-        description: locale === 'vi' ? 'Đã thêm story mới.' : 'New story added.',
+        title: locale === 'vi' ? 'Lỗi làm mới chỉ mục' : 'Indexing Refresh Error',
+        description:
+          error?.message ||
+          (locale === 'vi'
+            ? 'Không thể làm mới chỉ mục lúc này'
+            : 'Could not refresh index at this time'),
+        variant: 'destructive',
       })
-
-      resetDraft()
+    } finally {
+      setIsPingingId(null)
     }
-  }
-
-  const handleDelete = (id: string) => {
-    setStories((prev) => prev.filter((story) => story.id !== id))
-    if (editingId === id) resetDraft()
   }
 
   const persistStories = async (
@@ -347,15 +303,206 @@ export default function AdminStoriesPage() {
       const storiesById = new Map(refreshedStories.map((story) => [story.id, story]))
       const storiesToPing = publishStoryIds
         .map((id) => storiesById.get(id))
-        .filter((story): story is StoryItem => story !== undefined && story.isVisible !== false)
+        .filter(
+          (story): story is StoryItem =>
+            story !== undefined && story.isVisible !== false && !story.noIndex,
+        )
 
       for (const story of storiesToPing) {
-        void pingStorySeo(getStorySlug(story, 'vi'), getStorySlug(story, 'en'))
+        const viSlug = getStorySlug(story, 'vi')
+        const enSlug = getStorySlug(story, 'en')
+        void pingStorySeo(viSlug, enSlug)
+        void revalidatePaths([
+          `/vi/journal/${encodeURIComponent(viSlug)}`,
+          `/en/journal/${encodeURIComponent(enSlug)}`,
+        ])
       }
 
+      void revalidatePaths(['/vi', '/en', '/vi/journal', '/en/journal', '/sitemap.xml'])
+
       return true
-    } catch {
+    } catch (err: any) {
+      toast({
+        title: t('error'),
+        description: err?.response?.data?.message || err?.message || t('stories.saveError'),
+        variant: 'destructive',
+      })
       return false
+    }
+  }
+
+  const handleUpsert = async () => {
+    const updatedAt = new Date().toISOString()
+
+    const missingFields: string[] = []
+    if (!draft.titleVi.trim()) missingFields.push(locale === 'vi' ? 'Tiêu đề (VI)' : 'Title (VI)')
+    if (!draft.titleEn.trim()) missingFields.push(locale === 'vi' ? 'Tiêu đề (EN)' : 'Title (EN)')
+    if (!draft.summaryVi.trim())
+      missingFields.push(locale === 'vi' ? 'Tóm tắt (VI)' : 'Summary (VI)')
+    if (!draft.summaryEn.trim())
+      missingFields.push(locale === 'vi' ? 'Tóm tắt (EN)' : 'Summary (EN)')
+    if (!draft.contentVi.trim())
+      missingFields.push(locale === 'vi' ? 'Nội dung (VI)' : 'Content (VI)')
+    if (!draft.contentEn.trim())
+      missingFields.push(locale === 'vi' ? 'Nội dung (EN)' : 'Content (EN)')
+    if (!draft.imageUrl.trim()) missingFields.push(locale === 'vi' ? 'Ảnh story' : 'Story image')
+
+    if (missingFields.length > 0) {
+      toast({
+        title: t('error'),
+        description:
+          locale === 'vi'
+            ? `Vui lòng điền đủ các trường bắt buộc: ${missingFields.join(', ')}`
+            : `Please fill required fields: ${missingFields.join(', ')}`,
+        variant: 'destructive',
+      })
+      return
+    }
+
+    setIsSaving(true)
+
+    try {
+      if (editingId) {
+        const targetId = editingId
+        const shouldPingOnSave =
+          (draft.isVisible === undefined || draft.isVisible) && !draft.noIndex
+
+        const nextStories = stories.map((story) =>
+          story.id === editingId
+            ? {
+                ...story,
+                ...draft,
+                ...buildAutoSlugs({
+                  id: story.id,
+                  slug: '',
+                  slugVi: draft.slugVi,
+                  slugEn: draft.slugEn,
+                  titleVi: draft.titleVi,
+                  titleEn: draft.titleEn,
+                }),
+                slug: getStorySlug(
+                  {
+                    id: story.id,
+                    slug: '',
+                    slugVi: draft.slugVi,
+                    slugEn: draft.slugEn,
+                    titleVi: draft.titleVi,
+                    titleEn: draft.titleEn,
+                  },
+                  'en',
+                ),
+                publishedAt: draft.publishedAt?.trim() || undefined,
+                updatedAt,
+              }
+            : story,
+        )
+
+        const success = await persistStories(
+          nextStories,
+          locale === 'vi'
+            ? 'Đã cập nhật story và lưu vào cơ sở dữ liệu thành công.'
+            : 'Story updated and saved successfully.',
+          shouldPingOnSave ? [targetId] : [],
+        )
+
+        if (success) {
+          setDraft((prev) => ({
+            ...prev,
+            publishedAt: prev.publishedAt?.trim() || '',
+            updatedAt,
+          }))
+          if (shouldPingOnSave) {
+            setPendingPublishPingIds((prev) => Array.from(new Set([...prev, targetId])))
+          }
+          setJustUpdatedId(targetId)
+          setLastUpdatedTitle((locale === 'vi' ? draft.titleVi : draft.titleEn).trim())
+
+          window.setTimeout(() => {
+            setJustUpdatedId((prev) => (prev === targetId ? null : prev))
+          }, 2000)
+        }
+      } else {
+        const newId = crypto.randomUUID()
+        const newStory: StoryItem = {
+          id: newId,
+          ...draft,
+          ...buildAutoSlugs({
+            id: newId,
+            slug: '',
+            slugVi: draft.slugVi,
+            slugEn: draft.slugEn,
+            titleVi: draft.titleVi,
+            titleEn: draft.titleEn,
+          }),
+          slug: getStorySlug(
+            {
+              id: newId,
+              slug: '',
+              slugVi: draft.slugVi,
+              slugEn: draft.slugEn,
+              titleVi: draft.titleVi,
+              titleEn: draft.titleEn,
+            },
+            'en',
+          ),
+          publishedAt: draft.publishedAt?.trim() || undefined,
+          updatedAt,
+        }
+        const nextStories = [newStory, ...stories]
+
+        const success = await persistStories(
+          nextStories,
+          locale === 'vi'
+            ? 'Đã thêm story mới và lưu vào cơ sở dữ liệu thành công.'
+            : 'New story added and saved successfully.',
+          newStory.isVisible !== false && !newStory.noIndex ? [newId] : [],
+        )
+
+        if (success) {
+          resetDraft()
+        }
+      }
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    const storyToDelete = stories.find((s) => s.id === id)
+    const storyTitle = storyToDelete
+      ? locale === 'vi'
+        ? storyToDelete.titleVi
+        : storyToDelete.titleEn
+      : ''
+
+    const confirmed = await confirm({
+      title: locale === 'vi' ? 'Xóa story?' : 'Delete story?',
+      description:
+        locale === 'vi'
+          ? `Bạn có chắc chắn muốn xóa story "${storyTitle}" khỏi website không? Hành động này sẽ gỡ bài viết khỏi Journal.`
+          : `Are you sure you want to delete story "${storyTitle}"? This will remove the article from the Journal.`,
+      confirmText: locale === 'vi' ? 'Xóa story' : 'Delete',
+      cancelText: locale === 'vi' ? 'Hủy' : 'Cancel',
+      variant: 'destructive',
+      icon: 'trash',
+    })
+
+    if (!confirmed) return
+
+    const nextStories = stories.filter((story) => story.id !== id)
+    setIsSaving(true)
+    try {
+      const success = await persistStories(
+        nextStories,
+        locale === 'vi'
+          ? 'Đã xóa story và cập nhật website thành công.'
+          : 'Story deleted and website updated successfully.',
+      )
+      if (success && editingId === id) {
+        resetDraft()
+      }
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -485,38 +632,412 @@ export default function AdminStoriesPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
-              <Input
-                value={draft.titleVi}
-                onChange={(event) => setDraft((prev) => ({ ...prev, titleVi: event.target.value }))}
-                placeholder={t('stories.titleVi')}
-              />
-              <Input
-                value={draft.titleEn}
-                onChange={(event) => setDraft((prev) => ({ ...prev, titleEn: event.target.value }))}
-                placeholder={t('stories.titleEn')}
-              />
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-foreground">
+                  {t('stories.titleVi')} <span className="font-bold text-destructive">*</span>
+                </label>
+                <Input
+                  value={draft.titleVi}
+                  onChange={(event) =>
+                    setDraft((prev) => ({ ...prev, titleVi: event.target.value }))
+                  }
+                  placeholder={t('stories.titleVi')}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-foreground">
+                  {t('stories.titleEn')} <span className="font-bold text-destructive">*</span>
+                </label>
+                <Input
+                  value={draft.titleEn}
+                  onChange={(event) =>
+                    setDraft((prev) => ({ ...prev, titleEn: event.target.value }))
+                  }
+                  placeholder={t('stories.titleEn')}
+                />
+              </div>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
-              <Input
-                value={draft.summaryVi}
-                onChange={(event) =>
-                  setDraft((prev) => ({ ...prev, summaryVi: event.target.value }))
-                }
-                placeholder={t('stories.summaryVi')}
-              />
-              <Input
-                value={draft.summaryEn}
-                onChange={(event) =>
-                  setDraft((prev) => ({ ...prev, summaryEn: event.target.value }))
-                }
-                placeholder={t('stories.summaryEn')}
-              />
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-foreground">
+                  {t('stories.summaryVi')} <span className="font-bold text-destructive">*</span>
+                </label>
+                <Input
+                  value={draft.summaryVi}
+                  onChange={(event) =>
+                    setDraft((prev) => ({ ...prev, summaryVi: event.target.value }))
+                  }
+                  placeholder={t('stories.summaryVi')}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-foreground">
+                  {t('stories.summaryEn')} <span className="font-bold text-destructive">*</span>
+                </label>
+                <Input
+                  value={draft.summaryEn}
+                  onChange={(event) =>
+                    setDraft((prev) => ({ ...prev, summaryEn: event.target.value }))
+                  }
+                  placeholder={t('stories.summaryEn')}
+                />
+              </div>
+            </div>
+
+            {/* SEO & Search Indexing Card */}
+            <div className="space-y-4 rounded-xl border border-neutral-200/80 bg-neutral-50/50 p-4">
+              <div className="flex items-center justify-between border-b border-neutral-200/60 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600">
+                    <Sparkles className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-neutral-900">
+                      {locale === 'vi'
+                        ? 'Cấu hình SEO & Chỉ mục Google'
+                        : 'SEO & Google Indexing Settings'}
+                    </h4>
+                    <p className="text-xs text-neutral-500">
+                      {locale === 'vi'
+                        ? 'Tùy chỉnh đường dẫn URL, Meta Title, Meta Description và từ khóa tối ưu tìm kiếm'
+                        : 'Customize URL slugs, Meta Title, Meta Description and keywords for search engines'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* URL Slugs */}
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-neutral-800">
+                      {locale === 'vi' ? 'Đường dẫn SEO (Slug VI)' : 'SEO Slug (VI)'}
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setDraft((prev) => ({
+                          ...prev,
+                          slugVi: toStorySlug(prev.titleVi || ''),
+                        }))
+                      }
+                      className="text-[11px] font-medium text-primary hover:underline"
+                    >
+                      {locale === 'vi' ? 'Tự động tạo từ tiêu đề' : 'Generate from title'}
+                    </button>
+                  </div>
+                  <Input
+                    value={draft.slugVi || ''}
+                    onChange={(e) =>
+                      setDraft((prev) => ({ ...prev, slugVi: toStorySlug(e.target.value) }))
+                    }
+                    placeholder={toStorySlug(draft.titleVi) || 'nhung-ban-tay-giu-lua'}
+                    className="bg-white font-mono text-xs"
+                  />
+                  <p className="truncate text-[11px] text-neutral-500">
+                    URL:{' '}
+                    <span className="font-mono text-neutral-700">
+                      /vi/journal/{draft.slugVi || toStorySlug(draft.titleVi) || '...'}
+                    </span>
+                  </p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-neutral-800">
+                      {locale === 'vi' ? 'Đường dẫn SEO (Slug EN)' : 'SEO Slug (EN)'}
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setDraft((prev) => ({
+                          ...prev,
+                          slugEn: toStorySlug(prev.titleEn || ''),
+                        }))
+                      }
+                      className="text-[11px] font-medium text-primary hover:underline"
+                    >
+                      {locale === 'vi' ? 'Tự động tạo từ tiêu đề' : 'Generate from title'}
+                    </button>
+                  </div>
+                  <Input
+                    value={draft.slugEn || ''}
+                    onChange={(e) =>
+                      setDraft((prev) => ({ ...prev, slugEn: toStorySlug(e.target.value) }))
+                    }
+                    placeholder={toStorySlug(draft.titleEn) || 'hands-that-keep-the-fire'}
+                    className="bg-white font-mono text-xs"
+                  />
+                  <p className="truncate text-[11px] text-neutral-500">
+                    URL:{' '}
+                    <span className="font-mono text-neutral-700">
+                      /en/journal/{draft.slugEn || toStorySlug(draft.titleEn) || '...'}
+                    </span>
+                  </p>
+                </div>
+              </div>
+
+              {/* Meta Titles */}
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-neutral-800">
+                      {locale === 'vi' ? 'Tiêu đề SEO (Meta Title VI)' : 'Meta Title (VI)'}
+                    </label>
+                    <span
+                      className={cn(
+                        'font-mono text-[10px]',
+                        (draft.seoTitleVi || draft.titleVi).length > 60
+                          ? 'font-bold text-amber-600'
+                          : (draft.seoTitleVi || draft.titleVi).length >= 40
+                            ? 'font-medium text-emerald-600'
+                            : 'text-neutral-500',
+                      )}
+                    >
+                      {(draft.seoTitleVi || draft.titleVi).length}/60
+                    </span>
+                  </div>
+                  <Input
+                    value={draft.seoTitleVi || ''}
+                    onChange={(e) => setDraft((prev) => ({ ...prev, seoTitleVi: e.target.value }))}
+                    placeholder={
+                      draft.titleVi ||
+                      (locale === 'vi'
+                        ? 'Mặc định lấy từ tiêu đề bài viết'
+                        : 'Default from story title')
+                    }
+                    className="bg-white"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-neutral-800">
+                      {locale === 'vi' ? 'Tiêu đề SEO (Meta Title EN)' : 'Meta Title (EN)'}
+                    </label>
+                    <span
+                      className={cn(
+                        'font-mono text-[10px]',
+                        (draft.seoTitleEn || draft.titleEn).length > 60
+                          ? 'font-bold text-amber-600'
+                          : (draft.seoTitleEn || draft.titleEn).length >= 40
+                            ? 'font-medium text-emerald-600'
+                            : 'text-neutral-500',
+                      )}
+                    >
+                      {(draft.seoTitleEn || draft.titleEn).length}/60
+                    </span>
+                  </div>
+                  <Input
+                    value={draft.seoTitleEn || ''}
+                    onChange={(e) => setDraft((prev) => ({ ...prev, seoTitleEn: e.target.value }))}
+                    placeholder={
+                      draft.titleEn ||
+                      (locale === 'vi'
+                        ? 'Mặc định lấy từ tiêu đề bài viết'
+                        : 'Default from story title')
+                    }
+                    className="bg-white"
+                  />
+                </div>
+              </div>
+
+              {/* Meta Descriptions */}
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-neutral-800">
+                      {locale === 'vi'
+                        ? 'Mô tả SEO (Meta Description VI)'
+                        : 'Meta Description (VI)'}
+                    </label>
+                    <span
+                      className={cn(
+                        'font-mono text-[10px]',
+                        (draft.seoDescriptionVi || draft.summaryVi).length > 160
+                          ? 'font-bold text-amber-600'
+                          : (draft.seoDescriptionVi || draft.summaryVi).length >= 120
+                            ? 'font-medium text-emerald-600'
+                            : 'text-neutral-500',
+                      )}
+                    >
+                      {(draft.seoDescriptionVi || draft.summaryVi).length}/160
+                    </span>
+                  </div>
+                  <Input
+                    value={draft.seoDescriptionVi || ''}
+                    onChange={(e) =>
+                      setDraft((prev) => ({ ...prev, seoDescriptionVi: e.target.value }))
+                    }
+                    placeholder={
+                      draft.summaryVi ||
+                      (locale === 'vi' ? 'Mặc định lấy từ tóm tắt' : 'Default from summary')
+                    }
+                    className="bg-white"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-neutral-800">
+                      {locale === 'vi'
+                        ? 'Mô tả SEO (Meta Description EN)'
+                        : 'Meta Description (EN)'}
+                    </label>
+                    <span
+                      className={cn(
+                        'font-mono text-[10px]',
+                        (draft.seoDescriptionEn || draft.summaryEn).length > 160
+                          ? 'font-bold text-amber-600'
+                          : (draft.seoDescriptionEn || draft.summaryEn).length >= 120
+                            ? 'font-medium text-emerald-600'
+                            : 'text-neutral-500',
+                      )}
+                    >
+                      {(draft.seoDescriptionEn || draft.summaryEn).length}/160
+                    </span>
+                  </div>
+                  <Input
+                    value={draft.seoDescriptionEn || ''}
+                    onChange={(e) =>
+                      setDraft((prev) => ({ ...prev, seoDescriptionEn: e.target.value }))
+                    }
+                    placeholder={
+                      draft.summaryEn ||
+                      (locale === 'vi' ? 'Mặc định lấy từ tóm tắt' : 'Default from summary')
+                    }
+                    className="bg-white"
+                  />
+                </div>
+              </div>
+
+              {/* SEO Keywords */}
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-neutral-800">
+                    {locale === 'vi' ? 'Từ khóa SEO (VI)' : 'Keywords (VI)'}
+                  </label>
+                  <Input
+                    value={draft.seoKeywordsVi || ''}
+                    onChange={(e) =>
+                      setDraft((prev) => ({ ...prev, seoKeywordsVi: e.target.value }))
+                    }
+                    placeholder={
+                      locale === 'vi'
+                        ? 'gốm thủ công, nghệ nhân gốm, câu chuyện gốm sứ'
+                        : 'vietnamese ceramics, artisan pottery'
+                    }
+                    className="bg-white"
+                  />
+                  <p className="text-[10px] text-neutral-500">
+                    {locale === 'vi'
+                      ? 'Phân cách các từ khóa bằng dấu phẩy (,)'
+                      : 'Separate keywords with commas (,)'}
+                  </p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-neutral-800">
+                    {locale === 'vi' ? 'Từ khóa SEO (EN)' : 'Keywords (EN)'}
+                  </label>
+                  <Input
+                    value={draft.seoKeywordsEn || ''}
+                    onChange={(e) =>
+                      setDraft((prev) => ({ ...prev, seoKeywordsEn: e.target.value }))
+                    }
+                    placeholder="vietnamese ceramics, pottery journal, handcrafted stories"
+                    className="bg-white"
+                  />
+                  <p className="text-[10px] text-neutral-500">
+                    {locale === 'vi'
+                      ? 'Phân cách các từ khóa bằng dấu phẩy (,)'
+                      : 'Separate keywords with commas (,)'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Advanced Options & Noindex */}
+              <div className="grid gap-4 border-t border-neutral-200/60 pt-2 md:grid-cols-2">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-neutral-800">
+                    {locale === 'vi' ? 'URL Canonical tùy biến (nếu có)' : 'Custom Canonical URL'}
+                  </label>
+                  <Input
+                    value={draft.canonicalUrl || ''}
+                    onChange={(e) =>
+                      setDraft((prev) => ({ ...prev, canonicalUrl: e.target.value }))
+                    }
+                    placeholder="https://www.uomarchive.com/vi/journal/..."
+                    className="bg-white font-mono text-xs"
+                  />
+                </div>
+
+                <div className="flex items-center gap-3 pt-3">
+                  <input
+                    type="checkbox"
+                    id="noIndexToggle"
+                    checked={draft.noIndex || false}
+                    onChange={(e) => setDraft((prev) => ({ ...prev, noIndex: e.target.checked }))}
+                    className="h-4 w-4 cursor-pointer rounded border-neutral-300 text-primary focus:ring-primary"
+                  />
+                  <label
+                    htmlFor="noIndexToggle"
+                    className="cursor-pointer select-none text-xs text-neutral-800"
+                  >
+                    <span className="font-semibold text-destructive">
+                      {locale === 'vi'
+                        ? 'Chặn Google lập chỉ mục (noindex)'
+                        : 'Block Google from indexing (noindex)'}
+                    </span>
+                    <p className="text-[11px] text-neutral-500">
+                      {locale === 'vi'
+                        ? 'Bật tùy chọn này nếu bài viết đang nháp hoặc không muốn xuất hiện trên kết quả tìm kiếm'
+                        : 'Enable this if the story is a draft or should not appear in search engine results'}
+                    </p>
+                  </label>
+                </div>
+              </div>
+
+              {/* Live Google Snippet Previews */}
+              <div className="pt-2">
+                <p className="mb-2 text-xs font-semibold text-neutral-600">
+                  {locale === 'vi'
+                    ? 'Xem trước kết quả tìm kiếm Google (SERP Preview):'
+                    : 'Google SERP Preview:'}
+                </p>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <SeoSnippetPreview
+                    locale="vi"
+                    path={`/vi/journal/${draft.slugVi || toStorySlug(draft.titleVi) || 'story-slug'}`}
+                    title={draft.seoTitleVi || draft.titleVi || 'Tiêu đề story'}
+                    description={
+                      draft.seoDescriptionVi ||
+                      draft.summaryVi ||
+                      'Tóm tắt story sẽ hiển thị ở đây.'
+                    }
+                    branding={branding}
+                  />
+                  <SeoSnippetPreview
+                    locale="en"
+                    path={`/en/journal/${draft.slugEn || toStorySlug(draft.titleEn) || 'story-slug'}`}
+                    title={draft.seoTitleEn || draft.titleEn || 'Story title'}
+                    description={
+                      draft.seoDescriptionEn ||
+                      draft.summaryEn ||
+                      'The story summary shown in Google appears here.'
+                    }
+                    branding={branding}
+                  />
+                </div>
+              </div>
             </div>
 
             <div className="grid gap-4 xl:grid-cols-2">
               <div className="space-y-2">
-                <p className="text-sm font-medium text-foreground">{t('stories.contentVi')}</p>
+                <p className="text-xs font-semibold text-foreground">
+                  {t('stories.contentVi')} <span className="font-bold text-destructive">*</span>
+                </p>
                 <RichTextEditor
                   content={draft.contentVi}
                   onChange={(value) => setDraft((prev) => ({ ...prev, contentVi: value }))}
@@ -525,7 +1046,9 @@ export default function AdminStoriesPage() {
                 />
               </div>
               <div className="space-y-2">
-                <p className="text-sm font-medium text-foreground">{t('stories.contentEn')}</p>
+                <p className="text-xs font-semibold text-foreground">
+                  {t('stories.contentEn')} <span className="font-bold text-destructive">*</span>
+                </p>
                 <RichTextEditor
                   content={draft.contentEn}
                   onChange={(value) => setDraft((prev) => ({ ...prev, contentEn: value }))}
@@ -535,37 +1058,51 @@ export default function AdminStoriesPage() {
               </div>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-[1fr_auto]">
-              <Input
-                value={draft.imageUrl}
-                onChange={(event) =>
-                  setDraft((prev) => ({ ...prev, imageUrl: event.target.value }))
-                }
-                placeholder={t('stories.imageUrl')}
-              />
-              <label className="inline-flex cursor-pointer items-center justify-center rounded-md border px-4 text-sm">
-                {isUploading ? `${t('loading')}...` : t('stories.uploadImage')}
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  disabled={isUploading}
-                  onChange={handleUploadImage}
-                />
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-foreground">
+                {t('stories.imageUrl')} <span className="font-bold text-destructive">*</span>
               </label>
+              <div className="grid gap-4 md:grid-cols-[1fr_auto]">
+                <Input
+                  value={draft.imageUrl}
+                  onChange={(event) =>
+                    setDraft((prev) => ({ ...prev, imageUrl: event.target.value }))
+                  }
+                  placeholder={t('stories.imageUrl')}
+                />
+                <label className="inline-flex cursor-pointer items-center justify-center rounded-md border px-4 text-sm hover:bg-accent">
+                  {isUploading ? `${t('loading')}...` : t('stories.uploadImage')}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    disabled={isUploading}
+                    onChange={handleUploadImage}
+                  />
+                </label>
+              </div>
             </div>
 
-            <Input
-              value={draft.publishedAt}
-              onChange={(event) =>
-                setDraft((prev) => ({ ...prev, publishedAt: event.target.value }))
-              }
-              placeholder={t('stories.publishedAt')}
-            />
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-foreground">
+                {t('stories.publishedAt')}
+              </label>
+              <Input
+                value={draft.publishedAt}
+                onChange={(event) =>
+                  setDraft((prev) => ({ ...prev, publishedAt: event.target.value }))
+                }
+                placeholder="YYYY-MM-DD"
+              />
+            </div>
 
-            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-              <Button onClick={handleUpsert} className="w-full sm:w-auto">
-                {editingStory ? t('stories.updateStory') : t('stories.addStory')}
+            <div className="flex flex-col gap-2 pt-2 sm:flex-row sm:flex-wrap">
+              <Button onClick={handleUpsert} disabled={isSaving} className="w-full sm:w-auto">
+                {isSaving
+                  ? `${t('loading')}...`
+                  : editingStory
+                    ? t('stories.updateStory')
+                    : t('stories.addStory')}
               </Button>
               {editingStory && (
                 <Button variant="outline" onClick={resetDraft} className="w-full sm:w-auto">
@@ -607,22 +1144,23 @@ export default function AdminStoriesPage() {
             <Card
               key={story.id}
               data-story-id={story.id}
-              className={
+              className={cn(
+                'flex h-full flex-col transition-all duration-300',
                 activeCardId === story.id
-                  ? 'translate-y-[-4px] scale-[1.01] border-primary/30 shadow-md transition-all duration-300'
+                  ? 'translate-y-[-4px] scale-[1.01] border-primary/30 shadow-md'
                   : justUpdatedId === story.id
-                    ? 'border-emerald-300/70 shadow-sm shadow-emerald-100 transition-all duration-300'
-                    : 'transition-all duration-300'
-              }
+                    ? 'border-emerald-300/70 shadow-sm shadow-emerald-100'
+                    : 'hover:shadow-sm',
+              )}
             >
-              <CardContent className="relative space-y-3 p-4">
+              <CardContent className="relative flex flex-1 flex-col space-y-3 p-4">
                 {justUpdatedId === story.id && (
-                  <div className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full border border-emerald-300 bg-emerald-50 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 shadow-sm">
+                  <div className="absolute right-3 top-3 z-10 inline-flex items-center gap-1 rounded-full border border-emerald-300 bg-emerald-50 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 shadow-sm">
                     <CheckCircle2 className="h-3.5 w-3.5" />
                     Updated
                   </div>
                 )}
-                <div className="relative aspect-[4/3] overflow-hidden rounded-md bg-muted">
+                <div className="relative aspect-[4/3] w-full overflow-hidden rounded-md border border-border/40 bg-muted">
                   <Image
                     src={story.imageUrl}
                     alt={story.titleEn}
@@ -631,69 +1169,93 @@ export default function AdminStoriesPage() {
                     unoptimized
                   />
                 </div>
-                <h3 className="font-semibold">{locale === 'vi' ? story.titleVi : story.titleEn}</h3>
-                <div className="inline-flex w-fit rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                  {story.isVisible
-                    ? locale === 'vi'
-                      ? 'Hiện'
-                      : 'Visible'
-                    : locale === 'vi'
-                      ? 'Ẩn'
-                      : 'Hidden'}
-                </div>
-                <p className="line-clamp-2 text-sm text-muted-foreground">
-                  {locale === 'vi' ? story.summaryVi : story.summaryEn}
-                </p>
-                <div className="space-y-2 rounded-md border border-muted/50 bg-muted/20 p-2">
-                  <div
-                    className={`rounded-sm px-1.5 py-1 ${isContentViMissing ? 'border border-amber-300/60 bg-amber-50/80' : ''}`}
+                <div>
+                  <h3
+                    className="line-clamp-1 h-6 text-base font-semibold text-foreground"
+                    title={locale === 'vi' ? story.titleVi : story.titleEn}
                   >
-                    <div className="mb-1 flex items-center justify-between gap-2">
-                      <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/80">
+                    {locale === 'vi' ? story.titleVi : story.titleEn}
+                  </h3>
+                </div>
+                <div>
+                  <div
+                    className={cn(
+                      'inline-flex w-fit items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide transition-colors',
+                      story.isVisible
+                        ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                        : 'border-neutral-200 bg-neutral-100 text-neutral-500',
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        'h-1.5 w-1.5 rounded-full',
+                        story.isVisible ? 'bg-emerald-500' : 'bg-neutral-400',
+                      )}
+                    />
+                    {story.isVisible
+                      ? locale === 'vi'
+                        ? 'Hiện'
+                        : 'Visible'
+                      : locale === 'vi'
+                        ? 'Ẩn'
+                        : 'Hidden'}
+                  </div>
+                  {story.noIndex && (
+                    <span className="inline-flex items-center rounded-full border border-neutral-300 bg-neutral-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-neutral-600">
+                      Noindex
+                    </span>
+                  )}
+                </div>
+                <p className="line-clamp-2 h-9 text-xs leading-relaxed text-muted-foreground">
+                  {(locale === 'vi' ? story.summaryVi : story.summaryEn) || '—'}
+                </p>
+                <div className="space-y-2 rounded-lg border border-border/50 bg-muted/20 p-2.5">
+                  <div
+                    className={cn(
+                      'rounded px-1.5 py-1',
+                      isContentViMissing ? 'border border-amber-300/60 bg-amber-50/80' : '',
+                    )}
+                  >
+                    <div className="mb-0.5 flex items-center justify-between gap-2">
+                      <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground/80">
                         Content VI
-                      </p>
+                      </span>
                       {isContentViMissing && (
                         <span className="rounded bg-amber-200/80 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-amber-900">
                           Missing
                         </span>
                       )}
                     </div>
-                    {isContentViMissing ? (
-                      <p className="text-xs text-muted-foreground">No content</p>
-                    ) : (
-                      <div
-                        className="prose prose-sm prose-p:my-1 prose-p:text-muted-foreground prose-li:my-0 prose-li:text-muted-foreground max-h-20 max-w-none overflow-hidden text-xs leading-relaxed"
-                        dangerouslySetInnerHTML={{ __html: story.contentVi }}
-                      />
-                    )}
+                    <p className="line-clamp-2 h-8 text-xs leading-relaxed text-muted-foreground">
+                      {contentViPreview || <span className="italic opacity-60">No content</span>}
+                    </p>
                   </div>
                   <div
-                    className={`rounded-sm px-1.5 py-1 ${isContentEnMissing ? 'border border-amber-300/60 bg-amber-50/80' : ''}`}
+                    className={cn(
+                      'rounded border-t border-border/40 px-1.5 py-1 pt-1.5',
+                      isContentEnMissing ? 'border border-amber-300/60 bg-amber-50/80' : '',
+                    )}
                   >
-                    <div className="mb-1 flex items-center justify-between gap-2">
-                      <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/80">
+                    <div className="mb-0.5 flex items-center justify-between gap-2">
+                      <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground/80">
                         Content EN
-                      </p>
+                      </span>
                       {isContentEnMissing && (
                         <span className="rounded bg-amber-200/80 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-amber-900">
                           Missing
                         </span>
                       )}
                     </div>
-                    {isContentEnMissing ? (
-                      <p className="text-xs text-muted-foreground">No content</p>
-                    ) : (
-                      <div
-                        className="prose prose-sm prose-p:my-1 prose-p:text-muted-foreground prose-li:my-0 prose-li:text-muted-foreground max-h-20 max-w-none overflow-hidden text-xs leading-relaxed"
-                        dangerouslySetInnerHTML={{ __html: story.contentEn }}
-                      />
-                    )}
+                    <p className="line-clamp-2 h-8 text-xs leading-relaxed text-muted-foreground">
+                      {contentEnPreview || <span className="italic opacity-60">No content</span>}
+                    </p>
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="mt-auto flex items-center gap-2 border-t border-border/40 pt-3">
                   <Button
                     size="sm"
                     variant={editingId === story.id ? 'default' : 'outline'}
+                    className="h-8 flex-1 text-xs"
                     onClick={() => handleEdit(story)}
                   >
                     {editingId === story.id
@@ -707,19 +1269,45 @@ export default function AdminStoriesPage() {
                       href={`/${locale}/journal/${encodeURIComponent(getStorySlug(story, locale as 'vi' | 'en'))}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex h-9 w-9 items-center justify-center rounded-md border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                      className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                       title={
                         locale === 'vi'
                           ? 'Xem story ngoài trang public'
                           : 'View story on public site'
                       }
                     >
-                      <ExternalLink className="h-4 w-4" />
+                      <ExternalLink className="h-3.5 w-3.5" />
                     </a>
+                  )}
+                  {story.isVisible && !story.noIndex && (
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      className="h-8 w-8 shrink-0 text-amber-600 hover:border-amber-300 hover:bg-amber-50 hover:text-amber-700"
+                      onClick={(e) => handlePingGoogle(story, e)}
+                      disabled={isPingingId === story.id}
+                      title={
+                        locale === 'vi'
+                          ? 'Làm mới chỉ mục SEO trên Google & IndexNow'
+                          : 'Refresh SEO indexing on Google & IndexNow'
+                      }
+                    >
+                      {isPingingId === story.id ? (
+                        <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Zap className="h-3.5 w-3.5 fill-amber-500 text-amber-500" />
+                      )}
+                    </Button>
                   )}
                   <Button
                     size="sm"
                     variant="outline"
+                    className={cn(
+                      'h-8 px-3 text-xs',
+                      story.isVisible
+                        ? 'text-neutral-600 hover:bg-neutral-100'
+                        : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100',
+                    )}
                     onClick={() => handleToggleVisibility(story.id)}
                   >
                     {story.isVisible
@@ -730,7 +1318,12 @@ export default function AdminStoriesPage() {
                         ? 'Hiện'
                         : 'Show'}
                   </Button>
-                  <Button size="sm" variant="destructive" onClick={() => handleDelete(story.id)}>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 border-red-200 px-2.5 text-xs text-red-600 transition-colors hover:border-red-300 hover:bg-red-50 hover:text-red-700"
+                    onClick={() => handleDelete(story.id)}
+                  >
                     {t('delete')}
                   </Button>
                 </div>

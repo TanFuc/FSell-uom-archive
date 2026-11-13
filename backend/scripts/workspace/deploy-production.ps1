@@ -68,12 +68,12 @@ try {
     }
   }
 
-  Invoke-Step 'Start postgres and redis first' {
-    docker compose --env-file $envFile -f $composeFile up -d postgres redis
+  Invoke-Step 'Start mariadb and redis first' {
+    docker compose --env-file $envFile -f $composeFile up -d mariadb redis
   }
 
-  Invoke-Step 'Run database migrations' {
-    docker compose --env-file $envFile -f $composeFile run --rm backend npm run prisma:migrate:prod
+  Invoke-Step 'Push MariaDB schema' {
+    docker compose --env-file $envFile -f $composeFile run --rm backend npm run prisma:push
   }
 
   Invoke-Step 'Start backend and wait until healthy' {

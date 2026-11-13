@@ -1,4 +1,6 @@
 import { randomUUID } from 'crypto'
+import { join } from 'path'
+import * as fs from 'fs'
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3'
 import { Injectable, BadRequestException, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
@@ -20,10 +22,21 @@ export class UploadService {
     private configService: ConfigService,
     private cloudinaryService: CloudinaryService,
   ) {
+    const sharpConcurrency = Number(this.configService.get<string>('SHARP_CONCURRENCY') ?? '1')
+    sharp.concurrency(
+      Number.isFinite(sharpConcurrency) && sharpConcurrency > 0 ? sharpConcurrency : 1,
+    )
+    sharp.cache(false)
+
     this.uploadProvider = (this.configService.get<string>('UPLOAD_PROVIDER') ??
-      'cloudinary') as UploadProvider
+      'r2') as UploadProvider
     this.r2Bucket = this.configService.get<string>('R2_BUCKET') ?? ''
-    this.r2PublicUrl = (this.configService.get<string>('R2_PUBLIC_URL') ?? '').replace(/\/$/, '')
+    this.r2PublicUrl = (
+      this.configService.get<string>('IMAGE_BASE_URL') ||
+      this.configService.get<string>('R2_PUBLIC_BASE_URL') ||
+      this.configService.get<string>('R2_PUBLIC_URL') ||
+      ''
+    ).replace(/\/$/, '')
     this.r2PublicBaseUrl = this.normalizeR2PublicBaseUrl(this.r2PublicUrl, this.r2Bucket)
 
     if (this.uploadProvider === 'r2') {
@@ -40,6 +53,44 @@ export class UploadService {
           secretAccessKey,
         },
       })
+    }
+  }
+
+  private isR2ProperlyConfigured(): boolean {
+    const accessKeyId = this.configService.get<string>('R2_KEY') ?? ''
+    const secretAccessKey = this.configService.get<string>('R2_SECRET') ?? ''
+    return Boolean(
+      this.uploadProvider === 'r2' &&
+      this.s3Client &&
+      this.r2Bucket &&
+      this.r2PublicUrl &&
+      accessKeyId &&
+      !accessKeyId.startsWith('dev_placeholder') &&
+      accessKeyId.length >= 20 &&
+      secretAccessKey &&
+      !secretAccessKey.startsWith('dev_placeholder'),
+    )
+  }
+
+  private async uploadToLocal(
+    fileBuffer: Buffer,
+    folder: string,
+  ): Promise<{ url: string; publicId: string }> {
+    const safeFolder = (folder ?? 'products').replace(/^\/+|\/+$/g, '')
+    const uploadDir = join(process.cwd(), 'uploads', safeFolder)
+    await fs.promises.mkdir(uploadDir, { recursive: true })
+
+    const filename = `${Date.now()}-${randomUUID()}.webp`
+    const filePath = join(uploadDir, filename)
+    await fs.promises.writeFile(filePath, fileBuffer)
+
+    const publicId = `local/${safeFolder}/${filename}`
+    const relativeUrl = `/uploads/${safeFolder}/${filename}`
+    this.logger.log(`Ảnh đã lưu vào storage cục bộ: ${relativeUrl}`)
+
+    return {
+      url: relativeUrl,
+      publicId,
     }
   }
 
@@ -72,13 +123,22 @@ export class UploadService {
           kernel: sharp.kernel.lanczos3,
         })
         .sharpen({ sigma: 1.1, m1: 1, m2: 2, x1: 2, y2: 10, y3: 20 })
-        .webp({ quality: 88, effort: 6, smartSubsample: true })
+        .webp({ quality: 88, effort: 4, smartSubsample: true })
         .toBuffer()
 
       if (this.uploadProvider === 'r2') {
-        const result = await this.uploadToR2(optimizedBuffer, folder)
-        this.logger.log(`Image uploaded to R2: ${result.publicId}`)
-        return result
+        if (!this.isR2ProperlyConfigured()) {
+          this.logger.warn('R2 chưa được cấu hình hoặc key là placeholder, lưu ảnh vào storage cục bộ')
+          return await this.uploadToLocal(optimizedBuffer, folder)
+        }
+        try {
+          const result = await this.uploadToR2(optimizedBuffer, folder)
+          this.logger.log(`Image uploaded to R2: ${result.publicId}`)
+          return result
+        } catch (r2Err: any) {
+          this.logger.warn(`Upload lên R2 thất bại (${r2Err.message}), chuyển sang lưu cục bộ`)
+          return await this.uploadToLocal(optimizedBuffer, folder)
+        }
       }
 
       const optimizedFile: Express.Multer.File = {
@@ -87,18 +147,83 @@ export class UploadService {
         mimetype: 'image/webp',
       }
 
-      const result = await this.cloudinaryService.uploadFile(optimizedFile, folder)
-      this.logger.log(`Image uploaded to Cloudinary: ${result.public_id}`)
-
-      return {
-        url: result.secure_url,
-        publicId: result.public_id,
+      try {
+        const result = await this.cloudinaryService.uploadFile(optimizedFile, folder)
+        this.logger.log(`Image uploaded to Cloudinary: ${result.public_id}`)
+        return {
+          url: result.secure_url,
+          publicId: result.public_id,
+        }
+      } catch (cloudErr: any) {
+        this.logger.warn(`Upload lên Cloudinary thất bại (${cloudErr.message}), chuyển sang lưu cục bộ`)
+        return await this.uploadToLocal(optimizedBuffer, folder)
       }
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error('Failed to process/upload image', error)
       throw new BadRequestException('Không thể xử lý và upload ảnh')
     }
   }
+
+  async uploadImageFromBuffer(
+    buffer: Buffer,
+    folder: string = 'products',
+  ): Promise<{ url: string; publicId: string }> {
+    try {
+      const optimizedBuffer = await sharp(buffer)
+        .rotate()
+        .resize(1600, 1600, {
+          fit: 'inside',
+          withoutEnlargement: true,
+          kernel: sharp.kernel.lanczos3,
+        })
+        .sharpen({ sigma: 1.1, m1: 1, m2: 2, x1: 2, y2: 10, y3: 20 })
+        .webp({ quality: 88, effort: 4, smartSubsample: true })
+        .toBuffer()
+
+      if (this.uploadProvider === 'r2') {
+        if (!this.isR2ProperlyConfigured()) {
+          this.logger.warn('R2 chưa được cấu hình hoặc key là placeholder, lưu ảnh buffer vào storage cục bộ')
+          return await this.uploadToLocal(optimizedBuffer, folder)
+        }
+        try {
+          const result = await this.uploadToR2(optimizedBuffer, folder)
+          this.logger.log(`Image buffer uploaded to R2: ${result.publicId}`)
+          return result
+        } catch (r2Err: any) {
+          this.logger.warn(`Upload buffer lên R2 thất bại (${r2Err.message}), chuyển sang lưu cục bộ`)
+          return await this.uploadToLocal(optimizedBuffer, folder)
+        }
+      }
+
+      try {
+        const fakeFile: Express.Multer.File = {
+          fieldname: 'file',
+          originalname: `synced-${Date.now()}.webp`,
+          encoding: '7bit',
+          mimetype: 'image/webp',
+          size: optimizedBuffer.length,
+          buffer: optimizedBuffer,
+          destination: '',
+          filename: '',
+          path: '',
+          stream: null as any,
+        }
+
+        const result = await this.cloudinaryService.uploadFile(fakeFile, folder)
+        return {
+          url: result.secure_url,
+          publicId: result.public_id,
+        }
+      } catch (cloudErr: any) {
+        this.logger.warn(`Upload buffer Cloudinary thất bại (${cloudErr.message}), chuyển sang lưu cục bộ`)
+        return await this.uploadToLocal(optimizedBuffer, folder)
+      }
+    } catch (error: any) {
+      this.logger.error('Failed to process/upload image from buffer', error)
+      throw new BadRequestException('Không thể xử lý và upload ảnh từ buffer')
+    }
+  }
+
 
   private async uploadToR2(
     fileBuffer: Buffer,
@@ -166,6 +291,7 @@ export class UploadService {
 
   async uploadMultipleImages(
     files: Express.Multer.File[],
+    folder: string = 'products',
   ): Promise<{ urls: string[]; publicIds: string[] }> {
     if (!files || files.length === 0) {
       throw new BadRequestException('Không có file được cung cấp')
@@ -175,8 +301,10 @@ export class UploadService {
       throw new BadRequestException('Chỉ cho phép tối đa 10 ảnh')
     }
 
-    const uploadPromises = files.map((file) => this.uploadProductImage(file))
-    const results = await Promise.all(uploadPromises)
+    const results: Array<{ url: string; publicId: string }> = []
+    for (const file of files) {
+      results.push(await this.uploadProductImage(file, folder))
+    }
 
     return {
       urls: results.map((result) => result.url),
@@ -186,6 +314,16 @@ export class UploadService {
 
   async deleteFile(publicIdOrUrl: string): Promise<{ success: boolean }> {
     try {
+      if (publicIdOrUrl.startsWith('local/') || publicIdOrUrl.startsWith('/uploads/') || publicIdOrUrl.includes('/uploads/')) {
+        const cleanPath = publicIdOrUrl.replace(/^local\//, '').replace(/^.*\/uploads\//, '')
+        const filePath = join(process.cwd(), 'uploads', cleanPath)
+        if (fs.existsSync(filePath)) {
+          await fs.promises.unlink(filePath)
+          this.logger.log(`Local file deleted: ${filePath}`)
+        }
+        return { success: true }
+      }
+
       if (this.uploadProvider === 'r2') {
         if (!this.s3Client || !this.r2Bucket) {
           throw new BadRequestException('R2 chưa được cấu hình đúng')
@@ -242,6 +380,13 @@ export class UploadService {
 
   async deleteMultipleFiles(publicIds: string[]): Promise<{ success: boolean }> {
     try {
+      if (this.uploadProvider === 'r2') {
+        await Promise.all(publicIds.map((publicId) => this.deleteFile(publicId)))
+        this.logger.log(`${publicIds.length} files deleted from R2`)
+
+        return { success: true }
+      }
+
       await this.cloudinaryService.deleteMultipleFiles(publicIds)
       this.logger.log(`${publicIds.length} files deleted from Cloudinary`)
 

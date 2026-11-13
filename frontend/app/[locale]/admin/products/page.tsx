@@ -19,7 +19,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
@@ -41,7 +41,11 @@ import {
 } from '@/components/ui/table'
 import { useDocumentTitle } from '@/hooks/use-document-title'
 import { useToast } from '@/hooks/use-toast'
+import { useConfirm } from '@/hooks/use-confirm'
+import { getApiErrorMessage } from '@/lib/error-handler'
 import { api } from '@/lib/api'
+import { revalidatePaths } from '@/lib/revalidate'
+import { pingProductSeo } from '@/lib/seo-ping'
 import { type Product } from '@/lib/types'
 import { formatPriceVND, getImageUrl, optimizeProductImage, cn } from '@/lib/utils'
 
@@ -57,6 +61,7 @@ export default function ProductsPage() {
   const locale = useLocale()
   const t = useTranslations('admin')
   const { toast } = useToast()
+  const confirm = useConfirm()
 
   useDocumentTitle(t('products'), 'Admin - ƯƠM. Archive')
 
@@ -65,15 +70,20 @@ export default function ProductsPage() {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [isPinging, setIsPinging] = useState<string | null>(null)
   const [search, setSearch] = useState('')
+  const [busyProductIds, setBusyProductIds] = useState<Set<string>>(new Set())
   const [selectedProducts, setSelectedProducts] = useState<string[]>([])
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; product: Product | null }>({
     open: false,
     product: null,
   })
 
+  const searchRef = useRef(search)
+  searchRef.current = search
+
   const fetchProducts = useCallback(
-    async (options?: { withLoading?: boolean }) => {
+    async (options?: { withLoading?: boolean; query?: string }) => {
       const withLoading = options?.withLoading ?? false
+      const query = options?.query !== undefined ? options.query : searchRef.current
 
       try {
         if (withLoading) {
@@ -83,11 +93,11 @@ export default function ProductsPage() {
         }
 
         const response = await api.getAdminProducts({
-          search: search || undefined,
-          includeDeleted: false, // Don't show deleted products
+          search: query || undefined,
+          includeDeleted: false,
           limit: 100,
         })
-        setProducts(response.data.filter((p: Product) => !p.deletedAt)) // Extra filter
+        setProducts(response.data.filter((p: Product) => !p.deletedAt))
       } catch (error) {
         console.error('Failed to fetch products:', error)
         toast({
@@ -102,19 +112,24 @@ export default function ProductsPage() {
         setIsRefreshing(false)
       }
     },
-    [search, t, toast],
+    [t, toast],
   )
 
   useEffect(() => {
+    fetchProducts({ withLoading: true, query: '' })
+  }, [fetchProducts])
+
+  const isInitialSearch = useRef(true)
+  useEffect(() => {
+    if (isInitialSearch.current) {
+      isInitialSearch.current = false
+      return
+    }
     const delayDebounce = setTimeout(() => {
-      fetchProducts({ withLoading: false })
+      fetchProducts({ withLoading: false, query: search })
     }, 300)
     return () => clearTimeout(delayDebounce)
   }, [search, fetchProducts])
-
-  useEffect(() => {
-    fetchProducts({ withLoading: true })
-  }, [fetchProducts])
 
   const handleDelete = async () => {
     if (!deleteDialog.product) return
@@ -126,9 +141,12 @@ export default function ProductsPage() {
       setProducts((prev) => prev.filter((item) => item.id !== productToDelete.id))
       setSelectedProducts((prev) => prev.filter((id) => id !== productToDelete.id))
       toast({ title: t('success'), description: 'Đã chuyển vào thùng rác' })
-      fetchProducts({ withLoading: false })
     } catch (error) {
-      toast({ title: t('error'), description: t('failedToDelete'), variant: 'destructive' })
+      toast({
+        title: t('error'),
+        description: getApiErrorMessage(error, locale, t('failedToDelete')),
+        variant: 'destructive',
+      })
     } finally {
       setDeleteDialog({ open: false, product: null })
     }
@@ -136,18 +154,24 @@ export default function ProductsPage() {
 
   const handleDuplicate = async (product: Product) => {
     try {
-      await api.duplicateProduct(product.id)
+      const duplicated = await api.duplicateProduct(product.id)
       toast({ title: t('success'), description: t('productDuplicated') })
-      fetchProducts({ withLoading: false })
+      setProducts((prev) => [duplicated, ...prev])
     } catch (error) {
-      toast({ title: t('error'), description: t('failedToUpdate'), variant: 'destructive' })
+      toast({
+        title: t('error'),
+        description: getApiErrorMessage(error, locale, t('failedToUpdate')),
+        variant: 'destructive',
+      })
     }
   }
 
   const handleToggleActive = async (product: Product, e: React.MouseEvent) => {
     e.stopPropagation()
-    const nextValue = !product.isActive
+    if (busyProductIds.has(product.id)) return
 
+    const nextValue = !product.isActive
+    setBusyProductIds((prev) => new Set(prev).add(product.id))
     setProducts((prev) =>
       prev.map((item) => (item.id === product.id ? { ...item, isActive: nextValue } : item)),
     )
@@ -164,17 +188,26 @@ export default function ProductsPage() {
           item.id === product.id ? { ...item, isActive: product.isActive } : item,
         ),
       )
-      toast({ title: t('error'), description: t('failedToUpdate'), variant: 'destructive' })
-      return
+      toast({
+        title: t('error'),
+        description: getApiErrorMessage(error, locale, t('failedToUpdate')),
+        variant: 'destructive',
+      })
+    } finally {
+      setBusyProductIds((prev) => {
+        const next = new Set(prev)
+        next.delete(product.id)
+        return next
+      })
     }
-
-    fetchProducts({ withLoading: false })
   }
 
   const handleToggleFeatured = async (product: Product, e: React.MouseEvent) => {
     e.stopPropagation()
-    const nextValue = !product.isFeatured
+    if (busyProductIds.has(product.id)) return
 
+    const nextValue = !product.isFeatured
+    setBusyProductIds((prev) => new Set(prev).add(product.id))
     setProducts((prev) =>
       prev.map((item) => (item.id === product.id ? { ...item, isFeatured: nextValue } : item)),
     )
@@ -191,15 +224,37 @@ export default function ProductsPage() {
           item.id === product.id ? { ...item, isFeatured: product.isFeatured } : item,
         ),
       )
-      toast({ title: t('error'), description: t('failedToUpdate'), variant: 'destructive' })
-      return
+      toast({
+        title: t('error'),
+        description: getApiErrorMessage(error, locale, t('failedToUpdate')),
+        variant: 'destructive',
+      })
+    } finally {
+      setBusyProductIds((prev) => {
+        const next = new Set(prev)
+        next.delete(product.id)
+        return next
+      })
     }
-
-    fetchProducts({ withLoading: false })
   }
 
   const handleBulkDelete = async () => {
     const idsToDelete = [...selectedProducts]
+    if (idsToDelete.length === 0) return
+
+    const confirmed = await confirm({
+      title: locale === 'vi' ? 'Xóa các sản phẩm đã chọn?' : 'Delete selected products?',
+      description:
+        locale === 'vi'
+          ? `Bạn có chắc chắn muốn chuyển ${idsToDelete.length} sản phẩm đã chọn vào thùng rác không? Bạn có thể khôi phục lại sau.`
+          : `Are you sure you want to move ${idsToDelete.length} selected products to trash? You can restore them later.`,
+      confirmText: locale === 'vi' ? 'Chuyển vào thùng rác' : 'Move to trash',
+      cancelText: locale === 'vi' ? 'Hủy' : 'Cancel',
+      variant: 'destructive',
+      icon: 'trash',
+    })
+
+    if (!confirmed) return
 
     try {
       await Promise.all(idsToDelete.map((id) => api.deleteProduct(id)))
@@ -211,7 +266,11 @@ export default function ProductsPage() {
       setSelectedProducts([])
       fetchProducts({ withLoading: false })
     } catch (error) {
-      toast({ title: t('error'), description: t('failedToDelete'), variant: 'destructive' })
+      toast({
+        title: t('error'),
+        description: getApiErrorMessage(error, locale, t('failedToDelete')),
+        variant: 'destructive',
+      })
     }
   }
 
@@ -231,7 +290,11 @@ export default function ProductsPage() {
       setSelectedProducts([])
       fetchProducts({ withLoading: false })
     } catch (error) {
-      toast({ title: t('error'), description: t('failedToUpdate'), variant: 'destructive' })
+      toast({
+        title: t('error'),
+        description: getApiErrorMessage(error, locale, t('failedToUpdate')),
+        variant: 'destructive',
+      })
       fetchProducts({ withLoading: false })
     }
   }
@@ -278,26 +341,31 @@ export default function ProductsPage() {
     setIsPinging(product.id)
 
     try {
-      const response = await fetch('/api/revalidate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          path: `/${locale}/shop/${product.slug}`,
-        }),
-      })
+      const pathsToRevalidate = [
+        `/vi/shop/${product.slug}`,
+        `/en/shop/${product.slug}`,
+        '/vi/shop',
+        '/en/shop',
+        '/sitemap.xml',
+      ]
 
-      if (response.ok) {
+      const [revalResult] = await Promise.all([
+        revalidatePaths(pathsToRevalidate),
+        pingProductSeo(product.slug),
+      ])
+
+      if (revalResult.success) {
         toast({
           title: 'SEO Refresh Thành công',
-          description: 'Đã xóa cache & gửi yêu cầu cập nhật tới Googlebot',
+          description: 'Đã xóa cache & gửi yêu cầu làm mới chỉ mục (IndexNow & Googlebot)',
         })
       } else {
-        throw new Error('Failed to revalidate')
+        throw new Error(revalResult.message || 'Làm mới cache thất bại')
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: 'Lỗi SEO Refresh',
-        description: 'Không thể làm mới chỉ mục ngay lúc này',
+        description: error?.message || 'Không thể làm mới chỉ mục ngay lúc này',
         variant: 'destructive',
       })
     } finally {
@@ -314,12 +382,12 @@ export default function ProductsPage() {
           <p className="text-muted-foreground">{t('manageProductCatalog')}</p>
         </div>
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-          <Link href={`/${locale}/admin/products/trash`}>
-            <Button variant="outline" className="w-full sm:w-auto">
+          <Button asChild variant="outline" className="w-full sm:w-auto">
+            <Link href={`/${locale}/admin/products/trash`}>
               <Trash className="mr-2 h-4 w-4" />
               {t('trash')}
-            </Button>
-          </Link>
+            </Link>
+          </Button>
           <Button
             onClick={() => router.push(`/${locale}/admin/products/new`)}
             className="w-full sm:w-auto"
@@ -397,9 +465,9 @@ export default function ProductsPage() {
                 Bỏ nổi bật
               </Button>
               <Button
-                variant="destructive"
+                variant="outline"
                 size="sm"
-                className="shrink-0 snap-start"
+                className="shrink-0 snap-start border-red-200 text-red-600 transition-colors hover:border-red-300 hover:bg-red-50 hover:text-red-700"
                 onClick={handleBulkDelete}
               >
                 <Trash2 className="mr-2 h-4 w-4" />
@@ -441,13 +509,13 @@ export default function ProductsPage() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={11} className="h-[400px] text-center">
+                <TableCell colSpan={12} className="h-[400px] text-center">
                   <span className="text-muted-foreground">{t('loading')}...</span>
                 </TableCell>
               </TableRow>
             ) : products.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={11} className="h-[400px] text-center">
+                <TableCell colSpan={12} className="h-[400px] text-center">
                   <span className="text-muted-foreground">{t('noResults')}</span>
                 </TableCell>
               </TableRow>
@@ -531,19 +599,24 @@ export default function ProductsPage() {
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()} className="text-center">
                     <Button
-                      variant={product.isActive ? 'default' : 'outline'}
+                      variant="outline"
                       size="sm"
                       onClick={(e) => handleToggleActive(product, e)}
-                      className={`whitespace-nowrap ${product.isActive ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                      className={cn(
+                        'whitespace-nowrap text-xs font-medium transition-colors',
+                        product.isActive
+                          ? 'border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800'
+                          : 'border-neutral-200 bg-neutral-100 text-neutral-500 hover:bg-neutral-200/80 hover:text-neutral-700',
+                      )}
                     >
                       {product.isActive ? (
                         <>
-                          <Power className="mr-1 h-4 w-4" />
+                          <Power className="mr-1.5 h-3.5 w-3.5 text-emerald-600" />
                           Bật
                         </>
                       ) : (
                         <>
-                          <PowerOff className="mr-1 h-4 w-4" />
+                          <PowerOff className="mr-1.5 h-3.5 w-3.5 text-neutral-400" />
                           Tắt
                         </>
                       )}
@@ -551,19 +624,24 @@ export default function ProductsPage() {
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()} className="text-center">
                     <Button
-                      variant={product.isFeatured ? 'default' : 'outline'}
+                      variant="outline"
                       size="sm"
                       onClick={(e) => handleToggleFeatured(product, e)}
-                      className={`whitespace-nowrap ${product.isFeatured ? 'bg-yellow-600 hover:bg-yellow-700' : ''}`}
+                      className={cn(
+                        'whitespace-nowrap text-xs font-medium transition-colors',
+                        product.isFeatured
+                          ? 'border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100'
+                          : 'border-neutral-200 bg-neutral-100 text-neutral-500 hover:bg-neutral-200/80 hover:text-neutral-700',
+                      )}
                     >
                       {product.isFeatured ? (
                         <>
-                          <Star className="mr-1 h-4 w-4 fill-current" />
+                          <Star className="mr-1.5 h-3.5 w-3.5 fill-amber-500 text-amber-600" />
                           Nổi bật
                         </>
                       ) : (
                         <>
-                          <StarOff className="mr-1 h-4 w-4" />
+                          <StarOff className="mr-1.5 h-3.5 w-3.5 text-neutral-400" />
                           Thường
                         </>
                       )}
@@ -577,14 +655,14 @@ export default function ProductsPage() {
                       disabled={isPinging === product.id}
                       className={cn(
                         'h-8 w-8',
-                        isPinging === product.id ? 'animate-spin' : 'hover:text-amber-600',
+                        isPinging === product.id && 'cursor-not-allowed opacity-70',
                       )}
-                      title="Làm mới chỉ mục SEO (Ping Google)"
+                      title="Làm mới chỉ mục SEO trên Google"
                     >
                       {isPinging === product.id ? (
                         <RefreshCw className="h-4 w-4 animate-spin" />
                       ) : (
-                        <Zap className="h-4 w-4" />
+                        <Zap className="h-4 w-4 text-amber-500" />
                       )}
                     </Button>
                   </TableCell>
@@ -595,6 +673,7 @@ export default function ProductsPage() {
                         size="icon"
                         onClick={() => router.push(`/${locale}/admin/products/${product.id}`)}
                         title="Chỉnh sửa"
+                        className="text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -603,6 +682,7 @@ export default function ProductsPage() {
                         size="icon"
                         onClick={() => handleDuplicate(product)}
                         title="Nhân bản"
+                        className="text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
                       >
                         <Copy className="h-4 w-4" />
                       </Button>
@@ -610,7 +690,7 @@ export default function ProductsPage() {
                         variant="ghost"
                         size="icon"
                         onClick={() => setDeleteDialog({ open: true, product })}
-                        className="text-destructive hover:text-destructive"
+                        className="text-red-500 hover:bg-red-50 hover:text-red-700"
                         title="Xóa"
                       >
                         <Trash2 className="h-4 w-4" />

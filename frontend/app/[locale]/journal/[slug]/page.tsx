@@ -2,11 +2,19 @@ import { type Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import { notFound, permanentRedirect } from 'next/navigation'
+import { fetchSiteContentServer } from '@/lib/server-utils'
+import { parseSitePages } from '@/lib/site-structure'
 import Script from 'next/script'
 import { getTranslations } from 'next-intl/server'
 import { JournalRichContent } from '@/components/journal/JournalRichContent'
-import { getCanonicalBaseUrl } from '@/lib/seo'
+import {
+  buildPageMetadata,
+  getCanonicalBaseUrl,
+  getSeoBrandName,
+  truncateMetaDescription,
+} from '@/lib/seo'
 import { fetchBranding } from '@/lib/server-utils'
+import { DATA_REVALIDATE_SECONDS, PAGE_REVALIDATE_SECONDS } from '@/lib/cache-config'
 import {
   getStoryBySlug,
   getStorySlug,
@@ -16,8 +24,17 @@ import {
   toStorySlug,
 } from '@/lib/stories'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888/api'
+const API_URL =
+  process.env.SERVER_API_URL ||
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  'http://localhost:8888'
 const BASE_URL = getCanonicalBaseUrl()
+const STORY_FETCH_TIMEOUT_MS = Number.parseInt(
+  process.env.STORY_FETCH_TIMEOUT_MS || process.env.SERVER_FETCH_TIMEOUT_MS || '1800',
+  10,
+)
+export const revalidate = PAGE_REVALIDATE_SECONDS
 
 type SiteContentResponse = Record<string, unknown>
 
@@ -28,22 +45,20 @@ type FetchSiteContentResult =
 
 async function fetchSiteContent(): Promise<FetchSiteContentResult> {
   try {
+    const timeout =
+      Number.isFinite(STORY_FETCH_TIMEOUT_MS) && STORY_FETCH_TIMEOUT_MS > 0
+        ? STORY_FETCH_TIMEOUT_MS
+        : 1800
     const response = await fetch(`${API_URL}/settings/site-content`, {
-      next: { revalidate: 300 },
+      next: { revalidate: DATA_REVALIDATE_SECONDS },
+      signal: AbortSignal.timeout(timeout),
     })
 
-    if (response.status === 404) {
-      return { status: 'not-found' }
-    }
-
-    if (!response.ok) {
-      return { status: 'error' }
-    }
+    if (response.status === 404) return { status: 'not-found' }
+    if (!response.ok) return { status: 'error' }
 
     const payload = (await response.json()) as unknown
-    if (!payload || typeof payload !== 'object') {
-      return { status: 'error' }
-    }
+    if (!payload || typeof payload !== 'object') return { status: 'error' }
 
     const root = payload as { data?: unknown }
     if (root.data && typeof root.data === 'object' && !Array.isArray(root.data)) {
@@ -62,28 +77,25 @@ interface StoryDetailProps {
 
 export async function generateMetadata({ params }: StoryDetailProps): Promise<Metadata> {
   const [siteContent, branding] = await Promise.all([fetchSiteContent(), fetchBranding()])
-  const brandName =
-    params.locale === 'vi'
-      ? (branding?.brandNameVi ?? 'ƯƠM.')
-      : (branding?.brandNameEn ?? 'ƯƠM.')
+  const brandName = getSeoBrandName(params.locale, branding)
 
   if (siteContent.status === 'error') {
-    return {
-      title: params.locale === 'vi' ? 'Bai viet' : 'Story',
+    return buildPageMetadata({
+      locale: params.locale,
+      path: `/${params.locale}/journal/${params.slug}`,
+      title: params.locale === 'vi' ? 'Bài viết' : 'Story',
       description:
         params.locale === 'vi'
-          ? `Doc cac cau chuyen thu cong tu ${brandName}.`
+          ? `Đọc các câu chuyện thủ công từ ${brandName}.`
           : `Read handcrafted stories from ${brandName}.`,
-      robots: { index: true, follow: true },
+      branding,
+      type: 'article',
       alternates: {
-        canonical: `/${params.locale}/journal/${params.slug}`,
-        languages: {
-          vi: `/vi/journal/${params.slug}`,
-          en: `/en/journal/${params.slug}`,
-          'x-default': `/vi/journal/${params.slug}`,
-        },
+        vi: `/vi/journal/${params.slug}`,
+        en: `/en/journal/${params.slug}`,
+        'x-default': `/vi/journal/${params.slug}`,
       },
-    }
+    })
   }
 
   const stories = parseStories(
@@ -98,54 +110,65 @@ export async function generateMetadata({ params }: StoryDetailProps): Promise<Me
     }
   }
 
-  const title = params.locale === 'vi' ? story.titleVi : story.titleEn
-  const description = stripHtmlTags(
-    params.locale === 'vi' ? story.summaryVi : story.summaryEn,
-  ).slice(0, 170)
+  const isVi = params.locale === 'vi'
+  const title = (
+    isVi ? story.seoTitleVi || story.titleVi : story.seoTitleEn || story.titleEn
+  ).trim()
+  const rawDescription = isVi
+    ? story.seoDescriptionVi || story.summaryVi
+    : story.seoDescriptionEn || story.summaryEn
+  const description = truncateMetaDescription(stripHtmlTags(rawDescription))
   const viSlug = encodeURIComponent(getStorySlug(story, 'vi'))
   const enSlug = encodeURIComponent(getStorySlug(story, 'en'))
-  const canonicalPath = params.locale === 'vi' ? `/vi/journal/${viSlug}` : `/en/journal/${enSlug}`
-  const storyImage = story.imageUrl
+  const canonicalPath = isVi ? `/vi/journal/${viSlug}` : `/en/journal/${enSlug}`
+  const rawKeywords = (isVi ? story.seoKeywordsVi : story.seoKeywordsEn)?.trim()
+  const keywords = rawKeywords
+    ? rawKeywords
+        .split(',')
+        .map((k) => k.trim())
+        .filter(Boolean)
+    : undefined
 
-  return {
+  const metadata = buildPageMetadata({
+    locale: params.locale,
+    path: story.canonicalUrl || canonicalPath,
     title,
     description,
+    branding,
+    image: story.imageUrl,
+    type: 'article',
+    robots: story.noIndex
+      ? { index: false, follow: true }
+      : {
+          index: true,
+          follow: true,
+          googleBot: {
+            index: true,
+            follow: true,
+            'max-video-preview': -1,
+            'max-image-preview': 'large',
+            'max-snippet': -1,
+          },
+        },
     alternates: {
-      canonical: canonicalPath,
-      languages: {
-        vi: `/vi/journal/${viSlug}`,
-        en: `/en/journal/${enSlug}`,
-        'x-default': `/vi/journal/${viSlug}`,
-      },
+      vi: `/vi/journal/${viSlug}`,
+      en: `/en/journal/${enSlug}`,
+      'x-default': `/vi/journal/${viSlug}`,
     },
-    openGraph: {
-      type: 'article',
-      title,
-      description,
-      url: `${BASE_URL}${canonicalPath}`,
-      images: storyImage
-        ? [{ url: storyImage, width: 1200, height: 800, alt: title }]
-        : undefined,
-      publishedTime: story.publishedAt
-        ? new Date(story.publishedAt).toISOString()
-        : undefined,
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title,
-      description,
-      images: storyImage ? [storyImage] : undefined,
-    },
+  })
+
+  if (keywords && keywords.length > 0) {
+    metadata.keywords = keywords
   }
+
+  return metadata
 }
 
 export default async function StoryDetailPage({ params }: StoryDetailProps) {
+  if (parseSitePages(await fetchSiteContentServer()).find((page) => page.slug === 'journal')?.isVisible === false) notFound()
   const t = await getTranslations({ locale: params.locale, namespace: 'journal' })
   const [siteContent, branding] = await Promise.all([fetchSiteContent(), fetchBranding()])
-  const brandName =
-    params.locale === 'vi'
-      ? (branding?.brandNameVi ?? 'ƯƠM.')
-      : (branding?.brandNameEn ?? 'ƯƠM.')
+  const brandName = getSeoBrandName(params.locale, branding)
   const stories = parseStories(
     siteContent.status === 'ok' ? siteContent.data[STORIES_CONTENT_KEY] : undefined,
   ).filter((item) => item.isVisible !== false)
@@ -164,25 +187,36 @@ export default async function StoryDetailPage({ params }: StoryDetailProps) {
     }
   }
 
-  const title = params.locale === 'vi' ? story.titleVi : story.titleEn
-  const summary = params.locale === 'vi' ? story.summaryVi : story.summaryEn
-  const content = params.locale === 'vi' ? story.contentVi : story.contentEn
+  const isVi = params.locale === 'vi'
+  const title = (
+    isVi ? story.seoTitleVi || story.titleVi : story.seoTitleEn || story.titleEn
+  ).trim()
+  const summary = (
+    isVi ? story.seoDescriptionVi || story.summaryVi : story.seoDescriptionEn || story.summaryEn
+  ).trim()
+  const content = isVi ? story.contentVi : story.contentEn
+  const rawKeywords = (isVi ? story.seoKeywordsVi : story.seoKeywordsEn)?.trim()
+  const wordCount = stripHtmlTags(content).split(/\s+/).filter(Boolean).length
   const relatedStories = stories.filter((item) => item.id !== story.id).slice(0, 4)
   const shopCta = params.locale === 'vi' ? 'Xem shop' : 'Visit the shop'
 
   const viSlug = encodeURIComponent(getStorySlug(story, 'vi'))
   const enSlug = encodeURIComponent(getStorySlug(story, 'en'))
-  const canonicalPath = params.locale === 'vi' ? `/vi/journal/${viSlug}` : `/en/journal/${enSlug}`
+  const canonicalPath = isVi ? `/vi/journal/${viSlug}` : `/en/journal/${enSlug}`
 
   const articleJsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'NewsArticle',
+    '@type': 'Article',
     headline: title,
     description: summary,
     image: [story.imageUrl],
     datePublished: story.publishedAt
       ? new Date(story.publishedAt).toISOString()
       : new Date().toISOString(),
+    dateModified: story.updatedAt ? new Date(story.updatedAt).toISOString() : undefined,
+    inLanguage: params.locale,
+    wordCount,
+    ...(rawKeywords ? { keywords: rawKeywords } : {}),
     author: [
       {
         '@type': 'Organization',
@@ -190,6 +224,16 @@ export default async function StoryDetailPage({ params }: StoryDetailProps) {
         url: BASE_URL,
       },
     ],
+    publisher: {
+      '@type': 'Organization',
+      name: brandName,
+      url: BASE_URL,
+      logo: {
+        '@type': 'ImageObject',
+        url: `${BASE_URL}/assets/logo.png`,
+      },
+    },
+    mainEntityOfPage: `${BASE_URL}${canonicalPath}`,
   }
 
   const breadcrumbJsonLd = {
@@ -218,7 +262,7 @@ export default async function StoryDetailPage({ params }: StoryDetailProps) {
   }
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,#efe5d6_0%,#f7f4ef_40%,#f9f7f3_100%)] pt-20">
+    <div className="safe-screen min-h-screen bg-white pt-20">
       <Script
         id="article-jsonld"
         strategy="afterInteractive"
@@ -231,34 +275,34 @@ export default async function StoryDetailPage({ params }: StoryDetailProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
-      <article className="mx-auto w-full max-w-5xl px-6 py-12 lg:px-10">
+      <article className="mx-auto w-full max-w-5xl px-4 py-12 sm:px-6 lg:px-10">
         <Link
           href={`/${params.locale}/journal#stories`}
-          className="mb-6 inline-flex text-[11px] uppercase tracking-[0.2em] text-foreground/55 transition hover:text-foreground"
+          className="mb-6 inline-flex text-[11px] font-thin uppercase tracking-[0.14em] text-foreground/55 transition hover:text-foreground sm:tracking-[0.2em]"
         >
           {t('backToJournal')}
         </Link>
 
-        <div className="rounded-3xl border border-black/10 bg-white/80 p-6 shadow-sm backdrop-blur-sm md:p-10">
+        <div className="rounded-2xl border border-black/10 bg-white/80 p-5 shadow-sm backdrop-blur-sm sm:p-6 md:p-10">
           <div className="space-y-5">
-            <p className="text-[10px] uppercase tracking-[0.35em] text-foreground/45">
+            <p className="text-mobile-safe text-[10px] font-thin uppercase tracking-[0.22em] text-foreground/45 sm:tracking-[0.35em]">
               JOURNAL STORY
             </p>
-            <h1 className="font-playfair text-3xl leading-tight text-foreground md:text-5xl">
+            <h1 className="text-mobile-safe font-playfair text-3xl font-light leading-tight text-foreground md:text-5xl">
               {title}
             </h1>
             {story.publishedAt && (
-              <p className="inline-flex rounded-full border border-foreground/10 bg-foreground/[0.03] px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-foreground/55">
+              <p className="inline-flex max-w-full rounded-full border border-foreground/10 bg-foreground/[0.03] px-3 py-1 text-[10px] font-thin uppercase tracking-[0.14em] text-foreground/55 sm:tracking-[0.2em]">
                 {story.publishedAt}
               </p>
             )}
-            <p className="max-w-3xl text-sm leading-relaxed text-foreground/75 md:text-base">
+            <p className="max-w-3xl font-serif italic font-normal text-sm sm:text-base leading-relaxed text-foreground/80">
               {summary}
             </p>
           </div>
         </div>
 
-        <div className="relative mt-10 aspect-[16/10] overflow-hidden rounded-3xl border border-black/10 bg-white shadow-lg">
+        <div className="relative mt-10 aspect-[16/10] overflow-hidden rounded-2xl border border-black/10 bg-white shadow-lg sm:rounded-3xl">
           <Image
             src={story.imageUrl}
             alt={`${title} - Câu chuyện từ ƯƠM. Archive - Handcrafted Journal`}
@@ -272,13 +316,13 @@ export default async function StoryDetailPage({ params }: StoryDetailProps) {
         <JournalRichContent
           content={content}
           fallbackAlt={`${title} - ƯƠM. Archive Journal`}
-          className="prose prose-neutral prose-headings:font-playfair prose-headings:text-foreground prose-p:text-foreground/85 prose-li:text-foreground/85 mt-10 max-w-none rounded-3xl border border-black/10 bg-white/85 p-6 leading-relaxed shadow-sm backdrop-blur-sm md:p-10"
+          className="prose prose-neutral prose-headings:font-playfair prose-headings:font-light prose-p:text-foreground/85 prose-p:font-thin prose-li:text-foreground/85 prose-li:font-thin prose-blockquote:font-serif prose-blockquote:italic prose-blockquote:font-normal prose-blockquote:text-[#4A4238] prose-em:font-serif prose-em:italic prose-em:font-normal prose-strong:font-semibold prose-strong:text-foreground mt-10 max-w-none overflow-hidden rounded-2xl border border-black/10 bg-white/85 p-5 leading-relaxed shadow-sm backdrop-blur-sm [overflow-wrap:anywhere] sm:rounded-3xl sm:p-6 md:p-10 font-thin"
         />
 
         <div className="mt-10 flex justify-center">
           <Link
             href={`/${params.locale}/shop`}
-            className="text-[10px] font-bold uppercase tracking-[0.3em] text-foreground underline decoration-foreground/15 underline-offset-8 transition hover:opacity-70"
+            className="text-[10px] font-light uppercase tracking-[0.3em] text-foreground underline decoration-foreground/15 underline-offset-8 transition hover:opacity-70"
           >
             {shopCta}
           </Link>
@@ -286,18 +330,18 @@ export default async function StoryDetailPage({ params }: StoryDetailProps) {
 
         {relatedStories.length > 0 && (
           <section className="mt-16 border-t border-black/10 pt-12">
-            <div className="mb-8 flex items-end justify-between gap-4">
+            <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
               <div>
-                <p className="text-[10px] uppercase tracking-[0.28em] text-foreground/45">
+                <p className="text-[10px] font-thin uppercase tracking-[0.18em] text-foreground/45 sm:tracking-[0.28em]">
                   JOURNAL
                 </p>
-                <h2 className="mt-2 font-playfair text-2xl text-foreground">
+                <h2 className="text-mobile-safe mt-2 font-serif text-2xl font-normal text-[#4A4238]">
                   {t('relatedStories')}
                 </h2>
               </div>
               <Link
                 href={`/${params.locale}/journal#stories`}
-                className="text-[10px] uppercase tracking-[0.2em] text-foreground/60 transition hover:text-foreground"
+                className="font-sans text-xs font-semibold uppercase tracking-[0.15em] text-[#8C7E6A] transition-colors hover:text-[#4A4238]"
               >
                 {t('viewAllStories')}
               </Link>
@@ -327,10 +371,10 @@ export default async function StoryDetailPage({ params }: StoryDetailProps) {
                       />
                     </div>
                     <div className="space-y-2 p-4">
-                      <h3 className="font-playfair text-xl leading-tight text-foreground">
+                      <h3 className="text-mobile-safe font-serif text-lg sm:text-xl font-normal leading-tight text-[#4A4238] group-hover:text-[#8C7E6A] transition-colors">
                         {itemTitle}
                       </h3>
-                      <p className="line-clamp-3 text-sm text-foreground/70">{itemSummary}</p>
+                      <p className="line-clamp-3 text-sm font-thin text-foreground/70">{itemSummary}</p>
                     </div>
                   </Link>
                 )

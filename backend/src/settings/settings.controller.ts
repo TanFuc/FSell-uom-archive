@@ -1,4 +1,4 @@
-import { Controller, Get, Put, Body, UseGuards } from '@nestjs/common'
+import { Controller, Get, Post, Put, Delete, Body, Param, Headers, UnauthorizedException, UseGuards } from '@nestjs/common'
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger'
 import { Role } from '@prisma/client'
 import { Roles, CurrentUser, JwtPayload } from '../auth/decorators'
@@ -6,9 +6,14 @@ import { JwtAuthGuard, RolesGuard } from '../auth/guards'
 import {
   UpdateThemeDto,
   UpdateSiteContentDto,
+  UpdateClientCacheVersionDto,
   UpdateSocialLinksDto,
   UpdateExchangeRateDto,
   UpdateBrandingDto,
+  UpdatePaymentSettingsDto,
+  CreateTrustBadgeDto,
+  UpdateTrustBadgeDto,
+  ToggleTrustBadgesGlobalDto,
 } from './dto'
 import { SettingsService } from './settings.service'
 
@@ -56,6 +61,29 @@ export class SettingsController {
   @ApiResponse({ status: 200, description: 'Site content updated' })
   async updateSiteContent(@Body() dto: UpdateSiteContentDto, @CurrentUser() user: JwtPayload) {
     return this.settingsService.updateSiteContent(dto, user.sub)
+  }
+
+  @Put('client-cache-version')
+  @ApiOperation({ summary: 'Update client UI cache version (admin or internal secret)' })
+  @ApiResponse({ status: 200, description: 'Client cache version updated' })
+  async updateClientCacheVersion(
+    @Body() dto: UpdateClientCacheVersionDto,
+    @Headers('authorization') authHeader?: string,
+    @Headers('x-revalidate-secret') secretHeader?: string,
+  ) {
+    const isDev = process.env.NODE_ENV !== 'production'
+    const configuredSecret =
+      process.env.REVALIDATE_SECRET ||
+      process.env.SITEMAP_REVALIDATE_SECRET ||
+      'dev-sitemap-revalidate-secret'
+    const isSecretValid = Boolean(secretHeader && secretHeader === configuredSecret)
+
+    if (!isDev && !isSecretValid && !authHeader) {
+      throw new UnauthorizedException('Unauthorized')
+    }
+
+    const version = dto?.version || `v${Date.now()}`
+    return this.settingsService.updateClientCacheVersion(version)
   }
 
   @Get('social-links')
@@ -123,5 +151,79 @@ export class SettingsController {
   @ApiResponse({ status: 200, description: 'Branding updated' })
   async updateBranding(@Body() dto: UpdateBrandingDto, @CurrentUser() user: JwtPayload) {
     return this.settingsService.updateBranding(dto, user.sub)
+  }
+
+  @Get('payment')
+  @ApiOperation({
+    summary: 'Get payment QR code and bank transfer settings (public)',
+  })
+  @ApiResponse({ status: 200, description: 'Payment settings' })
+  async getPaymentSettings() {
+    return this.settingsService.getPaymentSettings()
+  }
+
+  @Put('payment')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.MANAGER)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Update payment QR code and bank transfer settings (admin/manager)',
+  })
+  @ApiResponse({ status: 200, description: 'Payment settings updated' })
+  async updatePaymentSettings(
+    @Body() dto: UpdatePaymentSettingsDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.settingsService.updatePaymentSettings(dto, user.sub)
+  }
+
+  @Get('trust-badges')
+  @ApiOperation({ summary: 'Get product trust badges and global display setting (public)' })
+  @ApiResponse({ status: 200, description: 'Trust badges list and toggle status' })
+  async getTrustBadges() {
+    return this.settingsService.getTrustBadges()
+  }
+
+  @Post('trust-badges')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.MANAGER)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Create new product trust badge (admin/manager)' })
+  @ApiResponse({ status: 201, description: 'Trust badge created' })
+  async createTrustBadge(@Body() dto: CreateTrustBadgeDto) {
+    return this.settingsService.createTrustBadge(dto)
+  }
+
+  @Put('trust-badges/toggle-global')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.MANAGER)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Toggle trust badges section globally on product detail (admin/manager)' })
+  @ApiResponse({ status: 200, description: 'Global toggle updated' })
+  async toggleTrustBadgesGlobal(@Body() dto: ToggleTrustBadgesGlobalDto) {
+    return this.settingsService.toggleTrustBadgesGlobal(dto.enabled)
+  }
+
+  @Put('trust-badges/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.MANAGER)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Update product trust badge by ID (admin/manager)' })
+  @ApiResponse({ status: 200, description: 'Trust badge updated' })
+  async updateTrustBadge(
+    @Param('id') id: string,
+    @Body() dto: UpdateTrustBadgeDto,
+  ) {
+    return this.settingsService.updateTrustBadge(id, dto)
+  }
+
+  @Delete('trust-badges/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.MANAGER)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Delete product trust badge by ID (admin/manager)' })
+  @ApiResponse({ status: 200, description: 'Trust badge deleted' })
+  async deleteTrustBadge(@Param('id') id: string) {
+    return this.settingsService.deleteTrustBadge(id)
   }
 }

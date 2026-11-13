@@ -123,21 +123,21 @@ export class CreateProductDto {
   @IsOptional()
   hoverImage?: string
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: 'Gốm sứ cao cấp',
     description: 'Product material',
   })
   @IsString()
-  @IsNotEmpty()
-  material: string
+  @IsOptional()
+  material?: string
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: '15cm x 15cm x 30cm',
     description: 'Product dimensions',
   })
   @IsString()
-  @IsNotEmpty()
-  dimensions: string
+  @IsOptional()
+  dimensions?: string
 
   @ApiProperty({
     example: 10,

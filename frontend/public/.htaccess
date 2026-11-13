@@ -1,0 +1,19 @@
+<IfModule mod_env.c>
+  SetEnv NODE_ENV production
+  SetEnv NODE_OPTIONS "--max-old-space-size=256 --v8-pool-size=1"
+  SetEnv UV_THREADPOOL_SIZE 1
+  SetEnv NEXT_TELEMETRY_DISABLED 1
+</IfModule>
+
+PassengerEnabled on
+PassengerAppType node
+PassengerStartupFile passenger-frontend.js
+PassengerMinInstances 1
+PassengerMaxInstances 1
+PassengerForceMaxConcurrentRequestsPerProcess 0
+
+# PassengerMaxPoolSize and PassengerPoolIdleTime are server-only. For these two
+# apps the provider should set PassengerMaxPoolSize 2 and PassengerPoolIdleTime 0.
+
+Options -MultiViews
+RewriteEngine On

@@ -1,23 +1,28 @@
 'use client'
 
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, X, Menu, Instagram, Facebook } from 'lucide-react'
+import { Search, X, Menu, Instagram, Facebook, ShoppingBag, User as UserIcon } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useCustomerStore } from '@/lib/customer-store'
+import { CartDrawer } from '@/components/cart/CartDrawer'
 import { usePathname, useRouter } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 import { useState, useEffect, useLayoutEffect, memo, useMemo, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { useCategories } from '@/hooks/use-categories'
 import { useProducts } from '@/hooks/use-products'
 import { useBranding, useExchangeRate, useSiteContent, useSocialLinks } from '@/hooks/use-settings'
+import { pageHref, parseSitePages } from '@/lib/site-structure'
 import { getDisplayPrice } from '@/lib/currency'
 import {
   parseTrendingTerms,
   SEARCH_TRENDING_EN_KEY,
   SEARCH_TRENDING_VI_KEY,
 } from '@/lib/search-trending'
-import { type Product } from '@/lib/types'
+import { type Product, type SiteContent } from '@/lib/types'
 import { cn, optimizeProductImage } from '@/lib/utils'
+import { CustomerProfileModal } from '@/components/customer/CustomerProfileModal'
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -55,7 +60,7 @@ function HighlightedText({ text, query }: { text: string; query: string }) {
         return (
           <mark
             key={`${part}-${index}`}
-            className="rounded-[4px] bg-[#ece7dc] px-1 py-[1px] text-foreground"
+            className="rounded-[4px] bg-stone-100 px-1 py-[1px] text-foreground"
           >
             {part}
           </mark>
@@ -71,40 +76,43 @@ const SearchResultItem = memo(
 
     return (
       <Link
-      href={`/${locale}/shop/${product.slug}`}
-      onClick={onClick}
-      prefetch={false}
-      className={cn(
-        'group block rounded-2xl border border-foreground/[0.08] bg-[linear-gradient(160deg,#ffffff_0%,#faf8f2_100%)] p-3 text-center shadow-[0_8px_20px_rgba(0,0,0,0.05)] transition-all duration-300 hover:-translate-y-1 hover:border-foreground/20 hover:shadow-[0_18px_34px_rgba(0,0,0,0.15)]',
-        isActive &&
-          'border-foreground/45 bg-[linear-gradient(160deg,#fffdfa_0%,#f4ecdd_100%)] shadow-[0_0_0_2px_rgba(66,56,42,0.16),0_16px_34px_rgba(0,0,0,0.15)]',
-      )}
-    >
-      <div className="relative mx-auto mb-3 aspect-square w-20 overflow-hidden rounded-full border border-foreground/[0.08] bg-muted/5 md:w-24">
-        {product.images?.[0] && (
-          <Image
-            src={optimizeProductImage(product.images[0], { width: 320, height: 320 })}
-            alt={
-              locale === 'vi'
-                ? `${productName} - Gợi ý tìm kiếm ƯƠM. Archive`
-                : `${productName} - Search suggestion by ƯƠM.`
-            }
-            fill
-            sizes="(max-width: 768px) 80px, 96px"
-            className="object-cover transition-transform duration-500 group-hover:scale-110"
-          />
+        href={`/${locale}/shop/${product.slug}`}
+        prefetch={false}
+        onClick={onClick}
+        className={cn(
+          'group block rounded-2xl border border-foreground/[0.08] bg-white p-3 text-center shadow-[0_8px_20px_rgba(0,0,0,0.05)] transition-all duration-300 hover:-translate-y-1 hover:border-foreground/20 hover:shadow-[0_18px_34px_rgba(0,0,0,0.15)]',
+          isActive &&
+            'border-foreground/45 bg-stone-50 shadow-[0_0_0_2px_rgba(66,56,42,0.16),0_16px_34px_rgba(0,0,0,0.15)]',
         )}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/15 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-      </div>
-      <div className="space-y-1">
-        <p className="line-clamp-2 min-h-[2.15rem] text-[9px] font-bold uppercase leading-tight tracking-[0.13em] text-foreground/90">
-          <HighlightedText text={locale === 'vi' ? product.nameVi : product.nameEn} query={query} />
-        </p>
-        <p className="text-[8px] font-semibold uppercase tracking-[0.16em] text-foreground/45">
-          {getDisplayPrice(product, locale, exchangeRate).currentPrice}
-        </p>
-      </div>
-    </Link>
+      >
+        <div className="relative mx-auto mb-3 aspect-square w-20 overflow-hidden rounded-full border border-foreground/[0.08] bg-muted/5 md:w-24">
+          {product.images?.[0] && (
+            <Image
+              src={optimizeProductImage(product.images[0], { width: 320, height: 320 })}
+              alt={
+                locale === 'vi'
+                  ? `${productName} - Gợi ý tìm kiếm ƯƠM. Archive`
+                  : `${productName} - Search suggestion by ƯƠM.`
+              }
+              fill
+              sizes="(max-width: 768px) 80px, 96px"
+              className="object-cover transition-transform duration-500 group-hover:scale-110"
+            />
+          )}
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/15 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+        </div>
+        <div className="space-y-1">
+          <p className="line-clamp-2 min-h-[2.15rem] font-sans text-xs font-semibold leading-tight text-[#4A4238] transition-colors group-hover:text-[#8C7E6A]">
+            <HighlightedText
+              text={locale === 'vi' ? product.nameVi : product.nameEn}
+              query={query}
+            />
+          </p>
+          <p className="font-sans text-xs font-semibold tracking-tight text-[#8C7E6A]">
+            {getDisplayPrice(product, locale, exchangeRate).currentPrice}
+          </p>
+        </div>
+      </Link>
     )
   },
 )
@@ -113,39 +121,60 @@ SearchResultItem.displayName = 'SearchResultItem'
 function SearchSkeletonItem() {
   return (
     <div className="rounded-2xl border border-foreground/[0.08] bg-white/90 p-3 shadow-[0_8px_20px_rgba(0,0,0,0.05)]">
-      <div className="mx-auto mb-3 h-20 w-20 animate-pulse rounded-full bg-gradient-to-r from-[#ece8df] via-[#f5f2eb] to-[#ece8df] bg-[length:220%_100%] md:h-24 md:w-24" />
+      <div className="mx-auto mb-3 h-20 w-20 animate-pulse rounded-full bg-gradient-to-r from-stone-100 via-stone-200 to-stone-100 bg-[length:220%_100%] md:h-24 md:w-24" />
       <div className="space-y-2">
-        <div className="h-2 animate-pulse rounded bg-gradient-to-r from-[#ece8df] via-[#f5f2eb] to-[#ece8df] bg-[length:220%_100%]" />
-        <div className="mx-auto h-2 w-2/3 animate-pulse rounded bg-gradient-to-r from-[#ece8df] via-[#f5f2eb] to-[#ece8df] bg-[length:220%_100%]" />
+        <div className="h-2 animate-pulse rounded bg-gradient-to-r from-stone-100 via-stone-200 to-stone-100 bg-[length:220%_100%]" />
+        <div className="mx-auto h-2 w-2/3 animate-pulse rounded bg-gradient-to-r from-stone-100 via-stone-200 to-stone-100 bg-[length:220%_100%]" />
       </div>
     </div>
   )
 }
 
-export function Header() {
+interface HeaderProps {
+  initialSiteContent?: SiteContent
+}
+
+export function Header({ initialSiteContent }: HeaderProps = {}) {
   const pathname = usePathname()
   const locale = useLocale() as 'vi' | 'en'
   const router = useRouter()
   const t = useTranslations('Navigation')
-  const { data: branding } = useBranding()
-  const { data: exchangeRate } = useExchangeRate()
-  const { data: socialLinks } = useSocialLinks()
-  const { data: siteContent } = useSiteContent()
-
   const [showSearch, setShowSearch] = useState(false)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
+  const [mounted, setMounted] = useState(false)
+  const [isCartOpen, setIsCartOpen] = useState(false)
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
+  const { customer, isAuthenticated, openAuthModal, logout: customerLogout, cartCount, fetchCartCount } = useCustomerStore()
+
+  useEffect(() => {
+    setMounted(true)
+    if (isAuthenticated) {
+      fetchCartCount()
+    }
+  }, [isAuthenticated, fetchCartCount])
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
-  const [isPanelReady, setIsPanelReady] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
   const [activeSearchIndex, setActiveSearchIndex] = useState(-1)
   const [recentSearches, setRecentSearches] = useState<string[]>([])
   const activeCardRefs = useRef<Array<HTMLDivElement | null>>([])
+  const scrollbarPaddingRef = useRef('')
+  const bodyOverflowRef = useRef('')
+  const bodyScrollCompensationRef = useRef('')
+  const { data: branding } = useBranding()
+  const { data: exchangeRate } = useExchangeRate({ enabled: showSearch })
+  const { data: socialLinks } = useSocialLinks()
+  const { data: siteContent } = useSiteContent({
+    initialData: initialSiteContent,
+    staleTime: 15 * 1000,
+    refetchOnMount: true,
+  })
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50)
+      setIsScrolled(window.scrollY > 20)
     }
+    handleScroll()
     window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
@@ -180,11 +209,20 @@ export function Header() {
     try {
       const stored = localStorage.getItem(BRANDING_CACHE_KEY)
       if (!stored) return undefined
-      return JSON.parse(stored) as {
+      const parsed = JSON.parse(stored) as {
         brandNameVi?: string
         brandNameEn?: string
         loadingText?: string
       }
+      if (
+        [parsed.brandNameVi, parsed.brandNameEn, parsed.loadingText].some(
+          (value) => typeof value === 'string' && (value.includes('UOM.') || value.includes('Æ')),
+        )
+      ) {
+        localStorage.removeItem(BRANDING_CACHE_KEY)
+        return undefined
+      }
+      return parsed
     } catch {
       return undefined
     }
@@ -238,17 +276,36 @@ export function Header() {
     setRecentSearches([])
   }, [RECENT_SEARCHES_KEY])
 
-  const { data: categories } = useCategories(
-    { includeInactive: false },
-    { enabled: showSearch || showMobileMenu },
-  )
+  const { data: categories } = useCategories({ includeInactive: false }, { enabled: showSearch })
 
   useLayoutEffect(() => {
-    if (showSearch || showMobileMenu) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
-      setIsPanelReady(false)
+    if (!showSearch && !showMobileMenu) {
+      return
+    }
+
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth
+    bodyOverflowRef.current = document.body.style.overflow
+    scrollbarPaddingRef.current = document.body.style.paddingRight
+    bodyScrollCompensationRef.current = document.body.style.getPropertyValue(
+      '--scrollbar-compensation',
+    )
+    document.body.style.overflow = 'hidden'
+    if (scrollbarWidth > 0) {
+      document.body.style.paddingRight = `${scrollbarWidth}px`
+      document.body.style.setProperty('--scrollbar-compensation', `${scrollbarWidth}px`)
+    }
+
+    return () => {
+      document.body.style.overflow = bodyOverflowRef.current
+      document.body.style.paddingRight = scrollbarPaddingRef.current
+      if (bodyScrollCompensationRef.current) {
+        document.body.style.setProperty(
+          '--scrollbar-compensation',
+          bodyScrollCompensationRef.current,
+        )
+      } else {
+        document.body.style.removeProperty('--scrollbar-compensation')
+      }
     }
   }, [showSearch, showMobileMenu])
 
@@ -287,7 +344,7 @@ export function Header() {
   const { data: latestSuggestions, isLoading: isLatestLoading } = useProducts(
     {
       page: 1,
-      limit: 40,
+      limit: 12,
       isActive: true,
       sortBy: 'updatedAt',
       sortOrder: 'desc',
@@ -385,22 +442,38 @@ export function Header() {
     node?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' })
   }, [activeSearchIndex, resultBatchKey, showSearch])
 
-  const navigation = [
-    { name: t('shop'), href: `/${locale}/shop` },
-    { name: t('about'), href: `/${locale}/about` },
-    { name: t('journal'), href: `/${locale}/journal` },
-  ]
+  const navigation = parseSitePages(siteContent)
+    .filter((page) => page.isVisible && (page.slug !== 'contact' || parseSitePages(siteContent).find((item) => item.slug === 'about')?.isVisible))
+    .map((page) => ({ name: locale === 'vi' ? page.titleVi : page.titleEn, href: pageHref(locale, page.slug) }))
 
   const switchLocale = locale === 'vi' ? 'en' : 'vi'
   const newPath = pathname.replace(`/${locale}`, `/${switchLocale}`)
 
   const closeSearchPanel = () => {
-    setIsPanelReady(false)
     setShowSearch(false)
     if (typeof document !== 'undefined') {
       const active = document.activeElement as HTMLElement | null
       active?.blur()
     }
+  }
+
+  const openSearchPanel = () => {
+    setShowMobileMenu(false)
+    setShowSearch(true)
+  }
+
+  const closeMobileMenu = () => {
+    setShowMobileMenu(false)
+  }
+
+  const toggleMobileMenu = () => {
+    if (showMobileMenu) {
+      closeMobileMenu()
+      return
+    }
+
+    setShowSearch(false)
+    setShowMobileMenu(true)
   }
 
   const handleSearch = (e: React.FormEvent) => {
@@ -452,557 +525,689 @@ export function Header() {
   }
 
   const cubicBezier = [0.22, 1, 0.36, 1]
+  const menuItemRise = {
+    hidden: { opacity: 0, x: -10 },
+    show: {
+      opacity: 1,
+      x: 0,
+      transition: { duration: 0.26, ease: cubicBezier },
+    },
+  }
+  const menuListStagger = {
+    hidden: { opacity: 1 },
+    show: {
+      opacity: 1,
+      transition: {
+        delayChildren: 0.16,
+        staggerChildren: 0.055,
+      },
+    },
+  }
   const listStagger = {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
-      transition: {
-        staggerChildren: 0.06,
-        delayChildren: 0.04,
-      },
+      transition: { duration: 0.08 },
     },
   }
   const itemRise = {
-    hidden: { opacity: 0, y: 10 },
+    hidden: { opacity: 0 },
     show: {
       opacity: 1,
-      y: 0,
-      transition: { duration: 0.28, ease: cubicBezier },
+      transition: { duration: 0.18, ease: cubicBezier },
     },
   }
 
-  const isHeaderOpaque = showMobileMenu
-  const panelOffsetClass = isScrolled ? 'top-16 lg:top-20' : 'top-20 lg:top-28'
+  const isHeaderOpaque = (showMobileMenu || isScrolled) && !showSearch
+  const isBorderVisible = (isScrolled || showMobileMenu) && !showSearch
 
   return (
-    <header
-      className={cn(
-        'fixed left-0 right-0 top-0 z-50 transition-all duration-500',
-        isHeaderOpaque ? 'bg-white shadow-sm' : 'bg-transparent',
-      )}
-    >
-      <div
+    <>
+      <header
         className={cn(
-          'relative z-[70] flex items-center bg-inherit px-6 transition-all duration-500 lg:px-12',
-          isScrolled ? 'h-16 lg:h-20' : 'h-20 lg:h-28',
-          isHeaderOpaque && !isScrolled ? 'border-b border-foreground/[0.03]' : 'border-b-0',
+          'fixed left-0 right-0 top-0 transition-[background-color,box-shadow,border-color] duration-300',
+          showMobileMenu ? 'z-[60]' : 'z-50',
+          isHeaderOpaque ? 'shadow-xs bg-white/95 backdrop-blur-md' : 'bg-transparent',
+          isBorderVisible ? 'border-b border-foreground/[0.06]' : 'border-b-0',
         )}
+        style={{ paddingRight: 'var(--scrollbar-compensation, 0px)' }}
       >
-        <div className="flex w-full items-center justify-between">
-          {/* Left */}
-          <div className="flex w-1/3 items-center">
-            <button
-              onClick={() => {
-                setShowMobileMenu(!showMobileMenu)
-                closeSearchPanel()
-              }}
-              aria-label={showMobileMenu ? t('closeMenu') : t('openMenu')}
-              className="group flex items-center gap-2 py-2 outline-none"
-            >
-              <div className="flex items-center justify-center">
-                <AnimatePresence mode="wait">
-                  {showMobileMenu ? (
-                    <motion.div
-                      key="close"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.15 }}
-                    >
-                      <X
-                        className={cn(
-                          'transition-all duration-500',
-                          isScrolled ? 'h-5 w-5 lg:h-6 lg:w-6' : 'h-6 w-6 lg:h-8 lg:w-8',
-                        )}
-                      />
-                    </motion.div>
-                  ) : (
-                    <motion.div
-                      key="menu"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.15 }}
-                    >
-                      <Menu
-                        className={cn(
-                          'transition-all duration-500',
-                          isScrolled ? 'h-5 w-5 lg:h-6 lg:w-6' : 'h-6 w-6 lg:h-8 lg:w-8',
-                        )}
-                      />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            </button>
-          </div>
-
-          {/* Middle Logo */}
-          <div className="flex w-1/3 justify-center overflow-hidden">
-            <Link
-              href={`/${locale}`}
-              className={cn(
-                'font-playfair font-bold tracking-tighter transition-all duration-500',
-                'text-2xl lg:text-4xl',
-                isScrolled
-                  ? 'pointer-events-none -translate-y-8 scale-90 opacity-0 blur-sm'
-                  : 'translate-y-0 opacity-100 hover:opacity-80',
-              )}
-              tabIndex={isScrolled ? -1 : 0}
-              suppressHydrationWarning
-            >
-              {brandText}
-            </Link>
-          </div>
-
-          {/* Right Socials + Search + Lang */}
-          <div className="flex w-1/3 items-center justify-end gap-3 lg:gap-8">
-            {/* Desktop Socials */}
-            <div className="mr-2 hidden items-center gap-5 lg:flex">
-              {socialLinks?.instagramUsername && (
-                <a
-                  href={`https://instagram.com/${socialLinks.instagramUsername}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="transition-opacity hover:opacity-50"
-                  aria-label="Instagram"
-                >
-                  <Instagram className="h-5 w-5" />
-                </a>
-              )}
-              {socialLinks?.facebookPageUrl && (
-                <a
-                  href={socialLinks.facebookPageUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="transition-opacity hover:opacity-50"
-                  aria-label="Facebook"
-                >
-                  <Facebook className="h-5 w-5" />
-                </a>
-              )}
+        <div
+          className={cn(
+            'relative z-[70] flex items-center bg-inherit px-4 transition-[height] duration-200 sm:px-6 lg:px-12',
+            isScrolled ? 'h-16 lg:h-20' : 'h-20 lg:h-28',
+          )}
+        >
+          <div className="relative flex w-full items-center justify-between">
+            {/* Left */}
+            <div className="flex shrink-0 items-center justify-start z-10">
+              <button
+                onClick={toggleMobileMenu}
+                aria-label={showMobileMenu ? t('closeMenu') : t('openMenu')}
+                className="group flex items-center gap-2 py-2 outline-none"
+              >
+                <div className="flex items-center justify-center">
+                  <AnimatePresence mode="wait" initial={false}>
+                    {showMobileMenu ? (
+                      <motion.div
+                        key="close"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.18 }}
+                      >
+                        <X
+                          className={cn(
+                            'transition-[height,width] duration-200',
+                            isScrolled ? 'h-5 w-5 lg:h-6 lg:w-6' : 'h-6 w-6 lg:h-8 lg:w-8',
+                          )}
+                        />
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="menu"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.18 }}
+                      >
+                        <Menu
+                          className={cn(
+                            'transition-[height,width] duration-200',
+                            isScrolled ? 'h-5 w-5 lg:h-6 lg:w-6' : 'h-6 w-6 lg:h-8 lg:w-8',
+                          )}
+                        />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </button>
             </div>
 
-            <button
-              onClick={() => {
-                showSearch ? closeSearchPanel() : setShowSearch(true)
-                setShowMobileMenu(false)
-              }}
-              className="flex items-center gap-2 py-1 outline-none"
-              aria-label={showSearch ? t('closeSearch') : t('openSearch')}
-            >
-              {showSearch ? (
-                <X className="h-5 w-5 lg:h-6 lg:w-6" />
-              ) : (
-                <Search className="h-5 w-5 lg:h-6 lg:w-6" />
-              )}
-              <span className="hidden text-xs font-bold uppercase leading-none tracking-widest lg:inline">
-                {showSearch ? t('close') : t('search')}
-              </span>
-            </button>
+            {/* Middle Logo (Always centered) */}
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 pointer-events-auto max-w-[50vw] sm:max-w-[60vw] text-center">
+              <Link
+                href={`/${locale}`}
+                className={cn(
+                  'block max-w-full font-serif font-light tracking-tight transition-all duration-300 hover:opacity-80 text-center truncate',
+                  isScrolled ? 'text-sm sm:text-lg lg:text-3xl' : 'text-base sm:text-xl lg:text-4xl',
+                )}
+                tabIndex={0}
+                suppressHydrationWarning
+              >
+                <span className="block truncate">{brandText}</span>
+              </Link>
+            </div>
 
-            <Link
-              href={newPath}
-              className="flex h-full items-center text-xs font-bold uppercase leading-none tracking-widest lg:text-sm"
-              aria-label={locale === 'vi' ? 'Switch to English' : 'Chuyển sang Tiếng Việt'}
-            >
-              {switchLocale}
-            </Link>
+            {/* Right Actions: Socials + Search + Cart + Auth + Lang (Icon Only) */}
+            <div className="flex shrink-0 items-center justify-end gap-2 xs:gap-2.5 sm:gap-4 lg:gap-5 z-10">
+              {/* Desktop Socials */}
+              <div className="mr-1 hidden items-center gap-4 lg:flex">
+                {socialLinks?.instagramUsername && (
+                  <a
+                    href={`https://instagram.com/${socialLinks.instagramUsername}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="transition-opacity hover:opacity-50"
+                    aria-label="Instagram"
+                  >
+                    <Instagram className="h-5 w-5" />
+                  </a>
+                )}
+                {socialLinks?.facebookPageUrl && (
+                  <a
+                    href={socialLinks.facebookPageUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="transition-opacity hover:opacity-50"
+                    aria-label="Facebook"
+                  >
+                    <Facebook className="h-5 w-5" />
+                  </a>
+                )}
+              </div>
+
+              {/* Search Button */}
+              <button
+                onClick={() => {
+                  showSearch ? closeSearchPanel() : openSearchPanel()
+                }}
+                className="p-1 outline-none transition-opacity hover:opacity-60"
+                aria-label={showSearch ? t('closeSearch') : t('openSearch')}
+                title={showSearch ? t('close') : t('search')}
+              >
+                {showSearch ? (
+                  <X className="h-5 w-5 lg:h-6 lg:w-6" />
+                ) : (
+                  <Search className="h-5 w-5 lg:h-6 lg:w-6" />
+                )}
+              </button>
+
+              {/* Cart Button */}
+              <button
+                onClick={() => {
+                  if (!isAuthenticated) {
+                    openAuthModal('Vui lòng đăng nhập để xem giỏ hàng', () => setIsCartOpen(true))
+                  } else {
+                    setIsCartOpen(true)
+                  }
+                }}
+                className="p-1 outline-none transition-opacity hover:opacity-60 relative whitespace-nowrap shrink-0"
+                aria-label="Giỏ hàng"
+                title={locale === 'vi' ? 'Giỏ hàng' : 'Cart'}
+              >
+                <div className="relative flex items-center justify-center">
+                  <ShoppingBag className="h-5 w-5 lg:h-6 lg:w-6 shrink-0" />
+                  {isAuthenticated && cartCount > 0 && (
+                    <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#4A4238] px-1 font-mono text-[9px] font-light leading-none text-white shadow-xs animate-in zoom-in-50 duration-200">
+                      {cartCount > 99 ? '99+' : cartCount}
+                    </span>
+                  )}
+                </div>
+              </button>
+
+              {/* Customer Account Button */}
+              {isAuthenticated ? (
+                <div className="flex items-center gap-1.5 whitespace-nowrap shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setIsProfileModalOpen(true)}
+                    className="flex items-center gap-1.5 p-1 hover:text-[#8C7E6A] transition-colors group cursor-pointer text-left"
+                    title={customer?.fullName || (locale === 'vi' ? 'Thông tin & Đổi mật khẩu' : 'Profile & Password')}
+                    aria-label="Thông tin tài khoản"
+                  >
+                    <UserIcon className="h-5 w-5 lg:h-6 lg:w-6 shrink-0 group-hover:scale-105 transition-transform" />
+                    <span className="hidden sm:inline font-serif text-xs font-normal text-[#4A4238] group-hover:text-[#8C7E6A] max-w-[120px] truncate">
+                      {customer?.fullName || (locale === 'vi' ? 'Tài khoản' : 'Account')}
+                    </span>
+                  </button>
+                  <button
+                    onClick={customerLogout}
+                    className="text-[9px] uppercase tracking-wider text-foreground/40 hover:text-[#4A4238] shrink-0 font-thin transition-colors"
+                    title="Đăng xuất"
+                  >
+                    (Thoát)
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => openAuthModal('Đăng nhập tài khoản khách hàng')}
+                  className="p-1 transition-opacity hover:opacity-60 whitespace-nowrap shrink-0"
+                  title={locale === 'vi' ? 'Đăng nhập' : 'Login'}
+                  aria-label={locale === 'vi' ? 'Đăng nhập' : 'Login'}
+                >
+                  <UserIcon className="h-5 w-5 lg:h-6 lg:w-6 shrink-0" />
+                </button>
+              )}
+
+              {/* Language Switch */}
+              <Link
+                href={newPath}
+                className="p-1 text-xs font-light uppercase leading-none tracking-widest transition-opacity hover:opacity-60 lg:text-sm shrink-0"
+                aria-label={locale === 'vi' ? 'Switch to English' : 'Chuyển sang Tiếng Việt'}
+              >
+                {switchLocale}
+              </Link>
+            </div>
           </div>
         </div>
-      </div>
+      </header>
 
       {/* SEARCH PANEL */}
-      <AnimatePresence>
-        {showSearch && (
-          <div className="fixed inset-0 z-40">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.25 }}
-              className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(0,0,0,0.46)_0%,rgba(0,0,0,0.62)_100%)] backdrop-blur-[3px]"
-              onClick={closeSearchPanel}
-            />
-            <motion.div
-              initial={{ y: '-10%', opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: '-10%', opacity: 0 }}
-              onAnimationComplete={() => setIsPanelReady(true)}
-              transition={{ duration: 0.35, ease: cubicBezier }}
-              className={cn(
-                'absolute inset-x-0 bottom-0 overflow-y-auto px-3 pb-4 will-change-transform md:px-6 md:pb-6',
-                panelOffsetClass,
-              )}
-            >
-              <div className="relative mx-auto w-full max-w-[1160px] overflow-hidden rounded-2xl border border-black/10 bg-[#fcfcfa] shadow-[0_24px_70px_rgba(0,0,0,0.3)]">
-                <div className="pointer-events-none absolute -right-16 -top-20 h-52 w-52 rounded-full bg-[#d7cab3]/45 blur-3xl" />
-                <div className="pointer-events-none absolute -left-12 bottom-0 h-40 w-40 rounded-full bg-[#e7dfcf]/55 blur-3xl" />
+      {mounted &&
+        createPortal(
+          <AnimatePresence>
+            {showSearch && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="fixed inset-0 z-[90]"
+              >
+                <div className="absolute inset-0 bg-black/80" onClick={closeSearchPanel} />
                 <motion.div
-                  animate={isPanelReady ? { opacity: 1, y: 0 } : { opacity: 0, y: 5 }}
-                  transition={{ duration: 0.3 }}
-                  className="relative min-h-[300px] px-5 py-6 md:px-8 md:py-8 lg:px-10 lg:py-9"
+                  initial={{ opacity: 0, y: -20, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -10, scale: 0.98 }}
+                  transition={{ duration: 0.3, ease: 'easeOut' }}
+                  className="absolute inset-x-0 bottom-0 top-16 overflow-y-auto px-3 pb-4 md:top-24 md:px-6 md:pb-6"
+                  onClick={closeSearchPanel}
                 >
-                  <form
-                    onSubmit={handleSearch}
-                    className="relative mb-8 rounded-xl border border-foreground/10 bg-white px-4 py-3 shadow-sm transition-all duration-300 focus-within:border-foreground/30 focus-within:shadow-[0_10px_26px_rgba(0,0,0,0.08)] md:px-5"
+                  <div
+                    className="relative mx-auto w-full max-w-[1160px] overflow-hidden rounded-2xl border border-black/10 bg-white shadow-[0_24px_70px_rgba(0,0,0,0.3)]"
+                    onClick={(e) => e.stopPropagation()}
                   >
-                    <div className="mb-2 flex items-center justify-between">
-                      <p className="text-[9px] font-bold uppercase tracking-[0.3em] text-foreground/35">
-                        {locale === 'vi' ? 'Tìm Kiếm Nhanh' : 'Quick Search'}
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <p className="text-[9px] uppercase tracking-[0.22em] text-foreground/30">
-                          {hasQuery
-                            ? `${foundSuggestions.length} ${locale === 'vi' ? 'kết quả' : 'results'}`
-                            : 'ENTER'}
-                        </p>
-                        <button
-                          type="button"
-                          onClick={closeSearchPanel}
-                          className="inline-flex items-center gap-1 rounded-full border border-foreground/15 px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.16em] text-foreground/55 transition-all hover:border-foreground/35 hover:text-foreground"
-                        >
-                          <X className="h-3 w-3" />
-                          {t('close')}
-                        </button>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Search className="h-4 w-4 shrink-0 text-foreground/35" />
-                      <input
-                        type="text"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        onKeyDown={handleInputKeyDown}
-                        placeholder={
-                          locale === 'vi'
-                            ? 'Nhập tên sản phẩm, chất liệu...'
-                            : 'Type product name, material...'
-                        }
-                        className="w-full bg-transparent py-1.5 font-sans text-base font-semibold tracking-[0.01em] text-foreground placeholder:text-foreground/35 focus:outline-none md:text-lg"
-                        autoFocus
-                        aria-label={locale === 'vi' ? 'Nhập nội dung tìm kiếm' : 'Search query'}
-                      />
-                    </div>
-                    {isSearching && searchQuery && globalLoadingText && (
-                      <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                        <span className="animate-pulse text-[10px] font-bold uppercase tracking-[0.25em] text-foreground/40">
-                          {globalLoadingText}
-                        </span>
-                      </div>
-                    )}
-                  </form>
-
-                  <div className="grid grid-cols-1 gap-10 md:grid-cols-4">
-                    <div className="md:col-span-3">
-                      {isQueryEmpty && (
-                        <motion.div
-                          initial={{ opacity: 0, y: 6 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="mb-6 rounded-xl border border-foreground/10 bg-[linear-gradient(120deg,rgba(255,255,255,0.95)_0%,rgba(244,237,224,0.95)_100%)] p-4 shadow-sm"
-                        >
-                          <p className="mb-3 text-[9px] font-bold uppercase tracking-[0.28em] text-foreground/40">
-                            {locale === 'vi' ? 'Trending Searches' : 'Trending Searches'}
+                    <div className="pointer-events-none absolute -right-16 -top-20 hidden h-52 w-52 rounded-full bg-stone-200/20 blur-3xl md:block" />
+                    <div className="pointer-events-none absolute -left-12 bottom-0 hidden h-40 w-40 rounded-full bg-stone-200/20 blur-3xl md:block" />
+                    <div className="relative min-h-[300px] px-5 py-6 md:px-8 md:py-8 lg:px-10 lg:py-9">
+                      <form
+                        onSubmit={handleSearch}
+                        className="relative mb-8 rounded-xl border border-foreground/10 bg-white px-4 py-3 shadow-sm transition-all duration-300 focus-within:border-foreground/30 focus-within:shadow-[0_10px_26px_rgba(0,0,0,0.08)] md:px-5"
+                      >
+                        <div className="mb-2 flex items-center justify-between">
+                          <p className="text-[9px] font-light uppercase tracking-[0.3em] text-foreground/35">
+                            {locale === 'vi' ? 'Tìm Kiếm Nhanh' : 'Quick Search'}
                           </p>
-                          <div className="flex flex-wrap gap-2.5">
-                            {trendingSearches.map((term) => (
-                              <button
-                                key={term}
-                                type="button"
-                                onClick={() => setSearchQuery(term)}
-                                className="rounded-full border border-foreground/15 bg-white/80 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground/70 transition-all hover:-translate-y-0.5 hover:border-foreground/35 hover:text-foreground"
-                              >
-                                {term}
-                              </button>
-                            ))}
-                          </div>
-                        </motion.div>
-                      )}
-
-                      {isQueryEmpty && recentSearches.length > 0 && (
-                        <motion.div
-                          initial={{ opacity: 0, y: 6 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.04 }}
-                          className="mb-6 rounded-xl border border-foreground/10 bg-white/90 p-4 shadow-sm"
-                        >
-                          <div className="mb-3 flex items-center justify-between gap-2">
-                            <p className="text-[9px] font-bold uppercase tracking-[0.28em] text-foreground/40">
-                              {locale === 'vi' ? 'Recent Searches' : 'Recent Searches'}
+                          <div className="flex items-center gap-2">
+                            <p className="text-[9px] uppercase tracking-[0.22em] text-foreground/30 font-thin">
+                              {hasQuery
+                                ? `${foundSuggestions.length} ${locale === 'vi' ? 'kết quả' : 'results'}`
+                                : 'ENTER'}
                             </p>
                             <button
                               type="button"
-                              onClick={() => {
-                                setRecentSearches([])
-                                if (typeof window !== 'undefined') {
-                                  try {
-                                    window.localStorage.removeItem(RECENT_SEARCHES_KEY)
-                                  } catch {}
-                                }
-                              }}
-                              className="border-foreground/12 rounded-full border px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-foreground/45 transition-colors hover:border-foreground/30 hover:text-foreground"
+                              onClick={closeSearchPanel}
+                              className="inline-flex items-center gap-1 rounded-full border border-foreground/15 px-2 py-1 text-[9px] font-light uppercase tracking-[0.16em] text-foreground/55 transition-all hover:border-foreground/35 hover:text-foreground"
                             >
-                              {locale === 'vi' ? 'Xóa' : 'Clear'}
+                              <X className="h-3 w-3" />
+                              {t('close')}
                             </button>
                           </div>
-                          <div className="flex flex-wrap gap-2.5">
-                            {recentSearches.map((term) => (
-                              <button
-                                key={`recent-${term}`}
-                                type="button"
-                                onClick={() => setSearchQuery(term)}
-                                className="rounded-full border border-foreground/15 bg-[#f9f6ef] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground/70 transition-all hover:-translate-y-0.5 hover:border-foreground/35 hover:text-foreground"
-                              >
-                                {term}
-                              </button>
-                            ))}
-                          </div>
-                        </motion.div>
-                      )}
-
-                      {hasQuery && (
-                        <>
-                          <div className="mb-5 flex items-center justify-between gap-3">
-                            <h4 className="text-[9px] font-bold uppercase tracking-[0.34em] text-foreground/35">
-                              {locale === 'vi' ? 'KẾT QUẢ TÌM ĐƯỢC' : 'FOUND RESULTS'}
-                            </h4>
-                            <span className="rounded-full border border-foreground/15 bg-white/80 px-3 py-1 text-[9px] font-semibold uppercase tracking-[0.2em] text-foreground/40">
-                              {foundSuggestions.length}
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <Search className="h-4 w-4 shrink-0 text-foreground/35" />
+                          <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onKeyDown={handleInputKeyDown}
+                            placeholder={
+                              locale === 'vi'
+                                ? 'Nhập tên sản phẩm, chất liệu...'
+                                : 'Type product name, material...'
+                            }
+                            className="w-full bg-transparent py-1.5 font-sans text-base font-light tracking-[0.01em] text-foreground placeholder:text-foreground/35 focus:outline-none md:text-lg"
+                            autoFocus
+                            aria-label={locale === 'vi' ? 'Nhập nội dung tìm kiếm' : 'Search query'}
+                          />
+                        </div>
+                        {isSearching && searchQuery && globalLoadingText && (
+                          <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                            <span
+                              className="animate-pulse text-[10px] font-light uppercase tracking-[0.25em] text-foreground/40"
+                              suppressHydrationWarning
+                            >
+                              {globalLoadingText}
                             </span>
                           </div>
-
-                          <AnimatePresence mode="wait" initial={false}>
-                            {isSearchLoading ? (
-                              <motion.div
-                                key={`skeleton-${debouncedQuery}`}
-                                initial={{ opacity: 0, y: 8 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -8 }}
-                                transition={{ duration: 0.22 }}
-                                className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4 md:gap-4"
-                              >
-                                {Array.from({ length: 4 }).map((_, idx) => (
-                                  <SearchSkeletonItem key={`sk-${idx}`} />
-                                ))}
-                              </motion.div>
-                            ) : foundSuggestions.length > 0 ? (
-                              <motion.div
-                                key={`results-${resultBatchKey}`}
-                                variants={listStagger}
-                                initial="hidden"
-                                animate={isPanelReady ? 'show' : 'hidden'}
-                                exit={{ opacity: 0, y: -8 }}
-                                className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4 md:gap-4"
-                              >
-                                {foundSuggestions.map((product, index) => (
-                                  <motion.div
-                                    key={`${product.id}-${resultBatchKey}`}
-                                    variants={itemRise}
-                                    initial={{ opacity: 0, y: 8, filter: 'blur(8px)' }}
-                                    animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                                    exit={{ opacity: 0, y: -6, filter: 'blur(8px)' }}
-                                    transition={{ duration: 0.26, ease: cubicBezier }}
-                                    ref={(node) => {
-                                      activeCardRefs.current[index] = node
-                                    }}
-                                  >
-                                    <SearchResultItem
-                                      product={product}
-                                      locale={locale}
-                                      exchangeRate={exchangeRate?.rate}
-                                      onClick={() => {
-                                        addRecentSearch(searchQuery || debouncedQuery)
-                                        closeSearchPanel()
-                                      }}
-                                      query={debouncedQuery}
-                                      isActive={activeSearchIndex === index}
-                                    />
-                                  </motion.div>
-                                ))}
-                              </motion.div>
-                            ) : (
-                              <motion.p
-                                key={`empty-${debouncedQuery}`}
-                                initial={{ opacity: 0, y: 8 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -8 }}
-                                className="mb-8 rounded-lg border border-dashed border-foreground/15 bg-white/70 px-4 py-4 text-xs uppercase tracking-[0.16em] text-foreground/45"
-                              >
-                                {locale === 'vi'
-                                  ? 'Không tìm thấy kết quả phù hợp.'
-                                  : 'No matching results found.'}
-                              </motion.p>
-                            )}
-                          </AnimatePresence>
-                        </>
-                      )}
-
-                      <div className="mb-5 flex items-center justify-between gap-3 border-t border-foreground/10 pt-5">
-                        <h4 className="text-[9px] font-bold uppercase tracking-[0.34em] text-foreground/35">
-                          {locale === 'vi' ? 'GỢI Ý' : 'SUGGESTED'}
-                        </h4>
-                        {hasQuery && (
-                          <span className="rounded-full border border-foreground/15 bg-white/80 px-3 py-1 text-[9px] font-semibold uppercase tracking-[0.2em] text-foreground/40">
-                            {locale === 'vi' ? 'Đề xuất thêm' : 'More to explore'}
-                          </span>
                         )}
-                      </div>
+                      </form>
 
-                      {suggestedSuggestions.length > 0 || isLatestLoading || isFeaturedLoading ? (
-                        <AnimatePresence mode="wait">
-                          {isLatestLoading || isFeaturedLoading ? (
+                      <div className="grid grid-cols-1 gap-10 md:grid-cols-4">
+                        <div className="md:col-span-3">
+                          {isQueryEmpty && (
                             <motion.div
-                              key="suggested-skeleton"
                               initial={{ opacity: 0 }}
                               animate={{ opacity: 1 }}
-                              exit={{ opacity: 0 }}
-                              className="grid grid-cols-2 gap-3 sm:grid-cols-4 md:gap-4"
+                              className="mb-6 rounded-xl border border-foreground/10 bg-[linear-gradient(120deg,rgba(255,255,255,0.95)_0%,rgba(244,237,224,0.95)_100%)] p-4 shadow-sm"
                             >
-                              {Array.from({ length: 4 }).map((_, idx) => (
-                                <SearchSkeletonItem key={`suggested-sk-${idx}`} />
-                              ))}
-                            </motion.div>
-                          ) : (
-                            <motion.div
-                              key={`suggested-${resultBatchKey}`}
-                              variants={listStagger}
-                              initial="hidden"
-                              animate="show"
-                              className="grid grid-cols-2 gap-3 sm:grid-cols-4 md:gap-4"
-                            >
-                              {suggestedSuggestions.map((product) => (
-                                <motion.div
-                                  key={`suggested-${product.id}-${resultBatchKey}`}
-                                  variants={itemRise}
-                                  initial={{ opacity: 0, y: 8, filter: 'blur(8px)' }}
-                                  animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                                  transition={{ duration: 0.26, ease: cubicBezier }}
-                                >
-                                  <SearchResultItem
-                                    product={product}
-                                    locale={locale}
-                                    exchangeRate={exchangeRate?.rate}
-                                    onClick={() => {
-                                      addRecentSearch(searchQuery || debouncedQuery)
-                                      closeSearchPanel()
-                                    }}
-                                    query={debouncedQuery}
-                                    isActive={false}
-                                  />
-                                </motion.div>
-                              ))}
+                              <p className="mb-3 text-[9px] font-light uppercase tracking-[0.28em] text-foreground/40">
+                                {locale === 'vi' ? 'Trending Searches' : 'Trending Searches'}
+                              </p>
+                              <div className="flex flex-wrap gap-2.5">
+                                {trendingSearches.map((term) => (
+                                  <button
+                                    key={term}
+                                    type="button"
+                                    onClick={() => setSearchQuery(term)}
+                                    className="rounded-full border border-foreground/15 bg-white/80 px-3 py-1.5 text-[10px] font-light uppercase tracking-[0.12em] text-foreground/70 transition-all hover:-translate-y-0.5 hover:border-foreground/35 hover:text-foreground"
+                                  >
+                                    {term}
+                                  </button>
+                                ))}
+                              </div>
                             </motion.div>
                           )}
-                        </AnimatePresence>
-                      ) : (
-                        <p className="rounded-lg border border-dashed border-foreground/15 bg-white/70 px-4 py-4 text-xs uppercase tracking-[0.16em] text-foreground/45">
-                          {locale === 'vi' ? 'Chưa có gợi ý phù hợp.' : 'No suggestions yet.'}
-                        </p>
-                      )}
-                    </div>
-                    <div className="space-y-5">
-                      <h4 className="mb-5 text-[9px] font-bold uppercase tracking-[0.34em] text-foreground/35">
-                        CATEGORIES
-                      </h4>
-                      <motion.nav
-                        variants={listStagger}
-                        initial="hidden"
-                        animate={isPanelReady ? 'show' : 'hidden'}
-                        className="flex flex-wrap gap-2 md:flex-col md:gap-2.5"
-                      >
-                        {categories?.map((cat) => (
-                          <motion.div key={cat.id} variants={itemRise}>
-                            <Link
-                              href={`/${locale}/shop?categoryId=${cat.id}`}
-                              onClick={closeSearchPanel}
-                              className="border-foreground/12 block rounded-full border bg-white px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] transition-all hover:border-foreground/35 hover:bg-foreground hover:text-white md:w-fit"
+
+                          {isQueryEmpty && recentSearches.length > 0 && (
+                            <motion.div
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              transition={{ delay: 0.04 }}
+                              className="mb-6 rounded-xl border border-foreground/10 bg-white/90 p-4 shadow-sm"
                             >
-                              {locale === 'vi' ? cat.nameVi : cat.nameEn}
-                            </Link>
-                          </motion.div>
-                        ))}
-                      </motion.nav>
+                              <div className="mb-3 flex items-center justify-between gap-2">
+                                <p className="text-[9px] font-light uppercase tracking-[0.28em] text-foreground/40">
+                                  {locale === 'vi' ? 'Recent Searches' : 'Recent Searches'}
+                                </p>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setRecentSearches([])
+                                    if (typeof window !== 'undefined') {
+                                      try {
+                                        window.localStorage.removeItem(RECENT_SEARCHES_KEY)
+                                      } catch {}
+                                    }
+                                  }}
+                                  className="border-foreground/12 rounded-full border px-2 py-1 text-[9px] font-thin uppercase tracking-[0.14em] text-foreground/45 transition-colors hover:border-foreground/30 hover:text-foreground"
+                                >
+                                  {locale === 'vi' ? 'Xóa' : 'Clear'}
+                                </button>
+                              </div>
+                              <div className="flex flex-wrap gap-2.5">
+                                {recentSearches.map((term) => (
+                                  <button
+                                    key={`recent-${term}`}
+                                    type="button"
+                                    onClick={() => setSearchQuery(term)}
+                                    className="rounded-full border border-foreground/15 bg-stone-50 px-3 py-1.5 text-[10px] font-light uppercase tracking-[0.12em] text-foreground/70 transition-all hover:-translate-y-0.5 hover:border-foreground/35 hover:text-foreground"
+                                  >
+                                    {term}
+                                  </button>
+                                ))}
+                              </div>
+                            </motion.div>
+                          )}
+
+                          {hasQuery && (
+                            <>
+                              <div className="mb-5 flex items-center justify-between gap-3">
+                                <h4 className="text-[9px] font-light uppercase tracking-[0.34em] text-foreground/35">
+                                  {locale === 'vi' ? 'KẾT QUẢ TÌM ĐƯỢC' : 'FOUND RESULTS'}
+                                </h4>
+                                <span className="rounded-full border border-foreground/15 bg-white/80 px-3 py-1 text-[9px] font-thin uppercase tracking-[0.2em] text-foreground/40">
+                                  {foundSuggestions.length}
+                                </span>
+                              </div>
+
+                              <AnimatePresence mode="wait" initial={false}>
+                                {isSearchLoading ? (
+                                  <motion.div
+                                    key={`skeleton-${debouncedQuery}`}
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    transition={{ duration: 0.12 }}
+                                    className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4 md:gap-4"
+                                  >
+                                    {Array.from({ length: 4 }).map((_, idx) => (
+                                      <SearchSkeletonItem key={`sk-${idx}`} />
+                                    ))}
+                                  </motion.div>
+                                ) : foundSuggestions.length > 0 ? (
+                                  <motion.div
+                                    key={`results-${resultBatchKey}`}
+                                    variants={listStagger}
+                                    initial="hidden"
+                                    animate="show"
+                                    exit={{ opacity: 0 }}
+                                    className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4 md:gap-4"
+                                  >
+                                    {foundSuggestions.map((product, index) => (
+                                      <motion.div
+                                        key={`${product.id}-${resultBatchKey}`}
+                                        variants={itemRise}
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        exit={{ opacity: 0 }}
+                                        transition={{ duration: 0.12 }}
+                                        ref={(node) => {
+                                          activeCardRefs.current[index] = node
+                                        }}
+                                      >
+                                        <SearchResultItem
+                                          product={product}
+                                          locale={locale}
+                                          exchangeRate={exchangeRate?.rate}
+                                          onClick={() => {
+                                            addRecentSearch(searchQuery || debouncedQuery)
+                                            closeSearchPanel()
+                                          }}
+                                          query={debouncedQuery}
+                                          isActive={activeSearchIndex === index}
+                                        />
+                                      </motion.div>
+                                    ))}
+                                  </motion.div>
+                                ) : (
+                                  <motion.p
+                                    key={`empty-${debouncedQuery}`}
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    className="mb-8 rounded-lg border border-dashed border-foreground/15 bg-white/70 px-4 py-4 text-xs font-thin uppercase tracking-[0.16em] text-foreground/45"
+                                  >
+                                    {locale === 'vi'
+                                      ? 'Không tìm thấy kết quả phù hợp.'
+                                      : 'No matching results found.'}
+                                  </motion.p>
+                                )}
+                              </AnimatePresence>
+                            </>
+                          )}
+
+                          <div className="mb-5 flex items-center justify-between gap-3 border-t border-foreground/10 pt-5">
+                            <h4 className="text-[9px] font-light uppercase tracking-[0.34em] text-foreground/35">
+                              {locale === 'vi' ? 'GỢI Ý' : 'SUGGESTED'}
+                            </h4>
+                            {hasQuery && (
+                              <span className="rounded-full border border-foreground/15 bg-white/80 px-3 py-1 text-[9px] font-thin uppercase tracking-[0.2em] text-foreground/40">
+                                {locale === 'vi' ? 'Đề xuất thêm' : 'More to explore'}
+                              </span>
+                            )}
+                          </div>
+
+                          {suggestedSuggestions.length > 0 ||
+                          isLatestLoading ||
+                          isFeaturedLoading ? (
+                            <AnimatePresence mode="wait">
+                              {isLatestLoading || isFeaturedLoading ? (
+                                <motion.div
+                                  key="suggested-skeleton"
+                                  initial={{ opacity: 0 }}
+                                  animate={{ opacity: 1 }}
+                                  exit={{ opacity: 0 }}
+                                  className="grid grid-cols-2 gap-3 sm:grid-cols-4 md:gap-4"
+                                >
+                                  {Array.from({ length: 4 }).map((_, idx) => (
+                                    <SearchSkeletonItem key={`suggested-sk-${idx}`} />
+                                  ))}
+                                </motion.div>
+                              ) : (
+                                <motion.div
+                                  key={`suggested-${resultBatchKey}`}
+                                  variants={listStagger}
+                                  initial="hidden"
+                                  animate="show"
+                                  className="grid grid-cols-2 gap-3 sm:grid-cols-4 md:gap-4"
+                                >
+                                  {suggestedSuggestions.map((product) => (
+                                    <motion.div
+                                      key={`suggested-${product.id}-${resultBatchKey}`}
+                                      variants={itemRise}
+                                      initial={{ opacity: 0 }}
+                                      animate={{ opacity: 1 }}
+                                      transition={{ duration: 0.12 }}
+                                    >
+                                      <SearchResultItem
+                                        product={product}
+                                        locale={locale}
+                                        exchangeRate={exchangeRate?.rate}
+                                        onClick={() => {
+                                          addRecentSearch(searchQuery || debouncedQuery)
+                                          closeSearchPanel()
+                                        }}
+                                        query={debouncedQuery}
+                                        isActive={false}
+                                      />
+                                    </motion.div>
+                                  ))}
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          ) : (
+                            <p className="rounded-lg border border-dashed border-foreground/15 bg-white/70 px-4 py-4 text-xs font-thin uppercase tracking-[0.16em] text-foreground/45">
+                              {locale === 'vi' ? 'Chưa có gợi ý phù hợp.' : 'No suggestions yet.'}
+                            </p>
+                          )}
+                        </div>
+                        <div className="space-y-5">
+                          <h4 className="mb-5 text-[9px] font-light uppercase tracking-[0.34em] text-foreground/35">
+                            CATEGORIES
+                          </h4>
+                          <motion.nav
+                            variants={listStagger}
+                            initial="hidden"
+                            animate="show"
+                            className="flex flex-wrap gap-2 md:flex-col md:gap-2.5"
+                          >
+                            {categories?.map(
+                              (cat: { id: string; nameVi: string; nameEn: string }) => (
+                                <motion.div key={cat.id} variants={itemRise}>
+                                  <Link
+                                    href={`/${locale}/shop?categoryId=${cat.id}`}
+                                    onClick={closeSearchPanel}
+                                    className="border-foreground/12 block rounded-full border bg-white px-3 py-1.5 text-[10px] font-light uppercase tracking-[0.12em] transition-all hover:border-foreground/35 hover:bg-foreground hover:text-white md:w-fit"
+                                  >
+                                    {locale === 'vi' ? cat.nameVi : cat.nameEn}
+                                  </Link>
+                                </motion.div>
+                              ),
+                            )}
+                          </motion.nav>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </motion.div>
-              </div>
-            </motion.div>
-          </div>
+              </motion.div>
+            )}
+          </AnimatePresence>,
+          document.body,
         )}
-      </AnimatePresence>
 
       {/* SIDE MENU */}
-      <AnimatePresence>
-        {showMobileMenu && (
-          <div className="fixed inset-0 z-50">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="absolute inset-0 bg-black/30"
-              onClick={() => setShowMobileMenu(false)}
-            />
-            <motion.div
-              initial={{ x: '-100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '-100%' }}
-              onAnimationComplete={() => setIsPanelReady(true)}
-              transition={{ duration: 0.5, ease: cubicBezier }}
-              className="absolute bottom-0 left-0 top-0 flex w-[85vw] max-w-[380px] flex-col bg-white pt-16 shadow-2xl will-change-transform lg:pt-20"
-            >
-              <div className="flex flex-1 flex-col justify-between px-8 py-12 lg:px-12">
-                <motion.nav
-                  animate={isPanelReady ? { opacity: 1, x: 0 } : { opacity: 0, x: -10 }}
-                  className="flex flex-col space-y-6"
-                >
-                  {navigation.map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={() => setShowMobileMenu(false)}
-                      className="text-3xl font-bold uppercase tracking-tighter transition-all hover:text-primary"
-                    >
-                      {item.name}
-                    </Link>
-                  ))}
-                </motion.nav>
+      {mounted &&
+        createPortal(
+          <AnimatePresence initial={false}>
+            {showMobileMenu && (
+              <div className="fixed inset-0 z-50">
                 <motion.div
-                  animate={isPanelReady ? { opacity: 1 } : { opacity: 0 }}
-                  transition={{ delay: 0.1 }}
-                  className="space-y-8"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.24, ease: 'easeOut' }}
+                  className="absolute inset-0 bg-black/30"
+                  onClick={closeMobileMenu}
+                />
+                <motion.div
+                  initial={{ x: '-100%' }}
+                  animate={{ x: 0 }}
+                  exit={{ x: '-100%' }}
+                  transition={{ duration: 0.38, ease: cubicBezier }}
+                  className="absolute bottom-0 left-0 top-0 flex w-[85vw] max-w-[380px] flex-col bg-white pt-16 shadow-2xl will-change-transform lg:pt-20"
                 >
-                  <div className="flex gap-6 text-foreground/40">
-                    {socialLinks?.instagramUsername && (
-                      <a
-                        href={`https://instagram.com/${socialLinks.instagramUsername}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label="Instagram"
+                  <div className="flex flex-1 flex-col justify-between px-8 py-12 lg:px-12">
+                    <nav aria-label={locale === 'vi' ? 'Điều hướng chính' : 'Primary navigation'}>
+                      <motion.ul
+                        variants={menuListStagger}
+                        initial="hidden"
+                        animate="show"
+                        exit="hidden"
+                        className="flex flex-col space-y-6"
                       >
-                        <Instagram className="h-5 w-5 transition-colors hover:text-foreground" />
-                      </a>
-                    )}
-                    {socialLinks?.facebookPageUrl && (
-                      <a
-                        href={socialLinks.facebookPageUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label="Facebook"
-                      >
-                        <Facebook className="h-5 w-5 transition-colors hover:text-foreground" />
-                      </a>
-                    )}
+                        {navigation.map((item) => (
+                          <motion.li key={item.href} variants={menuItemRise}>
+                            <Link
+                              href={item.href}
+                              title={item.name}
+                              onClick={closeMobileMenu}
+                              className="block text-2xl sm:text-3xl font-light uppercase tracking-wider transition-colors hover:text-primary"
+                              suppressHydrationWarning
+                            >
+                              {item.name}
+                            </Link>
+                          </motion.li>
+                        ))}
+                      </motion.ul>
+                    </nav>
+                    <div className="space-y-6">
+                      <div className="border-t border-foreground/10 pt-6">
+                        {isAuthenticated ? (
+                          <div className="flex flex-col gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                closeMobileMenu()
+                                setIsProfileModalOpen(true)
+                              }}
+                              className="flex items-center gap-2.5 text-sm font-light uppercase tracking-wider text-foreground transition-colors hover:text-[#8C7E6A] text-left"
+                            >
+                              <UserIcon className="h-4 w-4" />
+                              <span>{customer?.fullName || (locale === 'vi' ? 'Thông tin & Đổi mật khẩu' : 'Profile & Password')}</span>
+                            </button>
+                            <Link
+                              href={`/${locale}/my-orders`}
+                              onClick={closeMobileMenu}
+                              className="text-xs font-light text-stone-500 hover:text-stone-800 transition-colors pl-6"
+                            >
+                              {locale === 'vi' ? 'Xem đơn hàng của tôi →' : 'View my orders →'}
+                            </Link>
+                            <button
+                              onClick={() => {
+                                customerLogout()
+                                closeMobileMenu()
+                              }}
+                              className="self-start text-[10px] font-thin uppercase tracking-wider text-foreground/45 transition-colors hover:text-foreground pl-6"
+                            >
+                              {locale === 'vi' ? '(Đăng xuất)' : '(Logout)'}
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              closeMobileMenu()
+                              openAuthModal(locale === 'vi' ? 'Đăng nhập tài khoản khách hàng' : 'Login to customer account')
+                            }}
+                            className="flex items-center gap-2.5 text-sm font-light uppercase tracking-wider text-foreground transition-colors hover:text-[#8C7E6A]"
+                          >
+                            <UserIcon className="h-4 w-4" />
+                            <span>{locale === 'vi' ? 'Đăng nhập / Đăng ký' : 'Login / Register'}</span>
+                          </button>
+                        )}
+                      </div>
+                      <div className="flex gap-6 text-foreground/40">
+                        {socialLinks?.instagramUsername && (
+                          <a
+                            href={`https://instagram.com/${socialLinks.instagramUsername}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label="Instagram"
+                          >
+                            <Instagram className="h-5 w-5 transition-colors hover:text-foreground" />
+                          </a>
+                        )}
+                        {socialLinks?.facebookPageUrl && (
+                          <a
+                            href={socialLinks.facebookPageUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label="Facebook"
+                          >
+                            <Facebook className="h-5 w-5 transition-colors hover:text-foreground" />
+                          </a>
+                        )}
+                      </div>
+                      <p className="text-[8px] font-thin uppercase tracking-[0.4em] text-foreground/20">
+                        Saigon / Vietnam
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-[8px] font-bold uppercase tracking-[0.4em] text-foreground/20">
-                    Saigon / Vietnam
-                  </p>
                 </motion.div>
               </div>
-            </motion.div>
-          </div>
+            )}
+          </AnimatePresence>,
+          document.body,
         )}
-      </AnimatePresence>
-    </header>
+
+      {/* Global Cart Drawer */}
+      <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+      <CustomerProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+      />
+    </>
   )
 }

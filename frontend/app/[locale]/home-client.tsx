@@ -1,17 +1,19 @@
 'use client'
 
+import { type UseQueryResult } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useLocale, useTranslations } from 'next-intl'
-import { useRef, useState, useEffect, useCallback } from 'react'
+import { useRef, useState, useEffect, useCallback, useMemo } from 'react'
 import { BannerCarousel } from '@/components/BannerCarousel'
 import { ProductCard } from '@/components/ProductCard'
 import { useBanners } from '@/hooks/use-banners'
 import { useProducts } from '@/hooks/use-products'
 import { useSiteContent } from '@/hooks/use-settings'
+import { pageHref, parseHomeSections, parseSitePages } from '@/lib/site-structure'
 import { getStorySlug, parseStories, STORIES_CONTENT_KEY, type StoryItem } from '@/lib/stories'
-import { type Banner, type Product } from '@/lib/types'
+import { type Banner, type PaginatedResponse, type Product, type SiteContent } from '@/lib/types'
 import { cn, optimizeProductImage } from '@/lib/utils'
 
 function usePremiumSmoothScroll() {
@@ -26,9 +28,6 @@ function usePremiumSmoothScroll() {
   const lastX = useRef(0)
   const lastTime = useRef(0)
   const dragDistance = useRef(0)
-  const touchStartX = useRef(0)
-  const touchPrevX = useRef(0)
-  const touchPrevTime = useRef(0)
   const isPointerDown = useRef(false)
   const hasMovedWhilePointerDown = useRef(false)
 
@@ -98,6 +97,15 @@ function usePremiumSmoothScroll() {
     }
   }, [])
 
+  const handleScroll = useCallback(() => {
+    if (!scrollRef.current) return
+
+    const maxScroll = scrollRef.current.scrollWidth - scrollRef.current.clientWidth
+    if (maxScroll > 0) {
+      setProgress(scrollRef.current.scrollLeft / maxScroll)
+    }
+  }, [])
+
   const handleMouseUp = useCallback(() => {
     if (!isPointerDown.current && !isDragging) return
     isPointerDown.current = false
@@ -106,7 +114,7 @@ function usePremiumSmoothScroll() {
       animationFrame.current = requestAnimationFrame(step)
     }
     hasMovedWhilePointerDown.current = false
-  }, [step])
+  }, [isDragging, step])
 
   const handleCaptureClick = useCallback((e: React.MouseEvent) => {
     if (dragDistance.current > 15) {
@@ -114,55 +122,6 @@ function usePremiumSmoothScroll() {
       e.stopPropagation()
     }
   }, [])
-
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    if (!scrollRef.current || e.touches.length !== 1) return
-    const touchX = e.touches[0].clientX
-    setIsDragging(true)
-    touchStartX.current = touchX
-    touchPrevX.current = touchX
-    touchPrevTime.current = Date.now()
-    scrollLeft.current = scrollRef.current.scrollLeft
-    dragDistance.current = 0
-    velocity.current = 0
-    if (animationFrame.current) cancelAnimationFrame(animationFrame.current)
-  }, [])
-
-  const handleTouchMove = useCallback(
-    (e: React.TouchEvent) => {
-      if (!isDragging || !scrollRef.current || e.touches.length !== 1) return
-
-      const touchX = e.touches[0].clientX
-      const walk = (touchX - touchStartX.current) * 1.45
-      const prevScroll = scrollRef.current.scrollLeft
-      scrollRef.current.scrollLeft = scrollLeft.current - walk
-      dragDistance.current += Math.abs(scrollRef.current.scrollLeft - prevScroll)
-
-      const now = Date.now()
-      const dt = now - touchPrevTime.current
-      const dx = touchX - touchPrevX.current
-      if (dt > 0) {
-        const newVelocity = (-dx / dt) * 16
-        velocity.current = velocity.current * 0.25 + newVelocity * 0.75
-      }
-
-      touchPrevX.current = touchX
-      touchPrevTime.current = now
-
-      const maxScroll = scrollRef.current.scrollWidth - scrollRef.current.clientWidth
-      if (maxScroll > 0) {
-        setProgress(scrollRef.current.scrollLeft / maxScroll)
-      }
-    },
-    [isDragging],
-  )
-
-  const handleTouchEnd = useCallback(() => {
-    setIsDragging(false)
-    if (Math.abs(velocity.current) > 1) {
-      animationFrame.current = requestAnimationFrame(step)
-    }
-  }, [step])
 
   const handleDragStart = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -193,9 +152,7 @@ function usePremiumSmoothScroll() {
     onMouseLeave: handleMouseUp,
     onDragStart: handleDragStart,
     onClickCapture: handleCaptureClick,
-    onTouchStart: handleTouchStart,
-    onTouchMove: handleTouchMove,
-    onTouchEnd: handleTouchEnd,
+    onScroll: handleScroll,
     isDragging,
     progress,
   }
@@ -206,14 +163,68 @@ export default function HomeClient({
   initialSiteContent,
   initialBanners,
 }: {
-  initialProducts?: any
-  initialSiteContent?: any
+  initialProducts?: PaginatedResponse<Product>
+  initialSiteContent?: SiteContent
   initialBanners?: Banner[]
 }) {
   const t = useTranslations('Home')
   const tNav = useTranslations('Navigation')
   const locale = useLocale() as 'vi' | 'en'
   const storyCta = locale === 'vi' ? 'Doc story' : 'Read story'
+  const homepageLinks =
+    locale === 'vi'
+      ? [
+          {
+            slug: 'shop',
+            title: 'Sản phẩm',
+            description: 'Khám phá các món gốm thủ công đang có tại ƯƠM.',
+            href: `/${locale}/shop`,
+          },
+          {
+            slug: 'about',
+            title: 'Về chúng tôi',
+            description: 'Tìm hiểu triết lý tuyển chọn và câu chuyện của ƯƠM.',
+            href: `/${locale}/about`,
+          },
+          {
+            slug: 'journal',
+            title: 'Tạp chí',
+            description: 'Đọc câu chuyện về chất liệu, nghệ nhân và không gian sống.',
+            href: `/${locale}/journal`,
+          },
+          {
+            slug: 'contact',
+            title: 'Liên hệ',
+            description: 'Gửi yêu cầu tư vấn hoặc đặt hàng qua các kênh của ƯƠM.',
+            href: `/${locale}/about#contact`,
+          },
+        ]
+      : [
+          {
+            slug: 'shop',
+            title: 'Shop',
+            description: 'Explore handcrafted ceramic pieces curated by UOM.',
+            href: `/${locale}/shop`,
+          },
+          {
+            slug: 'about',
+            title: 'About Us',
+            description: 'Learn about the curation philosophy and story behind UOM.',
+            href: `/${locale}/about`,
+          },
+          {
+            slug: 'journal',
+            title: 'Journal',
+            description: 'Read stories about materials, artisans, and living spaces.',
+            href: `/${locale}/journal`,
+          },
+          {
+            slug: 'contact',
+            title: 'Contact',
+            description: 'Send an inquiry or order request through UOM channels.',
+            href: `/${locale}/about#contact`,
+          },
+        ]
 
   const { data: latestProducts, isLoading: isLoadingLatest } = useProducts(
     {
@@ -224,54 +235,79 @@ export default function HomeClient({
       sortOrder: 'desc',
     },
     { initialData: initialProducts },
-  )
+  ) as UseQueryResult<PaginatedResponse<Product>>
 
   const { data: siteContent, isLoading: isLoadingStories } = useSiteContent({
-    staleTime: 0,
-    refetchOnMount: 'always',
     initialData: initialSiteContent,
-  })
+  }) as UseQueryResult<SiteContent>
+  const sitePages = parseSitePages(siteContent)
+  const sections = parseHomeSections(siteContent)
+  const sectionVisible = (key: string) => {
+    if (['products', 'journal'].includes(key) && sitePages.find((page) => page.slug === (key === 'products' ? 'shop' : 'journal'))?.isVisible === false) return false
+    return sections.find((item) => item.key === key)?.isVisible !== false
+  }
+  const sectionText = (key: string, field: 'title' | 'subtitle') => {
+    const section = sections.find((item) => item.key === key)
+    return locale === 'vi' ? section?.[`${field}Vi`] : section?.[`${field}En`]
+  }
+  const visibleHomepageLinks = [
+    ...homepageLinks.map((item) => {
+      const page = sitePages.find((entry) => entry.slug === item.slug)
+      return page ? { ...item, title: locale === 'vi' ? page.titleVi : page.titleEn, description: locale === 'vi' ? page.descriptionVi : page.descriptionEn, isVisible: page.isVisible } : { ...item, isVisible: true }
+    }).filter((item) => item.isVisible && (item.href !== `/${locale}/about#contact` || sitePages.find((page) => page.slug === 'about')?.isVisible)),
+    ...sitePages.filter((page) => page.isVisible && !['home', 'shop', 'journal', 'about', 'contact'].includes(page.slug)).map((page) => ({ title: locale === 'vi' ? page.titleVi : page.titleEn, description: locale === 'vi' ? page.descriptionVi : page.descriptionEn, href: pageHref(locale, page.slug) })),
+  ]
   const stories = parseStories(siteContent?.[STORIES_CONTENT_KEY]).filter(
     (story) => story.isVisible !== false,
   )
+
+  const homeProducts = useMemo(() => {
+    if (!latestProducts?.data) return []
+    return [...latestProducts.data].sort((a, b) => {
+      const aFeatured = a.isFeatured ? 1 : 0
+      const bFeatured = b.isFeatured ? 1 : 0
+      if (aFeatured !== bFeatured) return bFeatured - aFeatured
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    })
+  }, [latestProducts?.data])
 
   const latestDrag = usePremiumSmoothScroll()
   const featuredDrag = usePremiumSmoothScroll()
 
   const { data: banners, isLoading: isLoadingBanners } = useBanners(true, {
     initialData: initialBanners,
-  })
+  }) as UseQueryResult<Banner[]>
 
   return (
-    <div className="overflow-hidden pt-0">
+    <div className="safe-screen pt-0">
       {/* Hero Banner Section */}
-      <section className="w-full">
+      <section className="w-full" hidden={!sectionVisible('hero')}>
         {isLoadingBanners ? (
-          <div className="aspect-[4/5] w-full animate-pulse bg-muted/20 md:aspect-[21/9] lg:aspect-[3/1]" />
+          <div className="h-[82vh] w-full animate-pulse bg-muted/20 sm:h-[88vh] md:h-[92vh] lg:h-[96vh] xl:h-screen" />
         ) : (
-          <BannerCarousel banners={banners || []} locale={locale} />
+          <BannerCarousel banners={banners ?? []} locale={locale} />
         )}
       </section>
 
       {/* Section: New Arrivals */}
-      <section className="w-full bg-white py-16 pt-24">
+      <section className="w-full bg-white py-16 pt-24" hidden={!sectionVisible('products')}>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="mb-16 flex items-end justify-between px-6 pb-8 lg:px-12"
+          className="mb-16 flex flex-wrap items-end justify-between gap-4 px-4 pb-8 sm:px-6 lg:px-12"
         >
-          <div className="space-y-3">
-            <h2 className="text-[8px] font-bold uppercase tracking-[0.4em] text-foreground/40">
-              {locale === 'vi' ? 'BST MỚI NHẤT' : 'NEW COLLECTIONS'}
+          <div className="min-w-0 space-y-3">
+            <h2 className="text-mobile-safe text-[8px] font-light uppercase tracking-[0.28em] text-foreground/40 sm:tracking-[0.4em]">
+              {sectionText('products', 'title')}
             </h2>
-            <p className="font-sans text-lg font-bold uppercase tracking-[0.1em]">
-              {locale === 'vi' ? 'Sản phẩm gợi ý' : 'Suggested for you'}
+            <p className="text-mobile-safe font-serif text-lg sm:text-xl font-light uppercase tracking-[0.08em] sm:tracking-[0.1em] text-[#1A1816]">
+              {sectionText('products', 'subtitle')}
             </p>
           </div>
           <Link
             href={`/${locale}/shop`}
-            className="group flex items-center gap-2 text-[8px] font-bold uppercase tracking-[0.2em] transition-colors hover:opacity-60"
+            className="group flex items-center gap-2 font-serif text-xs font-light uppercase tracking-[0.18em] text-[#8C7E6A] transition-colors hover:text-[#1A1816]"
           >
             <span>{t('showMore')}</span>
             <span className="sr-only">{tNav('shop')}</span>
@@ -280,11 +316,11 @@ export default function HomeClient({
         </motion.div>
 
         {isLoadingLatest ? (
-          <div className="flex gap-6 overflow-hidden px-6 lg:px-12">
-            {[...Array(3)].map((_, i) => (
+          <div className="flex gap-6 overflow-hidden px-4 sm:px-6 lg:px-12">
+            {Array.from({ length: 3 }).map((_, i) => (
               <div
                 key={i}
-                className="w-[calc(100vw-64px)] shrink-0 space-y-6 md:w-[45vw] lg:w-[31vw]"
+                className="w-[calc(100vw-32px)] max-w-full shrink-0 space-y-6 sm:w-[calc(100vw-64px)] md:w-[45vw] lg:w-[31vw]"
               >
                 <div className="aspect-[4/5] animate-pulse bg-muted/30" />
               </div>
@@ -300,23 +336,21 @@ export default function HomeClient({
               onMouseLeave={latestDrag.onMouseLeave}
               onDragStart={latestDrag.onDragStart}
               onClickCapture={latestDrag.onClickCapture}
-              onTouchStart={latestDrag.onTouchStart}
-              onTouchMove={latestDrag.onTouchMove}
-              onTouchEnd={latestDrag.onTouchEnd}
+              onScroll={latestDrag.onScroll}
               className={cn(
-                'hide-scrollbar flex select-none gap-6 overflow-x-auto px-6 pb-12 transition-transform duration-500 ease-out lg:px-12',
+                'hide-scrollbar flex w-full select-none gap-6 overflow-x-auto overscroll-x-contain px-4 pb-12 transition-transform duration-500 ease-out sm:px-6 lg:px-12',
                 latestDrag.isDragging ? 'scale-[0.995] cursor-grabbing' : 'cursor-grab',
               )}
             >
               <AnimatePresence mode="popLayout">
-                {latestProducts?.data.map((product: Product, idx: number) => (
+                {homeProducts.map((product: Product, idx: number) => (
                   <motion.div
                     key={product.id}
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ delay: idx * 0.05, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                    className="w-[calc(100vw-64px)] shrink-0 md:w-[45vw] lg:w-[31vw]"
+                    className="w-[calc(100vw-32px)] max-w-full shrink-0 sm:w-[calc(100vw-64px)] md:w-[45vw] lg:w-[31vw]"
                   >
                     <ProductCard product={product} locale={locale} priority={idx === 0} />
                   </motion.div>
@@ -328,19 +362,19 @@ export default function HomeClient({
       </section>
 
       {/* Section: JOURNAL */}
-      <section className="w-full border-t border-foreground/[0.03] bg-white py-24">
-        <div className="mb-16 flex items-end justify-between px-6 pb-8 lg:px-12">
-          <div className="space-y-3">
-            <h2 className="text-[9px] font-bold uppercase tracking-[0.35em] text-foreground/40 md:text-[10px]">
-              JOURNAL
+      <section className="w-full border-t border-foreground/[0.03] bg-white py-24" hidden={!sectionVisible('journal')}>
+        <div className="mb-16 flex flex-wrap items-end justify-between gap-4 px-4 pb-8 sm:px-6 lg:px-12">
+          <div className="min-w-0 space-y-3">
+            <h2 className="text-mobile-safe text-[9px] font-light uppercase tracking-[0.28em] text-foreground/40 sm:tracking-[0.35em] md:text-[10px]">
+              {sectionText('journal', 'title')}
             </h2>
-            <p className="font-sans text-base font-bold uppercase tracking-[0.1em] md:text-lg">
-              {locale === 'vi' ? 'Nhật ký & Câu chuyện' : 'Stories & Journal'}
+            <p className="text-mobile-safe font-serif text-lg sm:text-xl font-light uppercase tracking-[0.08em] md:tracking-[0.1em] text-[#1A1816]">
+              {sectionText('journal', 'subtitle')}
             </p>
           </div>
           <Link
             href={`/${locale}/journal`}
-            className="group flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.18em] transition-colors hover:opacity-60 md:text-[10px]"
+            className="group flex items-center gap-2 font-serif text-xs font-light uppercase tracking-[0.18em] text-[#8C7E6A] transition-colors hover:text-[#1A1816]"
           >
             <span>{t('showMore')}</span>
             <span className="sr-only">{tNav('journal')}</span>
@@ -349,11 +383,11 @@ export default function HomeClient({
         </div>
 
         {isLoadingStories ? (
-          <div className="flex gap-6 overflow-hidden px-6 lg:px-12">
-            {[...Array(2)].map((_, i) => (
+          <div className="flex gap-6 overflow-hidden px-4 sm:px-6 lg:px-12">
+            {Array.from({ length: 3 }).map((_, i) => (
               <div
                 key={i}
-                className="w-[calc(100vw-64px)] shrink-0 space-y-6 md:w-[45vw] lg:w-[calc(50vw-48px)]"
+                className="w-[82vw] max-w-full shrink-0 space-y-6 sm:w-[70vw] md:w-[44vw] lg:w-[38vw] xl:w-[36vw]"
               >
                 <div className="overflow-hidden rounded-xl border border-foreground/5">
                   <div className="aspect-[4/5] animate-pulse bg-muted/20" />
@@ -367,10 +401,10 @@ export default function HomeClient({
             ))}
           </div>
         ) : stories.length === 0 ? (
-          <div className="px-6 text-sm text-foreground/50 lg:px-12">
+          <div className="px-4 text-sm text-foreground/50 sm:px-6 lg:px-12">
             {locale === 'vi'
-              ? 'Stories đang được cập nhật. Xem lại sau nhé.'
-              : 'Stories are being updated. Please check back soon.'}
+              ? sections.find((section) => section.key === 'journal')?.bodyVi
+              : sections.find((section) => section.key === 'journal')?.bodyEn}
           </div>
         ) : (
           <div className="group/container relative">
@@ -382,11 +416,9 @@ export default function HomeClient({
               onMouseLeave={featuredDrag.onMouseLeave}
               onDragStart={featuredDrag.onDragStart}
               onClickCapture={featuredDrag.onClickCapture}
-              onTouchStart={featuredDrag.onTouchStart}
-              onTouchMove={featuredDrag.onTouchMove}
-              onTouchEnd={featuredDrag.onTouchEnd}
+              onScroll={featuredDrag.onScroll}
               className={cn(
-                'hide-scrollbar flex touch-pan-x select-none gap-6 overflow-x-auto px-6 pb-12 transition-transform duration-500 ease-out lg:px-12',
+                'hide-scrollbar flex w-full select-none gap-6 overflow-x-auto overscroll-x-contain px-4 pb-12 transition-transform duration-500 ease-out sm:px-6 lg:px-12',
                 featuredDrag.isDragging ? 'scale-[0.995] cursor-grabbing' : 'cursor-grab',
               )}
             >
@@ -394,14 +426,12 @@ export default function HomeClient({
                 {stories.map((story: StoryItem, idx: number) => (
                   <motion.div
                     key={story.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: idx * 0.05, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                    className="w-[calc(100vw-64px)] shrink-0 md:w-[45vw] lg:w-[calc(50vw-48px)]"
+                    initial={false}
+                    className="w-[82vw] max-w-full shrink-0 sm:w-[70vw] md:w-[44vw] lg:w-[38vw] xl:w-[36vw]"
                   >
                     <Link
                       href={`/${locale}/journal/${encodeURIComponent(getStorySlug(story, locale))}`}
+                      prefetch={false}
                       className="block"
                     >
                       <article className="group overflow-hidden rounded-xl border border-foreground/10 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg">
@@ -419,19 +449,19 @@ export default function HomeClient({
                           />
                           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-transparent" />
                           {story.publishedAt && (
-                            <p className="absolute left-4 top-4 rounded-full bg-white/85 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.16em] text-foreground/70 backdrop-blur-sm md:text-[10px]">
+                            <p className="absolute left-4 top-4 rounded-full bg-white/85 px-2.5 py-1 text-[9px] font-light uppercase tracking-[0.16em] text-foreground/70 backdrop-blur-sm md:text-[10px]">
                               {story.publishedAt}
                             </p>
                           )}
                         </div>
                         <div className="space-y-2 p-4 md:p-5">
-                          <h3 className="line-clamp-2 min-h-[2.4rem] font-sans text-sm font-semibold uppercase leading-tight tracking-[0.08em] text-foreground transition-colors group-hover:text-foreground/85 md:min-h-[2.8rem] md:text-base">
+                          <h3 className="line-clamp-2 min-h-[2.4rem] font-serif text-base sm:text-lg font-normal leading-tight text-[#4A4238] transition-colors group-hover:text-[#8C7E6A] md:min-h-[2.8rem]">
                             {locale === 'vi' ? story.titleVi : story.titleEn}
                           </h3>
-                          <p className="line-clamp-3 text-[10px] leading-relaxed tracking-[0.04em] text-foreground/65 md:text-xs">
+                          <p className="line-clamp-3 text-[10px] leading-relaxed tracking-[0.04em] text-foreground/65 md:text-xs font-thin">
                             {locale === 'vi' ? story.summaryVi : story.summaryEn}
                           </p>
-                          <span className="text-[9px] font-semibold uppercase tracking-[0.28em] text-foreground/55">
+                          <span className="font-sans text-xs font-semibold uppercase tracking-[0.15em] text-[#8C7E6A]">
                             {storyCta}
                           </span>
                         </div>
@@ -445,6 +475,44 @@ export default function HomeClient({
         )}
       </section>
 
+      <section className="w-full border-t border-foreground/[0.04] bg-white px-4 py-16 sm:px-6 lg:px-12" hidden={!sectionVisible('explore')}>
+        <div className="mx-auto max-w-6xl">
+          <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+            <div className="space-y-3">
+              <h2 className="text-mobile-safe text-[9px] font-light uppercase tracking-[0.28em] text-foreground/40 sm:tracking-[0.35em] md:text-[10px]">
+                {sectionText('explore', 'title')}
+              </h2>
+              <p className="text-mobile-safe font-serif text-lg sm:text-xl font-light uppercase tracking-[0.08em] md:tracking-[0.1em] text-[#1A1816]">
+                {sectionText('explore', 'subtitle')}
+              </p>
+            </div>
+          </div>
+
+          <nav aria-label={locale === 'vi' ? 'Các trang trong website' : 'Website pages'}>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {visibleHomepageLinks.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="group block rounded-md border border-foreground/10 bg-white p-5 transition duration-300 hover:-translate-y-1 hover:border-foreground/25 hover:shadow-sm"
+                >
+                  <span className="text-mobile-safe block font-serif text-xs sm:text-sm font-normal uppercase tracking-[0.12em] text-[#4A4238]">
+                    {item.title}
+                  </span>
+                  <span className="mt-3 block text-xs leading-relaxed text-foreground/60 font-thin">
+                    {item.description}
+                  </span>
+                  <span className="mt-5 inline-block text-[9px] font-light uppercase tracking-[0.24em] text-foreground/45 transition group-hover:text-foreground">
+                    {t('showMore')}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </nav>
+        </div>
+      </section>
+
+      {sections.filter((section) => section.key.startsWith('custom-') && section.isVisible).map((section) => <section key={section.key} className="border-t border-foreground/10 bg-white px-4 py-16 sm:px-6 lg:px-12"><div className="mx-auto max-w-6xl"><h2 className="text-xs font-light uppercase tracking-[0.25em] text-foreground/50">{locale === 'vi' ? section.titleVi : section.titleEn}</h2><p className="mt-4 font-serif text-xl font-light text-foreground sm:text-3xl">{locale === 'vi' ? section.subtitleVi : section.subtitleEn}</p><p className="mt-5 max-w-3xl whitespace-pre-wrap text-sm leading-7 text-foreground/65 font-thin">{locale === 'vi' ? section.bodyVi : section.bodyEn}</p></div></section>)}
       <div className="py-20" />
     </div>
   )

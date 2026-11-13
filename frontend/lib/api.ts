@@ -1,5 +1,8 @@
 import axios, { type AxiosInstance, type AxiosError } from 'axios'
-import { pingProductSeo, pingSitewideSeo } from './seo-ping'
+import { triggerPublicRevalidation } from './revalidate'
+import { pingProductSeo, pingSitewideSeo, pingStoriesSeo } from './seo-ping'
+import { parseStories, STORIES_CONTENT_KEY } from './stories'
+import { normalizePublicImageUrl } from './utils'
 import type {
   Product,
   Category,
@@ -17,7 +20,24 @@ import type {
   UpdateMyProfileDto,
 } from './types'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888/api'
+export function getEffectiveApiBaseUrl(): string {
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname
+    if (hostname.endsWith('uomarchive.com')) {
+      return 'https://api.uomarchive.com'
+    }
+  }
+  const envUrl = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL
+  if (
+    process.env.NODE_ENV === 'production' &&
+    (!envUrl || envUrl.includes('localhost') || envUrl.includes('127.0.0.1'))
+  ) {
+    return 'https://api.uomarchive.com'
+  }
+  return envUrl || 'http://localhost:8888'
+}
+
+const API_BASE_URL = getEffectiveApiBaseUrl()
 
 class ApiClient {
   private client: AxiosInstance
@@ -36,8 +56,47 @@ class ApiClient {
 
     this.client.interceptors.request.use(
       (config) => {
+        const effectiveBase = getEffectiveApiBaseUrl()
+        if (
+          config.baseURL &&
+          (config.baseURL.includes('localhost') || config.baseURL.includes('127.0.0.1')) &&
+          effectiveBase.startsWith('https://')
+        ) {
+          config.baseURL = effectiveBase
+        }
+        if (config.url && (config.url.startsWith('http://localhost') || config.url.startsWith('http://127.0.0.1'))) {
+          config.url = config.url.replace(/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?/, effectiveBase)
+        }
+
         if (typeof window !== 'undefined') {
-          const token = localStorage.getItem('accessToken')
+          const getCookie = (name: string): string | null => {
+            if (typeof document === 'undefined') return null
+            const match = document.cookie.match(new RegExp('(?:^|;\\s*)' + name + '=([^;]*)'))
+            return match ? decodeURIComponent(match[1]) : null
+          }
+
+          const rawAdminToken = localStorage.getItem('accessToken') || getCookie('accessToken')
+          const rawCustomerToken = localStorage.getItem('customerAccessToken') || getCookie('customerAccessToken')
+
+          if (rawAdminToken && !localStorage.getItem('accessToken')) {
+            localStorage.setItem('accessToken', rawAdminToken)
+          }
+
+          const isAdminContext =
+            Boolean(config.url?.includes('/admin')) ||
+            (typeof window !== 'undefined' && window.location.pathname.includes('/admin'))
+
+          let token: string | null = null
+          if (isAdminContext) {
+            token = rawAdminToken
+          } else {
+            const isCustomerRoute =
+              Boolean(config.url?.startsWith('/cart')) ||
+              (Boolean(config.url?.startsWith('/orders')) && !config.url?.startsWith('/orders/admin')) ||
+              Boolean(config.url?.startsWith('/customer'))
+
+            token = isCustomerRoute ? (rawCustomerToken || rawAdminToken) : (rawAdminToken || rawCustomerToken)
+          }
           if (token) {
             config.headers.Authorization = `Bearer ${token}`
           }
@@ -56,50 +115,57 @@ class ApiClient {
         const originalRequest: any = error.config
 
         if (error.response?.status === 401 && !originalRequest._retry) {
-          if (originalRequest.url?.includes('/auth/login')) {
+          if (originalRequest.url?.includes("/auth/login") || originalRequest.url?.includes("/customer/auth/login")) {
             return Promise.reject(error)
           }
 
           originalRequest._retry = true
 
-          try {
-            const refreshToken = localStorage.getItem('refreshToken')
-            if (!refreshToken) {
-              throw new Error('No refresh token')
-            }
+          const isAdminEndpoint =
+            Boolean(originalRequest.url?.includes("/admin")) ||
+            Boolean(originalRequest.url?.includes("/banners")) ||
+            Boolean(originalRequest.url?.includes("/users")) ||
+            (typeof window !== "undefined" && window.location.pathname.includes("/admin"))
 
-            const { data } = await axios.post(
-              `${API_BASE_URL}/auth/refresh`,
-              {},
-              {
-                headers: { Authorization: `Bearer ${refreshToken}` },
-              },
-            )
-
-            localStorage.setItem('accessToken', data.data.accessToken)
-            localStorage.setItem('refreshToken', data.data.refreshToken)
-
-            originalRequest.headers.Authorization = `Bearer ${data.data.accessToken}`
-            return this.client(originalRequest)
-          } catch (refreshError: any) {
-            if (typeof window !== 'undefined') {
-              const isAdminPage = window.location.pathname.includes('/admin')
-              const locale = localStorage.getItem('locale') || 'vi'
-
-              const savedLocale = localStorage.getItem('locale')
-              localStorage.clear()
-              if (savedLocale) {
-                localStorage.setItem('locale', savedLocale)
+          if (isAdminEndpoint) {
+            try {
+              const refreshToken = localStorage.getItem("refreshToken")
+              if (!refreshToken) {
+                throw new Error("No refresh token")
               }
 
-              const loginPath = isAdminPage ? `/${locale}/admin/login` : `/${locale}/login`
+              const { data } = await axios.post(
+                `${API_BASE_URL}/auth/refresh`,
+                {},
+                {
+                  headers: { Authorization: `Bearer ${refreshToken}` },
+                },
+              )
 
-              console.error('Session expired. Please login again.')
+              localStorage.setItem("accessToken", data.data.accessToken)
+              localStorage.setItem("refreshToken", data.data.refreshToken)
 
-              window.location.href = loginPath
+              originalRequest.headers.Authorization = `Bearer ${data.data.accessToken}`
+              return this.client(originalRequest)
+            } catch (refreshError: any) {
+              if (typeof window !== "undefined") {
+                localStorage.removeItem("accessToken")
+                localStorage.removeItem("refreshToken")
+                document.cookie = "accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
+                const locale = localStorage.getItem("locale") || "vi"
+                if (window.location.pathname.includes("/admin")) {
+                  window.location.href = `/${locale}/admin/login`
+                }
+              }
+              return Promise.reject(refreshError)
             }
-
-            return Promise.reject(refreshError)
+          } else {
+            if (typeof window !== "undefined") {
+              localStorage.removeItem("customerAccessToken")
+              localStorage.removeItem("customerRefreshToken")
+              document.cookie = "customerAccessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
+            }
+            return Promise.reject(error)
           }
         }
 
@@ -240,6 +306,7 @@ class ApiClient {
       body: JSON.stringify(data),
     })
     void pingSitewideSeo()
+    void triggerPublicRevalidation(['/'])
     return banner
   }
 
@@ -249,6 +316,7 @@ class ApiClient {
       body: JSON.stringify(data),
     })
     void pingSitewideSeo()
+    void triggerPublicRevalidation(['/'])
     return banner
   }
 
@@ -257,6 +325,7 @@ class ApiClient {
       method: 'DELETE',
     })
     void pingSitewideSeo()
+    void triggerPublicRevalidation(['/'])
     return result
   }
 
@@ -304,8 +373,10 @@ class ApiClient {
     })
     if (product?.slug) {
       void pingProductSeo(product.slug)
+      void triggerPublicRevalidation(['/', '/shop', `/shop/${product.slug}`])
     } else {
       void pingSitewideSeo()
+      void triggerPublicRevalidation(['/', '/shop'])
     }
     return product
   }
@@ -317,8 +388,10 @@ class ApiClient {
     })
     if (product?.slug) {
       void pingProductSeo(product.slug)
+      void triggerPublicRevalidation(['/', '/shop', `/shop/${product.slug}`])
     } else {
       void pingSitewideSeo()
+      void triggerPublicRevalidation(['/', '/shop'])
     }
     return product
   }
@@ -328,6 +401,7 @@ class ApiClient {
       method: 'DELETE',
     })
     void pingSitewideSeo()
+    void triggerPublicRevalidation(['/', '/shop'])
     return result
   }
 
@@ -337,8 +411,10 @@ class ApiClient {
     })
     if (product?.slug) {
       void pingProductSeo(product.slug)
+      void triggerPublicRevalidation(['/', '/shop', `/shop/${product.slug}`])
     } else {
       void pingSitewideSeo()
+      void triggerPublicRevalidation(['/', '/shop'])
     }
     return product
   }
@@ -349,8 +425,10 @@ class ApiClient {
     })
     if (product?.slug) {
       void pingProductSeo(product.slug)
+      void triggerPublicRevalidation(['/', '/shop', `/shop/${product.slug}`])
     } else {
       void pingSitewideSeo()
+      void triggerPublicRevalidation(['/', '/shop'])
     }
     return product
   }
@@ -360,6 +438,7 @@ class ApiClient {
       method: 'DELETE',
     })
     void pingSitewideSeo()
+    void triggerPublicRevalidation(['/', '/shop'])
     return result
   }
 
@@ -369,6 +448,7 @@ class ApiClient {
       body: JSON.stringify(data),
     })
     void pingSitewideSeo()
+    void triggerPublicRevalidation(['/', '/shop', '/journal', '/about'])
     return theme
   }
 
@@ -378,6 +458,7 @@ class ApiClient {
       body: JSON.stringify(data),
     })
     void pingSitewideSeo()
+    void triggerPublicRevalidation(['/', '/shop', '/journal', '/about'])
     return socialLinks
   }
 
@@ -386,7 +467,13 @@ class ApiClient {
       method: 'PUT',
       body: JSON.stringify(data),
     })
-    void pingSitewideSeo()
+    if (typeof data[STORIES_CONTENT_KEY] === 'string') {
+      void pingStoriesSeo(parseStories(data[STORIES_CONTENT_KEY]))
+      void triggerPublicRevalidation(['/', '/journal', '/about'])
+    } else {
+      void pingSitewideSeo()
+      void triggerPublicRevalidation(['/', '/shop', '/journal', '/about'])
+    }
     return result
   }
 
@@ -396,6 +483,7 @@ class ApiClient {
       body: JSON.stringify({ rate }),
     })
     void pingSitewideSeo()
+    void triggerPublicRevalidation(['/', '/shop'])
     return exchangeRate
   }
 
@@ -415,6 +503,7 @@ class ApiClient {
       body: JSON.stringify(data),
     })
     void pingSitewideSeo()
+    void triggerPublicRevalidation(['/', '/shop', '/journal', '/about'])
     return branding
   }
 
@@ -494,7 +583,11 @@ class ApiClient {
     }
 
     const result = await response.json()
-    return result.data || result
+    const upload = result.data || result
+    return {
+      ...upload,
+      url: upload.url ? normalizePublicImageUrl(upload.url) : upload.url,
+    }
   }
 
   async getCategories(params?: {
@@ -559,6 +652,285 @@ class ApiClient {
     })
     void pingSitewideSeo()
     return result
+  }
+
+  // ==================== SAPO SYNC ====================
+  async getSapoPreview(page = 1): Promise<{ items: any[]; page: number; hasMore: boolean }> {
+    const res = await this.client.get(`/admin/sapo-sync/preview`, { params: { page } })
+    return res.data?.data !== undefined ? res.data.data : res.data
+  }
+
+  async syncSapoProducts(productIds: (string | number)[]): Promise<any[]> {
+    const res = await this.client.post(`/admin/sapo-sync/sync`, { productIds })
+    return res.data?.data !== undefined ? res.data.data : res.data
+  }
+
+  // ==================== CART & ORDER ====================
+  async getCart(sessionId?: string, customerId?: string): Promise<any> {
+    const res = await this.client.get(`/cart`, { params: { sessionId, customerId } })
+    return res.data?.data !== undefined ? res.data.data : res.data
+  }
+
+  async addToCart(productId: string, quantity = 1, sessionId?: string, customerId?: string): Promise<any> {
+    const res = await this.client.post(`/cart/add`, { productId, quantity, sessionId }, { params: { customerId } })
+    return res.data?.data !== undefined ? res.data.data : res.data
+  }
+
+  async updateCartItem(cartItemId: string, quantity: number): Promise<any> {
+    const res = await this.client.put(`/cart/item/${cartItemId}`, { quantity })
+    return res.data?.data !== undefined ? res.data.data : res.data
+  }
+
+  async removeCartItem(cartItemId: string): Promise<any> {
+    const res = await this.client.delete(`/cart/item/${cartItemId}`)
+    return res.data?.data !== undefined ? res.data.data : res.data
+  }
+
+  async checkoutOrder(data: {
+    cartId: string
+    itemIds?: string[]
+    customerEmail: string
+    customerName: string
+    phoneNumber: string
+    shippingAddress: string
+    note?: string
+  }): Promise<any> {
+    const res = await this.client.post(`/orders/checkout`, data)
+    return res.data?.data !== undefined ? res.data.data : res.data
+  }
+
+  async getOrderTracking(idOrNumber: string, accessToken?: string): Promise<any> {
+    const res = await this.client.get(`/orders/${idOrNumber}`, {
+      params: accessToken ? { access: accessToken } : undefined,
+      headers: accessToken ? { 'x-order-payment-token': accessToken } : {},
+    })
+    return res.data?.data !== undefined ? res.data.data : res.data
+  }
+
+  async syncOrderTracking(idOrNumber: string, accessToken?: string): Promise<any> {
+    const res = await this.client.post(`/orders/${idOrNumber}/sync-tracking`, null, {
+      params: accessToken ? { access: accessToken } : undefined,
+      headers: accessToken ? { 'x-order-payment-token': accessToken } : {},
+    })
+    return res.data?.data !== undefined ? res.data.data : res.data
+  }
+
+  async fulfillOrder(
+    idOrNumber: string,
+    data: {
+      trackingNumber?: string
+      trackingCompany?: string
+      trackingUrl?: string
+      sendNotificationEmail?: boolean
+    },
+  ): Promise<any> {
+    const res = await this.client.post(`/orders/${idOrNumber}/fulfill`, data)
+    return res.data?.data !== undefined ? res.data.data : res.data
+  }
+
+  async getMyOrders(): Promise<any[]> {
+    const res = await this.client.get(`/orders/my-orders`)
+    return res.data?.data !== undefined ? res.data.data : res.data
+  }
+
+  // ==================== CUSTOMER AUTH ====================
+  async customerRegister(data: {
+    email: string
+    password: string
+    fullName: string
+    phone?: string
+    address?: string
+  }): Promise<any> {
+    const res = await this.client.post(`/customer/auth/register`, data)
+    return res.data?.data !== undefined ? res.data.data : res.data
+  }
+
+  async customerLogin(data: { email: string; password: string }): Promise<any> {
+    const res = await this.client.post(`/customer/auth/login`, data)
+    return res.data?.data !== undefined ? res.data.data : res.data
+  }
+
+  async customerLogout(): Promise<any> {
+    const res = await this.client.post(`/customer/auth/logout`)
+    return res.data?.data !== undefined ? res.data.data : res.data
+  }
+
+  async customerUpdateProfile(data: {
+    fullName?: string
+    phone?: string
+    address?: string
+  }): Promise<any> {
+    const res = await this.client.put('/customer/auth/profile', data)
+    return res.data?.data !== undefined ? res.data.data : res.data
+  }
+
+  async customerChangePassword(data: {
+    currentPassword?: string
+    newPassword: string
+  }): Promise<any> {
+    const res = await this.client.put('/customer/auth/change-password', data)
+    return res.data?.data !== undefined ? res.data.data : res.data
+  }
+
+  async customerGetMe(): Promise<any> {
+    const res = await this.client.get(`/customer/auth/me`)
+    return res.data?.data !== undefined ? res.data.data : res.data
+  }
+
+  // ==================== PAYMENT SETTINGS & ORDER PROOF ====================
+  async getPaymentSettings(): Promise<{
+    id: string
+    qrCodeUrl: string | null
+    bankName: string
+    accountNumber: string
+    accountHolder: string
+    transferInstruction: string
+    transferTemplates?: { id: string; name: string; content: string }[]
+    activeTemplateId?: string | null
+    note?: string | null
+  }> {
+    const res = await this.client.get(`/settings/payment`)
+    return res.data?.data !== undefined ? res.data.data : res.data
+  }
+
+  async updatePaymentSettings(data: {
+    qrCodeUrl?: string
+    bankName?: string
+    accountNumber?: string
+    accountHolder?: string
+    transferInstruction?: string
+    transferTemplates?: { id: string; name: string; content: string }[]
+    activeTemplateId?: string | null
+    note?: string
+  }): Promise<any> {
+    const res = await this.client.put(`/settings/payment`, data)
+    return res.data?.data !== undefined ? res.data.data : res.data
+  }
+
+  async uploadPaymentProof(idOrNumber: string, file: File, accessToken: string): Promise<any> {
+    const formData = new FormData()
+    formData.append('file', file)
+    const res = await this.client.post(`/orders/${idOrNumber}/payment-proof`, formData, {
+      params: accessToken ? { access: accessToken } : undefined,
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'x-order-payment-token': accessToken,
+      },
+    })
+    return res.data?.data !== undefined ? res.data.data : res.data
+  }
+
+  async confirmOrderTransfer(idOrNumber: string, accessToken: string): Promise<any> {
+    const res = await this.client.post(`/orders/${idOrNumber}/confirm-transfer`, null, {
+      params: accessToken ? { access: accessToken } : undefined,
+      headers: { 'x-order-payment-token': accessToken },
+    })
+    return res.data?.data !== undefined ? res.data.data : res.data
+  }
+
+  // ==================== ADMIN ORDERS ====================
+  async getAdminOrders(params?: {
+    page?: number
+    limit?: number
+    status?: string
+    paymentStatus?: string
+    search?: string
+    startDate?: string
+    endDate?: string
+    hasProof?: string
+    sortBy?: string
+    sortOrder?: string
+  }): Promise<{
+    items: any[]
+    total: number
+    page: number
+    limit: number
+    totalPages: number
+  }> {
+    const res = await this.client.get(`/orders/admin/list`, { params })
+    return res.data?.data !== undefined ? res.data.data : res.data
+  }
+
+  async getAdminOrder(idOrNumber: string): Promise<any> {
+    const res = await this.client.get(`/orders/admin/${idOrNumber}`)
+    return res.data?.data !== undefined ? res.data.data : res.data
+  }
+
+  async updateOrderStatus(idOrNumber: string, status: string): Promise<any> {
+    const res = await this.client.put(`/orders/admin/${idOrNumber}/status`, { status })
+    return res.data?.data !== undefined ? res.data.data : res.data
+  }
+
+  async updateOrderPaymentStatus(idOrNumber: string, paymentStatus: string): Promise<any> {
+    const res = await this.client.put(`/orders/admin/${idOrNumber}/payment-status`, { paymentStatus })
+    return res.data?.data !== undefined ? res.data.data : res.data
+  }
+
+  async sendOrderConfirmationEmail(idOrNumber: string): Promise<{
+    success: boolean
+    customerEmail: string
+    messageId?: string
+    error?: string
+  }> {
+    const res = await this.client.post(`/orders/admin/${idOrNumber}/send-confirmation-email`)
+    return res.data?.data !== undefined ? res.data.data : res.data
+  }
+
+  // ==================== TRUST BADGES ====================
+  async getTrustBadges(): Promise<{
+    enabled: boolean
+    items: Array<{
+      id: string
+      icon: string
+      titleVi: string
+      titleEn: string
+      descriptionVi?: string
+      descriptionEn?: string
+      isVisible: boolean
+      order: number
+    }>
+  }> {
+    const res = await this.client.get('/settings/trust-badges')
+    return res.data?.data !== undefined ? res.data.data : res.data
+  }
+
+  async createTrustBadge(data: {
+    icon: string
+    titleVi: string
+    titleEn: string
+    descriptionVi?: string
+    descriptionEn?: string
+    isVisible?: boolean
+    order?: number
+  }) {
+    const res = await this.client.post('/settings/trust-badges', data)
+    return res.data?.data !== undefined ? res.data.data : res.data
+  }
+
+  async updateTrustBadge(
+    id: string,
+    data: {
+      icon?: string
+      titleVi?: string
+      titleEn?: string
+      descriptionVi?: string
+      descriptionEn?: string
+      isVisible?: boolean
+      order?: number
+    },
+  ) {
+    const res = await this.client.put(`/settings/trust-badges/${id}`, data)
+    return res.data?.data !== undefined ? res.data.data : res.data
+  }
+
+  async deleteTrustBadge(id: string) {
+    const res = await this.client.delete(`/settings/trust-badges/${id}`)
+    return res.data?.data !== undefined ? res.data.data : res.data
+  }
+
+  async toggleTrustBadgesGlobal(enabled: boolean) {
+    const res = await this.client.put('/settings/trust-badges/toggle-global', { enabled })
+    return res.data?.data !== undefined ? res.data.data : res.data
   }
 }
 

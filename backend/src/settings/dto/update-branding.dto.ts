@@ -42,7 +42,7 @@ export class UpdateBrandingDto {
   @IsOptional()
   siteDescriptionEn?: string
 
-  @ApiPropertyOptional({ example: 'https://res.cloudinary.com/example/image/upload/logo.png' })
+  @ApiPropertyOptional({ example: 'https://images.uomarchive.com/branding/logo.webp' })
   @IsString()
   @IsOptional()
   logoUrl?: string

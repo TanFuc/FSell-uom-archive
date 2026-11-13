@@ -1,66 +1,122 @@
 import { type Metadata } from 'next'
-import { Suspense } from 'react'
+import { notFound } from 'next/navigation'
+import { fetchSiteContentServer } from '@/lib/server-utils'
+import { parseSitePages } from '@/lib/site-structure'
 import Script from 'next/script'
-import { getCanonicalBaseUrl } from '@/lib/seo'
+import { Suspense } from 'react'
+import { buildPageMetadata, getCanonicalBaseUrl, getSeoBrandName } from '@/lib/seo'
 import { fetchBranding } from '@/lib/server-utils'
+import { type Category, type PaginatedResponse, type Product } from '@/lib/types'
+import { DATA_REVALIDATE_SECONDS, PAGE_REVALIDATE_SECONDS } from '@/lib/cache-config'
 import ShopClient from './shop-client'
 
 const BASE_URL = getCanonicalBaseUrl()
-export const revalidate = 3600
+const API_URL =
+  process.env.SERVER_API_URL ||
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  'http://localhost:8888'
+export const revalidate = PAGE_REVALIDATE_SECONDS
+const SHOP_FETCH_TIMEOUT_MS = Number.parseInt(
+  process.env.SHOP_FETCH_TIMEOUT_MS || process.env.SERVER_FETCH_TIMEOUT_MS || '1800',
+  10,
+)
+
+type ShopSsrData = {
+  products?: PaginatedResponse<Product>
+  categories?: Category[]
+}
+
+function getShopSeo(locale: string) {
+  return locale === 'vi'
+    ? {
+        title: 'Tất cả sản phẩm',
+        description:
+          'Khám phá bộ sưu tập gốm sứ thủ công được tuyển chọn từ các nghệ nhân Việt Nam.',
+      }
+    : {
+        title: 'Shop',
+        description:
+          'Discover our curated collection of handcrafted ceramics from Vietnamese artisans.',
+      }
+}
+
+function unwrapData<T>(payload: unknown): T | null {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    return null
+  }
+
+  const root = payload as { data?: unknown }
+  const value = root.data ?? payload
+
+  if (value && typeof value === 'object') {
+    return value as T
+  }
+
+  return null
+}
+
+async function fetchJson(url: string): Promise<unknown> {
+  const timeout =
+    Number.isFinite(SHOP_FETCH_TIMEOUT_MS) && SHOP_FETCH_TIMEOUT_MS > 0
+      ? SHOP_FETCH_TIMEOUT_MS
+      : 1800
+  const res = await fetch(url, {
+    next: { revalidate: DATA_REVALIDATE_SECONDS },
+    signal: AbortSignal.timeout(timeout),
+  })
+
+  if (!res.ok) {
+    throw new Error(`Fetch failed: ${res.status}`)
+  }
+
+  return res.json()
+}
+
+async function fetchShopSsrData(): Promise<ShopSsrData> {
+  const [productsResult, categoriesResult] = await Promise.allSettled([
+    fetchJson(`${API_URL}/products?page=1&limit=12&isActive=true`),
+    fetchJson(`${API_URL}/categories?includeInactive=false`),
+  ])
+
+  return {
+    products:
+      productsResult.status === 'fulfilled'
+        ? (unwrapData<PaginatedResponse<Product>>(productsResult.value) ?? undefined)
+        : undefined,
+    categories:
+      categoriesResult.status === 'fulfilled'
+        ? (unwrapData<Category[]>(categoriesResult.value) ?? undefined)
+        : undefined,
+  }
+}
 
 export async function generateMetadata({
   params,
 }: {
   params: { locale: string }
 }): Promise<Metadata> {
-  const locale = params.locale
+  const locale = params.locale === 'vi' ? 'vi' : 'en'
   const branding = await fetchBranding()
+  const seo = getShopSeo(locale)
 
-  const isVi = locale === 'vi'
-  const brandName = isVi
-    ? (branding?.brandNameVi ?? 'ƯƠM.')
-    : (branding?.brandNameEn ?? 'ƯƠM.')
-
-  const title = isVi ? 'Tất cả sản phẩm' : 'Shop'
-  const description = isVi
-    ? 'Khám phá bộ sưu tập gốm sứ thủ công được tuyển chọn từ các nghệ nhân Việt Nam.'
-    : 'Discover our curated collection of handcrafted ceramics from Vietnamese artisans.'
-  const logoUrl = branding?.logoUrl || `${BASE_URL}/assets/logo.png`
-
-  return {
-    title,
-    description,
-    openGraph: {
-      title: `${title} | ${brandName}`,
-      description,
-      url: `${BASE_URL}/${locale}/shop`,
-      type: 'website',
-      images: [{ url: logoUrl, width: 1200, height: 630, alt: `${brandName} Logo` }],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: `${title} | ${brandName}`,
-      description,
-      images: [logoUrl],
-    },
-    alternates: {
-      canonical: `/${locale}/shop`,
-      languages: { vi: '/vi/shop', en: '/en/shop', 'x-default': '/vi/shop' },
-    },
-  }
+  return buildPageMetadata({
+    locale,
+    path: `/${locale}/shop`,
+    title: seo.title,
+    description: seo.description,
+    branding,
+    alternates: { vi: '/vi/shop', en: '/en/shop', 'x-default': '/vi/shop' },
+  })
 }
 
 export default async function ShopPage({ params }: { params: { locale: string } }) {
-  const locale = params.locale
+  if (parseSitePages(await fetchSiteContentServer()).find((page) => page.slug === 'shop')?.isVisible === false) notFound()
+  const locale = params.locale === 'vi' ? 'vi' : 'en'
   const branding = await fetchBranding()
-  const brandName =
-    locale === 'vi'
-      ? (branding?.brandNameVi ?? 'ƯƠM.')
-      : (branding?.brandNameEn ?? 'ƯƠM.')
-  const description =
-    locale === 'vi'
-      ? 'Khám phá bộ sưu tập gốm sứ thủ công được tuyển chọn từ các nghệ nhân Việt Nam.'
-      : 'Discover our curated collection of handcrafted ceramics from Vietnamese artisans.'
+  const brandName = getSeoBrandName(locale, branding)
+  const seo = getShopSeo(locale)
+  const ssrData = await fetchShopSsrData()
 
   return (
     <>
@@ -74,7 +130,7 @@ export default async function ShopPage({ params }: { params: { locale: string } 
             '@type': 'CollectionPage',
             name: `${brandName} Shop`,
             url: `${BASE_URL}/${locale}/shop`,
-            description,
+            description: seo.description,
           }),
         }}
       />
@@ -96,7 +152,7 @@ export default async function ShopPage({ params }: { params: { locale: string } 
               {
                 '@type': 'ListItem',
                 position: 2,
-                name: locale === 'vi' ? 'Cua hang' : 'Shop',
+                name: locale === 'vi' ? 'Cửa hàng' : 'Shop',
                 item: `${BASE_URL}/${locale}/shop`,
               },
             ],
@@ -104,7 +160,7 @@ export default async function ShopPage({ params }: { params: { locale: string } 
         }}
       />
       <Suspense fallback={null}>
-        <ShopClient />
+        <ShopClient initialProducts={ssrData.products} initialCategories={ssrData.categories} />
       </Suspense>
     </>
   )

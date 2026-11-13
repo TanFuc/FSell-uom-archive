@@ -11,6 +11,7 @@ node_modules/
 # Logs
 logs
 *.log
+.runtime/
 npm-debug.log*
 pnpm-debug.log*
 yarn-debug.log*
@@ -80,8 +81,14 @@ docker-compose.override.yml
 
 # Production
 /pm2
+/release-be
+/uom-backend-release.zip
 
 # Misc
 .terraform/
 *.tfstate
 *.tfstate.backup
+
+# AI Codex
+.codex/
+AGENTS.md

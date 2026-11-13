@@ -1,13 +1,7 @@
-'use client'
-
 import { type Metadata } from 'next'
 import PageNewClient from './page-new-client'
 
-export async function generateMetadata({
-  params,
-}: {
-  params: { locale: string }
-}): Promise<Metadata> {
+export function generateMetadata({ params }: { params: { locale: string } }): Metadata {
   const locale = params.locale
 
   return {

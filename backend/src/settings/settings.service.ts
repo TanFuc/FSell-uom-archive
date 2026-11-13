@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common'
+import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { Prisma } from '@prisma/client'
 import { PrismaService } from '../prisma/prisma.service'
 import { RedisService } from '../redis/redis.service'
@@ -7,9 +7,20 @@ import {
   UpdateSiteContentDto,
   UpdateSocialLinksDto,
   UpdateBrandingDto,
+  UpdatePaymentSettingsDto,
+  CreateTrustBadgeDto,
+  UpdateTrustBadgeDto,
 } from './dto'
 
 const CACHE_TTL = 3600 // 1 hour in seconds
+const DEFAULT_LOADING_TEXT = 'ƯƠM.'
+
+function normalizeLoadingText(value?: string): string {
+  const normalized = value?.trim()
+  if (!normalized) return DEFAULT_LOADING_TEXT
+  if (normalized.length > 24 || normalized.split(/\s+/).length > 3) return DEFAULT_LOADING_TEXT
+  return normalized
+}
 
 type SocialLinks = {
   facebookPageUrl: string
@@ -130,6 +141,37 @@ export class SettingsService {
   }
 
   async updateSiteContent(dto: UpdateSiteContentDto, userId?: string) {
+    for (const key of ['site.pages', 'site.sections'] as const) {
+      if (dto[key] !== undefined) {
+        try {
+          const parsed: unknown = JSON.parse(dto[key] as string)
+          if (!Array.isArray(parsed) || parsed.length > 40) throw new Error('invalid array')
+          const entries = parsed as unknown[]
+          const isRecord = (entry: unknown): entry is Record<string, unknown> =>
+            entry !== null && typeof entry === 'object' && !Array.isArray(entry)
+          if (key === 'site.pages' && entries.some((entry) =>
+            !isRecord(entry) || typeof entry.slug !== 'string' ||
+            !/^[a-z0-9-]{1,60}$/.test(entry.slug) ||
+            typeof entry.isVisible !== 'boolean' || typeof entry.titleVi !== 'string' ||
+            typeof entry.titleEn !== 'string' || typeof entry.descriptionVi !== 'string' ||
+            typeof entry.descriptionEn !== 'string' || typeof entry.contentVi !== 'string' ||
+            typeof entry.contentEn !== 'string' || entry.contentVi.length > 20000 ||
+            entry.contentEn.length > 20000,
+          )) throw new Error('invalid page')
+          if (key === 'site.sections' && entries.some((entry) =>
+            !isRecord(entry) || typeof entry.key !== 'string' ||
+            !(/^custom-[a-z0-9-]{1,60}$/.test(entry.key) || ['hero', 'products', 'journal', 'explore'].includes(entry.key)) ||
+            typeof entry.isVisible !== 'boolean' || typeof entry.titleVi !== 'string' ||
+            typeof entry.titleEn !== 'string' || typeof entry.subtitleVi !== 'string' ||
+            typeof entry.subtitleEn !== 'string' ||
+            (entry.bodyVi !== undefined && typeof entry.bodyVi !== 'string') ||
+            (entry.bodyEn !== undefined && typeof entry.bodyEn !== 'string'),
+          )) throw new Error('invalid section')
+        } catch {
+          throw new BadRequestException(`Cấu hình ${key} không hợp lệ`)
+        }
+      }
+    }
     const updates = Object.entries(dto)
       .filter(([, value]) => value !== undefined)
       .map(([key, value]) => {
@@ -145,6 +187,17 @@ export class SettingsService {
 
     this.logger.log('Site content updated')
     return { success: true }
+  }
+
+  async updateClientCacheVersion(version: string) {
+    await this.prisma.siteContent.upsert({
+      where: { key: 'system.client_cache_version' },
+      update: { value: version },
+      create: { key: 'system.client_cache_version', value: version },
+    })
+    await this.redis.del('site_content')
+    this.logger.log(`Client cache version updated to ${version}`)
+    return { success: true, version }
   }
 
   async getSocialLinks(): Promise<SocialLinks> {
@@ -358,14 +411,16 @@ export class SettingsService {
       brandNameEn: map['brand.name.en'] ?? 'ƯƠM. Archive',
       brandTaglineVi: map['brand.tagline.vi'] ?? '',
       brandTaglineEn: map['brand.tagline.en'] ?? '',
-      siteTitleVi: map['site.title.vi'] ?? 'ƯƠM. Archive - Gốm sứ thủ công Việt Nam',
-      siteTitleEn: map['site.title.en'] ?? 'ƯƠM. Archive - Handcrafted Ceramics from Vietnam',
+      siteTitleVi: map['site.title.vi'] ?? 'ƯƠM. - Gốm sứ thủ công Việt Nam',
+      siteTitleEn: map['site.title.en'] ?? 'ƯƠM. - Handcrafted Ceramics from Vietnam',
       siteDescriptionVi:
-        map['site.description.vi'] ?? 'Gốm sứ thủ công được tuyển chọn kỹ lưỡng từ Việt Nam.',
+        map['site.description.vi'] ??
+        'ƯƠM. tuyển chọn gốm sứ thủ công Việt Nam, lưu giữ vẻ đẹp mộc mạc, tinh tế và câu chuyện của nghệ nhân bản địa.',
       siteDescriptionEn:
-        map['site.description.en'] ?? 'Discover timeless Vietnamese ceramics curated with care.',
+        map['site.description.en'] ??
+        'Discover Vietnamese handcrafted ceramics curated for quiet beauty, refined living, and artisan stories.',
       logoUrl: map['site.logoUrl'] ?? '',
-      loadingText: map['site.loadingText'] ?? 'ƯƠM.',
+      loadingText: normalizeLoadingText(map['site.loadingText']),
     }
 
     await this.redis.set('branding_settings', JSON.stringify(branding), CACHE_TTL)
@@ -403,5 +458,201 @@ export class SettingsService {
 
     this.logger.log('Branding settings updated')
     return this.getBranding()
+  }
+
+  async getPaymentSettings() {
+    const cached = await this.redis.get('payment_settings')
+    if (cached) {
+      const parsed = this.parseCachedJson<any>(cached)
+      if (parsed) return parsed
+    }
+
+    let settings = await this.prisma.paymentSettings.findUnique({
+      where: { id: 'singleton' },
+    })
+
+    if (!settings) {
+      settings = await this.prisma.paymentSettings.create({
+        data: {
+          id: 'singleton',
+          qrCodeUrl: null,
+          bankName: 'MB Bank',
+          accountNumber: '',
+          accountHolder: '',
+          transferInstruction:
+            'Vui lòng ghi rõ nội dung chuyển khoản là [Mã đơn hàng] để hệ thống xử lý nhanh chóng.',
+        },
+      })
+    }
+
+    await this.redis.set('payment_settings', JSON.stringify(settings), CACHE_TTL)
+    return settings
+  }
+
+  async updatePaymentSettings(dto: UpdatePaymentSettingsDto, userId?: string) {
+    const templates = dto.transferTemplates?.map((template) => ({
+      id: String(template.id || '').trim().slice(0, 80),
+      name: String(template.name || '').trim().slice(0, 100),
+      content: String(template.content || '').trim().slice(0, 300),
+    }))
+    if (templates && (templates.length > 20 || templates.some((item) => !item.id || !item.name || !item.content))) {
+      throw new BadRequestException('Danh sách mẫu nội dung chuyển khoản không hợp lệ')
+    }
+    if (dto.activeTemplateId && templates && !templates.some((item) => item.id === dto.activeTemplateId)) {
+      throw new BadRequestException('Mẫu nội dung chuyển khoản đang chọn không tồn tại')
+    }
+    const settings = await this.prisma.paymentSettings.upsert({
+      where: { id: 'singleton' },
+      update: {
+        ...(dto.qrCodeUrl !== undefined && { qrCodeUrl: dto.qrCodeUrl ? dto.qrCodeUrl : null }),
+        ...(dto.bankName !== undefined && { bankName: dto.bankName }),
+        ...(dto.accountNumber !== undefined && { accountNumber: dto.accountNumber }),
+        ...(dto.accountHolder !== undefined && { accountHolder: dto.accountHolder }),
+        ...(dto.transferInstruction !== undefined && {
+          transferInstruction: dto.transferInstruction,
+        }),
+        ...(templates !== undefined && { transferTemplates: templates }),
+        ...(dto.activeTemplateId !== undefined && { activeTemplateId: dto.activeTemplateId || null }),
+        ...(dto.note !== undefined && { note: dto.note }),
+        updatedBy: userId,
+      },
+      create: {
+        id: 'singleton',
+        qrCodeUrl: dto.qrCodeUrl || null,
+        bankName: dto.bankName || '',
+        accountNumber: dto.accountNumber || '',
+        accountHolder: dto.accountHolder || '',
+        transferInstruction: dto.transferInstruction || '',
+        transferTemplates: templates || [],
+        activeTemplateId: dto.activeTemplateId || null,
+        note: dto.note || '',
+        updatedBy: userId,
+      },
+    })
+
+    await this.redis.del('payment_settings')
+    this.logger.log('Payment settings updated')
+    return settings
+  }
+
+  async getTrustBadges() {
+    const cached = await this.redis.get('product_trust_badges')
+    if (cached) {
+      const parsed = this.parseCachedJson<{ enabled: boolean; items: any[] }>(cached)
+      if (parsed) return parsed
+    }
+
+    const count = await this.prisma.productTrustBadge.count()
+    if (count === 0) {
+      await this.prisma.productTrustBadge.createMany({
+        data: [
+          {
+            icon: 'package',
+            titleVi: 'Đóng gói chống vỡ 100%',
+            titleEn: 'Breakage-Safe Packing',
+            descriptionVi: 'Hàng gốm sứ được bọc xốp bóng khí và hộp carton đa lớp chuyên dụng chống vỡ',
+            descriptionEn: 'Carefully wrapped with multi-layer bubble cushioning and heavy-duty box',
+            isVisible: true,
+            order: 0,
+          },
+          {
+            icon: 'sparkles',
+            titleVi: 'Gốm thủ công nghệ nhân',
+            titleEn: 'Artisan Handcrafted',
+            descriptionVi: 'Mỗi tác phẩm là độc bản được vuốt tay và nung củi bởi nghệ nhân bản địa',
+            descriptionEn: 'Every piece is uniquely hand-shaped and kiln-fired by local artisans',
+            isVisible: true,
+            order: 1,
+          },
+          {
+            icon: 'shield',
+            titleVi: 'Đồng kiểm khi nhận',
+            titleEn: 'Inspection on Delivery',
+            descriptionVi: 'Quý khách được mở hộp kiểm tra tính nguyên vẹn trước khi nhận hàng và thanh toán',
+            descriptionEn: 'Inspect the condition of pieces prior to accepting delivery and payment',
+            isVisible: true,
+            order: 2,
+          },
+        ],
+      })
+    }
+
+    const [items, globalSetting] = await Promise.all([
+      this.prisma.productTrustBadge.findMany({
+        orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
+      }),
+      this.prisma.siteSettings.findUnique({
+        where: { key: 'trust_badges_enabled' },
+      }),
+    ])
+
+    const result = {
+      enabled: globalSetting ? globalSetting.value === 'true' : true,
+      items,
+    }
+
+    await this.redis.set('product_trust_badges', JSON.stringify(result), CACHE_TTL)
+    return result
+  }
+
+  async createTrustBadge(dto: CreateTrustBadgeDto) {
+    let order = dto.order
+    if (order === undefined) {
+      const maxOrder = await this.prisma.productTrustBadge.aggregate({
+        _max: { order: true },
+      })
+      order = (maxOrder._max.order ?? -1) + 1
+    }
+
+    const badge = await this.prisma.productTrustBadge.create({
+      data: {
+        icon: dto.icon || 'package',
+        titleVi: dto.titleVi,
+        titleEn: dto.titleEn,
+        descriptionVi: dto.descriptionVi ?? '',
+        descriptionEn: dto.descriptionEn ?? '',
+        isVisible: dto.isVisible ?? true,
+        order,
+      },
+    })
+
+    await this.redis.del('product_trust_badges')
+    return badge
+  }
+
+  async updateTrustBadge(id: string, dto: UpdateTrustBadgeDto) {
+    const badge = await this.prisma.productTrustBadge.update({
+      where: { id },
+      data: {
+        ...(dto.icon !== undefined && { icon: dto.icon }),
+        ...(dto.titleVi !== undefined && { titleVi: dto.titleVi }),
+        ...(dto.titleEn !== undefined && { titleEn: dto.titleEn }),
+        ...(dto.descriptionVi !== undefined && { descriptionVi: dto.descriptionVi }),
+        ...(dto.descriptionEn !== undefined && { descriptionEn: dto.descriptionEn }),
+        ...(dto.isVisible !== undefined && { isVisible: dto.isVisible }),
+        ...(dto.order !== undefined && { order: dto.order }),
+      },
+    })
+
+    await this.redis.del('product_trust_badges')
+    return badge
+  }
+
+  async deleteTrustBadge(id: string) {
+    const deleted = await this.prisma.productTrustBadge.delete({
+      where: { id },
+    })
+    await this.redis.del('product_trust_badges')
+    return deleted
+  }
+
+  async toggleTrustBadgesGlobal(enabled: boolean) {
+    await this.prisma.siteSettings.upsert({
+      where: { key: 'trust_badges_enabled' },
+      update: { value: enabled ? 'true' : 'false' },
+      create: { key: 'trust_badges_enabled', value: enabled ? 'true' : 'false' },
+    })
+    await this.redis.del('product_trust_badges')
+    return { enabled }
   }
 }

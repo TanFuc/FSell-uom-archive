@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
-import { Lora, Montserrat, Playfair_Display } from 'next/font/google'
+import localFont from 'next/font/local'
+import { Montserrat } from 'next/font/google'
 import { notFound } from 'next/navigation'
 import { NextIntlClientProvider } from 'next-intl'
 import { getMessages, unstable_setRequestLocale } from 'next-intl/server'
@@ -7,18 +8,78 @@ import { Toaster as SonnerToaster } from 'sonner'
 import { DisableRightClick } from '@/components/DisableRightClick'
 import { ConditionalLayout } from '@/components/layout/ConditionalLayout'
 import { QueryProvider } from '@/components/providers/QueryProvider'
+import { ConfirmationProvider } from '@/components/providers/ConfirmationProvider'
 import { Toaster } from '@/components/ui/toaster'
+import { CustomerAuthModal } from '@/components/customer/CustomerAuthModal'
+import { CustomerSocialAuthListener } from '@/components/customer/CustomerSocialAuthListener'
 import { locales } from '@/i18n'
-import { getCanonicalBaseUrl } from '@/lib/seo'
-import { fetchBranding } from '@/lib/server-utils'
+import {
+  buildAbsoluteUrl,
+  getCanonicalBaseUrl,
+  getSeoBrandName,
+  getSeoSiteDescription,
+  getSeoSiteTitle,
+  getSeoSocialImageUrl,
+} from '@/lib/seo'
+import { fetchBranding, fetchSiteContentServer } from '@/lib/server-utils'
 import '@/styles/globals.css'
 import '@/styles/loading-animations.css'
 
-const lora = Lora({
-  subsets: ['latin', 'vietnamese'],
-  variable: '--font-lora',
+const abcArizona = localFont({
+  src: [
+    {
+      path: '../../public/fonts/VL ABCArizonaFlare-Thin.otf',
+      weight: '100',
+      style: 'normal',
+    },
+    {
+      path: '../../public/fonts/VL ABCArizonaFlare-Thin.otf',
+      weight: '200',
+      style: 'normal',
+    },
+    {
+      path: '../../public/fonts/VL ABCArizonaFlare-ThinItalic.otf',
+      weight: '100',
+      style: 'italic',
+    },
+    {
+      path: '../../public/fonts/VL ABCArizonaFlare-ThinItalic.otf',
+      weight: '200',
+      style: 'italic',
+    },
+    {
+      path: '../../public/fonts/VL ABCArizonaFlare-Light.otf',
+      weight: '300',
+      style: 'normal',
+    },
+    {
+      path: '../../public/fonts/VL ABCArizonaFlare-Light.otf',
+      weight: '400',
+      style: 'normal',
+    },
+    {
+      path: '../../public/fonts/VL ABCArizonaFlare-Light.otf',
+      weight: '500',
+      style: 'normal',
+    },
+    {
+      path: '../../public/fonts/VL ABCArizonaFlare-LightItalic.otf',
+      weight: '300',
+      style: 'italic',
+    },
+    {
+      path: '../../public/fonts/VL ABCArizonaFlare-RegIta.otf',
+      weight: '400',
+      style: 'italic',
+    },
+    {
+      path: '../../public/fonts/VL ABCArizonaFlare-RegIta.otf',
+      weight: '500',
+      style: 'italic',
+    },
+  ],
+  variable: '--font-arizona',
   display: 'swap',
-  weight: ['400', '500', '600', '700'],
 })
 
 const montserrat = Montserrat({
@@ -28,15 +89,8 @@ const montserrat = Montserrat({
   weight: ['300', '400', '500', '600', '700'],
 })
 
-const playfair = Playfair_Display({
-  subsets: ['latin', 'vietnamese'],
-  variable: '--font-playfair',
-  display: 'swap',
-  weight: ['400', '500', '600', '700'],
-})
-
 export const viewport: Viewport = {
-  themeColor: '#000000',
+  themeColor: '#FFFFFF',
   width: 'device-width',
   initialScale: 1,
 }
@@ -52,24 +106,10 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const branding = await fetchBranding()
   const baseUrl = getCanonicalBaseUrl()
-
-  const defaultTitle =
-    locale === 'vi'
-      ? (branding?.siteTitleVi ?? 'ƯƠM. - Gốm sứ thủ công Việt Nam')
-      : (branding?.siteTitleEn ?? 'ƯƠM. - Handcrafted Ceramics from Vietnam')
-
-  const brandName =
-    locale === 'vi'
-      ? (branding?.brandNameVi ?? 'ƯƠM.')
-      : (branding?.brandNameEn ?? 'ƯƠM.')
-
-  const description =
-    locale === 'vi'
-      ? (branding?.siteDescriptionVi ?? 'Gốm sứ thủ công được tuyển chọn kỹ lưỡng từ Việt Nam.')
-      : (branding?.siteDescriptionEn ?? 'Discover timeless Vietnamese ceramics curated with care.')
-
-  const logoUrl = branding?.logoUrl || '/assets/logo.png'
-  const tabIconUrl = '/assets/logo.png'
+  const defaultTitle = getSeoSiteTitle(locale, branding)
+  const brandName = getSeoBrandName(locale, branding)
+  const description = getSeoSiteDescription(locale, branding)
+  const previewImageUrl = buildAbsoluteUrl(getSeoSocialImageUrl(branding), baseUrl)
 
   return {
     metadataBase: new URL(baseUrl),
@@ -112,29 +152,38 @@ export async function generateMetadata({
       title: defaultTitle,
       description,
       siteName: brandName,
-      images: [{ url: logoUrl, width: 1200, height: 630, alt: `${brandName} Logo` }],
+      images: [
+        {
+          url: previewImageUrl,
+          alt: `${brandName} Logo`,
+          width: 1200,
+          height: 630,
+          type: 'image/png',
+        },
+      ],
     },
     twitter: {
       card: 'summary_large_image',
-      title: brandName,
+      title: defaultTitle,
       description,
-      images: [logoUrl],
+      images: [previewImageUrl],
     },
     icons: {
       icon: [
-        { url: tabIconUrl, type: 'image/png' },
-        { url: '/assets/logo.svg', type: 'image/svg+xml' },
+        { url: '/icon.svg', type: 'image/svg+xml' },
+        { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+        { url: '/favicon.ico', sizes: 'any' },
       ],
-      shortcut: [{ url: tabIconUrl, type: 'image/png' }],
-      apple: [{ url: tabIconUrl, sizes: '180x180', type: 'image/png' }],
+      shortcut: [{ url: '/favicon.ico' }],
+      apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
     },
     manifest: '/manifest.webmanifest',
     alternates: {
-      canonical: `${baseUrl}/${locale}`,
+      canonical: `/${locale}`,
       languages: {
-        vi: `${baseUrl}/vi`,
-        en: `${baseUrl}/en`,
-        'x-default': `${baseUrl}/vi`,
+        vi: '/vi',
+        en: '/en',
+        'x-default': '/vi',
       },
     },
   }
@@ -151,19 +200,48 @@ export default async function RootLayout({ children, params: { locale } }: RootL
   }
 
   unstable_setRequestLocale(locale)
-  const messages = await getMessages()
+  const siteContent = await fetchSiteContentServer()
+  let messages: any = {}
+  try {
+    messages = await getMessages({ locale })
+  } catch {
+    try {
+      messages = (await import(`@/messages/${locale}.json`)).default
+    } catch {}
+  }
+
+  const clientCacheVersion = siteContent['system.client_cache_version'] || 'v1.0'
 
   return (
     <html lang={locale} suppressHydrationWarning>
+      <head>
+        <link rel="preconnect" href="https://images.uomarchive.com" crossOrigin="" />
+        <link rel="dns-prefetch" href="https://images.uomarchive.com" />
+        <link rel="preconnect" href="https://api.uomarchive.com" crossOrigin="" />
+        <link rel="dns-prefetch" href="https://api.uomarchive.com" />
+        <script
+          id="uom-cache-buster"
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var v=${JSON.stringify(
+              clientCacheVersion,
+            )};var k='uom_ui_cache_version';var s=localStorage.getItem(k);if(s!==v){if('serviceWorker'in navigator){navigator.serviceWorker.getRegistrations().then(function(r){for(var i=0;i<r.length;i++){r[i].unregister();}});}if('caches'in window){caches.keys().then(function(c){for(var j=0;j<c.length;j++){caches.delete(c[j]);}});}try{var t=localStorage.getItem('accessToken');var rt=localStorage.getItem('refreshToken');var cs=localStorage.getItem('uom-customer-storage');sessionStorage.clear();if(t)localStorage.setItem('accessToken',t);if(rt)localStorage.setItem('refreshToken',rt);if(cs)localStorage.setItem('uom-customer-storage',cs);}catch(e){}localStorage.setItem(k,v);}}catch(e){}})();`,
+          }}
+        />
+      </head>
       <body
-        className={`${lora.variable} ${montserrat.variable} ${playfair.variable} flex min-h-screen flex-col bg-background font-serif antialiased`}
+        suppressHydrationWarning
+        className={`${abcArizona.variable} ${montserrat.variable} flex min-h-screen flex-col bg-background font-serif font-thin antialiased`}
       >
         <DisableRightClick />
         <NextIntlClientProvider messages={messages}>
           <QueryProvider>
-            <ConditionalLayout>{children}</ConditionalLayout>
-            <Toaster />
-            <SonnerToaster />
+            <ConfirmationProvider>
+              <ConditionalLayout initialSiteContent={siteContent}>{children}</ConditionalLayout>
+              <Toaster />
+              <SonnerToaster duration={2200} />
+              <CustomerAuthModal />
+              <CustomerSocialAuthListener />
+            </ConfirmationProvider>
           </QueryProvider>
         </NextIntlClientProvider>
       </body>

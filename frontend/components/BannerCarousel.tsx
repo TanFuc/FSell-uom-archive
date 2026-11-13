@@ -1,9 +1,10 @@
 'use client'
 
+import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import type { Banner as BannerType } from '@/lib/types'
-import { optimizeProductImage } from '@/lib/utils'
+import { cn, optimizeProductImage } from '@/lib/utils'
 
 interface BannerCarouselProps {
   banners: BannerType[]
@@ -11,56 +12,24 @@ interface BannerCarouselProps {
   autoPlayInterval?: number // milliseconds
 }
 
-export function BannerCarousel({ banners, locale, autoPlayInterval = 5000 }: BannerCarouselProps) {
+export function BannerCarousel({ banners, locale, autoPlayInterval = 6500 }: BannerCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [isAutoPlaying, setIsAutoPlaying] = useState(true)
   const [touchStart, setTouchStart] = useState(0)
   const [touchEnd, setTouchEnd] = useState(0)
   const shouldPreventClick = useRef(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    const el = containerRef.current
-    if (!el) return
-    const onWheel = (e: WheelEvent) => {
-      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
-        e.preventDefault()
-      }
-    }
-    el.addEventListener('wheel', onWheel, { passive: false })
-    return () => el.removeEventListener('wheel', onWheel)
-  }, [])
-
   const sortedBanners = [...banners].sort((a, b) => a.order - b.order)
 
   useEffect(() => {
-    if (!isAutoPlaying || sortedBanners.length <= 1) return
+    if (sortedBanners.length <= 1) return
 
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % sortedBanners.length)
     }, autoPlayInterval)
 
     return () => clearInterval(interval)
-  }, [isAutoPlaying, sortedBanners.length, autoPlayInterval])
-
-  const goToSlide = useCallback((index: number) => {
-    setCurrentIndex(index)
-    setIsAutoPlaying(false)
-
-    setTimeout(() => setIsAutoPlaying(true), 10000)
-  }, [])
-
-  const goToNext = useCallback(() => {
-    setCurrentIndex((prev) => (prev + 1) % sortedBanners.length)
-    setIsAutoPlaying(false)
-    setTimeout(() => setIsAutoPlaying(true), 10000)
-  }, [sortedBanners.length])
-
-  const goToPrevious = useCallback(() => {
-    setCurrentIndex((prev) => (prev - 1 + sortedBanners.length) % sortedBanners.length)
-    setIsAutoPlaying(false)
-    setTimeout(() => setIsAutoPlaying(true), 10000)
-  }, [sortedBanners.length])
+  }, [sortedBanners.length, autoPlayInterval])
 
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchStart(e.targetTouches[0].clientX)
@@ -75,14 +44,11 @@ export function BannerCarousel({ banners, locale, autoPlayInterval = 5000 }: Ban
     if (!touchStart || !touchEnd) return
 
     const distance = touchStart - touchEnd
-    const isLeftSwipe = distance > 50
-    const isRightSwipe = distance < -50
-
-    if (isLeftSwipe) {
-      goToNext()
+    if (distance > 50) {
+      setCurrentIndex((prev) => (prev + 1) % sortedBanners.length)
       shouldPreventClick.current = true
-    } else if (isRightSwipe) {
-      goToPrevious()
+    } else if (distance < -50) {
+      setCurrentIndex((prev) => (prev - 1 + sortedBanners.length) % sortedBanners.length)
       shouldPreventClick.current = true
     } else {
       shouldPreventClick.current = false
@@ -100,119 +66,118 @@ export function BannerCarousel({ banners, locale, autoPlayInterval = 5000 }: Ban
 
   if (sortedBanners.length === 0) return null
 
-  const currentBanner = sortedBanners[currentIndex]
-  const title = locale === 'vi' ? currentBanner.titleVi : currentBanner.titleEn
-  const subtitle = locale === 'vi' ? currentBanner.subtitleVi : currentBanner.subtitleEn
-  const description = locale === 'vi' ? currentBanner.descriptionVi : currentBanner.descriptionEn
-
-  const BannerContent = () => (
-    <>
-      {/* Background Image - Hero Style */}
-      <div className="relative aspect-[4/5] w-full md:aspect-[21/9] lg:aspect-[3/1]">
-        <picture className="absolute inset-0 block h-full w-full">
-          {currentBanner.mobileImageUrl && (
-            <source
-              media="(max-width: 767px)"
-              srcSet={optimizeProductImage(currentBanner.mobileImageUrl)}
-            />
-          )}
-          <img
-            src={optimizeProductImage(currentBanner.imageUrl)}
-            alt={title || 'Banner'}
-            className="h-full w-full object-cover transition-transform duration-300"
-            loading="eager"
-            fetchPriority="high"
-            decoding="async"
-            draggable={false}
-          />
-        </picture>
-
-        {/* Subtle overlay for text readability */}
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/5 to-black/30" />
-
-        {/* Text Content - Positioned at bottom left */}
-        {(title || subtitle || description) && (
-          <div className="absolute inset-0 flex items-end px-6 pb-12 md:px-16 md:pb-16 lg:px-24 lg:pb-20">
-            <div
-              className="animate-fade-in max-w-3xl space-y-3 md:space-y-3"
-              style={{ color: currentBanner.textColor || '#FFFFFF' }}
-            >
-              {title && (
-                <h2 className="text-3xl font-light uppercase leading-tight tracking-[0.15em] sm:text-4xl md:text-5xl lg:text-6xl">
-                  {title}
-                </h2>
-              )}
-              {subtitle && (
-                <p className="text-xs font-light uppercase tracking-[0.25em] opacity-90 md:text-sm">
-                  {subtitle}
-                </p>
-              )}
-              {description && (
-                <p className="line-clamp-3 max-w-2xl pt-2 text-sm font-light opacity-80 md:line-clamp-none md:text-base">
-                  {description}
-                </p>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-    </>
-  )
-
   return (
     <div
       ref={containerRef}
-      className="group relative w-full select-none overflow-hidden"
-      style={{ overscrollBehaviorX: 'none' }}
+      className="group relative h-[82vh] w-full select-none overflow-hidden bg-[#111110] sm:h-[88vh] md:h-[92vh] lg:h-[96vh] xl:h-screen"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Clickable Content Area */}
-      {currentBanner.link ? (
-        <Link
-          href={currentBanner.link}
-          className="block h-full w-full"
-          onClick={handleLinkClick}
-          draggable={false}
-        >
-          <BannerContent />
-        </Link>
-      ) : (
-        <div className="h-full w-full">
-          <BannerContent />
-        </div>
-      )}
+      {/* Top Scrim Gradient to ensure Navbar icons & logo are always crisp and legible */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-36 bg-gradient-to-b from-black/45 via-black/15 to-transparent md:h-44" />
 
-      {/* Slim line indicators at bottom edge */}
-      {sortedBanners.length > 1 && (
-        <div className="absolute bottom-0 left-0 flex w-full">
-          {sortedBanners.map((_, index) => (
-            <button
-              key={index}
-              onClick={(e) => {
-                e.preventDefault()
-                e.stopPropagation()
-                goToSlide(index)
-              }}
-              className="group/bar relative h-[3px] flex-1 overflow-hidden bg-white/25 transition-colors hover:bg-white/40"
-              aria-label={`Go to banner ${index + 1}`}
-            >
-              {index === currentIndex && (
-                <span
-                  className="absolute inset-y-0 left-0 w-full origin-left bg-white"
-                  style={{
-                    animation: isAutoPlaying
-                      ? `slideProgress ${autoPlayInterval}ms linear forwards`
-                      : 'none',
-                    transform: isAutoPlaying ? undefined : 'scaleX(1)',
+      {/* Banner Slides */}
+      {sortedBanners.map((banner, index) => {
+        const isActive = index === currentIndex
+        const title = locale === 'vi' ? banner.titleVi : banner.titleEn
+        const subtitle = locale === 'vi' ? banner.subtitleVi : banner.subtitleEn
+        const description = locale === 'vi' ? banner.descriptionVi : banner.descriptionEn
+        const textColor = banner.textColor || '#FFFFFF'
+
+        return (
+          <div
+            key={banner.id || index}
+            className={cn(
+              'absolute inset-0 transition-opacity duration-1000 ease-in-out',
+              isActive
+                ? 'pointer-events-auto z-[2] opacity-100'
+                : 'pointer-events-none z-[1] opacity-0',
+            )}
+          >
+            {/* Cinematic Image Frame */}
+            <div className="relative h-full w-full overflow-hidden">
+              <picture className="absolute inset-0 block h-full w-full">
+                {banner.mobileImageUrl && (
+                  <source
+                    media="(max-width: 767px)"
+                    srcSet={optimizeProductImage(banner.mobileImageUrl)}
+                  />
+                )}
+                <motion.img
+                  src={optimizeProductImage(banner.imageUrl)}
+                  alt={title || 'ƯƠM. Archive Hero Banner'}
+                  animate={isActive ? { scale: [1, 1.035] } : { scale: 1 }}
+                  transition={{
+                    duration: autoPlayInterval / 1000 + 1,
+                    ease: 'easeOut',
                   }}
+                  className="h-full w-full object-cover object-center"
+                  loading={index === 0 ? 'eager' : 'lazy'}
+                  decoding="async"
+                  draggable={false}
                 />
+              </picture>
+
+              {/* Gentle subtle bottom vignette for typography */}
+              {(title || subtitle || description) && (
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/65 via-black/20 to-transparent" />
               )}
-            </button>
-          ))}
-        </div>
-      )}
+            </div>
+
+            {/* Editorial Typography (if present) */}
+            {(title || subtitle || description) && (
+              <div className="absolute inset-0 z-[3] flex items-end px-6 pb-12 sm:px-10 sm:pb-16 md:px-16 md:pb-20 lg:px-24 lg:pb-24">
+                <AnimatePresence mode="wait">
+                  {isActive && (
+                    <motion.div
+                      key={`content-${banner.id || index}`}
+                      initial={{ opacity: 0, y: 18 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      transition={{
+                        duration: 0.8,
+                        ease: [0.16, 1, 0.3, 1],
+                      }}
+                      className="min-w-0 max-w-3xl space-y-2.5 md:space-y-3.5"
+                      style={{ color: textColor }}
+                    >
+                      {subtitle && (
+                        <p className="inline-block rounded-full bg-white/10 px-3.5 py-1 font-serif italic font-normal text-[9px] uppercase tracking-[0.24em] text-white/95 backdrop-blur-md sm:text-[10px] md:tracking-[0.3em]">
+                          {subtitle}
+                        </p>
+                      )}
+
+                      {title && (
+                        <h2 className="font-serif text-2xl font-light uppercase leading-[1.12] tracking-[0.06em] drop-shadow-[0_2px_12px_rgba(0,0,0,0.55)] sm:text-4xl sm:tracking-[0.1em] md:text-5xl lg:text-6xl">
+                          {title}
+                        </h2>
+                      )}
+
+                      {description && (
+                        <p className="line-clamp-2 max-w-2xl font-serif text-xs font-thin leading-relaxed tracking-[0.02em] text-white/85 drop-shadow-[0_1px_6px_rgba(0,0,0,0.4)] md:line-clamp-none md:text-sm lg:text-base">
+                          {description}
+                        </p>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
+
+            {/* Clickable Destination Link */}
+            {banner.link && (
+              <Link
+                href={banner.link}
+                onClick={handleLinkClick}
+                prefetch={false}
+                className="absolute inset-0 z-[4]"
+                aria-label={title || 'Banner Link'}
+              />
+            )}
+          </div>
+        )
+      })}
     </div>
   )
 }

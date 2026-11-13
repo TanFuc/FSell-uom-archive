@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api'
+import { revalidatePaths } from '@/lib/revalidate'
 import {
   parseTrendingTerms,
   SEARCH_TRENDING_EN_KEY,
@@ -118,9 +119,11 @@ export default function AdminTrendingSearchesPage() {
         [TRENDING_KEYS.vi]: serializeTrendingTerms(items.vi),
         [TRENDING_KEYS.en]: serializeTrendingTerms(items.en),
       })
+      void revalidatePaths(['/vi', '/en'])
       toast({ title: t('success'), description: t('trending.saved') })
-    } catch {
-      toast({ title: t('error'), description: t('trending.saveError'), variant: 'destructive' })
+    } catch (error: any) {
+      const message = error?.response?.data?.message || error?.message || t('trending.saveError')
+      toast({ title: t('error'), description: message, variant: 'destructive' })
     } finally {
       setIsSaving(false)
     }

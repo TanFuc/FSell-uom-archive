@@ -13,12 +13,18 @@ export const categoryKeys = {
   detail: (id: string) => [...categoryKeys.details(), id] as const,
 }
 
-export function useCategories(params?: QueryCategoriesDto, options?: { enabled?: boolean }) {
+export function useCategories(
+  params?: QueryCategoriesDto,
+  options?: { enabled?: boolean; initialData?: any },
+) {
   return useQuery({
     queryKey: categoryKeys.list(params || {}),
     queryFn: () => api.getCategories(params),
     enabled: options?.enabled ?? true,
-    staleTime: 10 * 60 * 1000, // 10 minutes
+    initialData: options?.initialData,
+    initialDataUpdatedAt: options?.initialData ? 0 : undefined,
+    staleTime: 15 * 1000,
+    refetchOnMount: true,
   })
 }
 
@@ -27,7 +33,8 @@ export function useCategory(id: string) {
     queryKey: categoryKeys.detail(id),
     queryFn: () => api.getCategoryById(id),
     enabled: !!id,
-    staleTime: 10 * 60 * 1000,
+    staleTime: 15 * 1000,
+    refetchOnMount: true,
   })
 }
 

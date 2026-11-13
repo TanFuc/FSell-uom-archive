@@ -60,22 +60,83 @@ export function slugify(str: string): string {
     .replace(/(^-|-$)/g, '')
 }
 
-export function getImageUrl(path: string): string {
-  if (path.startsWith('http')) {
+function getPublicImageBaseUrl(): string {
+  if (typeof window !== 'undefined' && window.location.hostname.endsWith('uomarchive.com')) {
+    return 'https://images.uomarchive.com'
+  }
+  const configured =
+    process.env.NEXT_PUBLIC_IMAGE_BASE_URL ||
+    process.env.NEXT_PUBLIC_R2_PUBLIC_URL ||
+    process.env.NEXT_PUBLIC_API_BASE_URL ||
+    process.env.NEXT_PUBLIC_API_URL
+  if (
+    process.env.NODE_ENV === 'production' &&
+    (!configured || configured.includes('localhost') || configured.includes('127.0.0.1'))
+  ) {
+    return 'https://images.uomarchive.com'
+  }
+  return (configured || 'http://localhost:3001').replace(/\/$/, '')
+}
+
+export function normalizePublicImageUrl(path: string): string {
+  if (!path) return path
+
+  // Protocol-relative URL (e.g. //bizweb.dktcdn.net/...)
+  if (path.startsWith('//')) {
+    return `https:${path}`
+  }
+
+  // Local uploads served by backend server
+  if (path.startsWith('/uploads/') || path.startsWith('uploads/')) {
+    let apiBase = (
+      process.env.NEXT_PUBLIC_API_BASE_URL ||
+      process.env.NEXT_PUBLIC_API_URL ||
+      ''
+    ).replace(/\/$/, '')
+    if (typeof window !== 'undefined') {
+      const hostname = window.location.hostname
+      if (hostname.endsWith('uomarchive.com')) {
+        apiBase = 'https://api.uomarchive.com'
+      } else if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        if (!apiBase || apiBase.includes('uomarchive.com')) {
+          apiBase = 'http://localhost:3006'
+        }
+      }
+    }
+    if (!apiBase) {
+      apiBase = process.env.NODE_ENV === 'production' ? 'https://api.uomarchive.com' : 'http://localhost:3006'
+    }
+    const cleanPath = path.startsWith('/') ? path : `/${path}`
+    return `${apiBase}${cleanPath}`
+  }
+
+  const imageBaseUrl = getPublicImageBaseUrl()
+
+  if (/^https?:\/\//i.test(path)) {
     try {
       const url = new URL(path)
-      const r2PublicUrl = (process.env.NEXT_PUBLIC_R2_PUBLIC_URL || '').replace(/\/$/, '')
-      if (r2PublicUrl && url.hostname.endsWith('.r2.dev')) {
-        const normalizedPath = url.pathname.replace(/^\/uom-archive\//, '/').replace(/^\//, '')
-        return `${r2PublicUrl}/${normalizedPath}`
+      const shouldRewriteToImageDomain =
+        url.hostname.endsWith('.r2.dev') ||
+        url.hostname.includes('r2.cloudflarestorage.com') ||
+        url.hostname === 'images.uomarchive.com'
+
+      if (imageBaseUrl && shouldRewriteToImageDomain) {
+        const normalizedPath = url.pathname.replace(/^\/uom-archive\//, '/').replace(/^\/+/, '')
+        return `${imageBaseUrl}/${normalizedPath}`
       }
     } catch {
       return path
     }
+
     return path
   }
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
-  return `${baseUrl}${path}`
+
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`
+  return `${imageBaseUrl}${normalizedPath}`
+}
+
+export function getImageUrl(path: string): string {
+  return normalizePublicImageUrl(path)
 }
 
 /**
