@@ -18,6 +18,7 @@ import {
   ChevronRight,
   User as UserIcon,
   KeyRound,
+  RefreshCw,
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
@@ -184,6 +185,7 @@ export default function AdminLayoutClient({ children }: AdminLayoutProps) {
   const navItems = [
     { href: `/${locale}/admin/dashboard`, label: t('dashboard'), icon: LayoutDashboard },
     { href: `/${locale}/admin/products`, label: t('products'), icon: Package },
+    { href: `/${locale}/admin/sapo-sync`, label: 'Sapo Sync', icon: RefreshCw },
     { href: `/${locale}/admin/banners`, label: 'Banners', icon: ImageIcon },
     { href: `/${locale}/admin/categories`, label: t('categories'), icon: LayoutGrid },
     { href: `/${locale}/admin/branding`, label: t('branding.navLabel'), icon: Brush },

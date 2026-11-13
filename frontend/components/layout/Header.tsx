@@ -1,9 +1,11 @@
 'use client'
 
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, X, Menu, Instagram, Facebook } from 'lucide-react'
+import { Search, X, Menu, Instagram, Facebook, ShoppingBag, User as UserIcon } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useCustomerStore } from '@/lib/customer-store'
+import { CartDrawer } from '@/components/cart/CartDrawer'
 import { usePathname, useRouter } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 import { useState, useEffect, useLayoutEffect, memo, useMemo, useRef } from 'react'
@@ -56,7 +58,7 @@ function HighlightedText({ text, query }: { text: string; query: string }) {
         return (
           <mark
             key={`${part}-${index}`}
-            className="rounded-[4px] bg-[#ece7dc] px-1 py-[1px] text-foreground"
+            className="rounded-[4px] bg-stone-100 px-1 py-[1px] text-foreground"
           >
             {part}
           </mark>
@@ -76,9 +78,9 @@ const SearchResultItem = memo(
         prefetch={false}
         onClick={onClick}
         className={cn(
-          'group block rounded-2xl border border-foreground/[0.08] bg-[linear-gradient(160deg,#ffffff_0%,#faf8f2_100%)] p-3 text-center shadow-[0_8px_20px_rgba(0,0,0,0.05)] transition-all duration-300 hover:-translate-y-1 hover:border-foreground/20 hover:shadow-[0_18px_34px_rgba(0,0,0,0.15)]',
+          'group block rounded-2xl border border-foreground/[0.08] bg-white p-3 text-center shadow-[0_8px_20px_rgba(0,0,0,0.05)] transition-all duration-300 hover:-translate-y-1 hover:border-foreground/20 hover:shadow-[0_18px_34px_rgba(0,0,0,0.15)]',
           isActive &&
-            'border-foreground/45 bg-[linear-gradient(160deg,#fffdfa_0%,#f4ecdd_100%)] shadow-[0_0_0_2px_rgba(66,56,42,0.16),0_16px_34px_rgba(0,0,0,0.15)]',
+            'border-foreground/45 bg-stone-50 shadow-[0_0_0_2px_rgba(66,56,42,0.16),0_16px_34px_rgba(0,0,0,0.15)]',
         )}
       >
         <div className="relative mx-auto mb-3 aspect-square w-20 overflow-hidden rounded-full border border-foreground/[0.08] bg-muted/5 md:w-24">
@@ -117,10 +119,10 @@ SearchResultItem.displayName = 'SearchResultItem'
 function SearchSkeletonItem() {
   return (
     <div className="rounded-2xl border border-foreground/[0.08] bg-white/90 p-3 shadow-[0_8px_20px_rgba(0,0,0,0.05)]">
-      <div className="mx-auto mb-3 h-20 w-20 animate-pulse rounded-full bg-gradient-to-r from-[#ece8df] via-[#f5f2eb] to-[#ece8df] bg-[length:220%_100%] md:h-24 md:w-24" />
+      <div className="mx-auto mb-3 h-20 w-20 animate-pulse rounded-full bg-gradient-to-r from-stone-100 via-stone-200 to-stone-100 bg-[length:220%_100%] md:h-24 md:w-24" />
       <div className="space-y-2">
-        <div className="h-2 animate-pulse rounded bg-gradient-to-r from-[#ece8df] via-[#f5f2eb] to-[#ece8df] bg-[length:220%_100%]" />
-        <div className="mx-auto h-2 w-2/3 animate-pulse rounded bg-gradient-to-r from-[#ece8df] via-[#f5f2eb] to-[#ece8df] bg-[length:220%_100%]" />
+        <div className="h-2 animate-pulse rounded bg-gradient-to-r from-stone-100 via-stone-200 to-stone-100 bg-[length:220%_100%]" />
+        <div className="mx-auto h-2 w-2/3 animate-pulse rounded bg-gradient-to-r from-stone-100 via-stone-200 to-stone-100 bg-[length:220%_100%]" />
       </div>
     </div>
   )
@@ -134,10 +136,15 @@ export function Header() {
   const [showSearch, setShowSearch] = useState(false)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [isCartOpen, setIsCartOpen] = useState(false)
+  const { customer, isAuthenticated, openAuthModal, logout: customerLogout, cartCount, fetchCartCount } = useCustomerStore()
 
   useEffect(() => {
     setMounted(true)
-  }, [])
+    if (isAuthenticated) {
+      fetchCartCount()
+    }
+  }, [isAuthenticated, fetchCartCount])
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const [isScrolled, setIsScrolled] = useState(false)
@@ -568,9 +575,9 @@ export function Header() {
             isScrolled ? 'h-16 lg:h-20' : 'h-20 lg:h-28',
           )}
         >
-          <div className="flex w-full items-center justify-between">
+          <div className="grid w-full grid-cols-3 items-center">
             {/* Left */}
-            <div className="flex w-auto shrink-0 items-center lg:w-1/3">
+            <div className="flex items-center justify-start">
               <button
                 onClick={toggleMobileMenu}
                 aria-label={showMobileMenu ? t('closeMenu') : t('openMenu')}
@@ -614,12 +621,12 @@ export function Header() {
               </button>
             </div>
 
-            {/* Middle Logo */}
-            <div className="flex min-w-0 flex-1 justify-center px-2 text-center lg:w-1/3">
+            {/* Middle Logo (Centered) */}
+            <div className="flex min-w-0 justify-center px-2 text-center">
               <Link
                 href={`/${locale}`}
                 className={cn(
-                  'whitespace-nowrap font-playfair font-bold tracking-tighter transition-all duration-300 hover:opacity-80',
+                  'truncate max-w-[200px] sm:max-w-none font-playfair font-bold tracking-tighter transition-all duration-300 hover:opacity-80',
                   isScrolled ? 'text-lg sm:text-xl lg:text-3xl' : 'text-xl sm:text-2xl lg:text-4xl',
                 )}
                 tabIndex={0}
@@ -629,10 +636,10 @@ export function Header() {
               </Link>
             </div>
 
-            {/* Right Socials + Search + Lang */}
-            <div className="flex w-auto shrink-0 items-center justify-end gap-3 lg:w-1/3 lg:gap-8">
+            {/* Right Actions: Socials + Search + Cart + Auth + Lang (Icon Only) */}
+            <div className="flex items-center justify-end gap-2.5 sm:gap-4 lg:gap-5">
               {/* Desktop Socials */}
-              <div className="mr-2 hidden items-center gap-5 lg:flex">
+              <div className="mr-1 hidden items-center gap-4 lg:flex">
                 {socialLinks?.instagramUsername && (
                   <a
                     href={`https://instagram.com/${socialLinks.instagramUsername}`}
@@ -657,26 +664,79 @@ export function Header() {
                 )}
               </div>
 
+              {/* Search Button */}
               <button
                 onClick={() => {
                   showSearch ? closeSearchPanel() : openSearchPanel()
                 }}
-                className="flex items-center gap-2 py-1 outline-none"
+                className="p-1 outline-none transition-opacity hover:opacity-60"
                 aria-label={showSearch ? t('closeSearch') : t('openSearch')}
+                title={showSearch ? t('close') : t('search')}
               >
                 {showSearch ? (
                   <X className="h-5 w-5 lg:h-6 lg:w-6" />
                 ) : (
                   <Search className="h-5 w-5 lg:h-6 lg:w-6" />
                 )}
-                <span className="hidden text-xs font-bold uppercase leading-none tracking-widest lg:inline">
-                  {showSearch ? t('close') : t('search')}
-                </span>
               </button>
 
+              {/* Cart Button */}
+              <button
+                onClick={() => {
+                  if (!isAuthenticated) {
+                    openAuthModal('Vui lòng đăng nhập để xem giỏ hàng', () => setIsCartOpen(true))
+                  } else {
+                    setIsCartOpen(true)
+                  }
+                }}
+                className="p-1 outline-none transition-opacity hover:opacity-60 relative whitespace-nowrap shrink-0"
+                aria-label="Giỏ hàng"
+                title={locale === 'vi' ? 'Giỏ hàng' : 'Cart'}
+              >
+                <div className="relative flex items-center justify-center">
+                  <ShoppingBag className="h-5 w-5 lg:h-6 lg:w-6 shrink-0" />
+                  {isAuthenticated && cartCount > 0 && (
+                    <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#4A4238] px-1 font-mono text-[9px] font-bold leading-none text-white shadow-xs animate-in zoom-in-50 duration-200">
+                      {cartCount > 99 ? '99+' : cartCount}
+                    </span>
+                  )}
+                </div>
+              </button>
+
+              {/* Customer Account Button */}
+              {isAuthenticated ? (
+                <div className="flex items-center gap-1.5 whitespace-nowrap shrink-0">
+                  <Link
+                    href={`/${locale}/my-orders`}
+                    className="p-1 hover:text-[#8C7E6A] transition-colors shrink-0"
+                    title={customer?.fullName || 'Đơn hàng của tôi'}
+                    aria-label="Đơn hàng của tôi"
+                  >
+                    <UserIcon className="h-5 w-5 lg:h-6 lg:w-6 shrink-0" />
+                  </Link>
+                  <button
+                    onClick={customerLogout}
+                    className="hidden text-[9px] uppercase tracking-wider text-foreground/40 hover:text-foreground shrink-0 sm:inline"
+                    title="Đăng xuất"
+                  >
+                    (Thoát)
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => openAuthModal('Đăng nhập tài khoản khách hàng')}
+                  className="p-1 transition-opacity hover:opacity-60 whitespace-nowrap shrink-0"
+                  title={locale === 'vi' ? 'Đăng nhập' : 'Login'}
+                  aria-label={locale === 'vi' ? 'Đăng nhập' : 'Login'}
+                >
+                  <UserIcon className="h-5 w-5 lg:h-6 lg:w-6 shrink-0" />
+                </button>
+              )}
+
+              {/* Language Switch */}
               <Link
                 href={newPath}
-                className="flex h-full items-center text-xs font-bold uppercase leading-none tracking-widest lg:text-sm"
+                className="p-1 text-xs font-bold uppercase leading-none tracking-widest transition-opacity hover:opacity-60 lg:text-sm shrink-0"
                 aria-label={locale === 'vi' ? 'Switch to English' : 'Chuyển sang Tiếng Việt'}
               >
                 {switchLocale}
@@ -708,11 +768,11 @@ export function Header() {
                   onClick={closeSearchPanel}
                 >
                   <div
-                    className="relative mx-auto w-full max-w-[1160px] overflow-hidden rounded-2xl border border-black/10 bg-[#fcfcfa] shadow-[0_24px_70px_rgba(0,0,0,0.3)]"
+                    className="relative mx-auto w-full max-w-[1160px] overflow-hidden rounded-2xl border border-black/10 bg-white shadow-[0_24px_70px_rgba(0,0,0,0.3)]"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <div className="pointer-events-none absolute -right-16 -top-20 hidden h-52 w-52 rounded-full bg-[#d7cab3]/45 blur-3xl md:block" />
-                    <div className="pointer-events-none absolute -left-12 bottom-0 hidden h-40 w-40 rounded-full bg-[#e7dfcf]/55 blur-3xl md:block" />
+                    <div className="pointer-events-none absolute -right-16 -top-20 hidden h-52 w-52 rounded-full bg-stone-200/20 blur-3xl md:block" />
+                    <div className="pointer-events-none absolute -left-12 bottom-0 hidden h-40 w-40 rounded-full bg-stone-200/20 blur-3xl md:block" />
                     <div className="relative min-h-[300px] px-5 py-6 md:px-8 md:py-8 lg:px-10 lg:py-9">
                       <form
                         onSubmit={handleSearch}
@@ -825,7 +885,7 @@ export function Header() {
                                     key={`recent-${term}`}
                                     type="button"
                                     onClick={() => setSearchQuery(term)}
-                                    className="rounded-full border border-foreground/15 bg-[#f9f6ef] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground/70 transition-all hover:-translate-y-0.5 hover:border-foreground/35 hover:text-foreground"
+                                    className="rounded-full border border-foreground/15 bg-stone-50 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground/70 transition-all hover:-translate-y-0.5 hover:border-foreground/35 hover:text-foreground"
                                   >
                                     {term}
                                   </button>
@@ -1089,6 +1149,9 @@ export function Header() {
           </AnimatePresence>,
           document.body,
         )}
+
+      {/* Global Cart Drawer */}
+      <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
     </>
   )
 }

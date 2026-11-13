@@ -2,7 +2,7 @@ import { type ThemeSettings, type SocialLinks, type SiteContent } from './types'
 
 export const DEFAULT_THEME: ThemeSettings = {
   id: 'default',
-  backgroundColor: '#F9F7F1',
+  backgroundColor: '#FFFFFF',
   textColor: '#4A4238',
   accentColor: '#8C7E6A',
   updatedAt: new Date().toISOString(),

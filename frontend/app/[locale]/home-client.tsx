@@ -449,7 +449,7 @@ export default function HomeClient({
         )}
       </section>
 
-      <section className="w-full border-t border-foreground/[0.04] bg-[#f8f6f2] px-4 py-16 sm:px-6 lg:px-12">
+      <section className="w-full border-t border-foreground/[0.04] bg-white px-4 py-16 sm:px-6 lg:px-12">
         <div className="mx-auto max-w-6xl">
           <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
             <div className="space-y-3">

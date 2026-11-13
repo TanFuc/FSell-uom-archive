@@ -122,6 +122,22 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'images.uomarchive.com',
       },
+      {
+        protocol: 'https',
+        hostname: '**.dktcdn.net',
+      },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '3006',
+        pathname: '/uploads/**',
+      },
+      {
+        protocol: 'http',
+        hostname: '127.0.0.1',
+        port: '3006',
+        pathname: '/uploads/**',
+      },
     ],
     formats: ['image/avif', 'image/webp'],
   },
